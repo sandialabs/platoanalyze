@@ -332,6 +332,12 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             Plato::WorksetBase<ElementType>::assembleResidual( tResidual, tReturnValue);
         }
 
+        // have another block that worksets u^A and u^B separately
+        // then calls something like evaluate_contact() for u^A and u^B separately
+        
+
+
+
         return tReturnValue;
     }
 
