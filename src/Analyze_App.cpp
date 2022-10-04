@@ -895,7 +895,6 @@ void MPMD_App::ComputeCriterionP::operator()()
 #endif
 }
 
-
 /******************************************************************************/
 MPMD_App::ComputeCriterionValue::
 ComputeCriterionValue(MPMD_App* aMyApp, Plato::InputData& aOpNode, Teuchos::RCP<ProblemDefinition> aOpDef) :
@@ -1568,7 +1567,6 @@ void MPMD_App::importData(const std::string& aName, const Plato::SharedData& aSh
     this->importDataT(aName, aSharedField);
 }
 
-
 /******************************************************************************/
 void MPMD_App::exportData(const std::string& aName, Plato::SharedData& aSharedField)
 /******************************************************************************/
@@ -1680,7 +1678,7 @@ Plato::ScalarMultiVector MPMD_App::getCoords()
     auto tNumVerts = mMesh->NumNodes();
     auto tNumDims = mMesh->NumDimensions();
     Plato::ScalarMultiVector retval("coords", tNumVerts, tNumDims);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumVerts), LAMBDA_EXPRESSION(const Plato::OrdinalType & tVertOrdinal){
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumVerts), KOKKOS_LAMBDA(const Plato::OrdinalType & tVertOrdinal){
         for (int iDim=0; iDim<tNumDims; iDim++){
             retval(tVertOrdinal,iDim) = tCoords[tVertOrdinal*tNumDims+iDim];
         }

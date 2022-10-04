@@ -25,7 +25,7 @@ public:
     }
 
     template<typename ResultScalarType, typename TensorScalarType, typename VolumeScalarType>
-    DEVICE_TYPE inline void operator()(Plato::OrdinalType cellOrdinal,
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType cellOrdinal,
                                        Plato::ScalarVectorT<ResultScalarType> pnorm,
                                        Plato::ScalarMultiVectorT<TensorScalarType> voigtTensor,
                                        Plato::OrdinalType p,
@@ -77,7 +77,7 @@ public:
     }
 
     template<typename ResultScalarType, typename TensorScalarType, typename VolumeScalarType>
-    DEVICE_TYPE inline void operator()(Plato::OrdinalType cellOrdinal,
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType cellOrdinal,
                                        Plato::ScalarVectorT<ResultScalarType> pnorm,
                                        Plato::ScalarMultiVectorT<TensorScalarType> voigtTensor,
                                        Plato::OrdinalType p,
@@ -178,7 +178,7 @@ public:
     }
 
     template<typename ResultScalarType, typename TensorScalarType, typename VolumeScalarType>
-    DEVICE_TYPE inline void operator()(Plato::OrdinalType cellOrdinal,
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType cellOrdinal,
                                        Plato::ScalarVectorT<ResultScalarType> pnorm,
                                        Plato::ScalarMultiVectorT<TensorScalarType> voigtTensor,
                                        Plato::OrdinalType p,
@@ -271,6 +271,51 @@ public:
 // class BarlatNormFunctor
 
 /******************************************************************************/
+/*! von Mises p-norm functor.
+
+ Given a voigt tensor, compute the von Mises p-norm.
+ Assumes single point integration.
+ */
+/******************************************************************************/
+template<Plato::OrdinalType VoigtLength>
+class VonMisesPNormFunctor
+{
+public:
+    VonMisesPNormFunctor(Teuchos::ParameterList& params) :
+            mScaleByVolume(true)
+    {
+        auto tNormalizeParams = params.sublist("Normalize");
+        if (tNormalizeParams.isType<bool>("Volume Scaling"))
+            mScaleByVolume = tNormalizeParams.get<bool>("Volume Scaling");
+    }
+
+    template<typename ResultScalarType, typename TensorScalarType, typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType cellOrdinal,
+                                       Plato::ScalarVectorT<ResultScalarType> pnorm,
+                                       Plato::ScalarMultiVectorT<TensorScalarType> voigtTensor,
+                                       Plato::OrdinalType p,
+                                       Plato::ScalarVectorT<VolumeScalarType> cellVolume) const
+    {
+        pnorm(cellOrdinal) = 0.0;
+        pnorm(cellOrdinal) += 0.5*pow(voigtTensor(cellOrdinal, 0) - voigtTensor(cellOrdinal, 1), 2.0);
+        pnorm(cellOrdinal) += 0.5*pow(voigtTensor(cellOrdinal, 1) - voigtTensor(cellOrdinal, 2), 2.0);
+        pnorm(cellOrdinal) += 0.5*pow(voigtTensor(cellOrdinal, 2) - voigtTensor(cellOrdinal, 0), 2.0);
+        pnorm(cellOrdinal) += 3.0*pow(voigtTensor(cellOrdinal, 3), 2.0);
+        pnorm(cellOrdinal) += 3.0*pow(voigtTensor(cellOrdinal, 4), 2.0);
+        pnorm(cellOrdinal) += 3.0*pow(voigtTensor(cellOrdinal, 5), 2.0);
+
+        pnorm(cellOrdinal) = pow(pnorm(cellOrdinal), p / 2.0);
+
+        if (mScaleByVolume)
+            pnorm(cellOrdinal) *= cellVolume(cellOrdinal);
+    }
+
+private:
+    bool mScaleByVolume;
+};
+// class VonMisesPNormFunctor
+
+/******************************************************************************/
 /*! Abstract base class for computing a tensor norm.
  */
 /******************************************************************************/
@@ -302,7 +347,7 @@ public:
         auto scale = pow(resultScalar, (1.0 - mExponent) / mExponent) / mExponent;
         auto numEntries = resultVector.size();
         Kokkos::parallel_for(Kokkos::RangePolicy < Plato::OrdinalType > (0, numEntries),
-                             LAMBDA_EXPRESSION(Plato::OrdinalType entryOrdinal)
+                             KOKKOS_LAMBDA(Plato::OrdinalType entryOrdinal)
                              {
                                  resultVector(entryOrdinal) *= scale;
                              },
@@ -340,7 +385,7 @@ public:
         Plato::OrdinalType numCells = result.extent(0);
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
         Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
-        LAMBDA_EXPRESSION(Plato::OrdinalType cellOrdinal)
+        KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
         {
             // compute tensor p-norm of tensor
             //
@@ -374,7 +419,7 @@ public:
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
         auto barlatNorm = mBarlatNorm;
         Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
-                             LAMBDA_EXPRESSION(Plato::OrdinalType cellOrdinal)
+                             KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
                              {
                                  // compute tensor p-norm of tensor
                                  //
@@ -409,7 +454,7 @@ public:
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
         auto weightedNorm = mWeightedNorm;
         Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
-                             LAMBDA_EXPRESSION(Plato::OrdinalType cellOrdinal)
+                             KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
                              {
                                  // compute tensor p-norm of tensor
                                  //
@@ -420,6 +465,40 @@ public:
     }
 };
 // class WeightedNorm
+
+template<Plato::OrdinalType VoigtLength, typename EvalT>
+class VonMisesNorm : public TensorNormBase<VoigtLength, EvalT>
+{
+public:
+    VonMisesNorm(Teuchos::ParameterList& params) :
+            TensorNormBase<VoigtLength, EvalT>(params),
+            mVonMisesPNorm(params)
+    {
+    }
+
+    void evaluate(Plato::ScalarVectorT<typename EvalT::ResultScalarType> result,
+                  Plato::ScalarMultiVectorT<typename EvalT::ResultScalarType> tensor,
+                  Plato::ScalarMultiVectorT<typename EvalT::ControlScalarType> control,
+                  Plato::ScalarVectorT<typename EvalT::ConfigScalarType> cellVolume) const
+    {
+        Plato::OrdinalType numCells = result.extent(0);
+        auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
+        auto vonMisesPNorm = mVonMisesPNorm;
+        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
+                             KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
+                             {
+                                 // compute von mises p-norm of tensor
+                                 //
+                                 vonMisesPNorm(cellOrdinal, result, tensor, exponent, cellVolume);
+
+                             },
+                             "Compute Von Mises PNorm");
+    }
+
+private:
+    VonMisesPNormFunctor<VoigtLength> mVonMisesPNorm;
+};
+// class VonMisesNorm
 
 template<Plato::OrdinalType VoigtLength, typename EvalT>
 struct TensorNormFactory
@@ -441,6 +520,10 @@ struct TensorNormFactory
             else if(normType == "Scalar")
             {
                 retval = Teuchos::rcp(new WeightedNorm<VoigtLength, EvalT>(params));
+            }
+            else if(normType == "Von Mises")
+            {
+                retval = Teuchos::rcp(new VonMisesNorm<VoigtLength, EvalT>(params));
             }
             else
             {

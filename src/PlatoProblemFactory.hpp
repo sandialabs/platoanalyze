@@ -10,6 +10,7 @@
 #include <memory>
 #include <sstream>
 #include <Teuchos_ParameterList.hpp>
+#include <stdexcept>
 
 #include "PlatoMesh.hpp"
 #include "AnalyzeMacros.hpp"
@@ -109,6 +110,11 @@ makeProblem(
         Plato::tolower(tElementType) == "tet4" )
     {
         return std::make_shared<ProblemT<PhysicsT<Plato::Tet4>>>(aMesh, aPlatoProb, aMachine);
+    }
+    if( Plato::tolower(tElementType) == "tri"  ||
+        Plato::tolower(tElementType) == "tri3" )
+    {
+        return std::make_shared<ProblemT<PhysicsT<Plato::Tri3>>>(aMesh, aPlatoProb, aMachine);
     }
     if( Plato::tolower(tElementType) == "hex8" ||
         Plato::tolower(tElementType) == "hexa8" )
@@ -387,6 +393,7 @@ create_thermomechanical_problem
 #ifdef PLATO_PARABOLIC
     if(tLowerPDE == "parabolic")
     {
+        throw std::runtime_error("Transient thermomechanics is not currently supported.");
         return makeProblem<Plato::Parabolic::Problem, Plato::Thermomechanics>(aMesh, aPlatoProb, aMachine);
     }
 #endif
@@ -503,6 +510,7 @@ public:
         {
             return ( Plato::create_stabilized_mechanical_problem(aMesh, tInputData, aMachine) );
         }
+        if(tLowerPhysics == "thermal")
         {
             return ( Plato::create_thermal_problem(aMesh, tInputData, aMachine) );
         }

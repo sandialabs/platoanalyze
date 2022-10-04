@@ -1,10 +1,4 @@
-/*
- * PlatoMeshMapTests.cpp
- *
- *  Created on: March 11, 2020
- */
-
-#include "PlatoTestHelpers.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include <sstream>
@@ -21,38 +15,41 @@
 #define MAKE_PUBLIC
 #include "Plato_MeshMap.hpp"
 
+namespace PlatoTestMeshMap {
+
+namespace {
+namespace pth = Plato::TestHelpers;
 using SparseMatrix = Plato::Geometry::MeshMap<Plato::Scalar>::SparseMatrix;
 
-std::vector<std::vector<Plato::Scalar>>
-toFull( SparseMatrix aInMatrix );
+/***************************************************************************//**
+* \brief Convert sparse matrix to full matrix
+*******************************************************************************/
+std::vector<std::vector<Plato::Scalar>> to_full(const SparseMatrix &aInMatrix) {
+  using OrdinalType = Plato::Geometry::MeshMap<Plato::Scalar>::OrdinalT;
+  using Plato::Scalar;
+
+  std::vector<std::vector<Scalar>> retMatrix(
+      aInMatrix.mNumRows, std::vector<Scalar>(aInMatrix.mNumCols, 0.0));
+
+  const auto tRowMap = pth::get(aInMatrix.mRowMap);
+  const auto tColMap = pth::get(aInMatrix.mColMap);
+  const auto tValues = pth::get(aInMatrix.mEntries);
+
+  const auto tNumRows = aInMatrix.mNumRows;
+  for (OrdinalType iRowIndex = 0; iRowIndex < tNumRows; iRowIndex++) {
+    const auto tFrom = tRowMap(iRowIndex);
+    const auto tTo = tRowMap(iRowIndex + 1);
+    for (auto iEntryIndex = tFrom; iEntryIndex < tTo; iEntryIndex++) {
+      const auto iColIndex = tColMap(iEntryIndex);
+      retMatrix[iRowIndex][iColIndex] = tValues(iEntryIndex);
+    }
+  }
+  return retMatrix;
+}
 
 using ExecSpace = Kokkos::DefaultExecutionSpace;
 using MemSpace = typename ExecSpace::memory_space;
-
-template <typename ViewType>
-typename ViewType::HostMirror
-get(ViewType aView)
-{
-    using RetType = typename ViewType::HostMirror;
-    RetType tView = Kokkos::create_mirror(aView);
-    Kokkos::deep_copy(tView, aView);
-    return tView;
-}
-
-template <typename DataType>
-void print_view(const Plato::ScalarVectorT<DataType> & aView)
-{
-   auto tView_host = Kokkos::create_mirror(aView);
-   Kokkos::deep_copy(tView_host, aView);
-   std::cout << '\n';
-   for (unsigned int i = 0; i < aView.extent(0); ++i)
-   {
-       std::cout << tView_host(i) << '\n';
-   }
-}
-
-namespace PlatoTestMeshMap
-{
+} // namespace
 
 /******************************************************************************/
 /*!
@@ -80,7 +77,7 @@ namespace PlatoTestMeshMap
     // create mesh
     //
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     // create GetBasis functor
     //
@@ -95,7 +92,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -120,7 +117,7 @@ namespace PlatoTestMeshMap
     }, "compute");
 
     double tol_double = 1e-14;
-    auto tBases_host = get(tBases);
+    auto tBases_host = pth::get(tBases);
     for(int iElem=0; iElem<tNElems; iElem++)
     {
         for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
@@ -156,7 +153,7 @@ namespace PlatoTestMeshMap
     // create mesh
     //
     constexpr int cMeshWidth=3;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET10", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET10", cMeshWidth);
 
     // create GetBasis functor
     //
@@ -171,7 +168,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -200,7 +197,7 @@ namespace PlatoTestMeshMap
     std::vector<Plato::Scalar> tBases_gold = {-oe, -oe, -oe, -oe, of, of, of, of, of, of};
 
     double tol_double = 1e-14;
-    auto tBases_host = get(tBases);
+    auto tBases_host = pth::get(tBases);
     for(int iElem=0; iElem<tNElems; iElem++)
     {
         for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
@@ -237,7 +234,7 @@ namespace PlatoTestMeshMap
     // create mesh
     //
     constexpr int cMeshWidth=3;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("HEX8", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", cMeshWidth);
 
     // create GetBasis functor
     //
@@ -252,7 +249,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -289,7 +286,7 @@ namespace PlatoTestMeshMap
     };
 
     double tol_double = 1e-14;
-    auto tBases_host = get(tBases);
+    auto tBases_host = pth::get(tBases);
     for(int iElem=0; iElem<tNElems; iElem++)
     {
         for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
@@ -326,7 +323,7 @@ namespace PlatoTestMeshMap
     // create mesh
     //
     constexpr int cMeshWidth=3;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("QUAD4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("QUAD4", cMeshWidth);
 
     // create GetBasis functor
     //
@@ -341,7 +338,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -377,7 +374,7 @@ namespace PlatoTestMeshMap
     };
 
     double tol_double = 1e-14;
-    auto tBases_host = get(tBases);
+    auto tBases_host = pth::get(tBases);
     for(int iElem=0; iElem<tNElems; iElem++)
     {
         for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
@@ -417,7 +414,7 @@ namespace PlatoTestMeshMap
     // create mesh
     //
     constexpr int cMeshWidth=3;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("HEX27", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX27", cMeshWidth);
 
     // create GetBasis functor
     //
@@ -432,7 +429,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -476,7 +473,7 @@ namespace PlatoTestMeshMap
     };
 
     double tol_double = 1e-14;
-    auto tBases_host = get(tBases);
+    auto tBases_host = pth::get(tBases);
     for(int iElem=0; iElem<tNElems; iElem++)
     {
         for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
@@ -543,7 +540,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVals), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
     {
         tMathMap(aOrdinal, tXin, tXout);
     }, "compute");
@@ -613,7 +610,7 @@ namespace PlatoTestMeshMap
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVals), LAMBDA_EXPRESSION(int aOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
     {
         tMathMap(aOrdinal, tXin, tXout);
     }, "compute");
@@ -684,7 +681,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET10", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -695,7 +692,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), LAMBDA_EXPRESSION(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
     }, "compute field");
@@ -783,7 +780,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -794,7 +791,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), LAMBDA_EXPRESSION(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
     }, "compute field");
@@ -883,7 +880,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("HEX8", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -894,7 +891,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), LAMBDA_EXPRESSION(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
     }, "compute field");
@@ -981,7 +978,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("QUAD4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("QUAD4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -992,7 +989,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), LAMBDA_EXPRESSION(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+1);
     }, "compute field");
@@ -1083,7 +1080,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -1170,7 +1167,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("HEX8", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -1185,7 +1182,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("uniform", tNumNodes);
     Kokkos::parallel_for("set field", Kokkos::RangePolicy<int>(0, tNumElements),
-    LAMBDA_EXPRESSION(int elemOrdinal)
+    KOKKOS_LAMBDA(int elemOrdinal)
     {
       bool tIntersected=false;
       for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
@@ -1273,7 +1270,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("QUAD4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("QUAD4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -1288,7 +1285,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("uniform", tNumNodes);
     Kokkos::parallel_for("set field", Kokkos::RangePolicy<int>(0, tNumElements),
-    LAMBDA_EXPRESSION(int elemOrdinal)
+    KOKKOS_LAMBDA(int elemOrdinal)
     {
       bool tIntersected=false;
       for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
@@ -1377,7 +1374,7 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
@@ -1392,7 +1389,7 @@ namespace PlatoTestMeshMap
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("uniform", tNumNodes);
     Kokkos::parallel_for("set field", Kokkos::RangePolicy<int>(0, tNumElements),
-    LAMBDA_EXPRESSION(int elemOrdinal)
+    KOKKOS_LAMBDA(int elemOrdinal)
     {
       bool tIntersected=false;
       for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
@@ -1480,13 +1477,13 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
 
-    auto tMatrix  = toFull(tMeshMap->mMatrix);
-    auto tMatrixT = toFull(tMeshMap->mMatrixT);
+    auto tMatrix  = to_full(tMeshMap->mMatrix);
+    auto tMatrixT = to_full(tMeshMap->mMatrixT);
 
     double tol_double = 1e-12;
     for(int i=0; i<tMatrix.size(); i++)
@@ -1497,8 +1494,8 @@ namespace PlatoTestMeshMap
         }
     }
 
-    auto tFilter  = toFull(*(tMeshMap->mFilter));
-    auto tFilterT = toFull(*(tMeshMap->mFilterT));
+    auto tFilter  = to_full(*(tMeshMap->mFilter));
+    auto tFilterT = to_full(*(tMeshMap->mFilterT));
 
     std::vector<Plato::Scalar> tRowSum(tFilter.size());
     for(int i=0; i<tFilter.size(); i++)
@@ -1515,7 +1512,7 @@ namespace PlatoTestMeshMap
     }
 
     auto tMatrixTT = tMeshMap->createTranspose(tMeshMap->mMatrixT);
-    auto tMatrixTTF = toFull(tMatrixTT);
+    auto tMatrixTTF = to_full(tMatrixTT);
 
     for(int i=0; i<tMatrix.size(); i++)
     {
@@ -1583,13 +1580,13 @@ namespace PlatoTestMeshMap
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
     constexpr int cMeshWidth=5;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET10", cMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET10", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
 
-    auto tMatrix  = toFull(tMeshMap->mMatrix);
-    auto tMatrixT = toFull(tMeshMap->mMatrixT);
+    auto tMatrix  = to_full(tMeshMap->mMatrix);
+    auto tMatrixT = to_full(tMeshMap->mMatrixT);
 
     double tol_double = 1e-12;
     for(int i=0; i<tMatrix.size(); i++)
@@ -1600,8 +1597,8 @@ namespace PlatoTestMeshMap
         }
     }
 
-    auto tFilter  = toFull(*(tMeshMap->mFilter));
-    auto tFilterT = toFull(*(tMeshMap->mFilterT));
+    auto tFilter  = to_full(*(tMeshMap->mFilter));
+    auto tFilterT = to_full(*(tMeshMap->mFilterT));
 
     std::vector<Plato::Scalar> tRowSum(tFilter.size());
     for(int i=0; i<tFilter.size(); i++)
@@ -1618,7 +1615,7 @@ namespace PlatoTestMeshMap
     }
 
     auto tMatrixTT = tMeshMap->createTranspose(tMeshMap->mMatrixT);
-    auto tMatrixTTF = toFull(tMatrixTT);
+    auto tMatrixTTF = to_full(tMatrixTT);
 
     for(int i=0; i<tMatrix.size(); i++)
     {
@@ -1628,35 +1625,5 @@ namespace PlatoTestMeshMap
         }
     }
   }
-}
 
-
-/***************************************************************************//**
-* \brief Convert sparse matrix to full matrix
-*******************************************************************************/
-std::vector<std::vector<Plato::Scalar>>
-toFull( SparseMatrix aInMatrix )
-{
-    using OrdinalType = Plato::Geometry::MeshMap<Plato::Scalar>::OrdinalT;
-    using Plato::Scalar;
-
-    std::vector<std::vector<Scalar>>
-        retMatrix(aInMatrix.mNumRows, std::vector<Scalar>(aInMatrix.mNumCols, 0.0));
-
-    auto tRowMap = get(aInMatrix.mRowMap);
-    auto tColMap = get(aInMatrix.mColMap);
-    auto tValues = get(aInMatrix.mEntries);
-
-    auto tNumRows = aInMatrix.mNumRows;
-    for(OrdinalType iRowIndex=0; iRowIndex<tNumRows; iRowIndex++)
-    {
-        auto tFrom = tRowMap(iRowIndex);
-        auto tTo   = tRowMap(iRowIndex+1);
-        for(auto iEntryIndex=tFrom; iEntryIndex<tTo; iEntryIndex++)
-        {
-            auto iColIndex = tColMap(iEntryIndex);
-            retMatrix[iRowIndex][iColIndex] = tValues(iEntryIndex);
-        }
-    }
-    return retMatrix;
-}
+} // namespace PlatoTestMeshMap

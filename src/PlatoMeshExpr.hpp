@@ -26,7 +26,7 @@ getFunctionValues(
     Plato::ScalarVectorT<ScalarType> z_coords("z coordinates", tNumCells*tNumPoints);
 
     Kokkos::parallel_for("fill coords", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-    LAMBDA_EXPRESSION(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+    KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
     {
         Plato::OrdinalType tEntryOffset = iCellOrdinal * tNumPoints;
         x_coords(tEntryOffset+iGpOrdinal) = aPoints(iCellOrdinal, iGpOrdinal, 0);
@@ -41,14 +41,15 @@ getFunctionValues(
 
     tExpEval.parse_expression(aFuncString.c_str());
     tExpEval.setup_storage(tNumCells*tNumPoints, /*num vals to eval =*/ 1);
-    Kokkos::parallel_for("", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-    LAMBDA_EXPRESSION(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+
+    tExpEval.set_variable("x", x_coords);
+    tExpEval.set_variable("y", y_coords);
+    tExpEval.set_variable("z", z_coords);
+
+    auto tNumTotalPoints = tNumCells*tNumPoints;
+    Kokkos::parallel_for("", Kokkos::RangePolicy<>(0, tNumTotalPoints), KOKKOS_LAMBDA(const Plato::OrdinalType iEntryOrdinal)
     {
-        Plato::OrdinalType tEntryOrdinal = iCellOrdinal * tNumPoints + iGpOrdinal;
-        tExpEval.set_variable("x", x_coords, tEntryOrdinal);
-        tExpEval.set_variable("y", y_coords, tEntryOrdinal);
-        tExpEval.set_variable("z", z_coords, tEntryOrdinal);
-        tExpEval.evaluate_expression( tEntryOrdinal, aFxnValues );
+        tExpEval.evaluate_expression( iEntryOrdinal, aFxnValues );
     });
     Kokkos::fence();
     tExpEval.clear_storage();
@@ -73,7 +74,7 @@ mapPoints(
     Kokkos::deep_copy(aMappedPoints, Plato::Scalar(0.0)); // initialize to 0
 
     Kokkos::parallel_for("map points", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-    LAMBDA_EXPRESSION(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+    KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
     {
         auto tCubPoint = tCubPoints(iGpOrdinal);
         auto tBasisValues = ElementType::basisValues(tCubPoint);
@@ -105,7 +106,7 @@ mapPoints(
     Plato::NodeCoordinate<ElementType::mNumSpatialDims, ElementType::mNumNodesPerCell> tNodeCoordinate(aSpatialDomain.Mesh);
 
     auto tCellOrdinals = aSpatialDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(Plato::OrdinalType aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for (Plato::OrdinalType ptOrdinal=0; ptOrdinal<tNumPoints; ptOrdinal++)
@@ -147,7 +148,7 @@ mapPoints(
 
     Plato::NodeCoordinate<ElementType::mNumSpatialDims, ElementType::mNumNodesPerCell> tNodeCoordinate(&(aSpatialModel.Mesh));
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(Plato::OrdinalType aCellOrdinal)
     {
         for (Plato::OrdinalType ptOrdinal=0; ptOrdinal<tNumPoints; ptOrdinal++)
         {

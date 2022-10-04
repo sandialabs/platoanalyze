@@ -1,8 +1,4 @@
-/*!
-  These unit tests are for the stabilized two-field formulation
-*/
-
-#include "PlatoTestHelpers.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 #include "Teuchos_UnitTestHarness.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -37,7 +33,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   // create test mesh
   //
   constexpr int meshWidth=2;
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", meshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
 
   using ElementType = Plato::Stabilized::ThermomechanicsElement<Plato::Tet4>;
 
@@ -58,7 +54,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   int tNumDofs = tNumNodes*tNumDofsPerNode;
 
   Plato::ScalarMultiVector tPGradWS("Projected pressure gradient workset", tNumDofs, spaceDim*nodesPerCell);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumCells), LAMBDA_EXPRESSION(const int & aCellOrdinal)
+  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumCells), KOKKOS_LAMBDA(const int & aCellOrdinal)
   {
       for(int iNode=0; iNode<nodesPerCell; iNode++)
       {
@@ -71,7 +67,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
 
   Plato::ScalarVector state("state", tNumDofs);
   Plato::ScalarVector z("control", tNumDofs);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), LAMBDA_EXPRESSION(const int & aNodeOrdinal)
+  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      z(aNodeOrdinal) = 1.0;
 
@@ -164,7 +160,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   auto tNumPoints = tCubWeights.size();
 
   Kokkos::parallel_for("compute residual", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-  LAMBDA_EXPRESSION(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+  KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
   {
     Plato::Scalar tVolume(0.0);
 
@@ -577,7 +573,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, StabilizedThermomechResidual3D )
   //
   constexpr int meshWidth=2;
   constexpr int spaceDim=3;
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", meshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
 
   using ElementType = Plato::Stabilized::ThermomechanicsElement<Plato::Tet4>;
 
@@ -592,7 +588,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, StabilizedThermomechResidual3D )
   Plato::ScalarVector tProjPGrad    ("ProjPGrad",     tNumNodes*spaceDim);
   Plato::ScalarVector tProjectState ("Project state", tNumNodes);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), LAMBDA_EXPRESSION(const int & aNodeOrdinal)
+  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      tControl(aNodeOrdinal) = 1.0;
 
@@ -653,7 +649,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, StabilizedThermomechResidual3D )
   // create constraint evaluator
   //
   Plato::DataMap tDataMap;
-  Plato::SpatialModel tSpatialModel(tMesh, *params);
+  Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
   Plato::Stabilized::VectorFunction<::Plato::Stabilized::Thermomechanics<Plato::Tet4>>
     vectorFunction(tSpatialModel, tDataMap, *params, params->get<std::string>("PDE Constraint"));
 
@@ -777,7 +773,7 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
   //
   constexpr int meshWidth=2;
 
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", meshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
 
   using ElementType = Plato::Stabilized::ThermomechanicsElement<Plato::Tet4>;
   constexpr auto spaceDim = ElementType::mNumSpatialDims;
@@ -790,7 +786,7 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
   Plato::ScalarVector tControl      ("Control",   tNumNodes);
   Plato::blas1::fill( 1.0, tControl );
   Plato::blas1::fill( 0.0, tProjPGrad );
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), LAMBDA_EXPRESSION(const int & aNodeOrdinal)
+  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      tProjectState(aNodeOrdinal) = 1.0*aNodeOrdinal;
   }, "state");
@@ -827,7 +823,7 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
   // create constraint evaluator
   //
   Plato::DataMap tDataMap;
-  Plato::SpatialModel tSpatialModel(tMesh, *params);
+  Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
   Plato::Stabilized::VectorFunction<::Plato::Stabilized::Projection<Plato::Tet4, ElementType::mNumDofsPerNode, ElementType::mPressureDofOffset>>
     tVectorFunction(tSpatialModel, tDataMap, *params, "State Gradient Projection");
 
@@ -892,7 +888,7 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
     Plato::ScalarVector tRowSum("row sum", tResidual.extent(0));
 
     auto tNumBlockRows = tJacobian->rowMap().size() - 1;
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumBlockRows), LAMBDA_EXPRESSION(int blockRowOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumBlockRows), KOKKOS_LAMBDA(int blockRowOrdinal)
     {
       // compute row sum
       rowSum(blockRowOrdinal, tRowSum);

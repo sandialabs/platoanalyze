@@ -5,7 +5,7 @@
  */
 
 
-#include "PlatoTestHelpers.hpp"
+#include "util/PlatoTestHelpers.hpp"
 #include "Teuchos_UnitTestHarness.hpp"
 
 #include "EngineMesh.hpp"
@@ -69,7 +69,7 @@ const Plato::Scalar cTol = 1e-9;
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Tet4)
 {
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", /*tMeshIntervals=*/ 2);
 
     std::vector<std::string> tExcludeNames;
 
@@ -110,7 +110,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Tet4)
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Tet4)
 {
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", /*tMeshIntervals=*/ 2);
 
     std::vector<std::string> tExcludeNames;
     tExcludeNames.push_back("z+");
@@ -152,7 +152,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Tet4)
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Hex8)
 {
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("HEX8", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", /*tMeshIntervals=*/ 2);
 
     std::vector<std::string> tExcludeNames;
     tExcludeNames.push_back("z+");
@@ -192,7 +192,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Hex8)
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Hex8)
 {
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("HEX8", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", /*tMeshIntervals=*/ 2);
 
     std::vector<std::string> tExcludeNames;
 
@@ -673,7 +673,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet4ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), LAMBDA_EXPRESSION(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -709,7 +709,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet10ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), LAMBDA_EXPRESSION(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -745,7 +745,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex8ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), LAMBDA_EXPRESSION(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -781,7 +781,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex20ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), LAMBDA_EXPRESSION(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)

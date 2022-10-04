@@ -60,8 +60,8 @@
 #include "Quad4.hpp"
 #include "PlatoUtilities.hpp"
 #include "PlatoMathTypes.hpp"
-#include "alg/PlatoLambda.hpp"
 #include "Plato_MeshMapUtils.hpp"
+#include "Plato_Exceptions.hpp"
 
 namespace Plato {
 namespace Geometry {
@@ -83,7 +83,7 @@ struct Full : public MathMapBase<ScalarT>
 
     Full(const Plato::InputData & aInput){}
 
-    DEVICE_TYPE inline void
+    KOKKOS_INLINE_FUNCTION void
     operator()( OrdinalT aOrdinal, VectorArrayT aInValue, VectorArrayT aOutValue ) const
     {
         for(Plato::OrdinalType iDim=0; iDim<SpaceDims; iDim++)
@@ -136,7 +136,7 @@ struct SymmetryPlane : public MathMapBase<ScalarT>
             mNormal(iDim) /= tLength;
         }
     }
-    DEVICE_TYPE inline void
+    KOKKOS_INLINE_FUNCTION void
     operator()( OrdinalT aOrdinal, VectorArrayT aInValue, VectorArrayT aOutValue ) const
     {
         ScalarT tProjVal = 0.0;
@@ -187,7 +187,7 @@ struct Translation : public MathMapBase<ScalarT>
         }
     }
 
-    DEVICE_TYPE inline void
+    KOKKOS_INLINE_FUNCTION void
     operator()( OrdinalT aOrdinal, VectorArrayT aInValue, VectorArrayT aOutValue ) const
     {
         for(Plato::OrdinalType iDim=0; iDim<SpaceDims; iDim++)
@@ -255,7 +255,7 @@ class MeshMap
         // check for missing parent elements
         OrdinalT tNumMissingParent(0);
         Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, tNVerts),
-        LAMBDA_EXPRESSION(const OrdinalT& aElemOrdinal, OrdinalT & aUpdate)
+        KOKKOS_LAMBDA(const OrdinalT& aElemOrdinal, OrdinalT & aUpdate)
         {
             if ( aParentElements(aElemOrdinal) == -2 ) 
             {  
@@ -427,11 +427,12 @@ class MeshMap
         decltype(d_x) d_r("radii", d_x.layout());
         Kokkos::deep_copy(d_r, aRadius);
 
-        ArborX::BVH<DeviceType>
-          bvh{Points{d_x.data(), d_y.data(), d_z.data(), (int)d_x.size()}};
+        Plato::ExecSpace tExecSpace;
+        ArborX::BVH<Plato::MemSpace>
+          bvh{tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), (int)d_x.size()}};
 
-        Kokkos::View<int*, DeviceType> tIndices("indices", 0), tOffset("offset", 0);
-        bvh.query(Spheres{d_x.data(), d_y.data(), d_z.data(), d_r.data(), (int)d_x.size()}, tIndices, tOffset);
+        Kokkos::View<int*, Plato::MemSpace> tIndices("indices", 0), tOffset("offset", 0);
+        ArborX::query(bvh, tExecSpace, Spheres{d_x.data(), d_y.data(), d_z.data(), d_r.data(), (int)d_x.size()}, tIndices, tOffset);
 
         // create matrix entries
         //

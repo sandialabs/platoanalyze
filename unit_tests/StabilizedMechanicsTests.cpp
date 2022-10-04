@@ -1,9 +1,3 @@
-/*
- * StabilizedMechanicsTests.cpp
- *
- *  Created on: Mar 26, 2020
- */
-
 #include <Teuchos_XMLParameterListCoreHelpers.hpp>
 
 #include "Teuchos_UnitTestHarness.hpp"
@@ -15,9 +9,9 @@
 #include "stabilized/Mechanics.hpp"
 #include "stabilized/MechanicsElement.hpp"
 #include "PlatoUtilities.hpp"
-#include "PlatoTestHelpers.hpp"
-#include "stabilized/Problem.hpp"
 
+#include "util/PlatoTestHelpers.hpp"
+#include "stabilized/Problem.hpp"
 
 namespace StabilizedMechanicsTests
 {
@@ -26,7 +20,7 @@ namespace StabilizedMechanicsTests
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Kinematics3D)
 {
     constexpr Plato::OrdinalType tMeshWidth = 1;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", tMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
     using ElementType = Plato::Stabilized::MechanicsElement<Plato::Tet4>;
 
@@ -34,7 +28,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Kinematics3D)
     constexpr int tNumVoigtTerms   = ElementType::mNumVoigtTerms;
     constexpr int tNumDofsPerNode  = ElementType::mNumDofsPerNode;
     constexpr int tNumDofsPerCell  = ElementType::mNumDofsPerCell;
-    constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
 
     // Set configuration workset
     auto tNumCells = tMesh->NumElements();
@@ -45,7 +38,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Kinematics3D)
     // Set state workset
     auto tNumNodes = tMesh->NumNodes();
     Plato::ScalarVector tState("state", tNumDofsPerNode * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), LAMBDA_EXPRESSION(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
@@ -64,7 +57,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Kinematics3D)
     Plato::Stabilized::Kinematics <ElementType> tKinematics;
     Plato::ComputeGradientMatrix  <ElementType> tComputeGradient;
     Kokkos::parallel_for("gradients", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-    LAMBDA_EXPRESSION(const int cellOrdinal, const int gpOrdinal)
+    KOKKOS_LAMBDA(const int cellOrdinal, const int gpOrdinal)
     {
         Plato::Scalar tVolume(0.0);
 
@@ -115,7 +108,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
     // 1. DEFINE PROBLEM
     const bool tOutputData = false; // for debugging purpose, set true to enable the Paraview output file
     constexpr Plato::OrdinalType tMeshWidth = 1;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", tMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
     using ElementType = Plato::Stabilized::MechanicsElement<Plato::Tet4>;
 
@@ -154,6 +147,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
             "</ParameterList>                                                             \n"
           "</ParameterList>                                                               \n"
         "</ParameterList>                                                                 \n"
+        "<ParameterList name='Essential Boundary Conditions'>                             \n"
+        "</ParameterList>                                                                 \n"
     "</ParameterList>                                                                     \n"
     );
 
@@ -164,14 +159,14 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
     Plato::Stabilized::Problem<Plato::Stabilized::Mechanics<Plato::Tet4>> tEllipticVMSProblem(tMesh, *tParamList, tMachine);
 
     // 2. Get Dirichlet Boundary Conditions
-    Plato::OrdinalType tDispDofX = 0;
-    Plato::OrdinalType tDispDofY = 1;
-    Plato::OrdinalType tDispDofZ = 2;
+    constexpr Plato::OrdinalType tDispDofX = 0;
+    constexpr Plato::OrdinalType tDispDofY = 1;
+    constexpr Plato::OrdinalType tDispDofZ = 2;
     constexpr Plato::OrdinalType tNumDofsPerNode = ElementType::mNumDofsPerNode;
-    auto tDirichletIndicesBoundaryX0_Xdof = PlatoUtestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x-", tNumDofsPerNode, tDispDofX);
-    auto tDirichletIndicesBoundaryX0_Ydof = PlatoUtestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x-", tNumDofsPerNode, tDispDofY);
-    auto tDirichletIndicesBoundaryX0_Zdof = PlatoUtestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x-", tNumDofsPerNode, tDispDofZ);
-    auto tDirichletIndicesBoundaryX1_Ydof = PlatoUtestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x+", tNumDofsPerNode, tDispDofY);
+    auto tDirichletIndicesBoundaryX0_Xdof = Plato::TestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x-", tNumDofsPerNode, tDispDofX);
+    auto tDirichletIndicesBoundaryX0_Ydof = Plato::TestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x-", tNumDofsPerNode, tDispDofY);
+    auto tDirichletIndicesBoundaryX0_Zdof = Plato::TestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x-", tNumDofsPerNode, tDispDofZ);
+    auto tDirichletIndicesBoundaryX1_Ydof = Plato::TestHelpers::get_dirichlet_indices_on_boundary_3D(tMesh, "x+", tNumDofsPerNode, tDispDofY);
 
     // 3. Set Dirichlet Boundary Conditions
     Plato::Scalar tValueToSet = 0;
@@ -179,14 +174,14 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
             tDirichletIndicesBoundaryX0_Zdof.size() + tDirichletIndicesBoundaryX1_Ydof.size();
     Plato::ScalarVector tDirichletValues("Dirichlet Values", tNumDirichletDofs);
     Plato::OrdinalVector tDirichletDofs("Dirichlet Dofs", tNumDirichletDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Xdof.size()), LAMBDA_EXPRESSION(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Xdof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         tDirichletValues(aIndex) = tValueToSet;
         tDirichletDofs(aIndex) = tDirichletIndicesBoundaryX0_Xdof(aIndex);
     }, "set dirichlet values and indices");
 
     auto tOffset = tDirichletIndicesBoundaryX0_Xdof.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Ydof.size()), LAMBDA_EXPRESSION(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Ydof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         auto tIndex = tOffset + aIndex;
         tDirichletValues(tIndex) = tValueToSet;
@@ -194,7 +189,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
     }, "set dirichlet values and indices");
 
     tOffset += tDirichletIndicesBoundaryX0_Ydof.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Zdof.size()), LAMBDA_EXPRESSION(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Zdof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         auto tIndex = tOffset + aIndex;
         tDirichletValues(tIndex) = tValueToSet;
@@ -203,7 +198,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
 
     tValueToSet = -1e-3;
     tOffset += tDirichletIndicesBoundaryX0_Zdof.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX1_Ydof.size()), LAMBDA_EXPRESSION(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX1_Ydof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         auto tIndex = tOffset + aIndex;
         tDirichletValues(tIndex) = tValueToSet;
@@ -266,7 +261,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
     // 1. PREPARE PROBLEM INPUS FOR TEST
     Plato::DataMap tDataMap;
     constexpr Plato::OrdinalType tMeshWidth = 1;
-    auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", tMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
     Teuchos::RCP<Teuchos::ParameterList> tPDEInputs =
         Teuchos::getParametersFromXmlString(
@@ -297,7 +292,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
         "</ParameterList>                                                               \n"
       );
 
-    Plato::SpatialModel tSpatialModel(tMesh, *tPDEInputs);
+    Plato::SpatialModel tSpatialModel(tMesh, *tPDEInputs, tDataMap);
 
     // 2. PREPARE FUNCTION INPUTS FOR TEST
     const Plato::OrdinalType tNumNodes = tMesh->NumNodes();
@@ -317,7 +312,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
     // 2.3 SET GLOBAL STATE
     auto tNumDofsPerNode = ElementType::mNumDofsPerNode;
     Plato::ScalarVector tState("state", tNumDofsPerNode * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), LAMBDA_EXPRESSION(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
@@ -331,7 +326,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
     auto tNumNodesPerCell = ElementType::mNumNodesPerCell;
     auto tNumSpatialDims  = ElementType::mNumSpatialDims;
     Plato::ScalarMultiVectorT<EvalType::NodeStateScalarType> tProjPressGradWS("projected pressure grad", tNumCells, ElementType::mNumNodeStatePerCell);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex< tNumNodesPerCell; tNodeIndex++)
         {

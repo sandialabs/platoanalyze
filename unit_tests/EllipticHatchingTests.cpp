@@ -1,5 +1,6 @@
-#include "PlatoTestHelpers.hpp"
+#include "util/PlatoTestHelpers.hpp"
 #include "Teuchos_UnitTestHarness.hpp"
+#include <Teuchos_XMLParameterListHelpers.hpp>
 
 #include "Tet4.hpp"
 #include "ToMap.hpp"
@@ -25,11 +26,11 @@ RandomStep(Plato::Scalar aLowerBound, Plato::Scalar aUpperBound, Plato::ScalarAr
 
     unsigned int tRANDOM_SEED = 1;
     std::srand(tRANDOM_SEED);
-    for(decltype(tSize0) iDim0; iDim0<tSize0; iDim0)
+    for(decltype(tSize0) iDim0=0; iDim0<tSize0; iDim0++)
     {
-      for(decltype(tSize1) iDim1; iDim1<tSize1; iDim1)
+      for(decltype(tSize1) iDim1=0; iDim1<tSize1; iDim1++)
       {
-        for(decltype(tSize2) iDim2; iDim2<tSize2; iDim2)
+        for(decltype(tSize2) iDim2=0; iDim2<tSize2; iDim2++)
         {
           const Plato::Scalar tRandNum = static_cast<Plato::Scalar>(std::rand()) / static_cast<Plato::Scalar>(RAND_MAX);
           tHostStep(iDim0, iDim1, iDim2) = aLowerBound + ( (aUpperBound - aLowerBound) * tRandNum);
@@ -46,7 +47,7 @@ void axpy(const Plato::Scalar & aAlpha, Plato::ScalarArray3D aInput, Plato::Scal
     auto tSize1 = aInput.extent(1);
     auto tSize2 = aInput.extent(2);
     Kokkos::parallel_for("axpy", Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0, 0, 0}, {tSize0, tSize1, tSize2}),
-    LAMBDA_EXPRESSION(const Plato::OrdinalType iDim0, const Plato::OrdinalType iDim1, const Plato::OrdinalType iDim2)
+    KOKKOS_LAMBDA(const Plato::OrdinalType iDim0, const Plato::OrdinalType iDim1, const Plato::OrdinalType iDim2)
     {
         aOutput(iDim0, iDim1, iDim2) += aAlpha * aInput(iDim0, iDim1, iDim2);
     });
@@ -61,7 +62,7 @@ Flatten(Plato::ScalarArray3D aArray3D, Plato::ScalarVector & aVector)
     auto tSize = tSize0*tSize1*tSize2;
     Kokkos::resize(aVector, tSize);
     Kokkos::parallel_for("flatten", Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0, 0, 0}, {tSize0, tSize1, tSize2}),
-    LAMBDA_EXPRESSION(const Plato::OrdinalType iDim0, const Plato::OrdinalType iDim1, const Plato::OrdinalType iDim2)
+    KOKKOS_LAMBDA(const Plato::OrdinalType iDim0, const Plato::OrdinalType iDim1, const Plato::OrdinalType iDim2)
     {
         aVector(iDim0*tSize1*tSize2+iDim1*tSize2+iDim2) = aArray3D(iDim0, iDim1, iDim2);
     });
@@ -76,7 +77,7 @@ Unflatten(Plato::ScalarArray3D aArray3D, Plato::ScalarVector & aVector)
     auto tSize = tSize0*tSize1*tSize2;
     Kokkos::resize(aVector, tSize);
     Kokkos::parallel_for("flatten", Kokkos::MDRangePolicy<Kokkos::Rank<3>>({0, 0, 0}, {tSize0, tSize1, tSize2}),
-    LAMBDA_EXPRESSION(const Plato::OrdinalType iDim0, const Plato::OrdinalType iDim1, const Plato::OrdinalType iDim2)
+    KOKKOS_LAMBDA(const Plato::OrdinalType iDim0, const Plato::OrdinalType iDim1, const Plato::OrdinalType iDim2)
     {
         aArray3D(iDim0, iDim1, iDim2) = aVector(iDim0*tSize1*tSize2+iDim1*tSize2+iDim2);
     });
@@ -174,7 +175,7 @@ void perturbMesh(MeshT& aMesh, VectorT aPerturb)
     auto tNumDims = aMesh->NumDimensions();
     auto tNumDofs = tNumDims*aMesh->NumNodes();
     Plato::ScalarVector tCoordsCopy("coordinates", tNumDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumDofs), LAMBDA_EXPRESSION(const Plato::OrdinalType &aDofOrdinal)
+    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType &aDofOrdinal)
     {
         tCoordsCopy(aDofOrdinal) = tCoords[aDofOrdinal] + aPerturb(aDofOrdinal);
     }, "tweak mesh");
@@ -481,13 +482,13 @@ testScalarFunction_Partial_u(ScalarFunctionT aScalarFunction, SolutionT aSolutio
 
 } // end namespace HatchingTestUtils
 
-
+#ifdef PLATO_HATCHING_GRADIENTS
 TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D )
 {
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
   // create input
   //
@@ -592,15 +593,13 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D )
 
   using PhysicsType = Plato::Elliptic::Hatching::Mechanics<Plato::Tet4>;
 
-  constexpr int cSpaceDim = Plato::Tet4::mNumSpatialDims;
-
   int tNumNodes = tMesh->NumNodes();
   Plato::ScalarVector tControl("control", tNumNodes);
   Plato::blas1::fill(1.0, tControl);
 
-  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams);
-  Plato::Sequence<typename PhysicsType::ElementType> tSequence(tSpatialModel, *tInputParams);
   Plato::DataMap tDataMap;
+  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+  Plato::Sequence<typename PhysicsType::ElementType> tSequence(tSpatialModel, *tInputParams);
 
   // create PDE constraint
   //
@@ -869,7 +868,7 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_full )
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
   // create input
   //
@@ -966,9 +965,9 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_full )
   Plato::ScalarVector tControl("control", tNumNodes);
   Plato::blas1::fill(1.0, tControl);
 
-  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams);
-  Plato::Sequence<typename PhysicsType::ElementType> tSequence(tSpatialModel, *tInputParams);
   Plato::DataMap tDataMap;
+  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+  Plato::Sequence<typename PhysicsType::ElementType> tSequence(tSpatialModel, *tInputParams);
 
   auto tSolution = tProblem->solution(tControl);
 
@@ -1156,6 +1155,7 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_full )
 
   delete tProblem;
 }
+#endif
 
 TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
 {
@@ -1197,9 +1197,10 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth, "omfg.exo");
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth, "omfg.exo");
 
-  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams);
+  Plato::DataMap tDataMap;
+  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
 
   /*****************************************************
    Test Elliptic::StateUpdate(aMesh);
@@ -1212,8 +1213,6 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
   /*****************************************************
    Call StateUpdate::operator()
    *****************************************************/
-
-   Plato::DataMap tDataMap;
 
    auto tNumEl = tMesh->NumElements();
    constexpr auto cNumGP = PhysicsType::ElementType::mNumGaussPoints;
@@ -1255,7 +1254,7 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
   auto tNumNodes = tMesh->NumNodes();
   auto tCoords = tMesh->Coordinates();
   Plato::ScalarVector tU("displacement", tNumNodes * cNumDm);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), LAMBDA_EXPRESSION(int aNodeOrdinal)
+  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(int aNodeOrdinal)
   {
     tU(aNodeOrdinal * cNumDm + 0) = tCoords[aNodeOrdinal * cNumDm + 0];
     tU(aNodeOrdinal * cNumDm + 1) = 0.0;
@@ -1372,11 +1371,12 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate_2layer )
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  auto tMesh = PlatoUtestHelpers::getBoxMesh("TET4", cMeshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
   using PhysicsType = Plato::Elliptic::Hatching::Mechanics<Plato::Tet4>;
 
-  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams);
+  Plato::DataMap tDataMap;
+  Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
   Plato::Sequence<typename PhysicsType::ElementType> tSequence(tSpatialModel, *tInputParams);
 
   /*****************************************************
@@ -1396,7 +1396,6 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate_2layer )
   constexpr auto cNumDPN = PhysicsType::ElementType::mNumDofsPerNode;
 
   // create solution 
-  Plato::DataMap tDataMap;
   Plato::ScalarMultiVector tGlobalStates("global state", /*numsteps=*/ 2, tMesh->NumNodes() * cNumDPN);
   Plato::ScalarArray4D tLocalStates("local state", /*numsteps=*/ 2, tNumEl, cNumGP, cNumVT);
   {

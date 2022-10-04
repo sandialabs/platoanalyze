@@ -3,7 +3,7 @@
  \todo 
 */
 
-#include "PlatoTestHelpers.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 #include "Teuchos_UnitTestHarness.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -28,7 +28,7 @@ TEUCHOS_UNIT_TEST( ElectroelasticTests, InternalElectroelasticEnergy3D )
   constexpr int tMeshWidth=2;
   constexpr int cSpaceDim=3;
   std::string tElementType("TET4");
-  auto tMesh = PlatoUtestHelpers::getBoxMesh(tElementType, tMeshWidth);
+  auto tMesh = Plato::TestHelpers::get_box_mesh(tElementType, tMeshWidth);
 
   // create mesh based solution from host data
   //
@@ -38,7 +38,7 @@ TEUCHOS_UNIT_TEST( ElectroelasticTests, InternalElectroelasticEnergy3D )
   Plato::ScalarMultiVector states("states", /*numSteps=*/1, tNumDofs);
   auto state = Kokkos::subview(states, 0, Kokkos::ALL());
   Plato::ScalarVector z("control", tNumDofs);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), LAMBDA_EXPRESSION(const int & aNodeOrdinal)
+  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      z(aNodeOrdinal) = 1.0;
 
@@ -103,7 +103,7 @@ TEUCHOS_UNIT_TEST( ElectroelasticTests, InternalElectroelasticEnergy3D )
   // create constraint
   //
   Plato::DataMap tDataMap;
-  Plato::SpatialModel tSpatialModel(tMesh, *params);
+  Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
 
   Plato::Elliptic::VectorFunction<::Plato::Electromechanics<Plato::Tet4>>
     vectorFunction(tSpatialModel, tDataMap, *params, params->get<std::string>("PDE Constraint"));

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
+CMAKE_POLICY(SET CMP0057 NEW)
 
 project(PLATOANALYZE VERSION 0.0.0 LANGUAGES CXX)
 
@@ -29,6 +30,9 @@ option(HELMHOLTZ       "Compile with Helmholtz filter"       ON )
 option(CUSTOMMATERIALS "Compile with custom materials"       OFF)
 option(HATCHING        "Compile with hatching algorithm"     ON )
 option(MICROMORPHIC    "Compile with Micromorphic physics"   ON )
+
+# Experimental option for using shape optimization with inherent strain/hatching
+option(HATCHING_GRADIENT "Compile with hatching gradients, enabling shape optimization with elliptic hatching problem" OFF)
 
 option(HEX_ELEMENTS    "Compile with hex*, quad* elements"   OFF )
 option(ALL_PENALTY     "Compile with Ramp and Heaviside"     OFF )
@@ -236,6 +240,10 @@ if(HATCHING)
   message("-- Plato: Hatching algorithm added")
   ADD_DEFINITIONS(-DPLATO_HATCHING)
 endif()
+if(HATCHING_GRADIENT)
+  message("-- Plato: Experimental hatching gradients enabled.")
+  ADD_DEFINITIONS(-DPLATO_HATCHING_GRADIENTS)
+endif()
 if(HYPERBOLIC)
   message("-- Plato: Hyperbolic physics added")
   ADD_DEFINITIONS(-DPLATO_HYPERBOLIC)
@@ -395,6 +403,14 @@ if (PLATOANALYZE_ENABLE_MPMD)
     add_definitions(-DPLATO_ESP)
     include_directories( ${ESP_INC_DIR} )
     set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_ESP_LIB} ${OCSM_LIB} ${ESP_LIB} ${OCSM_LIB})
+  endif()
+
+  option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
+  if (PLATOANALYZE_ENABLE_TACHO)
+    find_package(ShyLU_NodeTacho REQUIRED)
+    message("adding define: -DPLATO_TACHO")
+    add_definitions(-DPLATO_TACHO)
+    set(PLATO_LIBS ${PLATO_LIBS} ${ShyLU_NodeTacho_LIBRARIES})
   endif()
 
   target_link_libraries(Analyze_App ${PLATO_LIBS} ${PLATO_LIBS} analyzelib)

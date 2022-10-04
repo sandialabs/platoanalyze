@@ -49,7 +49,7 @@ namespace Parabolic
       // 
       if(problemParams.isSublist("Natural Boundary Conditions"))
       {
-          mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType>>(problemParams.sublist("Natural Boundary Conditions"));
+          mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType, mNumDofsPerNode>>(problemParams.sublist("Natural Boundary Conditions"));
       }
     }
 
@@ -96,7 +96,7 @@ namespace Parabolic
       auto& tApplyFluxWeighting  = mApplyFluxWeighting;
       auto& tApplyMassWeighting  = mApplyMassWeighting;
       Kokkos::parallel_for("compute residual", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-      LAMBDA_EXPRESSION(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+      KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
       {
           ConfigScalarType tVolume(0.0);
 
