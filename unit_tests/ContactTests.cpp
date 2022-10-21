@@ -218,8 +218,6 @@ public:
         Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
-            auto tElementOrdinal = tElementOrds(iCellOrdinal);
-
             auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
             auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
 
@@ -234,7 +232,7 @@ public:
                 {
                     auto tElementDofOrdinal = tLocalNodeOrd * ElementType::mNumDofsPerNode + tDof;
                     ResultScalarType tResult = tBasisValues(tNode)*tSurfaceDisp[tDof];
-                    Kokkos::atomic_add(&aResult(tElementOrdinal, tElementDofOrdinal), tResult);
+                    Kokkos::atomic_add(&aResult(iCellOrdinal, tElementDofOrdinal), tResult);
                 }
             }
 
@@ -583,12 +581,6 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
       (tSpatialModel.Mesh, tDomainCellMap, tChildElementNodeLocations, tMappedChildElementNodeLocations, tParentElements);
      
-    // get basis functions at cubature (quadrature, since surface) point
-    Plato::OrdinalType tCubOrdinal = 0;
-    auto tCubPoints = ElementType::Face::getCubPoints();
-    auto tCubPoint = tCubPoints(tCubOrdinal);
-    auto tBasisValues = ElementType::Face::basisValues(tCubPoint);
-
     // construct dummy residual class
     using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     DummyResidual<EvaluationType> tResidual;
@@ -619,7 +611,6 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
             TEST_FLOATING_EQUALITY(tResult_Host(iCell,iDof), tResult_Gold[iCell][iDof], 1e-12);
       }
     }
-
 
 }
 

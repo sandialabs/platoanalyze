@@ -30,6 +30,7 @@ Plato_add_test(Element ElementTests.cpp)
 Plato_add_test(PlatoMathTypes PlatoMathTypesTests.cpp)
 Plato_add_test(TensorNorm TensorNormTests.cpp)
 Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
+Plato_add_test(Assembly AssemblyTests.cpp)
 
 if(ELLIPTIC)
 Plato_add_test(MultipointConstraint PlatoMultipointConstraintTests.cpp)
