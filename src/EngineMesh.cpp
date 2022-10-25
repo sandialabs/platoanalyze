@@ -248,7 +248,7 @@ namespace Plato
                             isUnique = false;
                         }
                     }
-                    if(isUnique && tNodeOrd != aNodeOrdinal)
+                    if(isUnique)
                     {
                         tFatGraph_ordinals(tFatGraphOffset+tNumUnique) = tNodeOrd;
                         tNumUnique++;
@@ -531,8 +531,8 @@ namespace Plato
 
     void
     EngineMesh::NodeNodeGraph(
-        Plato::OrdinalVectorT<const Plato::OrdinalType> & aOffsetMap,
-        Plato::OrdinalVectorT<const Plato::OrdinalType> & aNodeOrds
+        Plato::OrdinalVectorT<Plato::OrdinalType> & aOffsetMap,
+        Plato::OrdinalVectorT<Plato::OrdinalType> & aNodeOrds
     )
     {
         aOffsetMap = mNodeNodeGraph_offsets;

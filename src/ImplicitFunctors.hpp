@@ -418,70 +418,16 @@ Teuchos::RCP<MatrixType>
 CreateBlockMatrix( Plato::Mesh aMesh )
 /******************************************************************************/
 {
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tOffsetMap;
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tNodeOrds;
+    Plato::OrdinalVectorT<Plato::OrdinalType> tOffsetMap;
+    Plato::OrdinalVectorT<Plato::OrdinalType> tNodeOrds;
     aMesh->NodeNodeGraph(tOffsetMap, tNodeOrds);
 
-    // TODO: this function is still omega_h specific because it assumes that the graph doesn't include diagonals.
-
     auto numRows = tOffsetMap.size() - 1;
-    // omega_h does not include the diagonals: add numRows, and then
-    // add 1 to each rowMap entry after the first
-    auto nnz = tNodeOrds.size() + numRows;
-
-    // account for num dofs per node
+    auto nnz = tNodeOrds.size();
     constexpr Plato::OrdinalType numBlockDofs = DofsPerNode_I*DofsPerNode_J;
-
-    typename MatrixType::RowMapVectorT  rowMap("row map", numRows+1);
-    typename MatrixType::ScalarVectorT  entries("matrix entries", nnz*numBlockDofs);
-    typename MatrixType::OrdinalVectorT columnIndices("column indices", nnz);
-
-    // The compressed row storage format in omega_h doesn't include diagonals.  This
-    // function creates a CRSMatrix with diagonal entries included.
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,numRows), KOKKOS_LAMBDA(Plato::OrdinalType rowNumber)
-    {
-      auto entryOffset_oh = tOffsetMap(rowNumber);
-      auto R0 = tOffsetMap(rowNumber) + rowNumber;
-      auto R1 = tOffsetMap(rowNumber+1) + rowNumber+1;
-      auto numNodesThisRow = R1-R0;
-      rowMap(rowNumber) = R0;
-      rowMap(rowNumber+1) = R1;
-
-      Plato::OrdinalType i_oh = 0; // will track i until we insert the diagonal entry
-      for (Plato::OrdinalType i=0; i<numNodesThisRow; i_oh++, i++)
-      {
-        bool insertDiagonal = false;
-        if ((i_oh == i) && (i_oh + entryOffset_oh >= tOffsetMap(rowNumber+1)))
-        {
-          // i_oh == i                    --> have not inserted diagonal
-          // i_oh + entryOffset_oh > size --> at the end of the omega_h entries, should insert
-          insertDiagonal = true;
-        }
-        else if (i_oh == i)
-        {
-          // i_oh + entryOffset_oh in bounds
-          auto columnIndex = tNodeOrds(i_oh + entryOffset_oh);
-          if (columnIndex > rowNumber)
-          {
-            insertDiagonal = true;
-          }
-        }
-        if (insertDiagonal)
-        {
-          // store the diagonal entry
-          columnIndices(R0+i) = rowNumber;
-          i_oh--; // i_oh lags i by 1 after we hit the diagonal
-        }
-        else
-        {
-          columnIndices(R0+i) = tNodeOrds(i_oh + entryOffset_oh);
-        }
-      }
-    });
-
+    typename MatrixType::ScalarVectorT entries("matrix entries", nnz*numBlockDofs);
     auto retMatrix = Teuchos::rcp(
-     new MatrixType( rowMap, columnIndices, entries,
+     new MatrixType( tOffsetMap, tNodeOrds, entries,
                      numRows*DofsPerNode_I, numRows*DofsPerNode_J,
                      DofsPerNode_I, DofsPerNode_J )
     );
@@ -501,8 +447,8 @@ Teuchos::RCP<MatrixType>
 CreateMatrix( Plato::Mesh aMesh )
 /******************************************************************************/
 {
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tOffsetMap;
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tNodeOrds;
+    Plato::OrdinalVectorT<Plato::OrdinalType> tOffsetMap;
+    Plato::OrdinalVectorT<Plato::OrdinalType> tNodeOrds;
     aMesh->NodeNodeGraph(tOffsetMap, tNodeOrds);
 
     // TODO: this function is still omega_h specific because it assumes that the graph doesn't include diagonals.
