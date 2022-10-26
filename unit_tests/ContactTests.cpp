@@ -27,6 +27,8 @@
 
 #include "elliptic/EvaluationTypes.hpp"
 
+#include "ContactPair.hpp"
+
 namespace ContactTests
 {
 
@@ -279,6 +281,51 @@ setup_dummy_spatial_model(Plato::Mesh aMesh)
     return Plato::SpatialModel(aMesh, *tInputs, tDataMap);
 }
 
+Teuchos::RCP<Teuchos::ParameterList>
+get_2box_mesh_params()
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs =
+        Teuchos::getParametersFromXmlString(
+        "<ParameterList name='Plato Problem'>                                           \n"
+        "  <ParameterList name='Spatial Model'>                                         \n"
+        "    <ParameterList name='Domains'>                                             \n"
+        "      <ParameterList name='Box 1'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Fancy Feast'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "      <ParameterList name='Box 2'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Fancy Feast'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Side A Block'  type='string' value='block_1'/>       \n"
+        "        <Parameter name='Side A Child Sideset' type='string' value='block1_child'/>  \n"
+        "        <Parameter name='Side B Block'  type='string' value='block_2'/>       \n"
+        "        <Parameter name='Side B Child Sideset' type='string' value='block2_child'/>  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+
+        "  <ParameterList name='Material Models'>                                       \n"
+        "    <ParameterList name='Fancy Feast'>                                         \n"
+        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
+        "        <Parameter  name='Poissons Ratio' type='double' value='0.35'/>         \n"
+        "        <Parameter  name='Youngs Modulus' type='double' value='1.0e11'/>       \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+        "</ParameterList>                                                               \n"
+      );
+
+    return tInputs;
+}
+
 template <typename ScalarT, typename OrdinalT>
 void get_child_node_coordinates
 (const Plato::ScalarVectorT<ScalarT>   & aCoords,
@@ -312,6 +359,87 @@ void map_child_nodes
         aMappedNodeLocations(1,nodeOrdinal) = aNodeLocations(1,nodeOrdinal) + transY(nodeOrdinal);
         aMappedNodeLocations(2,nodeOrdinal) = aNodeLocations(2,nodeOrdinal) + transZ(nodeOrdinal);
     }, "get coords");
+}
+
+TEUCHOS_UNIT_TEST(ParsingTests, ParseSingleContactPair)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    auto tContactParams = tInputs->sublist("Contact");
+    auto tPairsParams = tContactParams.sublist("Pairs");
+
+    // test parsing number of pairs
+    Plato::OrdinalType tNumPairs(0);
+    for (auto tIndex = tPairsParams.begin(); tIndex != tPairsParams.end(); ++tIndex)
+        tNumPairs++;
+    TEST_EQUALITY(tNumPairs, 1);
+
+    // parse pair data
+    const auto& tMyName = tPairsParams.name(tPairsParams.begin());
+    Teuchos::ParameterList& tPairParams = tPairsParams.sublist(tMyName);
+    TEST_EQUALITY(tPairParams.get<std::string>("Side A Block"), "block_1");
+    TEST_EQUALITY(tPairParams.get<std::string>("Side A Child Sideset"), "block1_child");
+    TEST_EQUALITY(tPairParams.get<std::string>("Side B Block"), "block_2");
+    TEST_EQUALITY(tPairParams.get<std::string>("Side B Child Sideset"), "block2_child");
+}
+
+TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
+    auto tContactParams = tInputs->sublist("Contact");
+    auto tPairsParams = tContactParams.sublist("Pairs");
+    const auto& tMyName = tPairsParams.name(tPairsParams.begin());
+    Teuchos::ParameterList& tPairParams = tPairsParams.sublist(tMyName);
+
+    Plato::ContactPair tPair(tPairParams, tMesh, tSpatialModel.Domains);
+
+    // test child nodes
+    auto tSideAChild = tPair.childNodesA();
+    TEST_EQUALITY(tSideAChild.size(), 4);
+
+    auto tSideAChild_Host = Plato::TestHelpers::get( tSideAChild );
+    std::vector<Plato::OrdinalType> tSideAChild_Gold = {0, 5, 6, 7};
+    for(int iVal=0; iVal<tSideAChild_Gold.size(); iVal++){
+        TEST_EQUALITY(tSideAChild_Host(iVal), tSideAChild_Gold[iVal]);
+    }
+
+    auto tSideBChild = tPair.childNodesB();
+    TEST_EQUALITY(tSideBChild.size(), 4);
+
+    auto tSideBChild_Host = Plato::TestHelpers::get( tSideBChild );
+    std::vector<Plato::OrdinalType> tSideBChild_Gold = {9, 10, 11, 12};
+    for(int iVal=0; iVal<tSideBChild_Gold.size(); iVal++){
+        TEST_EQUALITY(tSideBChild_Host(iVal), tSideBChild_Gold[iVal]);
+    }
+
+    // test parent elements
+    auto tSideAParent = tPair.parentElementsA();
+    TEST_EQUALITY(tSideAParent.size(), 4);
+
+    auto tSideAParent_Host = Plato::TestHelpers::get( tSideAParent );
+    std::vector<Plato::OrdinalType> tSideAParent_Gold = {6, 7, 7, 7};
+    for(int iVal=0; iVal<tSideAParent_Gold.size(); iVal++){
+        TEST_EQUALITY(tSideAParent_Host(iVal), tSideAParent_Gold[iVal]);
+    }
+
+    auto tSideBParent = tPair.parentElementsB();
+    TEST_EQUALITY(tSideBParent.size(), 4);
+
+    auto tSideBParent_Host = Plato::TestHelpers::get( tSideBParent );
+    std::vector<Plato::OrdinalType> tSideBParent_Gold = {4, 2, 2, 10000};
+    for(int iVal=0; iVal<tSideBParent_Gold.size(); iVal++){
+        TEST_EQUALITY(tSideBParent_Host(iVal), tSideBParent_Gold[iVal]);
+    }
 }
 
 TEUCHOS_UNIT_TEST(ProjectionTests, FindParentElementsForNodesWithDifferentTranslations)

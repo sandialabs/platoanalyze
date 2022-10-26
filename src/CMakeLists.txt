@@ -32,6 +32,7 @@ if(EXPRESSION)
   )
 endif()
 
+## criterion sources
 set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     TensileEnergyDensityLocalMeasure.cpp
     Plato_AugLagStressCriterionQuadratic.cpp
@@ -113,6 +114,7 @@ if(PLATOANALYZE_ENABLE_MESHMAP)
   ## Mesh constraint sources
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
       MultipointConstraints.cpp
+      ContactPair.cpp
   )
 
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
