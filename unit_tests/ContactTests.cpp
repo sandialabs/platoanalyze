@@ -27,7 +27,7 @@
 
 #include "elliptic/EvaluationTypes.hpp"
 
-#include "ContactPair.hpp"
+#include "ContactUtils.hpp"
 
 namespace ContactTests
 {
@@ -393,6 +393,13 @@ TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tElementType = tMesh->ElementType();
+    if( Plato::tolower(tElementType) != "tetra"  &&
+        Plato::tolower(tElementType) != "tetra4" &&
+        Plato::tolower(tElementType) != "tet4" )
+        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
+
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
@@ -401,10 +408,10 @@ TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
     const auto& tMyName = tPairsParams.name(tPairsParams.begin());
     Teuchos::ParameterList& tPairParams = tPairsParams.sublist(tMyName);
 
-    Plato::ContactPair tPair(tPairParams, tMesh, tSpatialModel.Domains);
+    Plato::ContactPair tPair = Plato::parseContactPair(tPairParams, tMesh);
 
     // test child nodes
-    auto tSideAChild = tPair.childNodesA();
+    auto tSideAChild = tPair.childNodesA;
     TEST_EQUALITY(tSideAChild.size(), 4);
 
     auto tSideAChild_Host = Plato::TestHelpers::get( tSideAChild );
@@ -413,7 +420,7 @@ TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
         TEST_EQUALITY(tSideAChild_Host(iVal), tSideAChild_Gold[iVal]);
     }
 
-    auto tSideBChild = tPair.childNodesB();
+    auto tSideBChild = tPair.childNodesB;
     TEST_EQUALITY(tSideBChild.size(), 4);
 
     auto tSideBChild_Host = Plato::TestHelpers::get( tSideBChild );
@@ -422,23 +429,39 @@ TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
         TEST_EQUALITY(tSideBChild_Host(iVal), tSideBChild_Gold[iVal]);
     }
 
-    // test parent elements
-    auto tSideAParent = tPair.parentElementsA();
-    TEST_EQUALITY(tSideAParent.size(), 4);
-
-    auto tSideAParent_Host = Plato::TestHelpers::get( tSideAParent );
-    std::vector<Plato::OrdinalType> tSideAParent_Gold = {6, 7, 7, 7};
-    for(int iVal=0; iVal<tSideAParent_Gold.size(); iVal++){
-        TEST_EQUALITY(tSideAParent_Host(iVal), tSideAParent_Gold[iVal]);
+    // test initial gap
+    std::vector<Plato::Scalar> tInitialGap_Gold = {1.0, 0.0, 0.0};
+    for(int iVal=0; iVal<tInitialGap_Gold.size(); iVal++){
+        TEST_EQUALITY(tPair.initialGap[iVal], tInitialGap_Gold[iVal]);
     }
 
-    auto tSideBParent = tPair.parentElementsB();
-    TEST_EQUALITY(tSideBParent.size(), 4);
+    // test parent elements
+    auto tChildLocations       = Plato::computeNodeLocations(tMesh, tPair.childNodesA);
+    auto tMappedChildLocations = Plato::mapNodeLocations(tChildLocations, tPair.initialGap);
+    Plato::SpatialDomain tDomain = Plato::getDomain(tPair.parentBlockB, tSpatialModel.Domains);
 
-    auto tSideBParent_Host = Plato::TestHelpers::get( tSideBParent );
-    std::vector<Plato::OrdinalType> tSideBParent_Gold = {4, 2, 2, 10000};
-    for(int iVal=0; iVal<tSideBParent_Gold.size(); iVal++){
-        TEST_EQUALITY(tSideBParent_Host(iVal), tSideBParent_Gold[iVal]);
+    Plato::OrdinalVector tParentElementsA("parent elements", tPair.childNodesA.size());
+    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
+      (tMesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElementsA);
+
+    auto tParentElements_Host = Plato::TestHelpers::get( tParentElementsA );
+    std::vector<Plato::OrdinalType> tParentElements_Gold = {7, 6, 6, 6};
+    for(int iVal=0; iVal<tParentElements_Gold.size(); iVal++){
+        TEST_EQUALITY(tParentElements_Host(iVal), tParentElements_Gold[iVal]);
+    }
+
+    tChildLocations       = Plato::computeNodeLocations(tMesh, tPair.childNodesB);
+    tMappedChildLocations = Plato::mapNodeLocations(tChildLocations, tPair.initialGap, -1.0);
+    tDomain = Plato::getDomain(tPair.parentBlockA, tSpatialModel.Domains);
+
+    Plato::OrdinalVector tParentElementsB("parent elements", tPair.childNodesB.size());
+    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
+      (tMesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElementsB);
+
+    tParentElements_Host = Plato::TestHelpers::get( tParentElementsB );
+    tParentElements_Gold = {4, 2, 2, 0};
+    for(int iVal=0; iVal<tParentElements_Gold.size(); iVal++){
+        TEST_EQUALITY(tParentElements_Host(iVal), tParentElements_Gold[iVal]);
     }
 }
 
