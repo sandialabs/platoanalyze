@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "EngineMesh.hpp"
+#include "alg/CrsMatrixUtils.hpp"
 
 namespace Plato
 {
@@ -192,25 +193,7 @@ namespace Plato
         }, "element ordinals");
 
         // sort list of connected elements (otherwise cpu and gpu builds produce different graphs)
-        auto tOrds = tNodeElementGraph_ordinals;
-        auto tOffs = tNodeElementGraph_offsets;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-        {
-            auto tFrom = tOffs(aNodeOrdinal);
-            auto tTo = tOffs(aNodeOrdinal+1)-1;
-            for( decltype(tFrom) tIndexI=tFrom; tIndexI<tTo; tIndexI++ )
-            {
-                for( decltype(tFrom) tIndexJ=tFrom; tIndexJ<tTo; tIndexJ++ )
-                {
-                    if( tOrds(tIndexJ) > tOrds(tIndexJ+1) )
-                    {
-                        auto tHereHoldThis = tOrds(tIndexJ+1);
-                        tOrds(tIndexJ+1) = tOrds(tIndexJ);
-                        tOrds(tIndexJ) = tHereHoldThis;
-                    }
-                }
-            }
-        }, "sort element ordinals");
+        Plato::sort_matrix_column_ordinals(tNodeElementGraph_offsets, tNodeElementGraph_ordinals);
     }
 
     void
@@ -292,25 +275,7 @@ namespace Plato
         }, "node ordinals");
 
         // sort list of connected nodes (otherwise cpu and gpu builds produce different graphs)
-        auto tOrds = tNodeNodeGraph_ordinals;
-        auto tOffs = tNodeNodeGraph_offsets;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-        {
-            auto tFrom = tOffs(aNodeOrdinal);
-            auto tTo = tOffs(aNodeOrdinal+1)-1;
-            for( decltype(tFrom) tIndexI=tFrom; tIndexI<tTo; tIndexI++ )
-            {
-                for( decltype(tFrom) tIndexJ=tFrom; tIndexJ<tTo; tIndexJ++ )
-                {
-                    if( tOrds(tIndexJ) > tOrds(tIndexJ+1) )
-                    {
-                        auto tHereHoldThis = tOrds(tIndexJ+1);
-                        tOrds(tIndexJ+1) = tOrds(tIndexJ);
-                        tOrds(tIndexJ) = tHereHoldThis;
-                    }
-                }
-            }
-        }, "sort ordinals");
+        Plato::sort_matrix_column_ordinals(tNodeNodeGraph_offsets, tNodeNodeGraph_ordinals);
     }
 
     void

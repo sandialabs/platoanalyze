@@ -56,6 +56,7 @@ set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     alg/ParseInput.cpp
     alg/ParallelComm.cpp
     alg/AmgXConfigs.cpp
+    alg/CrsMatrixUtils.cpp
     alg/AmgXLinearSolver.cpp
     alg/PlatoSolverFactory.cpp
     alg/PlatoAbstractSolver.cpp
