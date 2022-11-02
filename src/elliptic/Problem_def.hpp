@@ -612,7 +612,6 @@ namespace Elliptic
     void Problem<PhysicsType>::initialize(Teuchos::ParameterList& aProblemParams)
     {
         auto tName = aProblemParams.get<std::string>("PDE Constraint");
-        mPDE = std::make_shared<Plato::Elliptic::VectorFunction<PhysicsType>>(mSpatialModel, mDataMap, aProblemParams, tName);
 
         if(aProblemParams.isSublist("Criteria"))
         {
