@@ -128,11 +128,13 @@ public:
     ProjectedSurfaceDisplacement
     (const Plato::OrdinalVectorT<Plato::OrdinalType> & aParentElements,
      const Plato::ScalarMultiVectorT<Plato::Scalar>  & aMappedLocations,
+     const Plato::OrdinalVector                      & aChildNodeOrdMap,
            Plato::Mesh                                 aMesh,
            Plato::Scalar                               aScale = 1.0) :
      AbstractSurfaceDisplacement<EvaluationType>(aScale),
      mParentElements(aParentElements),
      mMappedLocations(aMappedLocations),
+     mChildNodeOrdMap(aChildNodeOrdMap),
      mGetBasis(aMesh),
      mInterpolateFromNodal(),
      mChildNode(0)
@@ -146,13 +148,13 @@ public:
      const Plato::ScalarMultiVectorT<InStateT>      & aState,
            Plato::Array<mNumSpatialDims, OutStateT> & aSurfaceDisp) const override
     {
-        auto tParentOrdinal = aCellOrdinal*mNumNodesPerFace + mChildNode;
-        auto tParentElement = mParentElements(tParentOrdinal);
+        auto tLocalChildNodeOrd = mChildNodeOrdMap(aCellOrdinal*mNumNodesPerFace + mChildNode);
+        auto tParentElement = mParentElements(tLocalChildNodeOrd);
 
         Plato::Array<mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
         for(Plato::OrdinalType iDim=0; iDim<mNumSpatialDims; iDim++)
         {
-            tInPoint(iDim) = mMappedLocations(iDim, tParentOrdinal);
+            tInPoint(iDim) = mMappedLocations(iDim, tLocalChildNodeOrd);
         }
 
         Plato::Array<mNumNodesPerCell, Plato::Scalar> tBasis(0.0); // config scalar type
@@ -175,6 +177,7 @@ public:
 private: 
     Plato::OrdinalVectorT<Plato::OrdinalType>             mParentElements;
     Plato::ScalarMultiVectorT<Plato::Scalar>              mMappedLocations;
+    Plato::OrdinalVector                                  mChildNodeOrdMap;
     Plato::OrdinalType                                    mChildNode;
     Plato::Geometry::GetBasis<ElementType, Plato::Scalar> mGetBasis;
     Plato::InterpolateFromNodal<ElementType, NumDofsPerNode, /*offset=*/0, mNumSpatialDims> mInterpolateFromNodal;
@@ -361,7 +364,7 @@ void map_child_nodes
     }, "get coords");
 }
 
-TEUCHOS_UNIT_TEST(ParsingTests, ParseSingleContactPair)
+TEUCHOS_UNIT_TEST(ParsingTests, ParseFromTeuchosParameterList)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
@@ -386,29 +389,19 @@ TEUCHOS_UNIT_TEST(ParsingTests, ParseSingleContactPair)
     TEST_EQUALITY(tPairParams.get<std::string>("Side B Child Sideset"), "block2_child");
 }
 
-TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
+TEUCHOS_UNIT_TEST(UtilsTests, ParseSingleContactPair)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tElementType = tMesh->ElementType();
-    if( Plato::tolower(tElementType) != "tetra"  &&
-        Plato::tolower(tElementType) != "tetra4" &&
-        Plato::tolower(tElementType) != "tet4" )
-        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
-
-    Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
-
     auto tContactParams = tInputs->sublist("Contact");
     auto tPairsParams = tContactParams.sublist("Pairs");
     const auto& tMyName = tPairsParams.name(tPairsParams.begin());
     Teuchos::ParameterList& tPairParams = tPairsParams.sublist(tMyName);
 
-    Plato::ContactPair tPair = Plato::parseContactPair(tPairParams, tMesh);
+    Plato::Contact::ContactPair tPair = Plato::Contact::parse_contact_pair(tPairParams, tMesh);
 
     // test child nodes
     auto tSideAChild = tPair.childNodesA;
@@ -434,34 +427,62 @@ TEUCHOS_UNIT_TEST(ContactPairTests, ComputeAndAccessChildNodesAndParentElements)
     for(int iVal=0; iVal<tInitialGap_Gold.size(); iVal++){
         TEST_EQUALITY(tPair.initialGap[iVal], tInitialGap_Gold[iVal]);
     }
+}
 
-    // test parent elements
-    auto tChildLocations       = Plato::computeNodeLocations(tMesh, tPair.childNodesA);
-    auto tMappedChildLocations = Plato::mapNodeLocations(tChildLocations, tPair.initialGap);
-    Plato::SpatialDomain tDomain = Plato::getDomain(tPair.parentBlockB, tSpatialModel.Domains);
+TEUCHOS_UNIT_TEST(UtilsTests, ParseAllContactPairs)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
-    Plato::OrdinalVector tParentElementsA("parent elements", tPair.childNodesA.size());
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-      (tMesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElementsA);
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    auto tParentElements_Host = Plato::TestHelpers::get( tParentElementsA );
-    std::vector<Plato::OrdinalType> tParentElements_Gold = {7, 6, 6, 6};
-    for(int iVal=0; iVal<tParentElements_Gold.size(); iVal++){
-        TEST_EQUALITY(tParentElements_Host(iVal), tParentElements_Gold[iVal]);
+    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+
+    // test number of pairs
+    TEST_EQUALITY(tPairs.size(), 1);
+}
+
+TEUCHOS_UNIT_TEST(UtilsTests, PopulateFullContactArrays)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tElementType = tMesh->ElementType();
+    if( Plato::tolower(tElementType) != "tetra"  &&
+        Plato::tolower(tElementType) != "tetra4" &&
+        Plato::tolower(tElementType) != "tet4" )
+        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
+    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+
+    auto tNumTotalNodes = Plato::Contact::count_total_child_nodes(tPairs);
+
+    // test total number of child nodes
+    TEST_EQUALITY(tNumTotalNodes, 8);
+
+    Plato::OrdinalVector tAllChildNodes("", tNumTotalNodes);
+    Plato::OrdinalVector tAllParentElements("", tNumTotalNodes);
+    Plato::Contact::populate_full_contact_arrays<ElementType>(tPairs, tSpatialModel, tAllChildNodes, tAllParentElements);
+    Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh);
+
+    // test child nodes
+    auto tAllChildNodes_Host = Plato::TestHelpers::get( tAllChildNodes );
+    std::vector<Plato::OrdinalType> tAllChildNodes_Gold = {0, 5, 6, 7, 9, 10, 11, 12};
+    for(int iVal=0; iVal<tAllChildNodes_Gold.size(); iVal++){
+        TEST_EQUALITY(tAllChildNodes_Host(iVal), tAllChildNodes_Gold[iVal]);
     }
 
-    tChildLocations       = Plato::computeNodeLocations(tMesh, tPair.childNodesB);
-    tMappedChildLocations = Plato::mapNodeLocations(tChildLocations, tPair.initialGap, -1.0);
-    tDomain = Plato::getDomain(tPair.parentBlockA, tSpatialModel.Domains);
-
-    Plato::OrdinalVector tParentElementsB("parent elements", tPair.childNodesB.size());
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-      (tMesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElementsB);
-
-    tParentElements_Host = Plato::TestHelpers::get( tParentElementsB );
-    tParentElements_Gold = {4, 2, 2, 0};
-    for(int iVal=0; iVal<tParentElements_Gold.size(); iVal++){
-        TEST_EQUALITY(tParentElements_Host(iVal), tParentElements_Gold[iVal]);
+    // test parent elements
+    auto tAllParentElements_Host = Plato::TestHelpers::get( tAllParentElements );
+    std::vector<Plato::OrdinalType> tAllParentElements_Gold = {7, 6, 6, 6, 4, 2, 2, 0};
+    for(int iVal=0; iVal<tAllParentElements_Gold.size(); iVal++){
+        TEST_EQUALITY(tAllParentElements_Host(iVal), tAllParentElements_Gold[iVal]);
     }
 }
 
@@ -508,12 +529,19 @@ TEUCHOS_UNIT_TEST(ProjectionTests, FindParentElementsForNodesWithDifferentTransl
 
 TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
 {
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tElementType = tMesh->ElementType();
+    if( Plato::tolower(tElementType) != "tetra"  &&
+        Plato::tolower(tElementType) != "tetra4" &&
+        Plato::tolower(tElementType) != "tet4" )
+        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
 
     // create dummy displacement workset from box mesh
-    constexpr Plato::OrdinalType tMeshWidth = 1;
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
-
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
@@ -525,24 +553,29 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     Plato::ScalarMultiVectorT<Plato::Scalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
      
+    // get contact pair A face info
+    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPair = tPairs[0]; // there is only 1 pair
+
     // get basis functions at cubature (quadrature, since surface) point
     Plato::OrdinalType tCubOrdinal = 0;
     auto tCubPoints = ElementType::Face::getCubPoints();
     auto tCubPoint = tCubPoints(tCubOrdinal);
     auto tBasisValues = ElementType::Face::basisValues(tCubPoint);
 
-    // get side set info
-    std::string tSideSetName = "z-";
-    auto tChildFaceElements = tMesh->GetSideSetElements(tSideSetName);
-    auto tNumChildCells = tChildFaceElements.extent(0);
-    auto tChildFaceLocalNodes = tMesh->GetSideSetLocalNodes(tSideSetName);
+    // test child elements
+    auto tChildElements_Host = Plato::TestHelpers::get( tPair.childElementsA );
+    std::vector<Plato::OrdinalType> tChildElements_gold = { 2, 4 };
+    for(int iChild=0; iChild<int(tChildElements_gold.size()); iChild++){
+        TEST_EQUALITY(tChildElements_Host(iChild), tChildElements_gold[iChild]);
+    }
 
     // construct dummy residual class
     using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     DummyResidual<EvaluationType> tResidual;
 
     // construct compute surface displacement functor
-    SurfaceDisplacement<EvaluationType> tComputeSurfaceDisp(tChildFaceElements, tChildFaceLocalNodes, -1.0);
+    SurfaceDisplacement<EvaluationType> tComputeSurfaceDisp(tPair.childElementsA, tPair.childFaceLocalNodesA, -1.0);
 
     // test surface displacement child face cell 0
     Plato::OrdinalType tChildCellOrdinal = 0;
@@ -550,7 +583,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     tResidual.exercise_surface_disp_interface(tComputeSurfaceDisp, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDisp0);
 
     auto tSurfaceDisp0_Host = Plato::TestHelpers::get( tSurfaceDisp0 );
-    std::vector<double> tSurfaceDisp_Gold = {-0.0009, -0.0010, -0.0011};
+    std::vector<double> tSurfaceDisp_Gold = {-0.0012, -0.0013, -0.0014};
     for(int iDof=0; iDof<tSurfaceDisp_Gold.size(); iDof++){
         TEST_FLOATING_EQUALITY(tSurfaceDisp0_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
     }
@@ -561,7 +594,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     tResidual.exercise_surface_disp_interface(tComputeSurfaceDisp, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDisp1);
 
     auto tSurfaceDisp1_Host = Plato::TestHelpers::get( tSurfaceDisp1 );
-    tSurfaceDisp_Gold = {-0.0011, -0.0012, -0.0013};
+    tSurfaceDisp_Gold = {-0.0013, -0.0014, -0.0015};
     for(int iDof=0; iDof<tSurfaceDisp_Gold.size(); iDof++){
         TEST_FLOATING_EQUALITY(tSurfaceDisp1_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
     }
@@ -569,12 +602,22 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
 
 TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribution)
 {
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tElementType = tMesh->ElementType();
+    if( Plato::tolower(tElementType) != "tetra"  &&
+        Plato::tolower(tElementType) != "tetra4" &&
+        Plato::tolower(tElementType) != "tet4" )
+        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
     
     // create dummy displacement workset from box mesh
-    constexpr Plato::OrdinalType tMeshWidth = 1;
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
-
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
@@ -586,65 +629,45 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     Plato::ScalarMultiVectorT<Plato::Scalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
 
-    // get side set info
-    std::string tSideSetName = "z-";
-    auto tChildFaceElements = tMesh->GetSideSetElements(tSideSetName);
+    // get contact pair A face info
+    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPair = tPairs[0]; // there is only 1 pair
+
+    auto tChildFaceElements = tPair.childElementsA;
     auto tNumChildCells = tChildFaceElements.extent(0);
-    auto tChildFaceLocalNodes = tMesh->GetSideSetLocalNodes(tSideSetName);
-
-    // get list of all child element nodes on face in order of element ID (repeated values b/c of shared nodes, but is ok) 
-    Plato::OrdinalVector tChildFaceElementNodeIDs("ids of child face element nodes", tNumChildCells*ElementType::mNumNodesPerFace);
-    auto tCells2Nodes = tMesh->Connectivity();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumChildCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        auto tCellOrdinal = tChildFaceElements(aCellOrdinal);
-
-        for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < ElementType::mNumNodesPerFace; tNodeIndex++)
-        {
-            auto tLocalNodeOrdinal = tChildFaceLocalNodes(aCellOrdinal*ElementType::mNumNodesPerFace+tNodeIndex);
-            auto tGlobalNodeOrdinal = tCells2Nodes(tCellOrdinal*ElementType::mNumNodesPerCell + tLocalNodeOrdinal);
-            tChildFaceElementNodeIDs(aCellOrdinal*ElementType::mNumNodesPerFace + tNodeIndex) = tGlobalNodeOrdinal;
-        }
-    }, "get parent elements for local ele face nodes");
-
-    // map child face coordinates - setting manually
-    Plato::ScalarMultiVector tChildElementNodeLocations("child node locations", ElementType::mNumSpatialDims, tChildFaceElementNodeIDs.size());
-    get_child_node_coordinates(tMesh->Coordinates(),tChildFaceElementNodeIDs,tChildElementNodeLocations);
-
-    std::vector<Plato::Scalar> tTranslationsX = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    std::vector<Plato::Scalar> tTranslationsY = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    std::vector<Plato::Scalar> tTranslationsZ = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-
-    Plato::ScalarMultiVector tMappedChildElementNodeLocations ("mapped child node locations", ElementType::mNumSpatialDims, tChildFaceElementNodeIDs.size());
-    map_child_nodes(tChildElementNodeLocations,tMappedChildElementNodeLocations,tTranslationsX,tTranslationsY,tTranslationsZ);
-
-    // find parent elements
-    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
-    auto tDomainCellMap = tSpatialModel.Domains.front().cellOrdinals(); // first and only domain
-    Plato::OrdinalVector tParentElements("mapped child face element nodes", tNumChildCells*ElementType::mNumNodesPerFace);
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-      (tSpatialModel.Mesh, tDomainCellMap, tChildElementNodeLocations, tMappedChildElementNodeLocations, tParentElements);
+    auto tChildFaceLocalNodes = tPair.childFaceLocalNodesA;
      
+    // construct dummy residual class
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
+    DummyResidual<EvaluationType> tResidual;
+
+    // construct compute surface displacement functor
+    auto tGlobalLocalChildNodeOrdMap = Plato::Contact::global_local_child_node_ord_map(tPair.childNodesA, tMesh->NumNodes());
+    auto tElementWiseChildNodeOrdMap = Plato::Contact::convert_to_elementwise_map(tPair.childElementsA, tPair.childFaceLocalNodesA, tGlobalLocalChildNodeOrdMap, tMesh, ElementType::mNumNodesPerFace);
+    
+    auto tChildLocations = Plato::Contact::compute_node_locations(tSpatialModel.Mesh, tPair.childNodesA);
+    auto tMappedChildLocations = Plato::Contact::map_node_locations(tChildLocations, tPair.initialGap);
+    Plato::SpatialDomain tDomain = Plato::Contact::get_domain(tPair.parentBlockB, tSpatialModel.Domains);
+
+    Plato::OrdinalVector tParentElements("parent elements", tPair.childNodesA.size());
+    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
+    (tSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
+
+    ProjectedSurfaceDisplacement<EvaluationType> tComputeSurfaceDisp(tParentElements, tMappedChildLocations, tElementWiseChildNodeOrdMap, tMesh);
+
+    // test surface displacement terms for each child node on child cell 0
+    Plato::OrdinalType tChildCellOrdinal = 0;
+
     // get basis functions at cubature (quadrature, since surface) point
     Plato::OrdinalType tCubOrdinal = 0;
     auto tCubPoints = ElementType::Face::getCubPoints();
     auto tCubPoint = tCubPoints(tCubOrdinal);
     auto tBasisValues = ElementType::Face::basisValues(tCubPoint);
 
-    // construct dummy residual class
-    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
-    DummyResidual<EvaluationType> tResidual;
-
-    // construct compute surface displacement functor
-    ProjectedSurfaceDisplacement<EvaluationType> tComputeSurfaceDisp(tParentElements, tMappedChildElementNodeLocations, tMesh);
-
-    // test surface displacement terms for each child node on child cell 0
-    Plato::OrdinalType tChildCellOrdinal = 0;
-
     std::vector<std::vector<double>> tSurfaceDisp_Gold = {
-        {0.0004 / 3.0, 0.0005 / 3.0, 0.0006 / 3.0},
-        {0.0010 / 3.0, 0.0011 / 3.0, 0.0012 / 3.0},
-        {0.0022 / 3.0, 0.0023 / 3.0, 0.0024 / 3.0}
+        {0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
+        {0.0034 / 3.0, 0.0035 / 3.0, 0.0036 / 3.0},
+        {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0}
     };
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
@@ -664,9 +687,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     tChildCellOrdinal = 1;
 
     tSurfaceDisp_Gold = {
-        {0.0004 / 3.0, 0.0005 / 3.0, 0.0006 / 3.0},
-        {0.0022 / 3.0, 0.0023 / 3.0, 0.0024 / 3.0},
-        {0.0016 / 3.0, 0.0017 / 3.0, 0.0018 / 3.0}
+        {0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
+        {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0},
+        {0.0028 / 3.0, 0.0029 / 3.0, 0.0030 / 3.0}
     };
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
@@ -685,12 +708,22 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
 
 TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
 {
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tElementType = tMesh->ElementType();
+    if( Plato::tolower(tElementType) != "tetra"  &&
+        Plato::tolower(tElementType) != "tetra4" &&
+        Plato::tolower(tElementType) != "tet4" )
+        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
     
     // create dummy displacement workset from box mesh
-    constexpr Plato::OrdinalType tMeshWidth = 1;
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
-
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
@@ -702,71 +735,69 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     Plato::ScalarMultiVectorT<Plato::Scalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
 
-    // get side set info
-    std::string tSideSetName = "z-";
-    auto tChildFaceElements = tMesh->GetSideSetElements(tSideSetName);
-    auto tNumChildCells = tChildFaceElements.extent(0);
-    auto tChildFaceLocalNodes = tMesh->GetSideSetLocalNodes(tSideSetName);
-
-    // get list of all child element nodes on face in order of element ID (repeated values b/c of shared nodes, but is ok) 
-    Plato::OrdinalVector tChildFaceElementNodeIDs("ids of child face element nodes", tNumChildCells*ElementType::mNumNodesPerFace);
-    auto tCells2Nodes = tMesh->Connectivity();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumChildCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        auto tCellOrdinal = tChildFaceElements(aCellOrdinal);
-
-        for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < ElementType::mNumNodesPerFace; tNodeIndex++)
-        {
-            auto tLocalNodeOrdinal = tChildFaceLocalNodes(aCellOrdinal*ElementType::mNumNodesPerFace+tNodeIndex);
-            auto tGlobalNodeOrdinal = tCells2Nodes(tCellOrdinal*ElementType::mNumNodesPerCell + tLocalNodeOrdinal);
-            tChildFaceElementNodeIDs(aCellOrdinal*ElementType::mNumNodesPerFace + tNodeIndex) = tGlobalNodeOrdinal;
-        }
-    }, "get parent elements for local ele face nodes");
-
-    // map child face coordinates - setting manually
-    Plato::ScalarMultiVector tChildElementNodeLocations("child node locations", ElementType::mNumSpatialDims, tChildFaceElementNodeIDs.size());
-    get_child_node_coordinates(tMesh->Coordinates(),tChildFaceElementNodeIDs,tChildElementNodeLocations);
-
-    std::vector<Plato::Scalar> tTranslationsX = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    std::vector<Plato::Scalar> tTranslationsY = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    std::vector<Plato::Scalar> tTranslationsZ = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-
-    Plato::ScalarMultiVector tMappedChildElementNodeLocations ("mapped child node locations", ElementType::mNumSpatialDims, tChildFaceElementNodeIDs.size());
-    map_child_nodes(tChildElementNodeLocations,tMappedChildElementNodeLocations,tTranslationsX,tTranslationsY,tTranslationsZ);
-
-    // find parent elements
-    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
-    auto tDomainCellMap = tSpatialModel.Domains.front().cellOrdinals(); // first and only domain
-    Plato::OrdinalVector tParentElements("mapped child face element nodes", tNumChildCells*ElementType::mNumNodesPerFace);
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-      (tSpatialModel.Mesh, tDomainCellMap, tChildElementNodeLocations, tMappedChildElementNodeLocations, tParentElements);
-     
     // construct dummy residual class
     using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     DummyResidual<EvaluationType> tResidual;
 
     // construct compute surface displacement functors
-    SurfaceDisplacement<EvaluationType> computeChildSurfaceDisp(tChildFaceElements, tChildFaceLocalNodes, -1.0);
-    ProjectedSurfaceDisplacement<EvaluationType> computeParentSurfaceDisp(tParentElements, tMappedChildElementNodeLocations, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPair = tPairs[0]; // there is only 1 pair
+    SurfaceDisplacement<EvaluationType> computeChildSurfaceDisp(tPair.childElementsA, tPair.childFaceLocalNodesA, -1.0);
+
+    auto tGlobalLocalChildNodeOrdMap = Plato::Contact::global_local_child_node_ord_map(tPair.childNodesA, tMesh->NumNodes());
+    auto tElementWiseChildNodeOrdMap = Plato::Contact::convert_to_elementwise_map(tPair.childElementsA, tPair.childFaceLocalNodesA, tGlobalLocalChildNodeOrdMap, tMesh, ElementType::mNumNodesPerFace);
+    
+    auto tChildLocations = Plato::Contact::compute_node_locations(tSpatialModel.Mesh, tPair.childNodesA);
+    auto tMappedChildLocations = Plato::Contact::map_node_locations(tChildLocations, tPair.initialGap);
+    Plato::SpatialDomain tDomain = Plato::Contact::get_domain(tPair.parentBlockB, tSpatialModel.Domains);
+
+    Plato::OrdinalVector tParentElements("parent elements", tPair.childNodesA.size());
+    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
+    (tSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
+
+    ProjectedSurfaceDisplacement<EvaluationType> computeParentSurfaceDisp(tParentElements, tMappedChildLocations, tElementWiseChildNodeOrdMap, tMesh);
 
     // test computation of displacement difference (dummy contact force)
-    Plato::ScalarMultiVectorT<Plato::Scalar> tResult("dummy contact force", tNumChildCells, ElementType::mNumDofsPerCell);
-    tResidual.dummy_contact_force(tSpatialModel,tSideSetName,tDispWS,computeChildSurfaceDisp,tResult); // child face contributions
+    Plato::ScalarMultiVectorT<Plato::Scalar> tResult("dummy contact force", tPair.childElementsA.size(), ElementType::mNumDofsPerCell);
+    tResidual.dummy_contact_force(tSpatialModel,tPair.childSideSetA,tDispWS,computeChildSurfaceDisp,tResult); // child face contributions
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
         computeParentSurfaceDisp.setChildNode(iChildNode);
-        tResidual.dummy_contact_force(tSpatialModel,tSideSetName,tDispWS,computeParentSurfaceDisp,tResult); // parent face contributions
+        tResidual.dummy_contact_force(tSpatialModel,tPair.childSideSetA,tDispWS,computeParentSurfaceDisp,tResult); // parent face contributions
     }
 
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ELE 1
+    // child contribution {-0.0012, -0.0013, -0.0014};
+    // parent contributions:
+    // {0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
+    // {0.0034 / 3.0, 0.0035 / 3.0, 0.0036 / 3.0},
+    // {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0}
+
+    // total contributions:
+    // {0.0007333333 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ELE 2
+    // child contribution {-0.0013, -0.0014, -0.0015};
+    // parent contributions:
+    // {0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
+    // {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0},
+    // {0.0028 / 3.0, 0.0029 / 3.0, 0.0030 / 3.0}
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     std::vector<std::vector<double>> tResult_Gold = {
-        {0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0},
-        {0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0, 0.0, 0.0}
+        {0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0, 0.0, 0.0},
+        {0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0, 0.0, 0.0}
     };
 
     auto tResult_Host = Plato::TestHelpers::get( tResult );
 
-    for(int iCell=0; iCell<int(tNumChildCells); iCell++){
+    for(int iCell=0; iCell<int(tPair.childElementsA.size()); iCell++){
         for(int iDof=0; iDof<ElementType::mNumNodesPerFace*ElementType::mNumDofsPerNode; iDof++){
             TEST_FLOATING_EQUALITY(tResult_Host(iCell,iDof), tResult_Gold[iCell][iDof], 1e-12);
       }

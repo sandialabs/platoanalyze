@@ -11,7 +11,6 @@
 
 #include "EngineMesh.hpp"
 #include "SpatialModel.hpp"
-#include "Plato_MeshMap.hpp"
 
 #include "elliptic/EvaluationTypes.hpp"
 
@@ -19,6 +18,10 @@
 #include "ImplicitFunctors.hpp"
 
 #include "InterpolateFromNodal.hpp"
+
+#ifdef PLATO_MESHMAP
+#include "ContactUtils.hpp"
+#endif
 
 namespace AssemblyTests
 {
@@ -162,6 +165,51 @@ setup_2box_spatial_model(Plato::Mesh aMesh)
 
     Plato::DataMap tDataMap;
     return Plato::SpatialModel(aMesh, *tInputs, tDataMap);
+}
+
+Teuchos::RCP<Teuchos::ParameterList>
+get_2box_mesh_params()
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs =
+        Teuchos::getParametersFromXmlString(
+        "<ParameterList name='Plato Problem'>                                           \n"
+        "  <ParameterList name='Spatial Model'>                                         \n"
+        "    <ParameterList name='Domains'>                                             \n"
+        "      <ParameterList name='Box 1'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Fancy Feast'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "      <ParameterList name='Box 2'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Fancy Feast'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Side A Block'  type='string' value='block_1'/>       \n"
+        "        <Parameter name='Side A Child Sideset' type='string' value='block1_child'/>  \n"
+        "        <Parameter name='Side B Block'  type='string' value='block_2'/>       \n"
+        "        <Parameter name='Side B Child Sideset' type='string' value='block2_child'/>  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+
+        "  <ParameterList name='Material Models'>                                       \n"
+        "    <ParameterList name='Fancy Feast'>                                         \n"
+        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
+        "        <Parameter  name='Poissons Ratio' type='double' value='0.35'/>         \n"
+        "        <Parameter  name='Youngs Modulus' type='double' value='1.0e11'/>       \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+        "</ParameterList>                                                               \n"
+      );
+
+    return tInputs;
 }
 
 // testing this to have as reference for the actual assembly tests below
@@ -578,8 +626,11 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreShapeFunctions)
 
 }
 
-TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, WhateverINeedItToBeForNow)
+#ifdef PLATO_MESHMAP
+TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
 {
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
@@ -590,367 +641,28 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, WhateverINeedItToBeForNow)
         Plato::tolower(tElementType) != "tet4" )
         ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
     constexpr int tNumDofsPerNode  = ElementType::mNumDofsPerNode;
-    constexpr int tSpaceDim = ElementType::mNumSpatialDims;
 
-    Plato::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
-    // marks for ALL child nodes
-    auto tNumNodes = tMesh->NumNodes();
+    // parse contact
+    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
 
-    Plato::OrdinalType tNumTotalChildNodes(0);
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // for contact pairs defined in input deck
+    // get full arrays of child nodes and parent elements
+    auto tNumTotalNodes = Plato::Contact::count_total_child_nodes(tPairs);
 
-    std::string tTmpSideSetName = "block1_child";
-    tNumTotalChildNodes += tMesh->GetNodeSetNodes(tTmpSideSetName).extent(0);
+    Plato::OrdinalVector tAllChildNodes("", tNumTotalNodes);
+    Plato::OrdinalVector tAllParentElements("", tNumTotalNodes);
+    Plato::Contact::populate_full_contact_arrays<ElementType>(tPairs, tSpatialModel, tAllChildNodes, tAllParentElements);
+    Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh);
 
-    tTmpSideSetName = "block2_child";
-    tNumTotalChildNodes += tMesh->GetNodeSetNodes(tTmpSideSetName).extent(0);
-    // end
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-
-    Plato::OrdinalVector tAllMarkedNodes("marking child nodes", tNumNodes);
-    Plato::blas1::fill(static_cast<Plato::OrdinalType>(-1), tAllMarkedNodes);  
-
-    Plato::OrdinalVector tCheckChildNodes("store to check if child nodes are repeated", tNumNodes);
-    Plato::blas1::fill(static_cast<Plato::OrdinalType>(0), tCheckChildNodes);  
-
-    Plato::OrdinalVector tAllChildNodes("all child nodes in all contact pairs",tNumTotalChildNodes);
-    Plato::OrdinalType tOffset(0);
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // for contact pairs defined in input deck
-    tTmpSideSetName = "block1_child";
-    auto tTmpChildFaceNodes = tMesh->GetNodeSetNodes(tTmpSideSetName);
-    auto tTmpNumChildNodes = tTmpChildFaceNodes.extent(0);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tTmpNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType iChildNode)
-    {
-        auto tChildNode = tTmpChildFaceNodes(iChildNode);
-        tAllMarkedNodes(tChildNode) = tOffset + iChildNode;
-        tAllChildNodes(tOffset + iChildNode) = tChildNode;
-        Kokkos::atomic_increment(&tCheckChildNodes(tChildNode));
-    });
-    tOffset += tTmpNumChildNodes;
-
-    // pull this part out since it is copied verbatum from above
-    tTmpSideSetName = "block2_child";
-    tTmpChildFaceNodes = tMesh->GetNodeSetNodes(tTmpSideSetName);
-    tTmpNumChildNodes = tTmpChildFaceNodes.extent(0);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tTmpNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType iChildNode)
-    {
-        auto tChildNode = tTmpChildFaceNodes(iChildNode);
-        tAllMarkedNodes(tChildNode) = tOffset + iChildNode;
-        tAllChildNodes(tOffset + iChildNode) = tChildNode;
-        Kokkos::atomic_increment(&tCheckChildNodes(tChildNode));
-    });
-    tOffset += tTmpNumChildNodes;
-    // end
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    
-    // check for repeated child nodes
-    Plato::OrdinalType tNumRecordedChild(0);
-    Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, tNumNodes),
-    KOKKOS_LAMBDA(const Plato::OrdinalType& aOrdinal, Plato::OrdinalType & aUpdate)
-    {
-        if ( tAllMarkedNodes(aOrdinal) >= 0 ) 
-        {  
-            Kokkos::atomic_increment(&aUpdate);
-        }
-    }, tNumRecordedChild);
-    if ( tNumRecordedChild > tNumTotalChildNodes )
-    {
-        ANALYZE_THROWERR("REPEATED CHILD NODE IN CONTACT SURFACE PAIRS")
-    }
-
-    // get block 1 side set info
-    std::string tSideSetName = "block1_child";
-    // auto tChildFaceNodes = tMesh->GetNodeSetNodes(tSideSetName);
-    auto tChildFaceNodes = tAllChildNodes;
-    auto tNumChildNodes = tChildFaceNodes.extent(0);
-
-    // auto tChildFaceNodes_Host = Plato::TestHelpers::get( tChildFaceNodes );
-    // std::vector<Plato::OrdinalType> tChildFaceNodes_Gold = {0, 5, 6, 7};
-    // for(int iVal=0; iVal<tChildFaceNodes_Gold.size(); iVal++){
-    //     TEST_EQUALITY(tChildFaceNodes_Host(iVal), tChildFaceNodes_Gold[iVal]);
-    // }
-
-    // get child node locations and map them
-    Plato::OrdinalVector tAllParentElements("parent elements", tNumTotalChildNodes);
-    auto tCoords = tMesh->Coordinates();
-    tOffset = 0;
-    // this could be brought up into the loops above? Or leave it separate since we have the check before this
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // for contact pairs defined in input deck
-    tTmpSideSetName = "block1_child";
-    tTmpChildFaceNodes = tMesh->GetNodeSetNodes(tTmpSideSetName);
-    tTmpNumChildNodes = tTmpChildFaceNodes.extent(0);
-    Plato::Array<tSpaceDim> tTranslation = {1.0, 0.0, 0.0}; // this would be given in input deck for each pair
-
-    Plato::ScalarMultiVector tChildNodeCoords("child node locations", tSpaceDim, tTmpNumChildNodes);
-    Plato::ScalarMultiVector tChildNodeMappedCoords("mapped child node locations", tSpaceDim, tTmpNumChildNodes);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tTmpNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
-    {
-        auto tNodeOrdinal = tTmpChildFaceNodes(nodeOrdinal);
-        for (Plato::OrdinalType iDim = 0; iDim < tSpaceDim; iDim++)
-        {
-            tChildNodeCoords(iDim, nodeOrdinal) = tCoords(tNodeOrdinal*tSpaceDim+iDim);
-            tChildNodeMappedCoords(iDim, nodeOrdinal) = tCoords(tNodeOrdinal*tSpaceDim+iDim) + tTranslation(iDim);
-        }
-    }, "get coords");
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // can pull this out of PBC MPCs? (don't want to repeat this code)
-    // in fact, can just make a method in SpatialModel class to return cell map or domain class
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    std::string tParentDomainName = "block_2";
-    Plato::OrdinalVector tDomainCellMap;
-    bool tFindName = 0;
-    for(auto& tDomain : tSpatialModel.Domains)
-    {
-        auto tName = tDomain.getElementBlockName();
-        if( tName == tParentDomainName )
-            tDomainCellMap = tDomain.cellOrdinals();
-            tFindName = 1;
-    }
-    if( tFindName == 0 )
-    {
-        ANALYZE_THROWERR("Assembly Tests: PARENT DOMAIN FOR PBC MULTIPOINT CONSTRAINT NOT FOUND.")
-    }
-
-    Plato::OrdinalVector tParentElements("parent elements", tTmpNumChildNodes);
-
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-      (tSpatialModel.Mesh, tDomainCellMap, tChildNodeCoords, tChildNodeMappedCoords, tParentElements);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tTmpNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
-    {
-        tAllParentElements(tOffset + nodeOrdinal) = tParentElements(nodeOrdinal);
-    }, "store parent elements");
-
-    tOffset += tTmpNumChildNodes;
-    
-    // again, pull this out since it is repeated
-    tTmpSideSetName = "block2_child";
-    tTmpChildFaceNodes = tMesh->GetNodeSetNodes(tTmpSideSetName);
-    tTmpNumChildNodes = tTmpChildFaceNodes.extent(0);
-    tTranslation = {-1.0, 0.0, 0.0}; // this would be given in input deck for each pair
-
-    // tChildNodeCoords("child node locations", tSpaceDim, tTmpNumChildNodes);
-    // tChildNodeMappedCoords("mapped child node locations", tSpaceDim, tTmpNumChildNodes);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tTmpNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
-    {
-        auto tNodeOrdinal = tTmpChildFaceNodes(nodeOrdinal);
-        for (Plato::OrdinalType iDim = 0; iDim < tSpaceDim; iDim++)
-        {
-            tChildNodeCoords(iDim, nodeOrdinal) = tCoords(tNodeOrdinal*tSpaceDim+iDim);
-            tChildNodeMappedCoords(iDim, nodeOrdinal) = tCoords(tNodeOrdinal*tSpaceDim+iDim) + tTranslation(iDim);
-        }
-    }, "get coords");
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // can pull this out of PBC MPCs? (don't want to repeat this code)
-    // in fact, can just make a method in SpatialModel class to return cell map or domain class
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    tParentDomainName = "block_1";
-    tFindName = 0;
-    for(auto& tDomain : tSpatialModel.Domains)
-    {
-        auto tName = tDomain.getElementBlockName();
-        if( tName == tParentDomainName )
-            tDomainCellMap = tDomain.cellOrdinals();
-            tFindName = 1;
-    }
-    if( tFindName == 0 )
-    {
-        ANALYZE_THROWERR("Assembly Tests: PARENT DOMAIN FOR PBC MULTIPOINT CONSTRAINT NOT FOUND.")
-    }
-
-    Plato::blas1::fill(static_cast<Plato::OrdinalType>(0), tParentElements);  
-
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-      (tSpatialModel.Mesh, tDomainCellMap, tChildNodeCoords, tChildNodeMappedCoords, tParentElements);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tTmpNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
-    {
-        tAllParentElements(tOffset + nodeOrdinal) = tParentElements(nodeOrdinal);
-    }, "store parent elements");
-
-    tOffset += tTmpNumChildNodes;
-    // end
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    tParentElements = tAllParentElements;
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // THIS NEEDS TO BE DONE AFTER DIAGONALS ARE INSERTED
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // Plato::OrdinalVectorT<const Plato::OrdinalType> tOffsetMap;
-    // Plato::OrdinalVectorT<const Plato::OrdinalType> tNodeOrds;
-    // tMesh->NodeNodeGraph(tOffsetMap, tNodeOrds);
-
-    Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
+    // add contact graph
+    Teuchos::RCP<Plato::CrsMatrixType> tJacobianOrig =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
-    auto tOffsetMap = tJacobianMat->rowMap();
-    auto tNodeOrds  = tJacobianMat->columnIndices();
-
-    // find and store number of entries in node node graph for just child nodes
-    Plato::OrdinalVector tChildOffsetMap("offset map for just child nodes", tNumChildNodes+1);
-    Plato::OrdinalType tNumChildConnectedNodes(0);
-
-    Kokkos::parallel_scan (Kokkos::RangePolicy<>(0,tNumChildNodes),
-    KOKKOS_LAMBDA (const Plato::OrdinalType& aOrdinal, Plato::OrdinalType& aUpdate, const bool& tIsFinal)
-    {
-        auto tChildNode = tChildFaceNodes(aOrdinal);
-        const auto tNumConnected = tOffsetMap(tChildNode+1) - tOffsetMap(tChildNode);
-
-        aUpdate += tNumConnected;
-        if( tIsFinal )
-        {
-          tChildOffsetMap(aOrdinal+1) = aUpdate;
-        }
-    }, tNumChildConnectedNodes);
-
-    // mark child nodes
-    Plato::OrdinalVector tMarkedNodes("marking child nodes", tNumNodes);
-    Plato::blas1::fill(static_cast<Plato::OrdinalType>(-1), tMarkedNodes);  
     
-    // figure out number of nodes and save them to fill out maps
-    constexpr int tNumNodesPerCell  = ElementType::mNumNodesPerCell;
-
-    auto tConnectivity = tMesh->Connectivity();
-
-    Plato::OrdinalType tNumOrdinals = tNumChildConnectedNodes*tNumNodesPerCell;
-    Plato::OrdinalVector tFatGraph_ordinals("largest number of possible nodes in graph", tNumOrdinals);
-    Plato::OrdinalVector tNumConnectedNodes("number of nodes connected by contact", tNumChildNodes);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType iChildNode)
-    {
-        Plato::OrdinalType tNumUnique(0);
-
-        auto tChildNode = tChildFaceNodes(iChildNode);
-        tMarkedNodes(tChildNode) = iChildNode;
-                
-        Plato::OrdinalType tFrom = tOffsetMap(tChildNode);
-        Plato::OrdinalType tTo   = tOffsetMap(tChildNode + 1);
-
-        auto tFatGraphOffset = tChildOffsetMap(iChildNode)*tNumNodesPerCell;
-
-        for(Plato::OrdinalType iOrd=tFrom; iOrd<tTo; iOrd++)
-        {
-            auto tGraphNode = tNodeOrds(iOrd);
-            
-            // check if node in graph is a child node
-            Plato::OrdinalType tOutput = -1;
-            for(Plato::OrdinalType iChild=0; iChild<tNumChildNodes; iChild++)
-            {
-                if (tChildFaceNodes(iChild) == tGraphNode)
-                {
-                    tOutput = iChild;
-                    break;
-                }
-            }
-
-            if (tOutput >= 0)
-            {
-                auto tParentElement = tParentElements(tOutput);
-                for(Plato::OrdinalType tElemLocalNodeOrd=0; tElemLocalNodeOrd<tNumNodesPerCell; tElemLocalNodeOrd++)
-                {
-                    auto tNodeOrd = tConnectivity(tParentElement*tNumNodesPerCell + tElemLocalNodeOrd);
-
-                    // get unique parent nodes
-                    bool isUnique = true;
-                    for( Plato::OrdinalType tIndex=0; tIndex<tNumUnique; tIndex++ )
-                    {
-                        if( tFatGraph_ordinals(tFatGraphOffset+tIndex) == tNodeOrd )
-                        {
-                            isUnique = false;
-                        }
-                    }
-                    if(isUnique)
-                    {
-                        tFatGraph_ordinals(tFatGraphOffset+tNumUnique) = tNodeOrd;
-                        tNumUnique++;
-                    }
-                }
-            }
-        }
-        tNumConnectedNodes(iChildNode) = tNumUnique;
-    });
-
-    Plato::OrdinalVector tFullOffsetMap("offset map accounting for contact", tNumNodes+1);
-
-    Plato::OrdinalType tNumNodeNodeEntries(0);
-    Kokkos::parallel_scan (Kokkos::RangePolicy<>(0,tNumNodes),
-    KOKKOS_LAMBDA (const Plato::OrdinalType& iOrdinal, Plato::OrdinalType& aUpdate, const bool& tIsFinal)
-    {
-        auto tChildMark = tMarkedNodes(iOrdinal);
-        
-        auto tOriginalNum = tOffsetMap(iOrdinal+1) - tOffsetMap(iOrdinal);
-        auto tContactNum = tNumConnectedNodes(tChildMark);
-
-        const auto tVal = (tChildMark < 0) ? tOriginalNum : tOriginalNum + tContactNum;
-        aUpdate += tVal;
-        if( tIsFinal )
-        {
-          tFullOffsetMap(iOrdinal+1) = aUpdate;
-        }
-    }, tNumNodeNodeEntries);
-
-    Plato::OrdinalVector tFullNodeOrds("node-node ordinals accounting for contact", tNumNodeNodeEntries);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-    {
-        auto tNewFrom = tFullOffsetMap(aNodeOrdinal);
-
-        // fill in old entries
-        auto tOldFrom = tOffsetMap(aNodeOrdinal);
-        auto tOldNum  = tOffsetMap(aNodeOrdinal+1) - tOldFrom;
-        for( Plato::OrdinalType tIndex=0; tIndex<tOldNum; tIndex++ )
-        {
-            tFullNodeOrds(tNewFrom+tIndex) = tNodeOrds(tOldFrom+tIndex);
-        }
-
-        // fill in new entries
-        auto tChildMark = tMarkedNodes(aNodeOrdinal);
-        if (tChildMark >= 0)
-        {
-            auto tNewConnected = tNumConnectedNodes(tChildMark);
-            auto tStart = tNewFrom + tOldNum;
-            auto tEnd   = tStart + tNewConnected;
-
-            auto tFatGraphOffset = tChildOffsetMap(tChildMark)*tNumNodesPerCell;
-            for( Plato::OrdinalType tIndex=tStart; tIndex<tEnd; tIndex++ )
-            {
-                tFullNodeOrds(tIndex) = tFatGraph_ordinals(tFatGraphOffset++);
-            }
-        }
-    }, "node ordinals accounting for contact");
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // then i need to sort? can pull out the sort from engine mesh?
-    // PULL IT OUT INTO A UTILITY?
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
-    // sort list of connected nodes (otherwise cpu and gpu builds produce different graphs)
-    auto& tOffs = tFullOffsetMap;
-    auto& tOrds = tFullNodeOrds;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-    {
-        auto tFrom = tOffs(aNodeOrdinal);
-        auto tTo = tOffs(aNodeOrdinal+1)-1;
-        for( decltype(tFrom) tIndexI=tFrom; tIndexI<tTo; tIndexI++ )
-        {
-            for( decltype(tFrom) tIndexJ=tFrom; tIndexJ<tTo; tIndexJ++ )
-            {
-                if( tOrds(tIndexJ) > tOrds(tIndexJ+1) )
-                {
-                    auto tHereHoldThis = tOrds(tIndexJ+1);
-                    tOrds(tIndexJ+1) = tOrds(tIndexJ);
-                    tOrds(tIndexJ) = tHereHoldThis;
-                }
-            }
-        }
-    }, "sort ordinals");
+    auto tJacobian = Plato::Contact::add_contact_graph_to_matrix(tJacobianOrig, tMesh, tAllChildNodes, tAllParentElements);
+    auto tFullOffsetMap = tJacobian->rowMap();
+    auto tFullNodeOrds  = tJacobian->columnIndices();
 
     // check row map
     auto tRowMap_Host = Plato::TestHelpers::get( tFullOffsetMap );
@@ -983,10 +695,11 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, WhateverINeedItToBeForNow)
         8, 11, 13, 14,
         8, 9, 10, 13, 15
         };
+
     for(int iVal=0; iVal<tColumnIndices_Gold.size(); iVal++){
         TEST_EQUALITY(tColumnIndices_Host(iVal), tColumnIndices_Gold[iVal]);
     }
-
 }
+#endif
 
 }
