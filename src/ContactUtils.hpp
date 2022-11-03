@@ -56,7 +56,6 @@ Plato::ScalarMultiVector map_node_locations
  const Teuchos::Array<Plato::Scalar> & aTranslation,
  Plato::Scalar                         aScale = 1.0);
 
-
 Plato::OrdinalVector global_local_child_node_ord_map
 (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aChildNodes,
        Plato::OrdinalType                                aNumMeshNodes);
