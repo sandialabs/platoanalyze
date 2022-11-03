@@ -23,7 +23,6 @@ public:
     operator()
     (Teuchos::RCP<Plato::CrsMatrixType> aMatrix);
 
-private:
     Plato::OrdinalType 
     extractChildNodeOffsets(const Plato::OrdinalVector & aOffsetMap);
 
