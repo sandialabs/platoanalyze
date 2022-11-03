@@ -20,6 +20,8 @@ set(ANALYZE_SOURCES
     AbstractTMKinetics.cpp
     LinearTMKinetics.cpp
     NonLinearTMKinetics.cpp
+    NaturalBC.cpp
+    NaturalBCTypes.cpp
 )
 
 if(EXPRESSION)

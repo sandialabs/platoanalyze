@@ -12,54 +12,23 @@
 
 #include "AnalyzeMacros.hpp"
 #include "PlatoMathExpr.hpp"
-#include "PlatoUtilities.hpp"
+#include "NaturalBCTypes.hpp"
+#include "NaturalBCData.hpp"
 #include "SurfaceLoadIntegral.hpp"
 #include "SurfacePressureIntegral.hpp"
 
 namespace Plato
 {
+/// @return The string associated with parameter @a aParameterName read from sublist
+///  @a aSublist. @a aBCName is the name of the parent list used for error messages.
+/// @throw std::runtime_error if @a aParameterName cannot be found in @a aSublist or
+///  it does not have type string.
+std::string getStringDataAndAffirmExists(
+    const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName);
 
-/***************************************************************************//**
- * \brief Natural boundary condition type ENUM
-*******************************************************************************/
-struct Neumann
-{
-    enum bc_t
-    {
-        UNDEFINED = 0,
-        UNIFORM = 1,
-        UNIFORM_PRESSURE = 2,
-        UNIFORM_COMPONENT = 3,
-    };
-};
-// struct Neumann
-
-/***************************************************************************//**
- * \brief Return natural boundary condition type
- * \param [in] aType natural boundary condition type string
- * \return natural boundary condition type enum
-*******************************************************************************/
-inline Plato::Neumann::bc_t natural_boundary_condition_type(const std::string& aType)
-{
-    auto tLowerTag = Plato::tolower(aType);
-    if(tLowerTag == "uniform")
-    {
-        return Plato::Neumann::UNIFORM;
-    }
-    else if(tLowerTag == "uniform pressure")
-    {
-        return Plato::Neumann::UNIFORM_PRESSURE;
-    }
-    else if(tLowerTag == "uniform component")
-    {
-        return Plato::Neumann::UNIFORM_COMPONENT;
-    }
-    else
-    {
-        ANALYZE_THROWERR(std::string("Natural Boundary Condition: 'Type' Parameter Keyword: '") + tLowerTag + "' is not supported.")
-    }
-}
-// function natural_boundary_condition_type
+/// @throw std::runtime_error if @a aParameterName cannot be found in @a aSublist
+void affirmExists(
+    const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName);
 
 /***************************************************************************//**
  * \brief Class for natural boundary conditions.
@@ -76,51 +45,23 @@ template<
   Plato::OrdinalType DofOffset=0>
 class NaturalBC
 {
-    const std::string mName;         /*!< user-defined load sublist name */
-    const std::string mType;         /*!< natural boundary condition type */
-    const std::string mSideSetName;  /*!< side set name */
-    Plato::Array<NumDofs> mFlux;  /*!< force vector values */
-    std::shared_ptr<Plato::MathExpr> mFluxExpr[NumDofs];
-
+    const std::string mName; /*!< user-defined load sublist name */
+    Plato::Neumann mType;
+    std::string mSidesetName;  /*!< side set name */
+    std::unique_ptr<NaturalBCData<NumDofs>> mData;
 public:
     /***************************************************************************//**
      * \brief Constructor
      * \param [in] aLoadName user-defined name for natural boundary condition sublist
      * \param [in] aSubList  natural boundary condition input parameter sublist
     *******************************************************************************/
-    NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>(const std::string & aLoadName, Teuchos::ParameterList &aSubList) :
+    NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>(const std::string & aLoadName, const Teuchos::ParameterList& aSublist) :
         mName(aLoadName),
-        mType(aSubList.get<std::string>("Type")),
-        mSideSetName(aSubList.get<std::string>("Sides")),
-        mFluxExpr{nullptr}
+        mType(naturalBoundaryCondition(getStringDataAndAffirmExists("Type", aSublist, mName))),
+        mSidesetName(getStringDataAndAffirmExists("Sides", aSublist, mName)),
+        mData(makeNaturalBCData<NumDofs>(aSublist))
     {
-        auto tIsValue = aSubList.isType<Teuchos::Array<Plato::Scalar>>("Vector");
-        auto tIsExpr  = aSubList.isType<Teuchos::Array<std::string>>("Vector");
-
-        if (tIsValue)
-        {
-            auto tFlux = aSubList.get<Teuchos::Array<Plato::Scalar>>("Vector");
-            for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
-            {
-                mFlux(tDof) = tFlux[tDof];
-            }
-        }
-        else
-        if (tIsExpr)
-        {
-            auto tExpr = aSubList.get<Teuchos::Array<std::string>>("Vector");
-            for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
-            {
-                mFluxExpr[tDof] = std::make_shared<Plato::MathExpr>(tExpr[tDof]);
-                mFlux(tDof) = mFluxExpr[tDof]->value(0.0);
-            }
-        }
     }
-
-    /***************************************************************************//**
-     * \brief Destructor
-    *******************************************************************************/
-    ~NaturalBC(){}
 
     /***************************************************************************//**
      * \brief Get the contribution to the assembled forcing vector.
@@ -168,13 +109,26 @@ public:
      * \brief Return natural boundary condition sublist name
      * \return sublist name
     *******************************************************************************/
-    decltype(mName) const& getSubListName() const { return mName; }
+    const std::string& getSubListName() const { return mName; }
 
     /***************************************************************************//**
      * \brief Return side set name for this natural boundary condition
      * \return side set name
     *******************************************************************************/
-    decltype(mSideSetName) const& getSideSetName() const { return mSideSetName; }
+    const std::string& getSideSetName() const { return mSidesetName; }
+
+    /***************************************************************************//**
+     * \brief Return natural boundary condition type 
+     * \return natural boundary condition type
+    *******************************************************************************/
+    Neumann getType() const { return mType; }
+
+    const NaturalBCData<NumDofs>& getNaturalBCData() const { return *mData; }
+    
+private:
+
+    void setBCType();
+    void setSidesetName();
 
 }; // class NaturalBC
 
@@ -196,36 +150,26 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
           Plato::Scalar aCurrentTime
 )
 {
-
-    for(int iDim=0; iDim<NumDofs; iDim++)
+    switch(mType)
     {
-        if(mFluxExpr[iDim])
-        {
-            mFlux(iDim) = mFluxExpr[iDim]->value(aCurrentTime);
-        }
-    }
-
-    auto tType = Plato::natural_boundary_condition_type(mType);
-    switch(tType)
-    {
-        case Plato::Neumann::UNIFORM:
+        case Plato::Neumann::UNIFORM_LOAD:
         case Plato::Neumann::UNIFORM_COMPONENT:
         {
-            Plato::SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfaceLoad(mSideSetName, mFlux);
+            Plato::SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfaceLoad(mSidesetName, aCurrentTime, mData->clone());
             tSurfaceLoad(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
             break;
         }
+
         case Plato::Neumann::UNIFORM_PRESSURE:
+        case Plato::Neumann::VARIABLE_PRESSURE:
         {
-             Plato::SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfacePress(mSideSetName, mFlux);
-             tSurfacePress(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
+            Plato::SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfacePress(mSidesetName, aCurrentTime, mData->clone());
+            tSurfacePress(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
             break;
         }
         default:
         {
-            std::stringstream tMsg;
-            tMsg << "Natural Boundary Condition: Natural Boundary Condition Type '" << mType.c_str() << "' is NOT supported.";
-            ANALYZE_THROWERR(tMsg.str().c_str())
+            ANALYZE_THROWERR("Natural Boundary Condition: Natural Boundary Condition Type is NOT supported.")
         }
     }
 }
