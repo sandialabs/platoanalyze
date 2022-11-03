@@ -116,6 +116,7 @@ if(PLATOANALYZE_ENABLE_MESHMAP)
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
       MultipointConstraints.cpp
       ContactUtils.cpp
+      UpdateGraphForContact.cpp
   )
 
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}

@@ -21,6 +21,7 @@
 
 #ifdef PLATO_MESHMAP
 #include "ContactUtils.hpp"
+#include "UpdateGraphForContact.hpp"
 #endif
 
 namespace AssemblyTests
@@ -657,10 +658,12 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
     Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh);
 
     // add contact graph
+    Plato::Contact::UpdateGraphForContact updateGraphForContact(tMesh, tAllChildNodes, tAllParentElements);
+
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianOrig =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
     
-    auto tJacobian = Plato::Contact::add_contact_graph_to_matrix(tJacobianOrig, tMesh, tAllChildNodes, tAllParentElements);
+    auto tJacobian = updateGraphForContact(tJacobianOrig);
     auto tFullOffsetMap = tJacobian->rowMap();
     auto tFullNodeOrds  = tJacobian->columnIndices();
 

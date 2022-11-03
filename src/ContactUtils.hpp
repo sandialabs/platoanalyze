@@ -120,12 +120,6 @@ void check_for_repeated_child_nodes
 (const Plato::OrdinalVector & aChildNodes,
        Plato::Mesh            aMesh);
 
-Teuchos::RCP<Plato::CrsMatrixType> add_contact_graph_to_matrix
-(Teuchos::RCP<Plato::CrsMatrixType>   aMatrix,
- Plato::Mesh                          aMesh,
- const Plato::OrdinalVector         & aChildNodes,
- const Plato::OrdinalVector         & aParentElements);
-
 }
 
 }
