@@ -16,12 +16,12 @@
 
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
+#include "MatrixGraphFunctors.hpp"
 
 #include "InterpolateFromNodal.hpp"
 
 #ifdef PLATO_MESHMAP
 #include "ContactUtils.hpp"
-#include "UpdateGraphForContact.hpp"
 #endif
 
 namespace AssemblyTests
@@ -658,12 +658,11 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
     Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh);
 
     // add contact graph
-    Plato::Contact::UpdateGraphForContact updateGraphForContact(tMesh, tAllChildNodes, tAllParentElements);
+    tSpatialModel.addContact(tAllChildNodes, tAllParentElements);
 
-    Teuchos::RCP<Plato::CrsMatrixType> tJacobianOrig =
+    Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
     
-    auto tJacobian = updateGraphForContact(tJacobianOrig);
     auto tFullOffsetMap = tJacobian->rowMap();
     auto tFullNodeOrds  = tJacobian->columnIndices();
 

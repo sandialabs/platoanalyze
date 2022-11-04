@@ -3,8 +3,6 @@
 #include "PlatoMesh.hpp"
 #include "PlatoStaticsTypes.hpp"
 
-#include <Teuchos_RCP.hpp>
-
 namespace Plato
 {
 
@@ -14,47 +12,49 @@ namespace Contact
 class UpdateGraphForContact
 {
 public:
-    UpdateGraphForContact
-    (Plato::Mesh                  aMesh,
-     const Plato::OrdinalVector & aChildNodes,
+    UpdateGraphForContact(Plato::Mesh aMesh);
+
+    void 
+    createNodeNodeGraph
+    (const Plato::OrdinalVector & aChildNodes,
      const Plato::OrdinalVector & aParentElements);
 
-    Teuchos::RCP<Plato::CrsMatrixType> 
-    operator()
-    (Teuchos::RCP<Plato::CrsMatrixType> aMatrix);
+    void
+    getNodeNodeGraph
+    (Plato::OrdinalVector & aOffsetMap,
+     Plato::OrdinalVector & aNodeOrds);
 
     Plato::OrdinalType 
-    extractChildNodeOffsets(const Plato::OrdinalVector & aOffsetMap);
+    extractChildNodeOffsets(const Plato::OrdinalVector & aChildNodes);
 
     void 
     storeUniqueParentNodeContributions
-    (const Plato::OrdinalVector & aOffsetMap, 
-     const Plato::OrdinalVector & aNodeOrds);
+    (const Plato::OrdinalVector & aChildNodes, 
+     const Plato::OrdinalVector & aParentElements);
 
     Plato::OrdinalType 
-    updateOffsetMap(const Plato::OrdinalVector & aOffsetMap);
+    updateOffsetMap();
 
     void 
-    updateNodeOrds
-    (const Plato::OrdinalVector & aOffsetMap, 
-    const Plato::OrdinalVector & aNodeOrds);
+    updateNodeOrds();
 
 private:
-    Plato::OrdinalVector mChildNodes;
-    Plato::OrdinalVector mParentElements;
-
     Plato::OrdinalVectorT<const Plato::OrdinalType> mConnectivity;
 
     Plato::OrdinalType mNumTotalNodes;
     Plato::OrdinalType mNumNodesPerElement;
 
-    Plato::OrdinalVector mChildOffsetMap;
     Plato::OrdinalVector mMarkedChildNodes;
-    Plato::OrdinalVector mNumConnectedNodes;
-    Plato::OrdinalVector mAllGraphOrdinals;
+
+    Plato::OrdinalVector mOffsetMap;
+    Plato::OrdinalVector mNodeOrds;
 
     Plato::OrdinalVector mFullOffsetMap;
     Plato::OrdinalVector mFullNodeOrds;
+
+    Plato::OrdinalVector mChildOffsetMap;
+    Plato::OrdinalVector mNumConnectedNodes;
+    Plato::OrdinalVector mAllGraphOrdinals;
 };
 
 }

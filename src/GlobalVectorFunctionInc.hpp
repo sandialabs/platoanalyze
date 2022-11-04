@@ -7,6 +7,8 @@
 #pragma once
 
 #include "WorksetBase.hpp"
+#include "ImplicitFunctors.hpp"
+#include "MatrixGraphFunctors.hpp"
 #include "SpatialModel.hpp"
 #include "SimplexFadTypes.hpp"
 #include "InfinitesimalStrainPlasticity.hpp"
@@ -797,12 +799,12 @@ public:
     ~GlobalVectorFunctionInc(){ return; }
 
     /***************************************************************************//**
-     * \brief Return reference to mesh database
+     * \brief Return reference to spatial model
      * \return mesh database
     *******************************************************************************/
-    Plato::Mesh getMesh() const
+    Plato::Mesh getSpatialModel() const
     {
-        return mSpatialModel.Mesh;
+        return mSpatialModel;
     }
 
     /***********************************************************************//**
@@ -1173,7 +1175,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tAssembledTransposeJacobian =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumNodeStatePerNode, mNumGlobalDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumNodeStatePerNode, mNumGlobalDofsPerNode>( mSpatialModel );
 
         // create entry ordinal functor:
         // tJacobianMatEntryOrdinal(e, k, l) => G

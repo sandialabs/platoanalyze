@@ -3,6 +3,8 @@
 #include <memory>
 
 #include "WorksetBase.hpp"
+#include "ImplicitFunctors.hpp"
+#include "MatrixGraphFunctors.hpp"
 #include "NaturalBCs.hpp"
 #include "elliptic/AbstractVectorFunction.hpp"
 #include "elliptic/EvaluationTypes.hpp"
@@ -359,7 +361,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(tMesh);
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(mSpatialModel);
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -454,7 +456,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -547,7 +549,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -640,7 +642,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {

@@ -218,7 +218,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumConfigDofsPerNode, mNumDofsPerNode>(tMesh);
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumConfigDofsPerNode, mNumDofsPerNode>(mSpatialModel);
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -281,7 +281,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControlDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControlDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -344,7 +344,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumVelDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumVelDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -407,7 +407,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumVelDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumVelDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -470,7 +470,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumPressDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumPressDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -532,7 +532,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumTempDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumTempDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -594,7 +594,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumVelDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumVelDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -656,7 +656,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumPressDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumPressDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)
@@ -718,7 +718,7 @@ public:
         // create return matrix
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumTempDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumTempDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         // evaluate internal forces
         for(const auto& tDomain : mSpatialModel.Domains)

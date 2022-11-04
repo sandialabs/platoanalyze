@@ -4,6 +4,8 @@
 #include <memory>
 
 #include "WorksetBase.hpp"
+#include "ImplicitFunctors.hpp"
+#include "MatrixGraphFunctors.hpp"
 #include "stabilized/AbstractVectorFunction.hpp"
 #include "stabilized/EvaluationTypes.hpp"
 
@@ -387,7 +389,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(tMesh);
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(mSpatialModel);
 
         Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumSpatialDims, mNumDofsPerNode> tMatEntryOrdinal(tJacobianMat, tMesh);
 
@@ -593,7 +595,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode> tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
 
@@ -698,7 +700,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode> tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
 
@@ -911,7 +913,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumNodeStatePerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumNodeStatePerNode>( mSpatialModel );
 
         // create entry ordinal functor:
         // tJacobianMatEntryOrdinal(e, k, l) => G
@@ -1060,7 +1062,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumNodeStatePerNode, mNumDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumNodeStatePerNode, mNumDofsPerNode>( mSpatialModel );
 
         // create entry ordinal functor:
         // tJacobianMatEntryOrdinal(e, k, l) => G
@@ -1196,7 +1198,7 @@ public:
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( tMesh );
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( mSpatialModel );
 
         Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumControl, mNumDofsPerNode> tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
 

@@ -17,7 +17,6 @@
 #include "Plato_MeshMap.hpp"
 
 #include "WorksetBase.hpp"
-#include "ImplicitFunctors.hpp"
 #include "SpatialModel.hpp"
 
 #include "InterpolateFromNodal.hpp"

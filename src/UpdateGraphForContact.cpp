@@ -7,76 +7,68 @@ namespace Plato
 
 namespace Contact
 {
-UpdateGraphForContact::UpdateGraphForContact
-(Plato::Mesh                  aMesh,
- const Plato::OrdinalVector & aChildNodes,
- const Plato::OrdinalVector & aParentElements) : 
- mChildNodes(aChildNodes),
- mParentElements(aParentElements),
+UpdateGraphForContact::UpdateGraphForContact(Plato::Mesh aMesh) :
  mConnectivity(aMesh->Connectivity()),
  mNumTotalNodes(aMesh->NumNodes()),
  mNumNodesPerElement(aMesh->NumNodesPerElement()),
- mChildOffsetMap("child node offset map", aChildNodes.size() + 1),
  mMarkedChildNodes("marking child nodes", aMesh->NumNodes()),
- mNumConnectedNodes("number of nodes connected by contact", aChildNodes.size()),
- mAllGraphOrdinals("largest number of possible nodes in graph, has repeated values", 0),
+ mOffsetMap("offset map before contact", 0),
+ mNodeOrds("node-node ordinals before contact", 0),
  mFullOffsetMap("offset map accounting for contact", aMesh->NumNodes() + 1),
- mFullNodeOrds("node-node ordinals accounting for contact", 0)
+ mFullNodeOrds("node-node ordinals accounting for contact", 0),
+ mChildOffsetMap("child node offset map", 0),
+ mNumConnectedNodes("number of nodes connected by contact", 0),
+ mAllGraphOrdinals("largest number of possible nodes in graph, has repeated values", 0)
 {
     Plato::blas1::fill(static_cast<Plato::OrdinalType>(-1), mMarkedChildNodes);  
+    aMesh->NodeNodeGraph(mOffsetMap, mNodeOrds);
 }
 
-Teuchos::RCP<Plato::CrsMatrixType> 
-UpdateGraphForContact::operator() (Teuchos::RCP<Plato::CrsMatrixType> aMatrix)
+void 
+UpdateGraphForContact::createNodeNodeGraph
+(const Plato::OrdinalVector & aChildNodes,
+ const Plato::OrdinalVector & aParentElements)
 {
-    if (!aMatrix->isBlockMatrix())
-        ANALYZE_THROWERR("UpdateGraphForContact functor expected input matrix to be a block matrix.")
+    Kokkos::resize(mChildOffsetMap, aChildNodes.size() + 1);
+    Kokkos::resize(mNumConnectedNodes, aChildNodes.size());
 
-    auto tOffsetMap = aMatrix->rowMap();
-    auto tNodeOrds  = aMatrix->columnIndices();
-
-    auto tNumChildConnectedNodes = this->extractChildNodeOffsets(tOffsetMap);
+    auto tNumChildConnectedNodes = this->extractChildNodeOffsets(aChildNodes);
     Plato::OrdinalType tNumOrdinals = tNumChildConnectedNodes*mNumNodesPerElement;
     Kokkos::resize(mAllGraphOrdinals, tNumOrdinals);
 
-    this->storeUniqueParentNodeContributions(tOffsetMap, tNodeOrds);
+    this->storeUniqueParentNodeContributions(aChildNodes, aParentElements);
 
-    auto tNumNodeNodeEntries = this->updateOffsetMap(tOffsetMap);
+    auto tNumNodeNodeEntries = this->updateOffsetMap();
     Kokkos::resize(mFullNodeOrds, tNumNodeNodeEntries);
 
-    updateNodeOrds(tOffsetMap, tNodeOrds);
+    this->updateNodeOrds();
 
     Plato::sort_matrix_column_ordinals(mFullOffsetMap, mFullNodeOrds);
-
-    // create new matrix
-    auto tNumRowsPerBlock = aMatrix->numRowsPerBlock();
-    auto tNumColsPerBlock = aMatrix->numColsPerBlock();
-    auto numRows = mFullOffsetMap.size() - 1;
-    auto nnz = mFullNodeOrds.size();
-    Plato::OrdinalType numBlockDofs = tNumRowsPerBlock*tNumColsPerBlock;
-    typename Plato::CrsMatrixType::ScalarVectorT entries("matrix entries", nnz*numBlockDofs);
-    auto retMatrix = Teuchos::rcp(
-     new Plato::CrsMatrixType( mFullOffsetMap, mFullNodeOrds, entries,
-                     numRows*tNumRowsPerBlock, numRows*tNumColsPerBlock,
-                     tNumRowsPerBlock, tNumColsPerBlock )
-    );
-    return retMatrix;
 }
 
-Plato::OrdinalType 
-UpdateGraphForContact::extractChildNodeOffsets(const Plato::OrdinalVector & aOffsetMap)
-{
-    auto tNumChildNodes = mChildNodes.size();
+void
+UpdateGraphForContact::getNodeNodeGraph
+(Plato::OrdinalVector & aOffsetMap,
+ Plato::OrdinalVector & aNodeOrds)
+ {
+    aOffsetMap = mFullOffsetMap;
+    aNodeOrds = mFullNodeOrds;
+ }
 
-    auto& tChildNodes = mChildNodes;
+Plato::OrdinalType 
+UpdateGraphForContact::extractChildNodeOffsets(const Plato::OrdinalVector & aChildNodes)
+{
+    auto tNumChildNodes = aChildNodes.size();
+
+    auto& tOffsetMap = mOffsetMap;
     auto& tChildOffsetMap = mChildOffsetMap;
 
     Plato::OrdinalType tTotalConnectedNodes(0);
     Kokkos::parallel_scan (Kokkos::RangePolicy<>(0,tNumChildNodes),
     KOKKOS_LAMBDA (const Plato::OrdinalType& aOrdinal, Plato::OrdinalType& aUpdate, const bool& tIsFinal)
     {
-        auto tChildNode = tChildNodes(aOrdinal);
-        const auto tNumConnected = aOffsetMap(tChildNode+1) - aOffsetMap(tChildNode);
+        auto tChildNode = aChildNodes(aOrdinal);
+        const auto tNumConnected = tOffsetMap(tChildNode+1) - tOffsetMap(tChildNode);
 
         aUpdate += tNumConnected;
         if( tIsFinal )
@@ -90,15 +82,15 @@ UpdateGraphForContact::extractChildNodeOffsets(const Plato::OrdinalVector & aOff
 
 void 
 UpdateGraphForContact::storeUniqueParentNodeContributions
-(const Plato::OrdinalVector & aOffsetMap, 
- const Plato::OrdinalVector & aNodeOrds)
+(const Plato::OrdinalVector & aChildNodes, 
+ const Plato::OrdinalVector & aParentElements)
 {
-    auto tNumChildNodes = mChildNodes.size();
+    auto tNumChildNodes = aChildNodes.size();
     
     auto tNumNodesPerElement = mNumNodesPerElement;
-    auto& tChildNodes = mChildNodes;
-    auto& tParentElements = mParentElements;
     auto& tMarkedChildNodes = mMarkedChildNodes;
+    auto& tOffsetMap = mOffsetMap;
+    auto& tNodeOrds = mNodeOrds;
     auto& tChildOffsetMap = mChildOffsetMap;
     auto& tConnectivity = mConnectivity;
     auto& tAllGraphOrdinals = mAllGraphOrdinals;
@@ -108,23 +100,23 @@ UpdateGraphForContact::storeUniqueParentNodeContributions
     {
         Plato::OrdinalType tNumUnique(0);
 
-        auto tChildNode = tChildNodes(iChildNode);
+        auto tChildNode = aChildNodes(iChildNode);
         tMarkedChildNodes(tChildNode) = iChildNode;
                 
-        Plato::OrdinalType tFrom = aOffsetMap(tChildNode);
-        Plato::OrdinalType tTo   = aOffsetMap(tChildNode + 1);
+        Plato::OrdinalType tFrom = tOffsetMap(tChildNode);
+        Plato::OrdinalType tTo   = tOffsetMap(tChildNode + 1);
 
         auto tFatGraphOffset = tChildOffsetMap(iChildNode)*tNumNodesPerElement;
 
         for(Plato::OrdinalType iOrd=tFrom; iOrd<tTo; iOrd++)
         {
-            auto tGraphNode = aNodeOrds(iOrd);
+            auto tGraphNode = tNodeOrds(iOrd);
             
             // check if node in graph is a child node
             Plato::OrdinalType tOutput = -1;
             for(Plato::OrdinalType iChild=0; iChild<tNumChildNodes; iChild++)
             {
-                if (tChildNodes(iChild) == tGraphNode)
+                if (aChildNodes(iChild) == tGraphNode)
                 {
                     tOutput = iChild;
                     break;
@@ -133,7 +125,7 @@ UpdateGraphForContact::storeUniqueParentNodeContributions
 
             if (tOutput >= 0)
             {
-                auto tParentElement = tParentElements(tOutput);
+                auto tParentElement = aParentElements(tOutput);
                 for(Plato::OrdinalType tElemLocalNodeOrd=0; tElemLocalNodeOrd<tNumNodesPerElement; tElemLocalNodeOrd++)
                 {
                     auto tNodeOrd = tConnectivity(tParentElement*tNumNodesPerElement + tElemLocalNodeOrd);
@@ -158,9 +150,10 @@ UpdateGraphForContact::storeUniqueParentNodeContributions
 }
 
 Plato::OrdinalType 
-UpdateGraphForContact::updateOffsetMap(const Plato::OrdinalVector & aOffsetMap)
+UpdateGraphForContact::updateOffsetMap()
 {
     auto tNumTotalNodes = mFullOffsetMap.size() - 1;
+    auto& tOffsetMap = mOffsetMap;
     auto& tFullOffsetMap = mFullOffsetMap;
     auto& tMarkedChildNodes = mMarkedChildNodes;
     auto& tNumConnectedNodes = mNumConnectedNodes;
@@ -171,7 +164,7 @@ UpdateGraphForContact::updateOffsetMap(const Plato::OrdinalVector & aOffsetMap)
     {
         auto tChildMark = tMarkedChildNodes(iOrdinal);
         
-        auto tOriginalNum = aOffsetMap(iOrdinal+1) - aOffsetMap(iOrdinal);
+        auto tOriginalNum = tOffsetMap(iOrdinal+1) - tOffsetMap(iOrdinal);
         auto tContactNum = tNumConnectedNodes(tChildMark);
 
         const auto tVal = (tChildMark < 0) ? tOriginalNum : tOriginalNum + tContactNum;
@@ -186,12 +179,12 @@ UpdateGraphForContact::updateOffsetMap(const Plato::OrdinalVector & aOffsetMap)
 }
 
 void 
-UpdateGraphForContact::updateNodeOrds
-(const Plato::OrdinalVector & aOffsetMap, 
- const Plato::OrdinalVector & aNodeOrds)
+UpdateGraphForContact::updateNodeOrds()
 {
     auto tNumTotalNodes = mFullOffsetMap.size() - 1;
     auto tNumNodesPerElement = mNumNodesPerElement;
+    auto& tOffsetMap = mOffsetMap;
+    auto& tNodeOrds = mNodeOrds;
     auto& tFullOffsetMap = mFullOffsetMap;
     auto& tFullNodeOrds = mFullNodeOrds;
     auto& tMarkedChildNodes = mMarkedChildNodes;
@@ -204,11 +197,11 @@ UpdateGraphForContact::updateNodeOrds
         auto tNewFrom = tFullOffsetMap(aNodeOrdinal);
 
         // fill in old entries
-        auto tOldFrom = aOffsetMap(aNodeOrdinal);
-        auto tOldNum  = aOffsetMap(aNodeOrdinal+1) - tOldFrom;
+        auto tOldFrom = tOffsetMap(aNodeOrdinal);
+        auto tOldNum  = tOffsetMap(aNodeOrdinal+1) - tOldFrom;
         for( Plato::OrdinalType tIndex=0; tIndex<tOldNum; tIndex++ )
         {
-            tFullNodeOrds(tNewFrom+tIndex) = aNodeOrds(tOldFrom+tIndex);
+            tFullNodeOrds(tNewFrom+tIndex) = tNodeOrds(tOldFrom+tIndex);
         }
 
         // fill in new entries
