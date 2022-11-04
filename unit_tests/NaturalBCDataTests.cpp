@@ -1,0 +1,245 @@
+#include "Hex8.hpp"
+#include "NaturalBCData.hpp"
+#include "util/PlatoTestHelpers.hpp"
+
+#include <Teuchos_UnitTestHarness.hpp>
+#include <Teuchos_XMLParameterListHelpers.hpp>
+
+namespace
+{
+/// The purpose of this function to emulate using scalarBoundarDataAtIndex in a kokkos
+/// parallelized section for testing.
+template<unsigned int NumIndices>
+Plato::ScalarVector boundaryDataAtIndices(const Plato::NaturalBCScalarData& aData, 
+    const Plato::Array<NumIndices, unsigned int>& aIndices)
+{
+    Plato::ScalarVector tOut("test bc data", NumIndices);
+    Kokkos::parallel_for(aIndices.size(),
+    KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    {
+        tOut(aIndex) = Plato::scalarBoundaryDataAtIndex(aData, aIndices[aIndex]);
+    });
+    return tOut;
+}
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, UniformPressure)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
+        "<ParameterList  name='Test Boundary Condition'>\n"
+        "  <Parameter name='Type' type='string' value='Uniform pressure'/>\n"
+        "  <Parameter name='Value' type='double' value='1'/>\n"
+        "  <Parameter name='Sides' type='string' value='x+'/>\n"
+        "</ParameterList>\n"
+    );
+
+    constexpr int kNumDOfs = 3;
+    std::unique_ptr<Plato::NaturalBCData<kNumDOfs>> tBCData = Plato::makeNaturalBCData<kNumDOfs>(*tInputs);
+
+    TEST_ASSERT(tBCData != nullptr);
+    TEST_ASSERT(dynamic_cast<Plato::UniformScalarNaturalBCData<kNumDOfs>*>(tBCData.get()) != nullptr);
+
+    const auto tScalarBoundaryData = tBCData->getScalarData(nullptr);
+
+    constexpr unsigned int kNumIndices = 3;
+    Plato::ScalarVector tResult = boundaryDataAtIndices<kNumIndices>(tScalarBoundaryData, {0, 2, 42});
+    auto tHostMirror = Kokkos::create_mirror_view(tResult);
+    Kokkos::deep_copy(tHostMirror, tResult);
+    TEST_EQUALITY(tHostMirror(0), 1.0);
+    TEST_EQUALITY(tHostMirror(1), 1.0);
+    TEST_EQUALITY(tHostMirror(2), 1.0);
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, Uniform)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
+        "<ParameterList  name='Test Boundary Condition'>\n"
+        "  <Parameter name='Type' type='string' value='Uniform'/>\n"
+        "  <Parameter name='Values' type='Array(double)' value='{1, 2, 3}'/>\n"
+        "  <Parameter name='Sides' type='string' value='z-'/>\n"
+        "</ParameterList>\n"
+    );
+
+    constexpr int kNumDOfs = 3;
+    std::unique_ptr<Plato::NaturalBCData<kNumDOfs>> tBCData = Plato::makeNaturalBCData<kNumDOfs>(*tInputs);
+
+    TEST_ASSERT(tBCData != nullptr);
+    TEST_ASSERT(dynamic_cast<Plato::UniformVectorNaturalBCData<kNumDOfs>*>(tBCData.get()) !=  nullptr);
+
+    const auto tVectorBoundaryData = tBCData->getVectorData();
+
+    TEST_EQUALITY(tVectorBoundaryData[0], 1.0);
+    TEST_EQUALITY(tVectorBoundaryData[1], 2.0);
+    TEST_EQUALITY(tVectorBoundaryData[2], 3.0);
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, TimeVarying)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
+        "<ParameterList  name='Test Boundary Condition'>\n"
+        "  <Parameter name='Type' type='string' value='Uniform'/>\n"
+        "  <Parameter name='Values' type='Array(string)' value='{t, 2 * t}'/>\n"
+        "  <Parameter name='Sides' type='string' value='z-'/>\n"
+        "</ParameterList>\n"
+    );
+
+    constexpr int kNumDOfs = 2;
+    std::unique_ptr<Plato::NaturalBCData<kNumDOfs>> tBCData = Plato::makeNaturalBCData<kNumDOfs>(*tInputs);
+
+    TEST_ASSERT(tBCData != nullptr);
+    TEST_ASSERT(dynamic_cast<Plato::TimeVaryingVectorNaturalBCData<kNumDOfs>*>(tBCData.get()) != nullptr);
+
+    for(int t = 0; t < 4; ++t)
+    {
+        const auto tVectorBoundaryData = tBCData->getVectorData(t);
+        TEST_EQUALITY(tVectorBoundaryData[0], static_cast<double>(t));
+        TEST_EQUALITY(tVectorBoundaryData[1], static_cast<double>(2*t));
+    }
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputUniform)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
+        "<ParameterList  name='Test Boundary Condition'>\n"
+        "  <Parameter name='Type' type='string' value='Variable pressure'/>\n"
+        "  <Parameter name='Variable' type='string' value='pressure_data'/>\n"
+        "  <Parameter name='Sides' type='string' value='z-'/>\n"
+        "</ParameterList>\n"
+    );
+
+    constexpr int kMeshWidth = 2;
+    constexpr auto kMeshName = "test.exo";
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", kMeshWidth);
+    // Write node data
+    {
+        Plato::MeshIO tWriter = Plato::MeshIOFactory::create(kMeshName, tMesh, "Write");
+
+        Plato::ScalarVector tDataOut("pressure_data", tMesh->NumNodes());
+        Kokkos::deep_copy(tDataOut, 42.0);
+        tWriter->AddNodeData("pressure_data", tDataOut);
+        constexpr int kStepIndex = 0;
+        constexpr double kTime = 0.0;
+        tWriter->Write(kStepIndex, kTime);
+    }
+
+    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
+    constexpr int kNumDOfs = 3;
+    std::unique_ptr<Plato::NaturalBCData<kNumDOfs>> tBCData = Plato::makeNaturalBCData<kNumDOfs>(*tInputs);
+
+    TEST_ASSERT(tBCData != nullptr);
+    TEST_ASSERT(dynamic_cast<Plato::SpatiallyVaryingNaturalBCData<kNumDOfs>*>(tBCData.get()) != nullptr);
+
+    const auto tBoundaryData = tBCData->getScalarData(tReader);
+    constexpr unsigned int kNumIndices = 3;
+    Plato::ScalarVector tResult = boundaryDataAtIndices<kNumIndices>(tBoundaryData, {0, 26, 27});
+    auto tHostMirror = Kokkos::create_mirror_view(tResult);
+    Kokkos::deep_copy(tHostMirror, tResult);
+
+    TEST_EQUALITY(tBoundaryData.mValue.size(), (kMeshWidth + 1)*(kMeshWidth + 1)*(kMeshWidth + 1));
+    TEST_EQUALITY(tHostMirror(0), 42.0);
+    TEST_EQUALITY(tHostMirror(1), 42.0);
+    TEST_EQUALITY(tHostMirror(2), 42.0);
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVarying)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
+        "<ParameterList  name='Test Boundary Condition'>\n"
+        "  <Parameter name='Type' type='string' value='Variable pressure'/>\n"
+        "  <Parameter name='Variable' type='string' value='pressure_data'/>\n"
+        "  <Parameter name='Sides' type='string' value='z-'/>\n"
+        "</ParameterList>\n"
+    );
+    constexpr auto kMeshName = "brick_with_data.exo";
+    Plato::Mesh tMesh = Plato::MeshFactory::create(kMeshName);
+    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
+
+    constexpr int kNumDOfs = 3;
+    std::unique_ptr<Plato::NaturalBCData<kNumDOfs>> tBCData = Plato::makeNaturalBCData<kNumDOfs>(*tInputs);
+
+    TEST_ASSERT(tBCData != nullptr);
+    TEST_ASSERT(dynamic_cast<Plato::SpatiallyVaryingNaturalBCData<kNumDOfs>*>(tBCData.get()) !=  nullptr);
+
+    const auto tBoundaryData = tBCData->getScalarData(tReader);
+    constexpr unsigned int kNumTestNodes = 105;
+    TEST_EQUALITY(tBoundaryData.mValue.size(), kNumTestNodes);
+
+    constexpr unsigned int kNumIndices = 3;
+    const Plato::Array<kNumIndices, unsigned int> kIndices{0, 26, 27};
+    Plato::ScalarVector tResult = boundaryDataAtIndices<kNumIndices>(tBoundaryData, kIndices);
+    auto tHostMirror = Kokkos::create_mirror_view(tResult);
+    Kokkos::deep_copy(tHostMirror, tResult);
+
+    TEST_EQUALITY(tHostMirror(0), 0.5 * kIndices[0]);
+    TEST_EQUALITY(tHostMirror(1), 0.5 * kIndices[1]);
+    TEST_EQUALITY(tHostMirror(2), 0.5 * kIndices[2]);
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVaryingElementIteration)
+{
+     Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
+        "<ParameterList  name='Test Boundary Condition'>\n"
+        "  <Parameter name='Type' type='string' value='Variable pressure'/>\n"
+        "  <Parameter name='Variable' type='string' value='surface_pressure'/>\n"
+        "  <Parameter name='Sides' type='string' value='pressure_sideset'/>\n"
+        "</ParameterList>\n"
+    );
+    constexpr auto kMeshName = "nodal_surface_pressure_field.exo";
+    Plato::Mesh tMesh = Plato::MeshFactory::create(kMeshName);
+    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
+   
+    constexpr int kNumDOfs = 3;
+    std::unique_ptr<Plato::NaturalBCData<kNumDOfs>> tBCData = Plato::makeNaturalBCData<kNumDOfs>(*tInputs);
+
+    TEST_ASSERT(tBCData != nullptr);
+    TEST_ASSERT(dynamic_cast<Plato::SpatiallyVaryingNaturalBCData<kNumDOfs>*>(tBCData.get()) !=  nullptr);
+
+    const auto tBoundaryData = tBCData->getScalarData(tReader);
+    constexpr unsigned int kNumTestNodes = 11 * 11 * 11;
+    TEST_EQUALITY(tBoundaryData.mValue.size(), kNumTestNodes);
+
+    constexpr auto kSideSetName = "pressure_sideset";
+    using IndexVector = Plato::OrdinalVectorT<const Plato::OrdinalType>;
+    const IndexVector tElementOrds = tMesh->GetSideSetElements(kSideSetName);
+    const IndexVector tNodeOrds = tMesh->GetSideSetLocalNodes(kSideSetName);
+    const IndexVector tFaceOrds = tMesh->GetSideSetFaces(kSideSetName);
+    const IndexVector tConnectivity = tMesh->Connectivity();
+    const Plato::OrdinalType tNumElements = tElementOrds.size();
+    const Plato::OrdinalType tNumFaces = tElementOrds.size();
+    const Plato::ScalarVectorT<const Plato::Scalar> tCoordinates = tMesh->Coordinates();
+
+    constexpr Plato::OrdinalType kNumElemsPerEdge = 10;
+    TEST_EQUALITY(tElementOrds.size(), kNumElemsPerEdge * kNumElemsPerEdge);
+
+    constexpr Plato::OrdinalType kNumNodesPerSide = (kNumElemsPerEdge + 1) * (kNumElemsPerEdge + 1);
+
+    using ElementType = Plato::Hex8;
+    Plato::ScalarVector tSidesetPressures("test bc data", kNumNodesPerSide);
+    Plato::ScalarVector tExpectedValue("test expected data", kNumNodesPerSide);
+
+    Kokkos::parallel_for(tElementOrds.size(), 
+    KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal)
+    {
+        const auto tElementOrdinal = tElementOrds(aSideOrdinal);
+        const auto tElemFaceOrdinal = tFaceOrds(aSideOrdinal);
+
+        for(Plato::OrdinalType tNode = 0; tNode < ElementType::mNumNodesPerFace; ++tNode)
+        {
+            const auto tLocalNodeOrdinal = tNodeOrds(aSideOrdinal*ElementType::mNumNodesPerFace + tNode);
+            const auto tGlobalNodeOrdinal = tConnectivity(tElementOrdinal*ElementType::mNumNodesPerCell + tLocalNodeOrdinal);
+            const Plato::Scalar tPressure = Plato::scalarBoundaryDataAtIndex(tBoundaryData, tGlobalNodeOrdinal);
+            const Plato::OrdinalType tIndex = std::abs(tCoordinates(3 * tGlobalNodeOrdinal + 1) + 5) * (kNumElemsPerEdge + 1) + std::abs(tCoordinates(3 * tGlobalNodeOrdinal + 2) + 5);
+            tSidesetPressures(tIndex) = tPressure;
+            tExpectedValue(tIndex) = tCoordinates(3 * tGlobalNodeOrdinal + 1) + tCoordinates(3 * tGlobalNodeOrdinal + 2) + 10;
+        }
+    });
+
+    auto tHostSidesetPressures = Kokkos::create_mirror_view(tSidesetPressures);
+    Kokkos::deep_copy(tHostSidesetPressures, tSidesetPressures);
+    auto tHostExpectedValue = Kokkos::create_mirror_view(tExpectedValue);
+    Kokkos::deep_copy(tHostExpectedValue, tExpectedValue);
+    for(int i = 0; i < kNumNodesPerSide; ++i)
+    {
+        TEST_FLOATING_EQUALITY(tHostSidesetPressures(i), tHostExpectedValue(i), 1e-14);
+    }
+}
