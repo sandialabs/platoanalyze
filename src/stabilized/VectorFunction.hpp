@@ -5,7 +5,7 @@
 
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
-#include "MatrixGraphFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "stabilized/AbstractVectorFunction.hpp"
 #include "stabilized/EvaluationTypes.hpp"
 

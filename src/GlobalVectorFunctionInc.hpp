@@ -8,7 +8,7 @@
 
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
-#include "MatrixGraphFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "SpatialModel.hpp"
 #include "SimplexFadTypes.hpp"
 #include "InfinitesimalStrainPlasticity.hpp"

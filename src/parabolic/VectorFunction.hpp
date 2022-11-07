@@ -5,7 +5,7 @@
 #include "SpatialModel.hpp"
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
-#include "MatrixGraphFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "parabolic/EvaluationTypes.hpp"
 #include "parabolic/AbstractVectorFunction.hpp"
 

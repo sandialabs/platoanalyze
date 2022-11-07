@@ -16,7 +16,7 @@
 
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
-#include "MatrixGraphFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 
 #include "InterpolateFromNodal.hpp"
 

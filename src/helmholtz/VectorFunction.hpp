@@ -5,7 +5,7 @@
 
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
-#include "MatrixGraphFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "NaturalBCs.hpp"
 #include "helmholtz/AbstractVectorFunction.hpp"
 #include "helmholtz/EvaluationTypes.hpp"

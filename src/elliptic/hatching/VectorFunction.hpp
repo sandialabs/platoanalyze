@@ -4,7 +4,7 @@
 
 #include "WorksetBase.hpp"
 #include "ImplicitFunctors.hpp"
-#include "MatrixGraphFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "NaturalBCs.hpp"
 #include "elliptic/hatching/AbstractVectorFunction.hpp"
 #include "elliptic/hatching/EvaluationTypes.hpp"
