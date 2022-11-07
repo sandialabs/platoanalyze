@@ -251,22 +251,44 @@ public:
     // regardless of the actual dimension of the problem.  The accessors below
     // return only the relevant data for the requested dimension.
     inline void
-    getUniformCartesianBasis(Plato::Matrix<3,3> & tBasis) const;
+    getUniformCartesianBasis(Plato::Matrix<3,3> & tBasis) const
+    {
+        tBasis = mUniformCartesianBasis;
+    }
 
     inline void
-    getUniformCartesianBasis(Plato::Matrix<2,2> & tBasis) const;
+    getUniformCartesianBasis(Plato::Matrix<2,2> & tBasis) const
+    {
+        for(int i=0; i<2; i++)
+            for(int j=0; j<2; j++)
+                tBasis(i,j) = mUniformCartesianBasis(i,j);
+    }
 
     inline void
-    getUniformCartesianBasis(Plato::Matrix<1,1> & tBasis) const;
+    getUniformCartesianBasis(Plato::Matrix<1,1> & tBasis) const
+    {
+        tBasis(0,0) = mUniformCartesianBasis(0,0);
+    }
 
     inline void
-    setUniformCartesianBasis(Plato::Matrix<3,3> const & tBasis);
+    setUniformCartesianBasis(Plato::Matrix<3,3> const & tBasis)
+    {
+        mUniformCartesianBasis = tBasis;
+    }
 
     inline void
-    setUniformCartesianBasis(Plato::Matrix<2,2> const & tBasis);
+    setUniformCartesianBasis(Plato::Matrix<2,2> const & tBasis)
+    {
+        for(int i=0; i<2; i++)
+            for(int j=0; j<2; j++)
+                mUniformCartesianBasis(i,j) = tBasis(i,j);
+    }
 
     inline void
-    setUniformCartesianBasis(Plato::Matrix<1,1> const & tBasis);
+    setUniformCartesianBasis(Plato::Matrix<1,1> const & tBasis)
+    {
+        mUniformCartesianBasis(0,0) = tBasis(0,0);
+    }
 
     bool hasUniformCartesianBasis() const
     { return mHasUniformBasis; }
@@ -276,7 +298,10 @@ public:
 
     inline
     Plato::ScalarArray3D
-    getVaryingCartesianBasis() const;
+    getVaryingCartesianBasis() const
+    {
+        return mVaryingCartesianBasis;
+    }
 
 };
 // class SpatialDomain
@@ -337,7 +362,7 @@ public:
 
     void returnNodeNodeGraph
     (Plato::OrdinalVector & aOffsetMap,
-     Plato::OrdinalVector & aNodeOrds);
+     Plato::OrdinalVector & aNodeOrds) const;
 };
 // class SpatialModel
 

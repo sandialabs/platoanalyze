@@ -22,7 +22,7 @@ public:
     void
     getNodeNodeGraph
     (Plato::OrdinalVector & aOffsetMap,
-     Plato::OrdinalVector & aNodeOrds);
+     Plato::OrdinalVector & aNodeOrds) const;
 
     Plato::OrdinalType 
     extractChildNodeOffsets(const Plato::OrdinalVector & aChildNodes);

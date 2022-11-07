@@ -49,7 +49,7 @@ UpdateGraphForContact::createNodeNodeGraph
 void
 UpdateGraphForContact::getNodeNodeGraph
 (Plato::OrdinalVector & aOffsetMap,
- Plato::OrdinalVector & aNodeOrds)
+ Plato::OrdinalVector & aNodeOrds) const
  {
     aOffsetMap = mFullOffsetMap;
     aNodeOrds = mFullNodeOrds;

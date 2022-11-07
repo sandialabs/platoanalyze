@@ -246,8 +246,10 @@ TEUCHOS_UNIT_TEST(BoxMeshWidth1Tests, BlockMatrixRowAndColumnMaps)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
+    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
+
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
 
     // check row map
     auto tRowMap_Host = Plato::TestHelpers::get( tJacobianMat->rowMap() );
@@ -271,7 +273,6 @@ TEUCHOS_UNIT_TEST(BoxMeshWidth1Tests, BlockMatrixRowAndColumnMaps)
     for(int iVal=0; iVal<tColumnIndices_Gold.size(); iVal++){
         TEST_EQUALITY(tColumnIndices_Host(iVal), tColumnIndices_Gold[iVal]);
     }
-        
 }
 
 // testing mesh for contact as reference for the actual assembly tests below
@@ -314,8 +315,13 @@ TEUCHOS_UNIT_TEST(TwoBoxMeshWidth1Tests, Connectivity)
 //
 TEUCHOS_UNIT_TEST(TwoBoxMeshWidth1Tests, BlockMatrixRowAndColumnMaps)
 {
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     auto tElementType = tMesh->ElementType();
@@ -326,7 +332,7 @@ TEUCHOS_UNIT_TEST(TwoBoxMeshWidth1Tests, BlockMatrixRowAndColumnMaps)
     constexpr int tNumDofsPerNode  = ElementType::mNumDofsPerNode;
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
 
     // check row map
     auto tRowMap_Host = Plato::TestHelpers::get( tJacobianMat->rowMap() );
@@ -374,8 +380,10 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
+    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
+
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
 
     Plato::BlockMatrixEntryOrdinal<tNumNodesPerCell, tNumDofsPerNode, tNumDofsPerNode>
         tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
@@ -435,7 +443,7 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreIdentity)
 
     // evaluate jacobian
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
 
     Plato::ScalarMultiVectorT<EvaluationType::ResultScalarType> tJacobian("JacobianState", tNumCells, tNumDofsPerCell);
 
@@ -547,7 +555,7 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreShapeFunctions)
 
     // evaluate jacobian
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
 
     Plato::ScalarMultiVectorT<EvaluationType::ResultScalarType> tJacobian("JacobianState", tNumCells, tNumDofsPerCell);
 
@@ -661,7 +669,7 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
     tSpatialModel.addContact(tAllChildNodes, tAllParentElements);
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
-        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tMesh );
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
     
     auto tFullOffsetMap = tJacobian->rowMap();
     auto tFullNodeOrds  = tJacobian->columnIndices();

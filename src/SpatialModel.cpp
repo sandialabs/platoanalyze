@@ -136,56 +136,6 @@ SpatialDomain::parseVaryingCartesianBasis(const Teuchos::ParameterList& aParamLi
   
 }
 
-// The cartesian basis is stored in the 3D matrix, mUniformCartesianBasis,
-// regardless of the actual dimension of the problem.  The accessors below
-// return only the relevant data for the requested dimension.
-inline void
-SpatialDomain::getUniformCartesianBasis(Plato::Matrix<3,3> & tBasis) const
-{
-  tBasis = mUniformCartesianBasis;
-}
-
-inline void
-SpatialDomain::getUniformCartesianBasis(Plato::Matrix<2,2> & tBasis) const
-{
-  for(int i=0; i<2; i++)
-    for(int j=0; j<2; j++)
-      tBasis(i,j) = mUniformCartesianBasis(i,j);
-}
-
-inline void
-SpatialDomain::getUniformCartesianBasis(Plato::Matrix<1,1> & tBasis) const
-{
-  tBasis(0,0) = mUniformCartesianBasis(0,0);
-}
-
-inline void
-SpatialDomain::setUniformCartesianBasis(Plato::Matrix<3,3> const & tBasis)
-{
-  mUniformCartesianBasis = tBasis;
-}
-
-inline void
-SpatialDomain::setUniformCartesianBasis(Plato::Matrix<2,2> const & tBasis)
-{
-  for(int i=0; i<2; i++)
-    for(int j=0; j<2; j++)
-      mUniformCartesianBasis(i,j) = tBasis(i,j);
-}
-
-inline void
-SpatialDomain::setUniformCartesianBasis(Plato::Matrix<1,1> const & tBasis)
-{
-  mUniformCartesianBasis(0,0) = tBasis(0,0);
-}
-
-inline
-Plato::ScalarArray3D
-SpatialDomain::getVaryingCartesianBasis() const
-{
-  return mVaryingCartesianBasis;
-}
-
 SpatialModel::SpatialModel(Plato::Mesh aMesh) : 
     Mesh(aMesh), 
     mHasContact(false), 
@@ -242,13 +192,17 @@ SpatialModel::addContact
 (const Plato::OrdinalVector & aChildNodes,
  const Plato::OrdinalVector & aParentElements)
 {
-    mUpdateGraphForContact.createNodeNodeGraph(aChildNodes, aParentElements);
+    if (!mHasContact)
+    {
+        mUpdateGraphForContact.createNodeNodeGraph(aChildNodes, aParentElements);
+        mHasContact = true;
+    }
 }
 
 void 
 SpatialModel::returnNodeNodeGraph
 (Plato::OrdinalVector & aOffsetMap,
- Plato::OrdinalVector & aNodeOrds)
+ Plato::OrdinalVector & aNodeOrds) const
  {
     if (mHasContact)
         mUpdateGraphForContact.getNodeNodeGraph(aOffsetMap, aNodeOrds);
