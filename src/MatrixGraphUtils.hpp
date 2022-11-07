@@ -141,7 +141,7 @@ CreateBlockMatrix( const Plato::SpatialModel & aSpatialModel )
 {
     Plato::OrdinalVector tOffsetMap;
     Plato::OrdinalVector tNodeOrds;
-    aSpatialModel.returnNodeNodeGraph(tOffsetMap, tNodeOrds);
+    aSpatialModel.NodeNodeGraph(tOffsetMap, tNodeOrds);
 
     auto numRows = tOffsetMap.size() - 1;
     auto nnz = tNodeOrds.size();

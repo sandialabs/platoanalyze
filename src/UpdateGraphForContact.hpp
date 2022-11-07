@@ -20,7 +20,7 @@ public:
      const Plato::OrdinalVector & aParentElements);
 
     void
-    getNodeNodeGraph
+    NodeNodeGraph
     (Plato::OrdinalVector & aOffsetMap,
      Plato::OrdinalVector & aNodeOrds) const;
 

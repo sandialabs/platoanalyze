@@ -47,7 +47,7 @@ UpdateGraphForContact::createNodeNodeGraph
 }
 
 void
-UpdateGraphForContact::getNodeNodeGraph
+UpdateGraphForContact::NodeNodeGraph
 (Plato::OrdinalVector & aOffsetMap,
  Plato::OrdinalVector & aNodeOrds) const
  {

@@ -360,7 +360,7 @@ public:
     (const Plato::OrdinalVector & aChildNodes,
      const Plato::OrdinalVector & aParentElements);
 
-    void returnNodeNodeGraph
+    void NodeNodeGraph
     (Plato::OrdinalVector & aOffsetMap,
      Plato::OrdinalVector & aNodeOrds) const;
 };

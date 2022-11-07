@@ -200,12 +200,12 @@ SpatialModel::addContact
 }
 
 void 
-SpatialModel::returnNodeNodeGraph
+SpatialModel::NodeNodeGraph
 (Plato::OrdinalVector & aOffsetMap,
  Plato::OrdinalVector & aNodeOrds) const
  {
     if (mHasContact)
-        mUpdateGraphForContact.getNodeNodeGraph(aOffsetMap, aNodeOrds);
+        mUpdateGraphForContact.NodeNodeGraph(aOffsetMap, aNodeOrds);
     else
         Mesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
  }
