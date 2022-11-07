@@ -69,6 +69,10 @@ Plato::OrdinalVector convert_to_elementwise_map
 
 Plato::OrdinalType count_total_child_nodes(const std::vector<ContactPair> & aPairs);
 
+void check_for_repeated_child_nodes
+(const Plato::OrdinalVector & aChildNodes,
+       Plato::Mesh            aMesh);
+
 template<typename ElementType>
 Plato::OrdinalVector find_parent_elements_for_side
 (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aChildNodes,
@@ -116,11 +120,9 @@ void populate_full_contact_arrays
         }, "store parent elements");
         tOffset += tNumNodes;
     }
-}
 
-void check_for_repeated_child_nodes
-(const Plato::OrdinalVector & aChildNodes,
-       Plato::Mesh            aMesh);
+    check_for_repeated_child_nodes(aChildNodes, aSpatialModel.Mesh);
+}
 
 }
 

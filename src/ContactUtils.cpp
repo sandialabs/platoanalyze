@@ -212,13 +212,16 @@ void check_for_repeated_child_nodes
         Kokkos::atomic_increment(&tCheckChildNodes(tChildNode));
     }, "");
 
-    Plato::OrdinalType tNumRecordedChild(0);
+    Plato::OrdinalType tNumRepeatedChild(0);
     Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, tNumTotalNodes),
     KOKKOS_LAMBDA(const Plato::OrdinalType& aOrdinal, Plato::OrdinalType & aUpdate)
     {
-        Kokkos::atomic_add(&aUpdate, tCheckChildNodes(aOrdinal));
-    }, tNumRecordedChild);
-    if ( tNumRecordedChild != tNumChildNodes )
+        if ( tCheckChildNodes(aOrdinal) > 1 ) 
+        {
+            Kokkos::atomic_increment(&aUpdate);
+        }
+    }, tNumRepeatedChild);
+    if ( tNumRepeatedChild != 0 )
     {
         ANALYZE_THROWERR("REPEATED CHILD NODE IN CONTACT SURFACE PAIRS")
     }

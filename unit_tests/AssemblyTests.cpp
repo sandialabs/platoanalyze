@@ -663,7 +663,6 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
     Plato::OrdinalVector tAllChildNodes("", tNumTotalNodes);
     Plato::OrdinalVector tAllParentElements("", tNumTotalNodes);
     Plato::Contact::populate_full_contact_arrays<ElementType>(tPairs, tSpatialModel, tAllChildNodes, tAllParentElements);
-    Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh);
 
     // add contact graph
     tSpatialModel.addContact(tAllChildNodes, tAllParentElements);

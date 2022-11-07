@@ -316,13 +316,13 @@ class SpatialModel
 {
 public:
     Plato::Mesh Mesh;     /*!< mesh database */
-
     std::vector<Plato::SpatialDomain> Domains; /*!< list of spatial domains, i.e. element blocks */
 
+private:
     bool mHasContact;
-
     Plato::Contact::UpdateGraphForContact mUpdateGraphForContact;
 
+public:
     /******************************************************************************//**
      * \brief Constructor for Plato::SpatialModel base class
      * \param [in] aMesh     Default mesh

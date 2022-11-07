@@ -300,6 +300,19 @@ TEUCHOS_UNIT_TEST(UtilsTests, PopulateFullContactArrays)
     }
 }
 
+TEUCHOS_UNIT_TEST(UtilsTests, CheckForRepeatedChildNodes)
+{
+    constexpr Plato::OrdinalType tMeshWidth = 1;
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
+
+    // create artificial all child nodes vector with repeated entry
+    std::vector<Plato::OrdinalType> tAllChildNodes = {1, 5, 6, 1};
+    auto dAllChildNodes = Plato::TestHelpers::create_device_view(tAllChildNodes);
+
+    // test
+    TEST_THROW(Plato::Contact::check_for_repeated_child_nodes(dAllChildNodes, tMesh), std::runtime_error);
+}
+
 TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
