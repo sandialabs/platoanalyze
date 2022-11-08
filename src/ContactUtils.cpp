@@ -1,5 +1,7 @@
 #include "ContactUtils.hpp"
+#include "ContactPair.hpp"
 #include "BLAS1.hpp"
+#include "AnalyzeMacros.hpp"
 
 namespace Plato
 {
@@ -13,45 +15,30 @@ ContactPair parse_contact_pair
 {
     ContactPair tContactPair;
 
-    if (!aParams.isType<std::string>("Side A Child Sideset"))
-        ANALYZE_THROWERR("Side A Child Sideset was not provided in contact pair")
+    if (aParams.isSublist("A Surface"))
+    {
+        auto tSurfaceParams = aParams.sublist("A Surface");
+        tContactPair.surfaceA.initialize(tSurfaceParams, aMesh);
+    }
+    else
+        ANALYZE_THROWERR("Parsing 'Contact' parameter list 'Pairs' sublist. Required 'A Surface' parameter sublist not found");
 
-    std::string tSideSetA = aParams.get<std::string>("Side A Child Sideset");
-    tContactPair.childSideSetA        = tSideSetA;
-    tContactPair.childNodesA          = aMesh->GetNodeSetNodes(tSideSetA);
-    tContactPair.childElementsA       = aMesh->GetSideSetElements(tSideSetA);
-    tContactPair.childFaceLocalNodesA = aMesh->GetSideSetLocalNodes(tSideSetA);
+    if (aParams.isSublist("B Surface"))
+    {
+        auto tSurfaceParams = aParams.sublist("B Surface");
+        tContactPair.surfaceB.initialize(tSurfaceParams, aMesh);
+    }
+    else
+        ANALYZE_THROWERR("Parsing 'Contact' parameter list 'Pairs' sublist. Required 'B Surface' parameter sublist not found");
 
-    if (!aParams.isType<std::string>("Side B Child Sideset"))
-        ANALYZE_THROWERR("Side B Child Sideset was not provided in contact pair")
-
-    std::string tSideSetB = aParams.get<std::string>("Side B Child Sideset");
-    tContactPair.childSideSetB        = tSideSetB;
-    tContactPair.childNodesB          = aMesh->GetNodeSetNodes(tSideSetB);
-    tContactPair.childElementsB       = aMesh->GetSideSetElements(tSideSetB);
-    tContactPair.childFaceLocalNodesB = aMesh->GetSideSetLocalNodes(tSideSetB);
-    
-    // parse initial gap
     if (!aParams.isType<Teuchos::Array<Plato::Scalar>>("Initial Gap"))
-        ANALYZE_THROWERR("Initial Gap vector was not provided in contact pair")
+        ANALYZE_THROWERR("Parsing 'Contact' parameter list 'Pairs' sublist. Required 'Initial Gap' parameter not found")
 
     Plato::OrdinalType tNumDims = aMesh->NumDimensions();
     auto tVector = aParams.get<Teuchos::Array<Plato::Scalar>>("Initial Gap");
     if(tVector.size() != tNumDims)
         ANALYZE_THROWERR("Initial Gap vector provided in contact pair has different dimensions than mesh.")
-    
     tContactPair.initialGap = tVector;
-
-    // get spatial domains for finding parent elements
-    if (!aParams.isType<std::string>("Side A Block"))
-        ANALYZE_THROWERR("Side A Block was not provided in contact pair")
-
-    tContactPair.parentBlockA = aParams.get<std::string>("Side A Block");
-
-    if (!aParams.isType<std::string>("Side B Block"))
-        ANALYZE_THROWERR("Side B Block was not provided in contact pair")
-
-    tContactPair.parentBlockB = aParams.get<std::string>("Side B Block");
 
     return tContactPair;
 }
@@ -122,16 +109,15 @@ Plato::ScalarMultiVector compute_node_locations
 
 Plato::ScalarMultiVector map_node_locations
 (const Plato::ScalarMultiVector      & aLocations,
- const Teuchos::Array<Plato::Scalar> & aTranslation,
- Plato::Scalar                         aScale)
+ const Teuchos::Array<Plato::Scalar> & aTranslation)
 {
     static constexpr int tSpaceDim = 3;
     if (aTranslation.size() != tSpaceDim || aLocations.extent(0) != tSpaceDim)
         ANALYZE_THROWERR("In ContactUtils map_node_locations, an incorrect dimension is given. Only 3 dimensions are supported.")
     
-    Plato::Scalar tTranslationX = aScale * aTranslation[0];
-    Plato::Scalar tTranslationY = aScale * aTranslation[1];
-    Plato::Scalar tTranslationZ = aScale * aTranslation[2];
+    Plato::Scalar tTranslationX = aTranslation[0];
+    Plato::Scalar tTranslationY = aTranslation[1];
+    Plato::Scalar tTranslationZ = aTranslation[2];
 
     Plato::OrdinalType tNumNodes = aLocations.extent(1);
     Plato::ScalarMultiVector tMappedLocations("mapped node locations", tSpaceDim, tNumNodes);
@@ -189,21 +175,66 @@ Plato::OrdinalVector convert_to_elementwise_map
     return tElementWiseMap;
 }
 
+Teuchos::Array<Plato::Scalar> 
+scale_initial_gap
+(const Teuchos::Array<Plato::Scalar> aGap,
+ Plato::Scalar                       aScale)
+{
+    Teuchos::Array<Plato::Scalar> tScaledGap = aGap;
+
+    for (Plato::OrdinalType iDim = 0; iDim < aGap.size(); iDim++)
+    {
+        tScaledGap[iDim] *= aScale;
+    }
+
+    return tScaledGap;
+}
+
 Plato::OrdinalType count_total_child_nodes(const std::vector<ContactPair> & aPairs)
 {
     Plato::OrdinalType tNum(0);
     for (auto tPair : aPairs)
-        tNum += tPair.childNodesA.size() + tPair.childNodesB.size();
+        tNum += tPair.surfaceA.childNodes().size() + tPair.surfaceB.childNodes().size();
     
     return tNum;
 }
 
+void populate_full_contact_arrays
+(const std::vector<ContactPair> & aPairs,
+       Plato::OrdinalVector     & aChildNodes,
+       Plato::OrdinalVector     & aParentElements)
+{
+    Plato::OrdinalType tOffset(0);
+    for (auto tPair : aPairs)
+    {
+        auto tChildNodes = tPair.surfaceA.childNodes();
+        auto tParentElements = tPair.surfaceA.parentElements();
+        Plato::OrdinalType tNumNodes = tChildNodes.size();
+        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
+        {
+            aChildNodes(tOffset + nodeOrdinal) = tChildNodes(nodeOrdinal);
+            aParentElements(tOffset + nodeOrdinal) = tParentElements(nodeOrdinal);
+        }, "store child nodes and parent elements");
+        tOffset += tNumNodes;
+
+        tChildNodes = tPair.surfaceB.childNodes();
+        tParentElements = tPair.surfaceB.parentElements();
+        tNumNodes = tChildNodes.size();
+        auto tScaledGap = scale_initial_gap(tPair.initialGap, -1.0);
+        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
+        {
+            aChildNodes(tOffset + nodeOrdinal) = tChildNodes(nodeOrdinal);
+            aParentElements(tOffset + nodeOrdinal) = tParentElements(nodeOrdinal);
+        }, "store child nodes and parent elements");
+        tOffset += tNumNodes;
+    }
+}
+
 void check_for_repeated_child_nodes
 (const Plato::OrdinalVector & aChildNodes,
-       Plato::Mesh            aMesh)
+       Plato::OrdinalType     aNumMeshNodes)
 {
-    auto tNumTotalNodes = aMesh->NumNodes();
-    Plato::OrdinalVector tCheckChildNodes("", tNumTotalNodes);
+    Plato::OrdinalVector tCheckChildNodes("", aNumMeshNodes);
 
     auto tNumChildNodes = aChildNodes.size();
     Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
@@ -213,7 +244,7 @@ void check_for_repeated_child_nodes
     }, "");
 
     Plato::OrdinalType tNumRepeatedChild(0);
-    Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, tNumTotalNodes),
+    Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, aNumMeshNodes),
     KOKKOS_LAMBDA(const Plato::OrdinalType& aOrdinal, Plato::OrdinalType & aUpdate)
     {
         if ( tCheckChildNodes(aOrdinal) > 1 ) 

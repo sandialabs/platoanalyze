@@ -190,11 +190,15 @@ get_2box_mesh_params()
         "  <ParameterList name='Contact'>                                                     \n"
         "    <ParameterList name='Pairs'>                                                     \n"
         "      <ParameterList name='Pair 1'>                                                  \n"
-        "        <Parameter name='Side A Block'  type='string' value='block_1'/>       \n"
-        "        <Parameter name='Side A Child Sideset' type='string' value='block1_child'/>  \n"
-        "        <Parameter name='Side B Block'  type='string' value='block_2'/>       \n"
-        "        <Parameter name='Side B Child Sideset' type='string' value='block2_child'/>  \n"
         "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <ParameterList name='A Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "        <ParameterList name='B Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
+        "        </ParameterList>                                                               \n"
         "      </ParameterList>                                                               \n"
         "    </ParameterList>                                                                 \n"
         "  </ParameterList>                                                                   \n"
@@ -656,13 +660,15 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
 
     // parse contact
     auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
 
     // get full arrays of child nodes and parent elements
     auto tNumTotalNodes = Plato::Contact::count_total_child_nodes(tPairs);
 
     Plato::OrdinalVector tAllChildNodes("", tNumTotalNodes);
     Plato::OrdinalVector tAllParentElements("", tNumTotalNodes);
-    Plato::Contact::populate_full_contact_arrays<ElementType>(tPairs, tSpatialModel, tAllChildNodes, tAllParentElements);
+    Plato::Contact::populate_full_contact_arrays(tPairs, tAllChildNodes, tAllParentElements);
+    Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh->NumNodes());
 
     // add contact graph
     tSpatialModel.addContact(tAllChildNodes, tAllParentElements);
