@@ -294,6 +294,31 @@ TEUCHOS_UNIT_TEST(UtilsTests, CheckForRepeatedChildNodes)
     TEST_THROW(Plato::Contact::check_for_repeated_child_nodes(dAllChildNodes, tMesh->NumNodes()), std::runtime_error);
 }
 
+TEUCHOS_UNIT_TEST(ContactSurfaceTests, InitialAssignmentOfParentDataIsPersistent)
+{
+    // add initial parent data
+    std::vector<Plato::OrdinalType> tParentElements = {1, 5, 6, 3};
+    auto dParentElements = Plato::TestHelpers::create_device_view(tParentElements);
+
+    Plato::OrdinalVector tElementWiseChildMap;
+    Plato::ScalarMultiVector tMappedChildNodeLocations;
+
+    Plato::Contact::ContactSurface tSurface;
+    tSurface.addParentData(dParentElements, tElementWiseChildMap, tMappedChildNodeLocations);
+
+    // change parent elements and add again
+    std::vector<Plato::OrdinalType> tNewParentElements = {8, 4, 1, 9};
+    auto dNewParentElements = Plato::TestHelpers::create_device_view(tNewParentElements);
+    tSurface.addParentData(dNewParentElements, tElementWiseChildMap, tMappedChildNodeLocations);
+
+    // test that original parent elements weren't changed
+    auto tStoredParentElements = tSurface.parentElements();
+    auto tStoredParentElements_Host = Plato::TestHelpers::get( tStoredParentElements );
+    for(int iOrd=0; iOrd<int(tParentElements.size()); iOrd++){
+        TEST_EQUALITY(tStoredParentElements_Host(iOrd), tParentElements[iOrd]);
+    }
+}
+
 TEUCHOS_UNIT_TEST(ContactSurfaceTests, ThrowWhenAccessingParentDataIfNotSet)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
