@@ -662,16 +662,8 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
     auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
 
-    // get full arrays of child nodes and parent elements
-    auto tNumTotalNodes = Plato::Contact::count_total_child_nodes(tPairs);
-
-    Plato::OrdinalVector tAllChildNodes("", tNumTotalNodes);
-    Plato::OrdinalVector tAllParentElements("", tNumTotalNodes);
-    Plato::Contact::populate_full_contact_arrays(tPairs, tAllChildNodes, tAllParentElements);
-    Plato::Contact::check_for_repeated_child_nodes(tAllChildNodes,tMesh->NumNodes());
-
     // add contact graph
-    tSpatialModel.addContact(tAllChildNodes, tAllParentElements);
+    tSpatialModel.addContact(tPairs);
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobian =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );

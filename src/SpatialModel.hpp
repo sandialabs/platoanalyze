@@ -8,6 +8,7 @@
 #include "PlatoMathTypes.hpp"
 #include "PlatoStaticsTypes.hpp"
 
+#include "ContactPair.hpp"
 #include "UpdateGraphForContact.hpp"
 
 namespace Plato
@@ -320,6 +321,7 @@ public:
 
 private:
     bool mHasContact;
+    std::vector<Plato::Contact::ContactPair> mContactPairs;
     Plato::Contact::UpdateGraphForContact mUpdateGraphForContact;
 
 public:
@@ -356,9 +358,7 @@ public:
     void append
     (Plato::SpatialDomain & aDomain);
 
-    void addContact
-    (const Plato::OrdinalVector & aChildNodes,
-     const Plato::OrdinalVector & aParentElements);
+    void addContact(std::vector<Plato::Contact::ContactPair> aPairs);
 
     void NodeNodeGraph
     (Plato::OrdinalVector & aOffsetMap,

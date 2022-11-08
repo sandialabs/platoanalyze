@@ -188,13 +188,19 @@ SpatialModel::append
 }
 
 void 
-SpatialModel::addContact
-(const Plato::OrdinalVector & aChildNodes,
- const Plato::OrdinalVector & aParentElements)
+SpatialModel::addContact(std::vector<Plato::Contact::ContactPair> aPairs)
 {
     if (!mHasContact)
     {
-        mUpdateGraphForContact.createNodeNodeGraph(aChildNodes, aParentElements);
+        mContactPairs = aPairs;
+
+        auto tNumNodes = Plato::Contact::count_total_child_nodes(aPairs);
+        Plato::OrdinalVector tChildNodes("", tNumNodes);
+        Plato::OrdinalVector tParentElements("", tNumNodes);
+        Plato::Contact::populate_full_contact_arrays(aPairs, tChildNodes, tParentElements);
+        Plato::Contact::check_for_repeated_child_nodes(tChildNodes,Mesh->NumNodes());
+        mUpdateGraphForContact.createNodeNodeGraph(tChildNodes, tParentElements);
+
         mHasContact = true;
     }
 }
@@ -203,11 +209,11 @@ void
 SpatialModel::NodeNodeGraph
 (Plato::OrdinalVector & aOffsetMap,
  Plato::OrdinalVector & aNodeOrds) const
- {
+{
     if (mHasContact)
         mUpdateGraphForContact.NodeNodeGraph(aOffsetMap, aNodeOrds);
     else
         Mesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
- }
+}
 
 } // namespace Plato

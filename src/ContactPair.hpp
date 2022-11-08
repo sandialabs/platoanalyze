@@ -72,6 +72,22 @@ struct ContactPair
     Teuchos::Array<Plato::Scalar> initialGap;
 };
 
+Teuchos::Array<Plato::Scalar> 
+scale_initial_gap
+(const Teuchos::Array<Plato::Scalar> aGap,
+ Plato::Scalar                       aScale);
+
+Plato::OrdinalType count_total_child_nodes(const std::vector<ContactPair> & aPairs);
+
+void populate_full_contact_arrays
+(const std::vector<ContactPair> & aPairs,
+       Plato::OrdinalVector     & aChildNodes,
+       Plato::OrdinalVector     & aParentElements);
+
+void check_for_repeated_child_nodes
+(const Plato::OrdinalVector & aChildNodes,
+       Plato::OrdinalType     aNumMeshNodes);
+
 }
 
 }
