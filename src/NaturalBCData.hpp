@@ -247,7 +247,6 @@ std::unique_ptr<NaturalBCData<NumDofs>> makeNaturalBCData(const Teuchos::Paramet
     switch(naturalBoundaryCondition(aSublist.get<std::string>("Type")))
     {
         case Neumann::UNIFORM_LOAD:
-        case Neumann::UNIFORM_COMPONENT:
             if(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Vector"))
             {
                 return std::make_unique<UniformVectorNaturalBCData<NumDofs>>(aSublist);

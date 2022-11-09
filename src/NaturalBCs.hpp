@@ -61,17 +61,6 @@ private:
     std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
     setPressureNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
 
-    /***************************************************************************//**
-     * \brief Return natural boundary condition type: uniform component.
-     *
-     * \param  [in] aName    user-defined name for natural boundary condition sublist
-     * \param  [in] aSubList natural boundary condition parameter sublist
-     *
-     * \return shared pointer to an uniform component natural boundary condition
-    *******************************************************************************/
-    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-    setUniformComponentNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
-
 // public functions
 public :
     /***************************************************************************//**
@@ -131,11 +120,6 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::appendNaturalBC
         case Plato::Neumann::UNIFORM_LOAD:
         {
             tBC = this->setUniformNaturalBC(aName, aSubList);
-            break;
-        }
-        case Plato::Neumann::UNIFORM_COMPONENT:
-        {
-            tBC = this->setUniformComponentNaturalBC(aName, aSubList);
             break;
         }
         case Plato::Neumann::UNIFORM_PRESSURE:
@@ -242,62 +226,6 @@ NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setPressureNaturalBC
 (const std::string & aName, Teuchos::ParameterList &aSubList)
 {
     return std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
-}
-
-/***************************************************************************//**
- * \brief NaturalBC::setUniformComponentNaturalBC function definition
-*******************************************************************************/
-template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
-std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setUniformComponentNaturalBC
-(const std::string & aName, Teuchos::ParameterList &aSubList)
-{
-    if(aSubList.isParameter("Value") == false)
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Value' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-    auto tValue = aSubList.get<Plato::Scalar>("Value");
-
-    if(aSubList.isParameter("Component") == false)
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Component' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-    Teuchos::Array<Plato::Scalar> tFluxVector(NumDofs, 0.0);
-    auto tFluxComponent = aSubList.get<std::string>("Component");
-
-    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>> tBC;
-    if( (tFluxComponent == "x" || tFluxComponent == "X") )
-    {
-        tFluxVector[0] = tValue;
-    }
-    else
-    if( (tFluxComponent == "y" || tFluxComponent == "Y") && DofsPerNode > 1 )
-    {
-        tFluxVector[1] = tValue;
-    }
-    else
-    if( (tFluxComponent == "z" || tFluxComponent == "Z") && DofsPerNode > 2 )
-    {
-        tFluxVector[2] = tValue;
-    }
-    else
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Component' Parameter Keyword: '" << tFluxComponent.c_str()
-            << "' in Parameter Sublist: '" << aName.c_str() << "' is NOT supported. "
-            << "Options are: 'X' or 'x', 'Y' or 'y', and 'Z' or 'z'.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-
-    aSubList.set("Vector", tFluxVector);
-    tBC = std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
-    return tBC;
 }
 
 /***************************************************************************//**

@@ -153,7 +153,6 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
     switch(mType)
     {
         case Plato::Neumann::UNIFORM_LOAD:
-        case Plato::Neumann::UNIFORM_COMPONENT:
         {
             Plato::SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfaceLoad(mSidesetName, aCurrentTime, mData->clone());
             tSurfaceLoad(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
