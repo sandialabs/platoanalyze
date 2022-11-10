@@ -246,6 +246,72 @@ namespace Plato {
   };
 
   /******************************************************************************/
+  template<int SpaceDim>
+  class Rank4VoigtFieldFactory
+  /******************************************************************************/
+  {
+    public:
+      Rank4VoigtFieldFactory(Teuchos::ParameterList& aParams) { }
+
+      template<typename ScalarType>
+      Rank4VoigtFieldFactory<ScalarType>
+      create() const {
+        // create and return the Rank4VoigtField with the desired symmetry
+      }
+  };
+
+  /******************************************************************************/
+  template<typename ScalarType, int SpaceDim>
+  class Rank4VoigtField
+  /******************************************************************************/
+  {
+    public:
+      Rank4VoigtField(Teuchos::ParameterList& aParams){}
+
+      Plato::ScalarArray4DT<ScalarType>
+      operator()(Plato::ScalarMultiVectorT<ScalarType> aLocalControl) const {
+      }
+  };
+
+  /******************************************************************************/
+  template<typename ScalarType, int SpaceDim>
+  class IsotropicRank4VoigtField : public Rank4VoigtField
+  /******************************************************************************/
+  {
+      Plato::ScalarExpression tE, tv;
+    public:
+
+      IsotropicRank4VoigtField(Teuchos::ParameterList& aParams){}
+
+      Plato::ScalarArray4DT<ScalarType>
+      operator()(Plato::ScalarMultiVectorT<ScalarType> aLocalControl) const {
+      }
+  };
+
+  /******************************************************************************/
+  /*!
+    \brief class for cubic 4th rank voigt tensor field
+  */
+  template<typename ScalarType, int SpaceDim>
+  class CubicRank4VoigtField : public Rank4VoigtField
+  /******************************************************************************/
+  {
+      Plato::ScalarExpression tE, tv, tG;
+    public:
+
+      /******************************************************************************//**
+      **********************************************************************************/
+      CubicRank4VoigtField(Teuchos::ParameterList& aParams){}
+
+      /******************************************************************************//**
+      **********************************************************************************/
+      Plato::ScalarArray4DT<ScalarType>
+      operator()(Plato::ScalarMultiVectorT<ScalarType> aLocalControl) const {
+      }
+  };
+
+
+  /******************************************************************************/
   /*!
     \brief class for tensor constant
   */
@@ -545,6 +611,8 @@ namespace Plato {
       std::map<std::string, Plato::TensorFunctor<SpatialDim>>     mTensorFunctorsMap;
       std::map<std::string, Plato::Rank4VoigtFunctor<SpatialDim>> mRank4VoigtFunctorsMap;
 
+      std::map<std::string, Plato::Rank4VoigtFieldFactory<SpatialDim>> mRank4VoigtFieldFactoryMap;
+
       Plato::MaterialModelType mType;
       std::string mExpression;
 
@@ -649,6 +717,13 @@ namespace Plato {
       Plato::Rank4VoigtFunctor<SpatialDim> getRank4VoigtFunctor(std::string aFunctorName)
       { return mRank4VoigtFunctorsMap[aFunctorName]; }
 
+      // Rank4Voigt field
+      template<typename ScalarType>
+      Plato::Rank4VoigtField<ScalarType> getRank4VoigtField(std::string aFunctorName)
+      {
+        auto tFactory = mRank4VoigtFieldFactoryMap[aFunctorName];
+        return tFactory.create<ScalarField>();
+      }
 
 
       // setters
@@ -823,6 +898,28 @@ namespace Plato {
               {
                   this->setRank4VoigtFunctor(aName, Plato::Rank4VoigtFunctor<SpatialDim>(tList));
               }
+          }
+          else
+          {
+              std::stringstream err;
+              err << "Required input missing. '" << aName
+                  << "' must be provided as a ParameterList";
+              ANALYZE_THROWERR(err.str());
+          }
+      }
+
+      /******************************************************************************/
+      /*!
+        \brief create either Rank4Voigt constant or Rank4Voigt functor from input
+        unit test: PlatoMaterialModel_MaterialModel
+      */
+      /******************************************************************************/
+      void parseRank4VoigtField(std::string aName, const Teuchos::ParameterList& aParamList)
+      {
+          if( aParamList.isSublist(aName) )
+          {
+              auto tList = aParamList.sublist(aName);
+              this->setRank4VoigtField(aName, Plato::Rank4VoigtFieldFactory<SpatialDim>(tList));
           }
           else
           {

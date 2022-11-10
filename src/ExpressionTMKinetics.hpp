@@ -37,6 +37,7 @@ protected:
     const Plato::Scalar mScaling2;
     Plato::VoigtMap<mNumSpatialDims> cVoigtMap;
 
+    Plato::Rank4VoigtField<ControlScalarType> mElasticStiffnessField;
     std::string mExpression;
     Plato::Scalar mE0;
     KineticsScalarType mPoissonsRatio;
@@ -59,9 +60,13 @@ public:
     {
         mThermalExpansivityConstant = aMaterialModel->getTensorConstant("Thermal Expansivity");
         mThermalConductivityConstant = aMaterialModel->getTensorConstant("Thermal Conductivity");
-        mE0 = aMaterialModel->getScalarConstant("E0");
-        mExpression = aMaterialModel->expression();
-        mPoissonsRatio = aMaterialModel->getScalarConstant("Poissons Ratio");
+
+        mElasticStiffnessField = aMaterialModel->getRank4VoigtField<ControlScalarType>("Elastic Stiffness Expression");
+
+//        mE0 = aMaterialModel->getScalarConstant("E0");
+//        mExpression = aMaterialModel->expression();
+//        mPoissonsRatio = aMaterialModel->getScalarConstant("Poissons Ratio");
+
         mControlValue = -1.0;
         if(aMaterialModel->scalarConstantExists("Density"))
         {
@@ -150,7 +155,7 @@ public:
     computeThermalStrainStressAndFlux(
         Plato::OrdinalType                            const & aNumCells,
         Plato::ScalarMultiVectorT<StateT>             const & aTemperature,
-        Plato::ScalarMultiVectorT<KineticsScalarType> const & aElementYoungsModulusValues,
+        Plato::ScalarMultiVectorT<ControlScalarType>  const & aLocalControl,
         Plato::ScalarArray3DT<KinematicsScalarType>   const & aStrain,
         Plato::ScalarArray3DT<KineticsScalarType>     const & aStress,
         Plato::ScalarArray3DT<KineticsScalarType>     const & aFlux,
@@ -168,14 +173,13 @@ public:
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
 
+        auto tStiffness = mElasticStiffnessField(aLocalControl);
+
         Kokkos::parallel_for("compute element kinematics", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {aNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             StateT tTemperature = aTemperature(iCellOrdinal, iGpOrdinal);
 
-            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            auto tCurYoungsModulus = aElementYoungsModulusValues(tEntryOrdinal, 0);
-            Plato::IsotropicStiffnessConstant<mNumSpatialDims, KineticsScalarType> tStiffnessConstant(tCurYoungsModulus, tPoissonsRatio);            
             // compute thermal strain
             //
             StateT tstrain[mNumVoigtTerms] = {0};
@@ -189,7 +193,8 @@ public:
             for( int iVoigt=0; iVoigt<mNumVoigtTerms; iVoigt++){
                 aStress(iCellOrdinal, iGpOrdinal, iVoigt) = 0.0;
                 for( int jVoigt=0; jVoigt<mNumVoigtTerms; jVoigt++){
-                    aStress(iCellOrdinal, iGpOrdinal, iVoigt) += (aStrain(iCellOrdinal, iGpOrdinal, jVoigt)-tstrain[jVoigt])*tStiffnessConstant(iVoigt, jVoigt);
+                    aStress(iCellOrdinal, iGpOrdinal, iVoigt)
+                      += (aStrain(iCellOrdinal, iGpOrdinal, jVoigt)-tstrain[jVoigt])*tStiffness(iCellOrdinal, iGpOrdinal, iVoigt, jVoigt);
                 }
             }
 
@@ -229,13 +234,7 @@ public:
         // Set local control to user-defined value if requested.
         setLocalControl(aControl, tLocalControl);
 
-        auto tNumPoints = ElementType::getCubWeights().size();
-
-        // Calculate a Youngs Modulus for each element based on its density.
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementYoungsModulusValues("Youngs Modulus", tNumCells*tNumPoints, 1);
-        calculateYoungsModulusValues(tNumCells, tLocalControl, tElementYoungsModulusValues);
-
-        computeThermalStrainStressAndFlux(tNumCells, aTemperature, tElementYoungsModulusValues, aStrain, aStress, aFlux, aTGrad);
+        computeThermalStrainStressAndFlux(tNumCells, aTemperature, tLocalControl, aStrain, aStress, aFlux, aTGrad);
     }
 };// class ExpressionTMKinetics
 }// namespace Plato
