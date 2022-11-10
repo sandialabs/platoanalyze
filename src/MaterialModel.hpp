@@ -254,7 +254,7 @@ namespace Plato {
       Rank4VoigtFieldFactory(Teuchos::ParameterList& aParams) { }
 
       template<typename ScalarType>
-      Rank4VoigtFieldFactory<ScalarType>
+      Rank4VoigtField<ScalarType>
       create() const {
         // create and return the Rank4VoigtField with the desired symmetry
       }
