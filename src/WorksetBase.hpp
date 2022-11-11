@@ -31,6 +31,7 @@ protected:
     using ElementType::mNumDofsPerCell;      /*!< number of global degrees of freedom, e.g. displacements, per element  */
     using ElementType::mNumLocalDofsPerCell; /*!< number of local degrees of freedom, e.g. plasticity variables, per element  */
     using ElementType::mNumNodeStatePerNode; /*!< number of pressure states per node  */
+    using ElementType::mNumNodesPerFace;
 
     using StateFad      = typename Plato::FadTypes<ElementType>::StateFad;          /*!< global state AD type */
     using LocalStateFad = typename Plato::FadTypes<ElementType>::LocalStateFad;     /*!< local state AD type */
@@ -612,6 +613,41 @@ public:
     ) const
     {
         Plato::assemble_jacobian_fad(aDomain, aNumRows, aNumColumns, aMatrixEntryOrdinal, aJacobianWorkset, aReturnValue);
+    }
+
+    /******************************************************************************//**
+     * \brief Assemble Jacobian: overloaded for nonlocal element contributions on surface
+     *
+     * \tparam MatrixEntriesOrdinalType Input container of matrix ordinal
+     * \tparam JacobianWorksetType Input container, as a 2-D Kokkos::View
+     * \tparam AssembledJacobianType Output container, as a 1-D Kokkos::View
+     *
+     * \param [in] aNumRows number of rows
+     * \param [in] aNumColumns number of columns
+     * \param [in] aLocalCells array of local cells whose DOF contributions are being assembled
+     * \param [in] aNonLocalCells array of nonlocal cells whose contributions are being assembled in
+     * \param [in] aNonLocalCellMap array mapping each node in local cells to corresponding index in nonlocal cell array
+     * \param [in] aFaceLocalNodes array of cell nodes that are on faces
+     * \param [in] aContributingNode ordinal of node on local face whose nonlocal cell contributions are being assembled in
+     * \param [in] aMatrixEntryOrdinal container of Jacobian entry ordinal (local-to-global ID map)
+     * \param [in] aJacobianWorkset Jacobian cell workset
+     * \param [in/out] aReturnValue assembled Jacobian
+    **********************************************************************************/
+    template<class MatrixEntriesOrdinalType, class JacobianWorksetType, class AssembledJacobianType>
+    void
+    assembleJacobianFad(
+              Plato::OrdinalType                                aNumColumns,
+        const Plato::OrdinalVectorT<const Plato::OrdinalType> & aLocalCells,
+        const Plato::OrdinalVector                            & aNonLocalCells,
+        const Plato::OrdinalVector                            & aNonLocalCellMap,
+        const Plato::OrdinalVectorT<const Plato::OrdinalType> & aFaceLocalNodes,
+              Plato::OrdinalType                                aContributingNode,
+        const MatrixEntriesOrdinalType                        & aMatrixEntryOrdinal,
+        const JacobianWorksetType                             & aJacobianWorkset,
+              AssembledJacobianType                           & aReturnValue
+    ) const
+    {
+        Plato::assemble_jacobian_fad(mNumNodesPerFace, mNumDofsPerNode, aNumColumns, aLocalCells, aNonLocalCells, aNonLocalCellMap, aFaceLocalNodes, aContributingNode, aMatrixEntryOrdinal, aJacobianWorkset, aReturnValue);
     }
 
     /******************************************************************************//**

@@ -363,6 +363,9 @@ public:
     void NodeNodeGraph
     (Plato::OrdinalVector & aOffsetMap,
      Plato::OrdinalVector & aNodeOrds) const;
+
+    std::vector<Plato::Contact::ContactPair>
+    contactPairs() { return mContactPairs; }
 };
 // class SpatialModel
 
