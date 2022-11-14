@@ -37,7 +37,7 @@ protected:
     const Plato::Scalar mScaling2;
     Plato::VoigtMap<mNumSpatialDims> cVoigtMap;
 
-    Plato::Rank4VoigtField<ControlScalarType> mElasticStiffnessField;
+    std::shared_ptr<Plato::Rank4VoigtField<EvaluationType>> mElasticStiffnessField;
     std::string mExpression;
     Plato::Scalar mE0;
     KineticsScalarType mPoissonsRatio;
@@ -61,7 +61,8 @@ public:
         mThermalExpansivityConstant = aMaterialModel->getTensorConstant("Thermal Expansivity");
         mThermalConductivityConstant = aMaterialModel->getTensorConstant("Thermal Conductivity");
 
-        mElasticStiffnessField = aMaterialModel->getRank4VoigtField<ControlScalarType>("Elastic Stiffness Expression");
+        mElasticStiffnessField = std::make_shared<Plato::Rank4VoigtField<EvaluationType>>
+                (aMaterialModel->template getRank4VoigtField<EvaluationType>("Elastic Stiffness Expression"));
 
 //        mE0 = aMaterialModel->getScalarConstant("E0");
 //        mExpression = aMaterialModel->expression();
@@ -173,7 +174,7 @@ public:
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
 
-        auto tStiffness = mElasticStiffnessField(aLocalControl);
+        auto tStiffness = (*mElasticStiffnessField)(aLocalControl);
 
         Kokkos::parallel_for("compute element kinematics", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {aNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)

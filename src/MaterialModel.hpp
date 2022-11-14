@@ -3,6 +3,9 @@
 #include <Teuchos_ParameterList.hpp>
 #include "PlatoStaticsTypes.hpp"
 #include "ParseTools.hpp"
+#include "InterpolateFromNodal.hpp"
+#include "ExpressionEvaluator.hpp"
+#include "FadTypes.hpp"
 
 namespace Plato {
 
@@ -246,45 +249,121 @@ namespace Plato {
   };
 
   /******************************************************************************/
-  template<int SpaceDim>
-  class Rank4VoigtFieldFactory
+  template<typename EvaluationType>
+  class ScalarExpression
   /******************************************************************************/
   {
-    public:
-      Rank4VoigtFieldFactory(Teuchos::ParameterList& aParams) { }
+    private:
+      using StateT  = typename EvaluationType::StateScalarType;
+      using ConfigT = typename EvaluationType::ConfigScalarType;
+      using KineticsScalarType = typename EvaluationType::ResultScalarType;
+      using ElementType = typename EvaluationType::ElementType;
+      using KinematicsScalarType = typename Plato::fad_type_t<ElementType, StateT, ConfigT>;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
 
-      template<typename ScalarType>
-      Rank4VoigtField<ScalarType>
-      create() const {
-        // create and return the Rank4VoigtField with the desired symmetry
+      std::string mExpression;
+      std::map<std::string, Plato::Scalar> mConstantsMap;
+      ExpressionEvaluator<Plato::ScalarMultiVectorT<KineticsScalarType>,
+                          Plato::ScalarMultiVectorT<KinematicsScalarType>,
+                          Plato::ScalarVectorT<ControlScalarType>,
+                          Plato::Scalar > mExpEval;
+    public:
+      ScalarExpression(){ /* BWC: computeYoungsMod code will go in here */}
+      
+      Plato::ScalarMultiVectorT<ControlScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aElementDensity) const 
+      {
+        auto tCubPoints = ElementType::getCubPoints();
+        auto tCubWeights = ElementType::getCubWeights();
+        auto tNumPoints = tCubWeights.size();
+        auto tNumCells = aElementDensity.extent(0)/tNumPoints;
+
+        mExpEval.parse_expression(mExpression.c_str());
+        mExpEval.setup_storage(tNumCells*tNumPoints, 1);
+        std::map<std::string, Plato::Scalar>::iterator tIter = mConstantsMap.begin();
+        while(tIter != mConstantsMap.end())
+        {
+          mExpEval.set_variable(tIter->first, tIter->second);
+          tIter++;
+        }
+        mExpEval.set_variable("tElementDensity", aElementDensity);
+        Plato::ScalarMultiVectorT<ControlScalarType> tResults("Expression Results", tNumCells*tNumPoints, 1);
+        Kokkos::parallel_for("compute element values", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            mExpEval.evaluate_expression( tEntryOrdinal, tResults );
+        });
+        return tResults;
       }
+
   };
 
   /******************************************************************************/
-  template<typename ScalarType, int SpaceDim>
+  template<typename EvaluationType>
   class Rank4VoigtField
   /******************************************************************************/
   {
+    protected:
+      using ElementType = typename EvaluationType::ElementType;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+
     public:
       Rank4VoigtField(Teuchos::ParameterList& aParams){}
 
-      Plato::ScalarArray4DT<ScalarType>
-      operator()(Plato::ScalarMultiVectorT<ScalarType> aLocalControl) const {
+      Plato::ScalarArray4DT<ControlScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const { /* this may have to be virtual */
+      }
+
+      void calculateElementDensities(const Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl,
+                                     Plato::ScalarVectorT<ControlScalarType> &aElementDensity)
+      {
+        auto tCubPoints = ElementType::getCubPoints();
+        auto tCubWeights = ElementType::getCubWeights();
+        auto tNumPoints = tCubWeights.size();
+        auto tNumCells = aLocalControl.extent(0);
+        aElementDensity.resize(tNumCells*tNumPoints, 0);
+        Plato::InterpolateFromNodal<ElementType, 1, 0> tInterpolateFromNodal;
+
+        Kokkos::parallel_for("compute element density", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tCubPoint = tCubPoints(iGpOrdinal);
+            auto tBasisValues = ElementType::basisValues(tCubPoint);
+
+            // Calculate the node-averaged density for the element/cell
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            aElementDensity(tEntryOrdinal) = tInterpolateFromNodal(iCellOrdinal, tBasisValues, aLocalControl);
+        });
       }
   };
 
   /******************************************************************************/
-  template<typename ScalarType, int SpaceDim>
-  class IsotropicRank4VoigtField : public Rank4VoigtField
+  template<typename EvaluationType>
+  class IsotropicRank4VoigtField : public Rank4VoigtField<EvaluationType>
   /******************************************************************************/
   {
-      Plato::ScalarExpression tE, tv;
+    protected:
+      using ElementType = typename EvaluationType::ElementType;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+    private:
+      Plato::ScalarExpression<ControlScalarType> tC11, tC12, tC44;
     public:
 
       IsotropicRank4VoigtField(Teuchos::ParameterList& aParams){}
 
-      Plato::ScalarArray4DT<ScalarType>
-      operator()(Plato::ScalarMultiVectorT<ScalarType> aLocalControl) const {
+      Plato::ScalarArray4DT<ControlScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const 
+      {
+        Plato::ScalarVectorT<ControlScalarType> tElementDensity;
+        calculateElementDensities(aLocalControl, tElementDensity);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementC11 = tC11(tElementDensity);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementC12 = tC12(tElementDensity);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementC44 = tC44(tElementDensity);
+        /* First call new function to get element density values (this could be in Rank4VoigtField (base)) then pass that down to  
+        tE(aLocalControl); */
+        /* BWC: set actual material properties based on new control. old "computeYoungsMod" code, etc. Call 
+        expression evaluator first. */
       }
   };
 
@@ -292,11 +371,14 @@ namespace Plato {
   /*!
     \brief class for cubic 4th rank voigt tensor field
   */
-  template<typename ScalarType, int SpaceDim>
-  class CubicRank4VoigtField : public Rank4VoigtField
+  template<typename EvaluationType>
+  class CubicRank4VoigtField : public Rank4VoigtField<EvaluationType>
   /******************************************************************************/
   {
-      Plato::ScalarExpression tE, tv, tG;
+    protected:
+      using ElementType = typename EvaluationType::ElementType;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+      Plato::ScalarExpression<ControlScalarType> tE, tv, tG;
     public:
 
       /******************************************************************************//**
@@ -305,10 +387,28 @@ namespace Plato {
 
       /******************************************************************************//**
       **********************************************************************************/
-      Plato::ScalarArray4DT<ScalarType>
-      operator()(Plato::ScalarMultiVectorT<ScalarType> aLocalControl) const {
+      Plato::ScalarArray4DT<ControlScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const {
       }
   };
+
+  /******************************************************************************/
+  template<int SpaceDim>
+  class Rank4VoigtFieldFactory
+  /******************************************************************************/
+  {
+    public:
+      Rank4VoigtFieldFactory(Teuchos::ParameterList& aParams) { /* BWC: implement this to keep info needed for building the field later. These
+           include things like the expression strings and E0, v0 */ }
+      Rank4VoigtFieldFactory() { std::cout << "Unexpected call of Rank4VoigtFieldFactory default constructor" << std::endl; }
+
+      template<typename EvaluationType>
+      Rank4VoigtField<EvaluationType>
+      create() const {
+        // create and return the Rank4VoigtField with the desired symmetry
+      }
+  };
+
 
 
   /******************************************************************************/
@@ -718,11 +818,17 @@ namespace Plato {
       { return mRank4VoigtFunctorsMap[aFunctorName]; }
 
       // Rank4Voigt field
-      template<typename ScalarType>
-      Plato::Rank4VoigtField<ScalarType> getRank4VoigtField(std::string aFunctorName)
+      template<typename EvaluationType>
+      Plato::Rank4VoigtField<EvaluationType> getRank4VoigtField(std::string aFieldName)
       {
-        auto tFactory = mRank4VoigtFieldFactoryMap[aFunctorName];
-        return tFactory.create<ScalarField>();
+          if(mRank4VoigtFieldFactoryMap.count(aFieldName) == 0)
+          {
+              std::stringstream err;
+              err << "Attempted to retrieve non-extistant Rank4VoigtFieldFactory with name " << aFieldName;
+              ANALYZE_THROWERR(err.str());
+          }
+          auto tFactory = mRank4VoigtFieldFactoryMap.at(aFieldName);
+          return tFactory.template create<EvaluationType>();
       }
 
 
@@ -752,6 +858,10 @@ namespace Plato {
       // Rank4Voigt functor
       void setRank4VoigtFunctor(std::string aFunctorName, Plato::Rank4VoigtFunctor<SpatialDim> aFunctorValue)
       { mRank4VoigtFunctorsMap[aFunctorName] = aFunctorValue; }
+
+      // Rank4Voigt field
+      void setRank4VoigtField(std::string aFieldName, Plato::Rank4VoigtFieldFactory<SpatialDim> aFieldValue)
+      { mRank4VoigtFieldFactoryMap[aFieldName] = aFieldValue; }
 
 
       /******************************************************************************/
