@@ -388,16 +388,26 @@ TEUCHOS_UNIT_TEST(FunctorTests, ApplyContactPenalty_DiagonalMatrix)
     Plato::Contact::ContactPair tPair = Plato::Contact::parse_contact_pair(tPairParams, tMesh);
 
     // apply contact penalty
-    Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tProjectedDisp{45.3, 66.54, 77.88};
     Plato::Contact::ApplyContactPenalty<ElementType> applyContactPenalty(tPair.penaltyValue);
-    Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tPenalizedDisp;
-    applyContactPenalty(tProjectedDisp, tPenalizedDisp);
+
+    std::vector<Plato::Scalar> tProjectedDisp = {45.3, 66.54, 77.88};
+    auto dProjectedDisp = Plato::TestHelpers::create_device_view(tProjectedDisp);
+    Plato::ScalarMultiVector tFullProjectedDisp("",1,3);
+    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,1), KOKKOS_LAMBDA(Plato::OrdinalType iCellOrdinal)
+    {
+        for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+            tFullProjectedDisp(iCellOrdinal,iDim) = dProjectedDisp(iDim);
+    }, "fill in for device");
+
+    Plato::ScalarMultiVector tPenalizedDisp("",1,3);
+    applyContactPenalty(tFullProjectedDisp, tPenalizedDisp);
 
     // test
     std::vector<Plato::Scalar> tPenalizedDisp_Gold = {45.3e5, 66.54e5, 77.88e5};
-    TEST_FLOATING_EQUALITY(tPenalizedDisp(0), tPenalizedDisp_Gold[0], 1.0e-13);
-    TEST_FLOATING_EQUALITY(tPenalizedDisp(1), tPenalizedDisp_Gold[1], 1.0e-13);
-    TEST_FLOATING_EQUALITY(tPenalizedDisp(2), tPenalizedDisp_Gold[2], 1.0e-13);
+    auto tPenalizedDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tPenalizedDisp, 0, Kokkos::ALL()) );
+
+    for(int iOrd=0; iOrd<tPenalizedDisp_Gold.size(); iOrd++)
+        TEST_FLOATING_EQUALITY(tPenalizedDisp_Host(iOrd), tPenalizedDisp_Gold[iOrd], 1.0e-13);
 }
 
 TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)

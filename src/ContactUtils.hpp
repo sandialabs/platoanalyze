@@ -100,13 +100,20 @@ public:
     }
 
     template<typename StateType, typename ResultType>
-    KOKKOS_INLINE_FUNCTION void
+    void
     operator()
-    (const Plato::Array<mNumSpatialDims, StateType>  & aState,
-           Plato::Array<mNumSpatialDims, ResultType> & aResult) const
+    (const Plato::ScalarMultiVectorT<StateType>  & aState,
+           Plato::ScalarMultiVectorT<ResultType> & aResult) const
     {
-        for(Plato::OrdinalType iDim = 0; iDim < mNumSpatialDims; iDim++)
-            aResult(iDim) = mPenaltyValue(iDim) * aState(iDim);
+        auto tNumCells = aState.extent(0);
+        
+        auto tPenaltyValue = mPenaltyValue;
+        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(Plato::OrdinalType iCellOrdinal)
+        {
+            for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+                aResult(iCellOrdinal, iDim) = tPenaltyValue(iDim) * aState(iCellOrdinal, iDim);
+        }, "apply contact penalization and projection");
+
     }
 
 private:
