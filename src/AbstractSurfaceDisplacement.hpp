@@ -1,7 +1,6 @@
 #pragma once
 
 #include "PlatoStaticsTypes.hpp"
-#include "PlatoMathTypes.hpp"
 
 namespace Plato
 {
@@ -25,10 +24,9 @@ public:
 
     virtual KOKKOS_INLINE_FUNCTION void
     operator()
-    (Plato::OrdinalType                                            aCellOrdinal, 
-     const Plato::Array<ElementType::mNumNodesPerFace>           & aBasisFunctions,
-     const Plato::ScalarMultiVectorT<InStateT>                   & aState,
-           Plato::Array<ElementType::mNumSpatialDims, OutStateT> & aSurfaceDisp) const = 0;
+    (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
+     const Plato::ScalarMultiVectorT<InStateT>             & aState,
+           Plato::ScalarMultiVectorT<OutStateT>            & aSurfaceDisp) const = 0;
 
 protected:
     Plato::Scalar mScale;

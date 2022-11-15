@@ -43,50 +43,31 @@ private:
     using ResultScalarType = typename EvaluationType::ResultScalarType; 
 
 public:
-
-    template <typename SurfaceDispType>
-    void exercise_surface_disp_interface
-    (const SurfaceDispType                             & aComputeSurfaceDisp,
-     Plato::OrdinalType                                  aCellOrdinal, 
-     const Plato::Array<ElementType::mNumNodesPerFace> & aBasisFunctions,
-     const Plato::ScalarMultiVectorT<StateScalarType>  & aState,
-           Plato::ScalarVectorT<ResultScalarType>      & aSurfaceDisp)
-    {
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, 1), KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal)
-        {
-            Plato::Array<ElementType::mNumSpatialDims, StateScalarType> tSurfaceDisp;
-            aComputeSurfaceDisp(aCellOrdinal, aBasisFunctions, aState, tSurfaceDisp);
-            for( Plato::OrdinalType tDof=0; tDof<ElementType::mNumDofsPerNode; tDof++)
-            {
-                Kokkos::atomic_add(&aSurfaceDisp(tDof), tSurfaceDisp(tDof));
-            }
-        }, "do it on device");
-        }
-
-    template <typename SurfaceDispType>
     void dummy_contact_force
-    (const Plato::SpatialModel                         & aSpatialModel,
-     const std::string                                 & aSideSet,
-     const Plato::ScalarMultiVectorT<StateScalarType>  & aState,
-     const SurfaceDispType                             & aComputeSurfaceDisp,
-           Plato::ScalarMultiVectorT<ResultScalarType> & aResult)
+    (const Plato::SpatialModel                                         & aSpatialModel,
+     const std::string                                                 & aSideSet,
+     const Plato::ScalarMultiVectorT<StateScalarType>                  & aState,
+     const Plato::Contact::AbstractSurfaceDisplacement<EvaluationType> & aComputeSurfaceDisp,
+           Plato::ScalarMultiVectorT<ResultScalarType>                 & aResult)
     {
         auto tElementOrds   = aSpatialModel.Mesh->GetSideSetElements(aSideSet);
-        auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
+
+        Plato::ScalarMultiVectorT<ResultScalarType> tSurfaceDisplacement("", tElementOrds.size(), ElementType::mNumDofsPerNode);
+        aComputeSurfaceDisp(tElementOrds, aState, tSurfaceDisplacement);
+
         Plato::OrdinalType tNumFaces = tElementOrds.size();
 
         auto tCubaturePoints  = ElementType::Face::getCubPoints();
         auto tCubatureWeights = ElementType::Face::getCubWeights();
         auto tNumPoints = tCubatureWeights.size();
 
+        auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
+
         Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
             auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
-
-            Plato::Array<ElementType::mNumSpatialDims, StateScalarType> tSurfaceDisp;
-            aComputeSurfaceDisp(iCellOrdinal, tBasisValues, aState, tSurfaceDisp);
 
             for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
             {
@@ -95,7 +76,7 @@ public:
                 for( Plato::OrdinalType tDof=0; tDof<ElementType::mNumDofsPerNode; tDof++)
                 {
                     auto tElementDofOrdinal = tLocalNodeOrd * ElementType::mNumDofsPerNode + tDof;
-                    ResultScalarType tResult = tBasisValues(tNode)*tSurfaceDisp[tDof];
+                    ResultScalarType tResult = tBasisValues(tNode)*tSurfaceDisplacement(iCellOrdinal, tDof);
                     Kokkos::atomic_add(&aResult(iCellOrdinal, tElementDofOrdinal), tResult);
                 }
             }
@@ -445,12 +426,6 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
     auto tPair = tPairs[0]; // there is only 1 pair
 
-    // get basis functions at cubature (quadrature, since surface) point
-    Plato::OrdinalType tCubOrdinal = 0;
-    auto tCubPoints = ElementType::Face::getCubPoints();
-    auto tCubPoint = tCubPoints(tCubOrdinal);
-    auto tBasisValues = ElementType::Face::basisValues(tCubPoint);
-
     // test child elements
     auto tChildElements_Host = Plato::TestHelpers::get( tPair.surfaceA.childElements() );
     std::vector<Plato::OrdinalType> tChildElements_gold = { 2, 4 };
@@ -464,28 +439,28 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
         TEST_EQUALITY(tChildElements_Host(iChild), tChildElements_gold[iChild]);
     }
 
-    // construct dummy residual class
-    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
-    DummyResidual<EvaluationType> tResidual;
-
     // construct compute surface displacement functors
-    Plato::Contact::SurfaceDisplacement<EvaluationType> tComputeSurfaceDispA(tPair.surfaceA.childElements(), tPair.surfaceA.childFaceLocalNodes(), -1.0);
-    Plato::Contact::SurfaceDisplacement<EvaluationType> tComputeSurfaceDispB(tPair.surfaceB.childElements(), tPair.surfaceB.childFaceLocalNodes(), -1.0);
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
+    Plato::Contact::SurfaceDisplacement<EvaluationType> tComputeSurfaceDispA(tPair.surfaceA.childFaceLocalNodes(), -1.0);
+    Plato::Contact::SurfaceDisplacement<EvaluationType> tComputeSurfaceDispB(tPair.surfaceB.childFaceLocalNodes(), -1.0);
+
+    // compute surface displacement for all child face cells
+    Plato::ScalarMultiVector tSurfaceDispA("make on device", tPair.surfaceA.childElements().size(), ElementType::mNumDofsPerNode);
+    tComputeSurfaceDispA(tPair.surfaceA.childElements(), tDispWS, tSurfaceDispA);
+
+    Plato::ScalarMultiVector tSurfaceDispB("make on device", tPair.surfaceB.childElements().size(), ElementType::mNumDofsPerNode);
+    tComputeSurfaceDispB(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
 
     // test surface displacement child face cell 0
     Plato::OrdinalType tChildCellOrdinal = 0;
-    Plato::ScalarVector tSurfaceDispA("make on device", ElementType::mNumDofsPerNode);
-    Plato::ScalarVector tSurfaceDispB("make on device", ElementType::mNumDofsPerNode);
-    tResidual.exercise_surface_disp_interface(tComputeSurfaceDispA, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDispA);
-    tResidual.exercise_surface_disp_interface(tComputeSurfaceDispB, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDispB);
 
-    auto tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDispA );
+    auto tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispA, tChildCellOrdinal, Kokkos::ALL()) );
     std::vector<double> tSurfaceDisp_Gold = {-0.0012, -0.0013, -0.0014};
     for(int iDof=0; iDof<tSurfaceDisp_Gold.size(); iDof++){
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
     }
 
-    tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDispB );
+    tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispB, tChildCellOrdinal, Kokkos::ALL()) );
     tSurfaceDisp_Gold = {-0.0031, -0.0032, -0.0033};
     for(int iDof=0; iDof<tSurfaceDisp_Gold.size(); iDof++){
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
@@ -493,18 +468,14 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
 
     // test surface displacement child face cell 1
     tChildCellOrdinal = 1;
-    Plato::blas1::fill(static_cast<Plato::Scalar>(0), tSurfaceDispA);  
-    Plato::blas1::fill(static_cast<Plato::Scalar>(0), tSurfaceDispB);  
-    tResidual.exercise_surface_disp_interface(tComputeSurfaceDispA, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDispA);
-    tResidual.exercise_surface_disp_interface(tComputeSurfaceDispB, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDispB);
 
-    tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDispA );
+    tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispA, tChildCellOrdinal, Kokkos::ALL()) );
     tSurfaceDisp_Gold = {-0.0013, -0.0014, -0.0015};
     for(int iDof=0; iDof<tSurfaceDisp_Gold.size(); iDof++){
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
     }
 
-    tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDispB );
+    tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispB, tChildCellOrdinal, Kokkos::ALL()) );
     tSurfaceDisp_Gold = {-0.0033, -0.0034, -0.0035};
     for(int iDof=0; iDof<tSurfaceDisp_Gold.size(); iDof++){
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
@@ -541,19 +512,10 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
     auto tPair = tPairs[0]; // there is only 1 pair
 
-    // construct dummy residual class
-    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
-    DummyResidual<EvaluationType> tResidual;
-
     // construct compute surface displacement functors
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     Plato::Contact::ProjectedSurfaceDisplacement<EvaluationType> tComputeSurfaceDispA(tPair.surfaceA.parentElements(), tPair.surfaceA.mappedChildNodeLocations(), tPair.surfaceA.elementWiseChildMap(), tMesh);
     Plato::Contact::ProjectedSurfaceDisplacement<EvaluationType> tComputeSurfaceDispB(tPair.surfaceB.parentElements(), tPair.surfaceB.mappedChildNodeLocations(), tPair.surfaceB.elementWiseChildMap(), tMesh);
-
-    // get basis functions at cubature (quadrature, since surface) point
-    Plato::OrdinalType tCubOrdinal = 0;
-    auto tCubPoints = ElementType::Face::getCubPoints();
-    auto tCubPoint = tCubPoints(tCubOrdinal);
-    auto tBasisValues = ElementType::Face::basisValues(tCubPoint);
 
     // test surface displacement terms for each child node on child cell 0
     Plato::OrdinalType tChildCellOrdinal = 0;
@@ -570,10 +532,10 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     {
         tComputeSurfaceDispA.setChildNode(iChildNode);
 
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0), tSurfaceDisp);  
-        tResidual.exercise_surface_disp_interface(tComputeSurfaceDispA, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDisp);
+        Plato::ScalarMultiVector tSurfaceDispA("make on device", tPair.surfaceA.childElements().size(), ElementType::mNumDofsPerNode);
+        tComputeSurfaceDispA(tPair.surfaceA.childElements(), tDispWS, tSurfaceDispA);
 
-        auto tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDisp );
+        auto tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispA, tChildCellOrdinal, Kokkos::ALL()) );
         for(int iDof=0; iDof<tSurfaceDisp_Gold[iChildNode].size(); iDof++){
             TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iChildNode][iDof], 1e-12);
         }
@@ -589,10 +551,10 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     {
         tComputeSurfaceDispB.setChildNode(iChildNode);
 
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0), tSurfaceDisp);  
-        tResidual.exercise_surface_disp_interface(tComputeSurfaceDispB, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDisp);
+        Plato::ScalarMultiVector tSurfaceDispB("make on device", tPair.surfaceB.childElements().size(), ElementType::mNumDofsPerNode);
+        tComputeSurfaceDispB(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
 
-        auto tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDisp );
+        auto tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispB, tChildCellOrdinal, Kokkos::ALL()) );
         for(int iDof=0; iDof<tSurfaceDisp_Gold[iChildNode].size(); iDof++){
             TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iChildNode][iDof], 1e-12);
         }
@@ -611,10 +573,10 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     {
         tComputeSurfaceDispA.setChildNode(iChildNode);
 
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0), tSurfaceDisp);  
-        tResidual.exercise_surface_disp_interface(tComputeSurfaceDispA, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDisp);
+        Plato::ScalarMultiVector tSurfaceDispA("make on device", tPair.surfaceA.childElements().size(), ElementType::mNumDofsPerNode);
+        tComputeSurfaceDispA(tPair.surfaceA.childElements(), tDispWS, tSurfaceDispA);
 
-        auto tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDisp );
+        auto tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispA, tChildCellOrdinal, Kokkos::ALL()) );
         for(int iDof=0; iDof<tSurfaceDisp_Gold[iChildNode].size(); iDof++){
             TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iChildNode][iDof], 1e-12);
         }
@@ -630,10 +592,10 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     {
         tComputeSurfaceDispB.setChildNode(iChildNode);
 
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0), tSurfaceDisp);  
-        tResidual.exercise_surface_disp_interface(tComputeSurfaceDispB, tChildCellOrdinal, tBasisValues, tDispWS, tSurfaceDisp);
+        Plato::ScalarMultiVector tSurfaceDispB("make on device", tPair.surfaceB.childElements().size(), ElementType::mNumDofsPerNode);
+        tComputeSurfaceDispB(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
 
-        auto tSurfaceDisp_Host = Plato::TestHelpers::get( tSurfaceDisp );
+        auto tSurfaceDisp_Host = Plato::TestHelpers::get( Kokkos::subview(tSurfaceDispB, tChildCellOrdinal, Kokkos::ALL()) );
         for(int iDof=0; iDof<tSurfaceDisp_Gold[iChildNode].size(); iDof++){
             TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iChildNode][iDof], 1e-12);
         }
@@ -675,12 +637,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     auto tPair = tPairs[0]; // there is only 1 pair
 
     // construct compute surface displacement functors for side A
-    Plato::Contact::SurfaceDisplacement<EvaluationType> computeChildSurfaceDispA(tPair.surfaceA.childElements(), tPair.surfaceA.childFaceLocalNodes(), -1.0);
+    Plato::Contact::SurfaceDisplacement<EvaluationType> computeChildSurfaceDispA(tPair.surfaceA.childFaceLocalNodes(), -1.0);
     Plato::Contact::ProjectedSurfaceDisplacement<EvaluationType> 
         computeParentSurfaceDispA(tPair.surfaceA.parentElements(), tPair.surfaceA.mappedChildNodeLocations(), tPair.surfaceA.elementWiseChildMap(), tMesh);
 
     // construct compute surface displacement functors for side B
-    Plato::Contact::SurfaceDisplacement<EvaluationType> computeChildSurfaceDispB(tPair.surfaceB.childElements(), tPair.surfaceB.childFaceLocalNodes());
+    Plato::Contact::SurfaceDisplacement<EvaluationType> computeChildSurfaceDispB(tPair.surfaceB.childFaceLocalNodes());
     Plato::Contact::ProjectedSurfaceDisplacement<EvaluationType> 
         computeParentSurfaceDispB(tPair.surfaceB.parentElements(), tPair.surfaceB.mappedChildNodeLocations(), tPair.surfaceB.elementWiseChildMap(), tMesh, -1.0);
 
