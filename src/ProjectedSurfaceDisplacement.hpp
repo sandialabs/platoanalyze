@@ -37,7 +37,7 @@ public:
     {
     }
 
-    KOKKOS_INLINE_FUNCTION void
+    void
     operator()
     (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
      const Plato::ScalarMultiVectorT<InStateT>             & aState,

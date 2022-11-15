@@ -22,7 +22,7 @@ public:
 
     virtual ~AbstractSurfaceDisplacement(){}
 
-    virtual KOKKOS_INLINE_FUNCTION void
+    virtual void
     operator()
     (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
      const Plato::ScalarMultiVectorT<InStateT>             & aState,
