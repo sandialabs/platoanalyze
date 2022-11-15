@@ -134,6 +134,16 @@ setup_dummy_spatial_model(Plato::Mesh aMesh)
     return Plato::SpatialModel(aMesh, *tInputs, tDataMap);
 }
 
+void
+check_element_type_is_tet(Plato::Mesh aMesh)
+{
+    auto tElementType = aMesh->ElementType();
+    if( Plato::tolower(tElementType) != "tetra"  &&
+        Plato::tolower(tElementType) != "tetra4" &&
+        Plato::tolower(tElementType) != "tet4" )
+        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
+}
+
 Teuchos::RCP<Teuchos::ParameterList>
 get_2box_mesh_params()
 {
@@ -157,6 +167,10 @@ get_2box_mesh_params()
         "    <ParameterList name='Pairs'>                                                     \n"
         "      <ParameterList name='Pair 1'>                                                  \n"
         "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        // "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
+        // "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
+        "        <Parameter name='Penalty Value' type='double' value='1.0e4' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='normal' />  \n"
         "        <ParameterList name='A Surface'>                                                  \n"
         "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
         "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
@@ -185,13 +199,31 @@ get_2box_mesh_params()
 
 TEUCHOS_UNIT_TEST(UtilsTests, ParseSingleContactPair)
 {
-    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+    Teuchos::RCP<Teuchos::ParameterList> tContactParams =
+        Teuchos::getParametersFromXmlString(
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <Parameter name='Penalty Value' type='double' value='1.0e4' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='normal' />  \n"
+        "        <ParameterList name='A Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "        <ParameterList name='B Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+      );
 
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    auto tContactParams = tInputs->sublist("Contact");
-    auto tPairsParams = tContactParams.sublist("Pairs");
+    auto tPairsParams = tContactParams->sublist("Pairs");
     const auto& tMyName = tPairsParams.name(tPairsParams.begin());
     Teuchos::ParameterList& tPairParams = tPairsParams.sublist(tMyName);
 
@@ -221,6 +253,11 @@ TEUCHOS_UNIT_TEST(UtilsTests, ParseSingleContactPair)
     for(int iVal=0; iVal<tInitialGap_Gold.size(); iVal++){
         TEST_EQUALITY(tPair.initialGap[iVal], tInitialGap_Gold[iVal]);
     }
+
+    // test penalty data
+    TEST_EQUALITY(tPair.penaltyType, "normal");
+    TEST_EQUALITY(tPair.penaltyValue.size(), 1);
+    TEST_FLOATING_EQUALITY(tPair.penaltyValue[0], 1.0e4, 1e-13)
 }
 
 TEUCHOS_UNIT_TEST(UtilsTests, ParseAllContactPairs)
@@ -243,12 +280,8 @@ TEUCHOS_UNIT_TEST(UtilsTests, PopulateFullContactArrays)
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
+    check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tElementType = tMesh->ElementType();
-    if( Plato::tolower(tElementType) != "tetra"  &&
-        Plato::tolower(tElementType) != "tetra4" &&
-        Plato::tolower(tElementType) != "tet4" )
-        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
 
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
@@ -338,6 +371,54 @@ TEUCHOS_UNIT_TEST(ContactSurfaceTests, ThrowWhenAccessingParentDataIfNotSet)
     TEST_THROW(tPair.surfaceB.mappedChildNodeLocations(), std::runtime_error);
 }
 
+TEUCHOS_UNIT_TEST(FunctorTests, ApplyContactPenalty_DiagonalMatrix)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tContactParams =
+        Teuchos::getParametersFromXmlString(
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
+        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e5,1.0e5,1.0e5}' />  \n"
+        "        <ParameterList name='A Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "        <ParameterList name='B Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+      );
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    check_element_type_is_tet(tMesh);
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+
+    auto tPairsParams = tContactParams->sublist("Pairs");
+    const auto& tMyName = tPairsParams.name(tPairsParams.begin());
+    Teuchos::ParameterList& tPairParams = tPairsParams.sublist(tMyName);
+
+    Plato::Contact::ContactPair tPair = Plato::Contact::parse_contact_pair(tPairParams, tMesh);
+
+    // apply contact penalty
+    Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tProjectedDisp{45.3, 66.54, 77.88};
+    Plato::Contact::ApplyContactPenalty<ElementType> applyContactPenalty(tPair.penaltyValue);
+    Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tPenalizedDisp;
+    applyContactPenalty(tProjectedDisp, tPenalizedDisp);
+
+    // test
+    std::vector<Plato::Scalar> tPenalizedDisp_Gold = {45.3e5, 66.54e5, 77.88e5};
+    TEST_FLOATING_EQUALITY(tPenalizedDisp(0), tPenalizedDisp_Gold[0], 1.0e-13);
+    TEST_FLOATING_EQUALITY(tPenalizedDisp(1), tPenalizedDisp_Gold[1], 1.0e-13);
+    TEST_FLOATING_EQUALITY(tPenalizedDisp(2), tPenalizedDisp_Gold[2], 1.0e-13);
+}
+
 TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
@@ -345,12 +426,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
+    check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tElementType = tMesh->ElementType();
-    if( Plato::tolower(tElementType) != "tetra"  &&
-        Plato::tolower(tElementType) != "tetra4" &&
-        Plato::tolower(tElementType) != "tet4" )
-        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
@@ -444,12 +521,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
+    check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tElementType = tMesh->ElementType();
-    if( Plato::tolower(tElementType) != "tetra"  &&
-        Plato::tolower(tElementType) != "tetra4" &&
-        Plato::tolower(tElementType) != "tet4" )
-        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
     
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
@@ -577,12 +650,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
+    check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tElementType = tMesh->ElementType();
-    if( Plato::tolower(tElementType) != "tetra"  &&
-        Plato::tolower(tElementType) != "tetra4" &&
-        Plato::tolower(tElementType) != "tet4" )
-        ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
     
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );

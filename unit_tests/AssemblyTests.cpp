@@ -204,6 +204,8 @@ get_2box_mesh_params()
         "    <ParameterList name='Pairs'>                                                     \n"
         "      <ParameterList name='Pair 1'>                                                  \n"
         "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <Parameter name='Penalty Value' type='double' value='1.0e4' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='normal' />  \n"
         "        <ParameterList name='A Surface'>                                                  \n"
         "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
         "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"

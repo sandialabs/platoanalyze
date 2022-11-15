@@ -70,6 +70,8 @@ struct ContactPair
     ContactSurface surfaceA;
     ContactSurface surfaceB;
     Teuchos::Array<Plato::Scalar> initialGap;
+    std::string penaltyType;
+    Teuchos::Array<Plato::Scalar> penaltyValue;
 };
 
 Teuchos::Array<Plato::Scalar> 

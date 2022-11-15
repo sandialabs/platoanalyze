@@ -16,13 +16,17 @@ namespace Plato
 namespace Contact
 {
 
+std::vector<ContactPair> parse_contact
+(const Teuchos::ParameterList & aParams,
+ Plato::Mesh                    aMesh);
+
 ContactPair parse_contact_pair
 (const Teuchos::ParameterList & aParams,
  Plato::Mesh                    aMesh);
 
-std::vector<ContactPair> parse_contact
+void parse_contact_penalty
 (const Teuchos::ParameterList & aParams,
- Plato::Mesh                    aMesh);
+       ContactPair            & aContactPair);
 
 Plato::SpatialDomain get_domain
 (const std::string                       & aDomainName,
@@ -81,6 +85,34 @@ void set_parent_data_for_pairs
         set_parent_data_for_surface<ElementType>(tPair.surfaceB, tScaledGap, aSpatialModel);
     }
 }
+
+template<typename ElementType>
+class ApplyContactPenalty : public ElementType
+{
+private:
+    using ElementType::mNumSpatialDims;
+
+public:
+    ApplyContactPenalty(const Teuchos::Array<Plato::Scalar> & aPenaltyValue)
+    {
+        for(Plato::OrdinalType iDim=0; iDim < mNumSpatialDims; iDim++)
+            mPenaltyValue(iDim) = aPenaltyValue[iDim];
+    }
+
+    template<typename StateType, typename ResultType>
+    KOKKOS_INLINE_FUNCTION void
+    operator()
+    (const Plato::Array<mNumSpatialDims, StateType>  & aState,
+           Plato::Array<mNumSpatialDims, ResultType> & aResult) const
+    {
+        for(Plato::OrdinalType iDim = 0; iDim < mNumSpatialDims; iDim++)
+            aResult(iDim) = mPenaltyValue(iDim) * aState(iDim);
+    }
+
+private:
+    Plato::Array<mNumSpatialDims, Plato::Scalar> mPenaltyValue;
+
+};
 
 }
 

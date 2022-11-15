@@ -9,6 +9,37 @@ namespace Plato
 namespace Contact
 {
 
+std::vector<ContactPair> parse_contact
+(const Teuchos::ParameterList & aParams,
+ Plato::Mesh                    aMesh)
+ {
+    std::vector<ContactPair> tPairs;
+    if (aParams.isSublist("Contact"))
+    {
+        auto tContactParams = aParams.sublist("Contact");
+        if (!tContactParams.isSublist("Pairs"))
+        {
+            ANALYZE_THROWERR("Parsing 'Contact' parameter list. Required 'Pairs' parameter sublist not found");
+        }
+
+        auto tPairsParams = tContactParams.sublist("Pairs");
+        for (auto tIndex = tPairsParams.begin(); tIndex != tPairsParams.end(); ++tIndex)
+        {
+            const auto &tEntry  = tPairsParams.entry(tIndex);
+            const auto &tMyName = tPairsParams.name(tIndex);
+
+            if (!tEntry.isList())
+            {
+                ANALYZE_THROWERR("Parameter in 'Domains' parameter sublist within 'Spatial Model' parameter list not valid.  Expect lists only.");
+            }
+
+            Teuchos::ParameterList &tPairParams = tPairsParams.sublist(tMyName);
+            tPairs.push_back(parse_contact_pair(tPairParams, aMesh));
+        }
+    }
+    return tPairs;
+ }
+
 ContactPair parse_contact_pair
 (const Teuchos::ParameterList & aParams,
  Plato::Mesh                    aMesh)
@@ -40,39 +71,32 @@ ContactPair parse_contact_pair
         ANALYZE_THROWERR("Initial Gap vector provided in contact pair has different dimensions than mesh.")
     tContactPair.initialGap = tVector;
 
+    parse_contact_penalty(aParams, tContactPair);
+
     return tContactPair;
 }
 
-std::vector<ContactPair> parse_contact
+void parse_contact_penalty
 (const Teuchos::ParameterList & aParams,
- Plato::Mesh                    aMesh)
- {
-    std::vector<ContactPair> tPairs;
-    if (aParams.isSublist("Contact"))
+       ContactPair            & aContactPair)
+{
+    if (!aParams.isType<std::string>("Penalty Type"))
+        ANALYZE_THROWERR("Parsing 'Contact' parameter list 'Pairs' sublist. Required 'Penalty Type' parameter not found")
+    aContactPair.penaltyType = aParams.get<std::string>("Penalty Type");
+
+    if (aParams.isType<Plato::Scalar>("Penalty Value"))
     {
-        auto tContactParams = aParams.sublist("Contact");
-        if (!tContactParams.isSublist("Pairs"))
-        {
-            ANALYZE_THROWERR("Parsing 'Contact' parameter list. Required 'Pairs' parameter sublist not found");
-        }
-
-        auto tPairsParams = tContactParams.sublist("Pairs");
-        for (auto tIndex = tPairsParams.begin(); tIndex != tPairsParams.end(); ++tIndex)
-        {
-            const auto &tEntry  = tPairsParams.entry(tIndex);
-            const auto &tMyName = tPairsParams.name(tIndex);
-
-            if (!tEntry.isList())
-            {
-                ANALYZE_THROWERR("Parameter in 'Domains' parameter sublist within 'Spatial Model' parameter list not valid.  Expect lists only.");
-            }
-
-            Teuchos::ParameterList &tPairParams = tPairsParams.sublist(tMyName);
-            tPairs.push_back(parse_contact_pair(tPairParams, aMesh));
-        }
+        Plato::Scalar tValue = aParams.get<Plato::Scalar>("Penalty Value");
+        Teuchos::Array<Plato::Scalar> tValueArray(1, tValue);
+        aContactPair.penaltyValue = tValueArray;
     }
-    return tPairs;
- }
+    else if (aParams.isType<Teuchos::Array<Plato::Scalar>>("Penalty Value"))
+    {
+        aContactPair.penaltyValue = aParams.get<Teuchos::Array<Plato::Scalar>>("Penalty Value");
+    }
+    else
+        ANALYZE_THROWERR("Parsing 'Contact' parameter list 'Pairs' sublist. Required 'Penalty Value' parameter not found")
+}
 
 Plato::SpatialDomain get_domain
 (const std::string                       & aDomainName,
