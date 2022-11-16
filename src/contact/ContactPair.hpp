@@ -20,7 +20,7 @@ public:
     void
     initialize
     (const Teuchos::ParameterList & aParams,
-    Plato::Mesh                    aMesh);
+     Plato::Mesh                    aMesh);
 
     void
     addParentData
@@ -29,28 +29,28 @@ public:
      const Plato::ScalarMultiVector & aMappedChildNodeLocations);
 
     std::string
-    childSideSet() { return mChildSideSet; }
+    childSideSet() const { return mChildSideSet; }
 
     Plato::OrdinalVectorT<const Plato::OrdinalType>
-    childNodes() { return mChildNodes; }
+    childNodes() const { return mChildNodes; }
 
     Plato::OrdinalVectorT<const Plato::OrdinalType>
-    childElements() { return mChildElements; }
+    childElements() const { return mChildElements; }
 
     Plato::OrdinalVectorT<const Plato::OrdinalType>
-    childFaceLocalNodes() { return mChildFaceLocalNodes; }
+    childFaceLocalNodes() const { return mChildFaceLocalNodes; }
 
     std::string
-    parentBlock() { return mParentBlock; }
+    parentBlock() const { return mParentBlock; }
 
     Plato::OrdinalVector
-    parentElements();
+    parentElements() const;
 
     Plato::OrdinalVector
-    elementWiseChildMap();
+    elementWiseChildMap() const;
 
     Plato::ScalarMultiVector
-    mappedChildNodeLocations();
+    mappedChildNodeLocations() const;
 
 private:
     std::string mChildSideSet;

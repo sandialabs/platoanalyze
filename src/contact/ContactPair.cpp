@@ -48,7 +48,7 @@ ContactSurface::addParentData
 }
 
 Plato::OrdinalVector
-ContactSurface::parentElements() 
+ContactSurface::parentElements() const
 { 
     if (!mHasParentData)
         ANALYZE_THROWERR("In ContactSurface class: Attempting to access parent data before it is assigned.")
@@ -57,7 +57,7 @@ ContactSurface::parentElements()
 }
 
 Plato::OrdinalVector
-ContactSurface::elementWiseChildMap() 
+ContactSurface::elementWiseChildMap() const
 { 
     if (!mHasParentData)
         ANALYZE_THROWERR("In ContactSurface class: Attempting to access parent data before it is assigned.")
@@ -66,7 +66,7 @@ ContactSurface::elementWiseChildMap()
 }
 
 Plato::ScalarMultiVector
-ContactSurface::mappedChildNodeLocations() 
+ContactSurface::mappedChildNodeLocations() const
 { 
     if (!mHasParentData)
         ANALYZE_THROWERR("In ContactSurface class: Attempting to access parent data before it is assigned.")

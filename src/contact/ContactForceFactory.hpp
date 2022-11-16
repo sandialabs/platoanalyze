@@ -8,6 +8,7 @@
 #include "PlatoUtilities.hpp"
 #include "AnalyzeMacros.hpp"
 
+#include "Teuchos_RCP.hpp"
 #include <Teuchos_Array.hpp>
 
 namespace Plato
