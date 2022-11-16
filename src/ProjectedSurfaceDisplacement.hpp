@@ -41,7 +41,7 @@ public:
     operator()
     (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
      const Plato::ScalarMultiVectorT<InStateT>             & aState,
-           Plato::ScalarMultiVectorT<OutStateT>            & aSurfaceDisp) const override
+           Plato::ScalarArray3DT<OutStateT>                & aSurfaceDisp) const override
     {
         auto tNumFaces = aElementOrds.size();
 
@@ -81,7 +81,7 @@ public:
 
             for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerNode; tDofIndex++)
             {
-                aSurfaceDisp(iCellOrdinal, tDofIndex) = tScale * tBasisValues(tChildNode) * tSurfaceDisp(tDofIndex);
+                aSurfaceDisp(iCellOrdinal, iGPOrdinal, tDofIndex) = tScale * tBasisValues(tChildNode) * tSurfaceDisp(tDofIndex);
             }
 
         }, "projected surface displacement");

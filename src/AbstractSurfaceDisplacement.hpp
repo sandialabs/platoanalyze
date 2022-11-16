@@ -12,7 +12,6 @@ template <typename EvaluationType>
 class AbstractSurfaceDisplacement : public EvaluationType::ElementType
 {
 protected:
-    using ElementType = typename EvaluationType::ElementType;
     using InStateT  = typename EvaluationType::StateScalarType;  
     using OutStateT = typename EvaluationType::ResultScalarType; 
 
@@ -26,7 +25,7 @@ public:
     operator()
     (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
      const Plato::ScalarMultiVectorT<InStateT>             & aState,
-           Plato::ScalarMultiVectorT<OutStateT>            & aSurfaceDisp) const = 0;
+           Plato::ScalarArray3DT<OutStateT>                & aSurfaceDisp) const = 0;
 
 protected:
     Plato::Scalar mScale;

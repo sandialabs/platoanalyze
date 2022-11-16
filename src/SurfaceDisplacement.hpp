@@ -24,7 +24,7 @@ private:
 public:
     SurfaceDisplacement
     (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aSideSetLocalNodes,
-      Plato::Scalar                                          aScale = 1.0) :
+     Plato::Scalar                                          aScale = 1.0) :
      AbstractSurfaceDisplacement<EvaluationType>(aScale),
      mSideSetLocalNodes(aSideSetLocalNodes)
     {
@@ -34,7 +34,7 @@ public:
     operator()
     (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
      const Plato::ScalarMultiVectorT<InStateT>             & aState,
-           Plato::ScalarMultiVectorT<OutStateT>            & aSurfaceDisp) const override
+           Plato::ScalarArray3DT<OutStateT>                & aSurfaceDisp) const override
     {
         auto tNumFaces = aElementOrds.size();
 
@@ -55,12 +55,12 @@ public:
 
             for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerNode; tDofIndex++)
             {
-                aSurfaceDisp(iCellOrdinal, tDofIndex) = 0.0;
+                aSurfaceDisp(iCellOrdinal, iGPOrdinal, tDofIndex) = 0.0;
                 for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < ElementType::mNumNodesPerFace; tNodeIndex++)
                 {
                     Plato::OrdinalType tFaceNode = tSideSetLocalNodes(iCellOrdinal*ElementType::mNumNodesPerFace + tNodeIndex);
                     Plato::OrdinalType tCellDofIndex = NumDofsPerNode * tFaceNode + tDofIndex; 
-                    aSurfaceDisp(iCellOrdinal, tDofIndex) += tScale * tBasisValues(tNodeIndex) * aState(tGlobalCellOrdinal, tCellDofIndex);
+                    aSurfaceDisp(iCellOrdinal, iGPOrdinal, tDofIndex) += tScale * tBasisValues(tNodeIndex) * aState(tGlobalCellOrdinal, tCellDofIndex);
                 }
             }
 

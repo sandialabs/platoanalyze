@@ -86,41 +86,6 @@ void set_parent_data_for_pairs
     }
 }
 
-template<typename ElementType>
-class ApplyContactPenalty : public ElementType
-{
-private:
-    using ElementType::mNumSpatialDims;
-
-public:
-    ApplyContactPenalty(const Teuchos::Array<Plato::Scalar> & aPenaltyValue)
-    {
-        for(Plato::OrdinalType iDim=0; iDim < mNumSpatialDims; iDim++)
-            mPenaltyValue(iDim) = aPenaltyValue[iDim];
-    }
-
-    template<typename StateType, typename ResultType>
-    void
-    operator()
-    (const Plato::ScalarMultiVectorT<StateType>  & aState,
-           Plato::ScalarMultiVectorT<ResultType> & aResult) const
-    {
-        auto tNumCells = aState.extent(0);
-        
-        auto tPenaltyValue = mPenaltyValue;
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(Plato::OrdinalType iCellOrdinal)
-        {
-            for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
-                aResult(iCellOrdinal, iDim) = tPenaltyValue(iDim) * aState(iCellOrdinal, iDim);
-        }, "apply contact penalization and projection");
-
-    }
-
-private:
-    Plato::Array<mNumSpatialDims, Plato::Scalar> mPenaltyValue;
-
-};
-
 }
 
 }
