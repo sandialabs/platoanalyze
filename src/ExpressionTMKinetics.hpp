@@ -61,8 +61,9 @@ public:
         mThermalExpansivityConstant = aMaterialModel->getTensorConstant("Thermal Expansivity");
         mThermalConductivityConstant = aMaterialModel->getTensorConstant("Thermal Conductivity");
 
-        mElasticStiffnessField = std::make_shared<Plato::Rank4VoigtField<EvaluationType>>
-                (aMaterialModel->template getRank4VoigtField<EvaluationType>("Elastic Stiffness Expression"));
+        mElasticStiffnessField = aMaterialModel->template getRank4VoigtField<EvaluationType>("Elastic Stiffness Expression");
+//        mElasticStiffnessField = std::make_shared<Plato::Rank4VoigtField<EvaluationType>>
+//                (aMaterialModel->template getRank4VoigtField<EvaluationType>("Elastic Stiffness Expression"));
 
 //        mE0 = aMaterialModel->getScalarConstant("E0");
 //        mExpression = aMaterialModel->expression();

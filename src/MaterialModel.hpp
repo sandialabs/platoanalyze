@@ -262,21 +262,48 @@ namespace Plato {
       using ControlScalarType = typename EvaluationType::ControlScalarType;
 
       std::string mExpression;
+      std::string mIndependentVariableName;
       std::map<std::string, Plato::Scalar> mConstantsMap;
       ExpressionEvaluator<Plato::ScalarMultiVectorT<KineticsScalarType>,
                           Plato::ScalarMultiVectorT<KinematicsScalarType>,
                           Plato::ScalarVectorT<ControlScalarType>,
                           Plato::Scalar > mExpEval;
     public:
-      ScalarExpression(){ /* BWC: computeYoungsMod code will go in here */}
-      
-      Plato::ScalarMultiVectorT<ControlScalarType>
-      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aElementDensity) const 
+      ScalarExpression() {}
+      ScalarExpression(const std::string &aName, const Teuchos::ParameterList& aParams)
       {
+          if (aParams.isSublist(aName)) 
+          {
+                auto tSubList = aParams.sublist(aName);
+                std::vector<std::string> tConstantNames = Plato::ParseTools::getParam<Teuchos::Array<std::string>>(tSubList, "Constant Names").toVector();
+                std::vector<double> tConstantValues = Plato::ParseTools::getParam<Teuchos::Array<double>>(tSubList, "Constant Values").toVector();
+                if(tConstantNames.size() != tConstantValues.size())
+                {
+                  std::stringstream err;
+                  err << "'Constant Names' and 'Constant Values' arrays must have the same number of entries." << std::endl;
+                  ANALYZE_THROWERR(err.str());
+                }
+                for(size_t j=0; j<tConstantNames.size(); ++j)
+                {
+                  mConstantsMap[tConstantNames[j]] = tConstantValues[j];
+                }
+                mIndependentVariableName = Plato::ParseTools::getParam<std::string>(tSubList, "Independent Variable Name", "");
+                mExpression = Plato::ParseTools::getParam<std::string>(tSubList, "Expression", "");
+          }
+      }
+      
+      const std::string& getExpression() const { return mExpression; }
+      const std::map<std::string, double>& getConstantsMap() const { return mConstantsMap; }
+      const std::string& getIndependentVariableName() const { return mIndependentVariableName; }
+
+      Plato::ScalarMultiVectorT<ControlScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aIndependentVariable) const 
+      {
+        // aIndependentVariable is of dimension (numCells*numCubaturePointsPerCell, 1)
         auto tCubPoints = ElementType::getCubPoints();
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
-        auto tNumCells = aElementDensity.extent(0)/tNumPoints;
+        auto tNumCells = aIndependentVariable.extent(0)/tNumPoints;
 
         mExpEval.parse_expression(mExpression.c_str());
         mExpEval.setup_storage(tNumCells*tNumPoints, 1);
@@ -286,7 +313,7 @@ namespace Plato {
           mExpEval.set_variable(tIter->first, tIter->second);
           tIter++;
         }
-        mExpEval.set_variable("tElementDensity", aElementDensity);
+        mExpEval.set_variable(mIndependentVariableName, aIndependentVariable);
         Plato::ScalarMultiVectorT<ControlScalarType> tResults("Expression Results", tNumCells*tNumPoints, 1);
         Kokkos::parallel_for("compute element values", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
@@ -307,33 +334,37 @@ namespace Plato {
     protected:
       using ElementType = typename EvaluationType::ElementType;
       using ControlScalarType = typename EvaluationType::ControlScalarType;
+      std::map<std::string, Plato::ScalarExpression<EvaluationType>> mStiffnessTensorProperties;
 
     public:
-      Rank4VoigtField(Teuchos::ParameterList& aParams){}
+      const Plato::ScalarExpression<EvaluationType>& getTensorProperty(const std::string &aName) const 
+                            { return mStiffnessTensorProperties.at(aName); }
+
+      Rank4VoigtField(const Teuchos::ParameterList& aParams){}
 
       Plato::ScalarArray4DT<ControlScalarType>
       operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const { /* this may have to be virtual */
       }
 
-      void calculateElementDensities(const Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl,
-                                     Plato::ScalarVectorT<ControlScalarType> &aElementDensity)
+      void calculateIndependentVariable(const Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl,
+                                     Plato::ScalarVectorT<ControlScalarType> &aIndependentVariable)
       {
         auto tCubPoints = ElementType::getCubPoints();
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
         auto tNumCells = aLocalControl.extent(0);
-        aElementDensity.resize(tNumCells*tNumPoints, 0);
+        aIndependentVariable.resize(tNumCells*tNumPoints, 0);
         Plato::InterpolateFromNodal<ElementType, 1, 0> tInterpolateFromNodal;
 
-        Kokkos::parallel_for("compute element density", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
+        Kokkos::parallel_for("compute independent variable", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             auto tCubPoint = tCubPoints(iGpOrdinal);
             auto tBasisValues = ElementType::basisValues(tCubPoint);
 
-            // Calculate the node-averaged density for the element/cell
+            // Calculate the node-averaged independent variable for the element/cell
             auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            aElementDensity(tEntryOrdinal) = tInterpolateFromNodal(iCellOrdinal, tBasisValues, aLocalControl);
+            aIndependentVariable(tEntryOrdinal) = tInterpolateFromNodal(iCellOrdinal, tBasisValues, aLocalControl);
         });
       }
   };
@@ -346,24 +377,25 @@ namespace Plato {
     protected:
       using ElementType = typename EvaluationType::ElementType;
       using ControlScalarType = typename EvaluationType::ControlScalarType;
-    private:
-      Plato::ScalarExpression<ControlScalarType> tC11, tC12, tC44;
-    public:
 
-      IsotropicRank4VoigtField(Teuchos::ParameterList& aParams){}
+    public:
+      IsotropicRank4VoigtField(const Teuchos::ParameterList& aParams) : Rank4VoigtField<EvaluationType>(aParams) 
+      {
+        this->mStiffnessTensorProperties.clear();
+        this->mStiffnessTensorProperties["Youngs Modulus"] = Plato::ScalarExpression<EvaluationType>("Youngs Modulus", aParams);
+        this->mStiffnessTensorProperties["Poissons Ratio"] = Plato::ScalarExpression<EvaluationType>("Poissons Ratio", aParams);
+      }
 
       Plato::ScalarArray4DT<ControlScalarType>
       operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const 
       {
-        Plato::ScalarVectorT<ControlScalarType> tElementDensity;
-        calculateElementDensities(aLocalControl, tElementDensity);
-        Plato::ScalarMultiVectorT<ControlScalarType> tElementC11 = tC11(tElementDensity);
-        Plato::ScalarMultiVectorT<ControlScalarType> tElementC12 = tC12(tElementDensity);
-        Plato::ScalarMultiVectorT<ControlScalarType> tElementC44 = tC44(tElementDensity);
-        /* First call new function to get element density values (this could be in Rank4VoigtField (base)) then pass that down to  
-        tE(aLocalControl); */
-        /* BWC: set actual material properties based on new control. old "computeYoungsMod" code, etc. Call 
-        expression evaluator first. */
+        Plato::ScalarVectorT<ControlScalarType> tIndependentVariable;
+        calculateIndependentVariable(aLocalControl, tIndependentVariable);
+        /*
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementC11 = this->mStiffnessTensorProperties["C11"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementC12 = this->mStiffnessTensorProperties["C12"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementC44 = this->mStiffnessTensorProperties["C44"](tIndependentVariable);
+        */
       }
   };
 
@@ -378,12 +410,17 @@ namespace Plato {
     protected:
       using ElementType = typename EvaluationType::ElementType;
       using ControlScalarType = typename EvaluationType::ControlScalarType;
-      Plato::ScalarExpression<ControlScalarType> tE, tv, tG;
     public:
 
       /******************************************************************************//**
       **********************************************************************************/
-      CubicRank4VoigtField(Teuchos::ParameterList& aParams){}
+      CubicRank4VoigtField(const Teuchos::ParameterList& aParams) : Rank4VoigtField<EvaluationType>(aParams) 
+      {
+        this->mStiffnessTensorProperties.clear();
+        this->mStiffnessTensorProperties["Youngs Modulus"] = Plato::ScalarExpression<EvaluationType>("Youngs Modulus", aParams);
+        this->mStiffnessTensorProperties["Poissons Ratio"] = Plato::ScalarExpression<EvaluationType>("Poissons Ratio", aParams);
+        this->mStiffnessTensorProperties["Shear Modulus"] = Plato::ScalarExpression<EvaluationType>("Shear Modulus", aParams);
+      }
 
       /******************************************************************************//**
       **********************************************************************************/
@@ -397,15 +434,33 @@ namespace Plato {
   class Rank4VoigtFieldFactory
   /******************************************************************************/
   {
+      Teuchos::ParameterList mParams;
     public:
-      Rank4VoigtFieldFactory(Teuchos::ParameterList& aParams) { /* BWC: implement this to keep info needed for building the field later. These
-           include things like the expression strings and E0, v0 */ }
+      Rank4VoigtFieldFactory(const Teuchos::ParameterList& aParams) 
+      { 
+        mParams = aParams;
+      }
       Rank4VoigtFieldFactory() { std::cout << "Unexpected call of Rank4VoigtFieldFactory default constructor" << std::endl; }
 
       template<typename EvaluationType>
-      Rank4VoigtField<EvaluationType>
-      create() const {
-        // create and return the Rank4VoigtField with the desired symmetry
+      std::shared_ptr<Rank4VoigtField<EvaluationType>>
+      create() const 
+      {
+        std::string tSymmetry = Plato::ParseTools::getParam<std::string>(mParams, "symmetry");
+        if(tSymmetry != "isotropic" && tSymmetry != "cubic")
+        {
+          std::stringstream err;
+          err << "Attempted to create material with non-supported symmetry." << std::endl;
+          ANALYZE_THROWERR(err.str());
+        }
+        if(tSymmetry == "isotropic")
+        {
+          return std::make_shared<IsotropicRank4VoigtField<EvaluationType>>(mParams);
+        }
+        else 
+        {
+          return std::make_shared<CubicRank4VoigtField<EvaluationType>>(mParams);
+        }
       }
   };
 
@@ -819,7 +874,7 @@ namespace Plato {
 
       // Rank4Voigt field
       template<typename EvaluationType>
-      Plato::Rank4VoigtField<EvaluationType> getRank4VoigtField(std::string aFieldName)
+      std::shared_ptr<Plato::Rank4VoigtField<EvaluationType>> getRank4VoigtField(std::string aFieldName)
       {
           if(mRank4VoigtFieldFactoryMap.count(aFieldName) == 0)
           {

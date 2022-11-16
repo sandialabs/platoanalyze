@@ -33,6 +33,7 @@
 #include "ImplicitFunctors.hpp"
 #include "LinearThermoelasticMaterial.hpp"
 #include "ExpressionEvaluator.hpp"
+#include "MaterialModel.hpp"
 
 #include <fenv.h>
 
@@ -664,122 +665,97 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, VolAvgStressPNormShear_3D)
     }
 }
 
-#if 0
-void call_expression_evaluator()
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_parsing_cubic)
 {
-    using PhysicsT = Plato::Mechanics<3>;
-    using EvalType = typename Plato::Evaluation<PhysicsT>::Residual;
-    using StateT  = typename EvalType::StateScalarType;  /*!< state variables automatic differentiation type */
-    using ConfigT = typename EvalType::ConfigScalarType; /*!< configuration variables automatic differentiation type */
-    using KinematicsScalarType = typename Plato::fad_type_t<PhysicsT, StateT, ConfigT>; /*!<   strain variables automatic differentiation type */
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='cubic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e11}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0*(0.001 + (1.0 - 0.001)*Z*Z*Z)'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0, v1}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2, 0.3}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0+(v1-v0)*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Shear Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{G0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='G0*(0.001 + (1.0 - 0.001)*Z*Z*Z)'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+/*      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='cubic' /> \n"
+      "          <ParameterList name='C11'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{c11}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e11}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='c11*(0.001 + (1.0 - 0.001)*Z*Z*Z)'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='C12'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{c12}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e7}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='c12*(0.001 + (1.0 - 0.001)*Z*Z*Z)'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n" */
+    );
 
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
 
-    const Plato::Scalar tNumCells = 5;
-    Plato::ScalarVectorT<EvalType::ControlScalarType> tElementDensity("Gauss point density", tNumCells);
-    std::shared_ptr<Plato::LinearTetCubRuleDegreeOne<EvalType::SpatialDim>> tCubatureRule =
-             std::make_shared<Plato::LinearTetCubRuleDegreeOne<EvalType::SpatialDim>>();
-    auto tBasisFunctions = tCubatureRule->getBasisFunctions();
-    Plato::InterpolateFromNodal<EvalType::SpatialDim, 1, 0> tInterpolateFromNodal;
-    Plato::ScalarMultiVectorT<EvalType::ControlScalarType> tLocalControl("Local Control", tNumCells, 4);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
-    {
-        for(int i=0; i<4; ++i)
-        {
-            tLocalControl(aCellOrdinal, i) = 0.5;
-        }
-    },"Compute Youngs Modulus for each Element");
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
-    {
-        tInterpolateFromNodal(aCellOrdinal, tBasisFunctions, tLocalControl, tElementDensity);
-    },"Compute Youngs Modulus for each Element");
-
-
-    Plato::ExpressionEvaluator<Plato::ScalarMultiVectorT<EvalType::ResultScalarType>,
-                        Plato::ScalarMultiVectorT<KinematicsScalarType>,
-                        Plato::ScalarVectorT<EvalType::ControlScalarType>,
-                        Plato::Scalar > tExpEval;
-
-    tExpEval.parse_expression("E0*tRho*tRho*tRho");
-    tExpEval.setup_storage(tNumCells, 1);
-    tExpEval.set_variable("E0", 1e9);
-    Plato::ScalarMultiVectorT<EvalType::ResultScalarType> tElementYoungsModulusValues("Element Youngs Modulus", tNumCells, 1);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
-    {
-        tExpEval.set_variable("tRho", tElementDensity, aCellOrdinal);
-        tExpEval.evaluate_expression( aCellOrdinal, tElementYoungsModulusValues );
-    },"Compute Youngs Modulus for each Element");
-    Kokkos::fence();
-    tExpEval.clear_storage();
+    Plato::CubicRank4VoigtField<EvalType> tCubicField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
+    const Plato::ScalarExpression<EvalType>& tYM = tCubicField.getTensorProperty("Youngs Modulus");
+    TEST_ASSERT(tYM.getIndependentVariableName() == "Z");
+    TEST_ASSERT(tYM.getExpression() == "E0*(0.001 + (1.0 - 0.001)*Z*Z*Z)");
+    TEST_ASSERT(fabs(tYM.getConstantsMap().at("E0") - 1e11) < 1e-6);
+    const Plato::ScalarExpression<EvalType>& tPR = tCubicField.getTensorProperty("Poissons Ratio");
+    TEST_ASSERT(tPR.getIndependentVariableName() == "Z");
+    TEST_ASSERT(tPR.getExpression() == "v0+(v1-v0)*Z");
+    TEST_ASSERT(fabs(tPR.getConstantsMap().at("v0") - 0.2) < 1e-6);
+    TEST_ASSERT(fabs(tPR.getConstantsMap().at("v1") - 0.3) < 1e-6);
+    const Plato::ScalarExpression<EvalType>& tSM = tCubicField.getTensorProperty("Shear Modulus");
+    TEST_ASSERT(tSM.getIndependentVariableName() == "Z");
+    TEST_ASSERT(tSM.getExpression() == "G0*(0.001 + (1.0 - 0.001)*Z*Z*Z)");
+    TEST_ASSERT(fabs(tSM.getConstantsMap().at("G0") - 1e10) < 1e-6);
 }
 
-void call_expression_evaluator_jac()
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_parsing_isotropic)
 {
-    using PhysicsT = Plato::Thermomechanics<3>;
-    using EvalType = typename Plato::Evaluation<PhysicsT>::Jacobian;
-    using StateT  = typename EvalType::StateScalarType;
-    using ConfigT = typename EvalType::ConfigScalarType; 
-    using KinematicsScalarType = typename Plato::fad_type_t<PhysicsT, StateT, ConfigT>; 
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='isotropic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e11}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0*(0.001 + (1.0 - 0.001)*Z*Z*Z)'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0, v1}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2, 0.3}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0+(v1-v0)*Z'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
 
-    const Plato::Scalar tNumCells = 5;
-    Plato::ScalarVectorT<EvalType::ControlScalarType> tElementDensity("Gauss point density", tNumCells);
-    std::shared_ptr<Plato::LinearTetCubRuleDegreeOne<EvalType::SpatialDim>> tCubatureRule =
-             std::make_shared<Plato::LinearTetCubRuleDegreeOne<EvalType::SpatialDim>>();
-    auto tBasisFunctions = tCubatureRule->getBasisFunctions();
-    Plato::InterpolateFromNodal<EvalType::SpatialDim, 1, 0> tInterpolateFromNodal;
-    Plato::ScalarMultiVectorT<EvalType::ControlScalarType> tLocalControl("Local Control", tNumCells, 4);
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
-    {
-        for(int i=0; i<4; ++i)
-        {
-            tLocalControl(aCellOrdinal, i) = 0.5;
-        }
-    },"Compute Youngs Modulus for each Element");
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
-    {
-        tInterpolateFromNodal(aCellOrdinal, tBasisFunctions, tLocalControl, tElementDensity);
-    },"Compute Youngs Modulus for each Element");
-
-    Plato::ExpressionEvaluator<Plato::ScalarMultiVectorT<EvalType::ResultScalarType>,
-                        Plato::ScalarMultiVectorT<KinematicsScalarType>,
-                        Plato::ScalarVectorT<EvalType::ControlScalarType>,
-                        Plato::Scalar > tExpEval;
-
-    tExpEval.parse_expression("E0*tRho*tRho*tRho");
-    tExpEval.setup_storage(tNumCells, 1);
-    tExpEval.set_variable("E0", 1e9);
-    Plato::ScalarMultiVectorT<EvalType::ResultScalarType> tElementYoungsModulusValues("Element Youngs Modulus", tNumCells, 1);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), LAMBDA_EXPRESSION(Plato::OrdinalType aCellOrdinal)
-    {
-        tExpEval.set_variable("tRho", tElementDensity, aCellOrdinal);
-        tExpEval.evaluate_expression( aCellOrdinal, tElementYoungsModulusValues );
-    },"Compute Youngs Modulus for each Element");
-    Kokkos::fence();
-    tExpEval.clear_storage();
-/*
-    auto EHost = Kokkos::create_mirror_view( tElementYoungsModulusValues );
-    Kokkos::deep_copy(EHost, tElementYoungsModulusValues);
-    for(int i=0; i<tNumCells; ++i)
-    { 
-      std::cout << "EHost: " << EHost(i,0) << std::endl;
-    }
-*/
+    Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
+    const Plato::ScalarExpression<EvalType>& tYM = tIsoField.getTensorProperty("Youngs Modulus");
+    TEST_ASSERT(tYM.getIndependentVariableName() == "Z");
+    TEST_ASSERT(tYM.getExpression() == "E0*(0.001 + (1.0 - 0.001)*Z*Z*Z)");
+    TEST_ASSERT(fabs(tYM.getConstantsMap().at("E0") - 1e11) < 1e-6);
+    const Plato::ScalarExpression<EvalType>& tPR = tIsoField.getTensorProperty("Poissons Ratio");
+    TEST_ASSERT(tPR.getIndependentVariableName() == "Z");
+    TEST_ASSERT(tPR.getExpression() == "v0+(v1-v0)*Z");
+    TEST_ASSERT(fabs(tPR.getConstantsMap().at("v0") - 0.2) < 1e-6);
+    TEST_ASSERT(fabs(tPR.getConstantsMap().at("v1") - 0.3) < 1e-6);
 }
-
-void eval_some_value()
-{
-    call_expression_evaluator();
-    call_expression_evaluator_jac();
-}
-
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionTMKinetics)
-{
-    eval_some_value();
-    eval_some_value();
-}
-#endif
