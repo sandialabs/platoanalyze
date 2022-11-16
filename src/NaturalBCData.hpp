@@ -68,8 +68,8 @@ public:
     /// @throw std::runtime_error
     explicit UniformVectorNaturalBCData(const Teuchos::ParameterList& aSublist)
     {
-        assert(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Vector"));
-        const auto& tFlux = aSublist.get<Teuchos::Array<Plato::Scalar>>("Vector");
+        assert(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Values"));
+        const auto& tFlux = aSublist.get<Teuchos::Array<Plato::Scalar>>("Values");
         for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
         {
             mFlux(tDof) = tFlux[tDof];
@@ -142,8 +142,8 @@ public:
 
     explicit TimeVaryingVectorNaturalBCData(const Teuchos::ParameterList& aSublist)
     {
-        assert(aSublist.isType<Teuchos::Array<std::string>>("Vector"));
-        const auto& tExpr = aSublist.get<Teuchos::Array<std::string>>("Vector");
+        assert(aSublist.isType<Teuchos::Array<std::string>>("Values"));
+        const auto& tExpr = aSublist.get<Teuchos::Array<std::string>>("Values");
         for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
         {
             mFluxExpr[tDof] = std::make_unique<Plato::MathExpr>(tExpr[tDof]);
@@ -247,17 +247,17 @@ std::unique_ptr<NaturalBCData<NumDofs>> makeNaturalBCData(const Teuchos::Paramet
     switch(naturalBoundaryCondition(aSublist.get<std::string>("Type")))
     {
         case Neumann::UNIFORM_LOAD:
-            if(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Vector"))
+            if(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Values"))
             {
                 return std::make_unique<UniformVectorNaturalBCData<NumDofs>>(aSublist);
             }
-            else if(aSublist.isType<Teuchos::Array<std::string>>("Vector"))
+            else if(aSublist.isType<Teuchos::Array<std::string>>("Values"))
             {
                 return std::make_unique<TimeVaryingVectorNaturalBCData<NumDofs>>(aSublist);
             }
             else
             {
-                ANALYZE_THROWERR(R"(Expected "Vector" field of type array of double or string in uniform natural boundary condition.)");
+                ANALYZE_THROWERR(R"(Expected "Values" field of type array of double or string in uniform natural boundary condition.)");
             }
             break;
         case Neumann::UNIFORM_PRESSURE:
