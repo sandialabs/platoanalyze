@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AbstractSurfaceDisplacement.hpp"
+#include "contact/AbstractSurfaceDisplacement.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoMathTypes.hpp"
 

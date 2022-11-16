@@ -26,11 +26,11 @@
 
 #include "elliptic/EvaluationTypes.hpp"
 
-#include "ContactPair.hpp"
-#include "ContactUtils.hpp"
-#include "SurfaceDisplacement.hpp"
-#include "ProjectedSurfaceDisplacement.hpp"
-#include "ContactForceFactory.hpp"
+#include "contact/ContactPair.hpp"
+#include "contact/ContactUtils.hpp"
+#include "contact/SurfaceDisplacement.hpp"
+#include "contact/ProjectedSurfaceDisplacement.hpp"
+#include "contact/ContactForceFactory.hpp"
 
 namespace ContactTests
 {

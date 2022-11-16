@@ -1,8 +1,8 @@
 #pragma once
 
-#include "AbstractContactForce.hpp"
-#include "CompliantContactForce.hpp"
-#include "NormalContactForce.hpp"
+#include "contact/AbstractContactForce.hpp"
+#include "contact/CompliantContactForce.hpp"
+#include "contact/NormalContactForce.hpp"
 
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoUtilities.hpp"

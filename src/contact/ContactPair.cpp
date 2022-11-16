@@ -1,4 +1,4 @@
-#include "ContactPair.hpp"
+#include "contact/ContactPair.hpp"
 #include "AnalyzeMacros.hpp"
 
 namespace Plato

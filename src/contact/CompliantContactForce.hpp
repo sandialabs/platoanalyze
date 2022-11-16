@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AbstractContactForce.hpp"
+#include "contact/AbstractContactForce.hpp"
 #include "PlatoStaticsTypes.hpp"
 
 #include <Teuchos_Array.hpp>

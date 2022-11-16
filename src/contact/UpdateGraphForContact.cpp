@@ -1,4 +1,4 @@
-#include "UpdateGraphForContact.hpp"
+#include "contact/UpdateGraphForContact.hpp"
 #include "BLAS1.hpp"
 #include "alg/CrsMatrixUtils.hpp"
 

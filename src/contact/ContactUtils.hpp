@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ContactPair.hpp"
+#include "contact/ContactPair.hpp"
 #include "PlatoMesh.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "SpatialModel.hpp"

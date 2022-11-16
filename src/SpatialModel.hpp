@@ -8,8 +8,8 @@
 #include "PlatoMathTypes.hpp"
 #include "PlatoStaticsTypes.hpp"
 
-#include "ContactPair.hpp"
-#include "UpdateGraphForContact.hpp"
+#include "contact/ContactPair.hpp"
+#include "contact/UpdateGraphForContact.hpp"
 
 namespace Plato
 {

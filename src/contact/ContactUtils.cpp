@@ -1,5 +1,5 @@
-#include "ContactUtils.hpp"
-#include "ContactPair.hpp"
+#include "contact/ContactUtils.hpp"
+#include "contact/ContactPair.hpp"
 #include "BLAS1.hpp"
 #include "AnalyzeMacros.hpp"
 

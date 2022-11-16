@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AbstractContactForce.hpp"
+#include "contact/AbstractContactForce.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "WeightedNormalVector.hpp"
 #include "SurfaceArea.hpp"

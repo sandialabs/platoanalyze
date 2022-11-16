@@ -21,7 +21,7 @@
 #include "InterpolateFromNodal.hpp"
 
 #ifdef PLATO_MESHMAP
-#include "ContactUtils.hpp"
+#include "contact/ContactUtils.hpp"
 #endif
 
 namespace AssemblyTests
