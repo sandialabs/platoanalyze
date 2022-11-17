@@ -297,23 +297,23 @@ namespace Plato {
       const std::string& getIndependentVariableName() const { return mIndependentVariableName; }
 
       Plato::ScalarMultiVectorT<ControlScalarType>
-      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aIndependentVariable) const 
+      operator()(Plato::ScalarVectorT<ControlScalarType> aIndependentVariable)  
       {
         // aIndependentVariable is of dimension (numCells*numCubaturePointsPerCell, 1)
         auto tCubPoints = ElementType::getCubPoints();
         auto tCubWeights = ElementType::getCubWeights();
-        auto tNumPoints = tCubWeights.size();
-        auto tNumCells = aIndependentVariable.extent(0)/tNumPoints;
+        Plato::OrdinalType tNumPoints = tCubWeights.size();
+        Plato::OrdinalType tNumCells = aIndependentVariable.size()/tNumPoints;
 
         mExpEval.parse_expression(mExpression.c_str());
         mExpEval.setup_storage(tNumCells*tNumPoints, 1);
         std::map<std::string, Plato::Scalar>::iterator tIter = mConstantsMap.begin();
         while(tIter != mConstantsMap.end())
         {
-          mExpEval.set_variable(tIter->first, tIter->second);
+          mExpEval.set_variable(tIter->first.c_str(), tIter->second);
           tIter++;
         }
-        mExpEval.set_variable(mIndependentVariableName, aIndependentVariable);
+        mExpEval.set_variable(mIndependentVariableName.c_str(), aIndependentVariable);
         Plato::ScalarMultiVectorT<ControlScalarType> tResults("Expression Results", tNumCells*tNumPoints, 1);
         Kokkos::parallel_for("compute element values", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
@@ -343,17 +343,16 @@ namespace Plato {
       Rank4VoigtField(const Teuchos::ParameterList& aParams){}
 
       Plato::ScalarArray4DT<ControlScalarType>
-      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const { /* this may have to be virtual */
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl)  { /* this may have to be virtual */
       }
 
-      void calculateIndependentVariable(const Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl,
+      void calculateIndependentVariable(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl,
                                      Plato::ScalarVectorT<ControlScalarType> &aIndependentVariable)
       {
         auto tCubPoints = ElementType::getCubPoints();
         auto tCubWeights = ElementType::getCubWeights();
-        auto tNumPoints = tCubWeights.size();
-        auto tNumCells = aLocalControl.extent(0);
-        aIndependentVariable.resize(tNumCells*tNumPoints, 0);
+        Plato::OrdinalType tNumPoints = tCubWeights.size();
+        Plato::OrdinalType tNumCells = aLocalControl.extent(0);
         Plato::InterpolateFromNodal<ElementType, 1, 0> tInterpolateFromNodal;
 
         Kokkos::parallel_for("compute independent variable", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
@@ -377,6 +376,7 @@ namespace Plato {
     protected:
       using ElementType = typename EvaluationType::ElementType;
       using ControlScalarType = typename EvaluationType::ControlScalarType;
+      using ConfigT = typename EvaluationType::ConfigScalarType;
 
     public:
       IsotropicRank4VoigtField(const Teuchos::ParameterList& aParams) : Rank4VoigtField<EvaluationType>(aParams) 
@@ -387,15 +387,46 @@ namespace Plato {
       }
 
       Plato::ScalarArray4DT<ControlScalarType>
-      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const 
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) 
       {
-        Plato::ScalarVectorT<ControlScalarType> tIndependentVariable;
-        calculateIndependentVariable(aLocalControl, tIndependentVariable);
-        /*
-        Plato::ScalarMultiVectorT<ControlScalarType> tElementC11 = this->mStiffnessTensorProperties["C11"](tIndependentVariable);
-        Plato::ScalarMultiVectorT<ControlScalarType> tElementC12 = this->mStiffnessTensorProperties["C12"](tIndependentVariable);
-        Plato::ScalarMultiVectorT<ControlScalarType> tElementC44 = this->mStiffnessTensorProperties["C44"](tIndependentVariable);
-        */
+        Plato::OrdinalType tNumCells = aLocalControl.extent(0);
+        Plato::OrdinalType tNumPoints = ElementType::getCubWeights().size();
+
+        Plato::ScalarVectorT<ControlScalarType> tIndependentVariable("density", tNumCells*tNumPoints);
+        this->calculateIndependentVariable(aLocalControl, tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementYoungsModulus = this->mStiffnessTensorProperties["Youngs Modulus"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementPoissonsRatio = this->mStiffnessTensorProperties["Poissons Ratio"](tIndependentVariable);
+        
+        Plato::ScalarArray4DT<ConfigT> tStiffness("stiffness", tNumCells, tNumPoints, ElementType::mNumVoigtTerms, ElementType::mNumVoigtTerms);   
+        Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal, 0);
+            auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal, 0);
+            auto tCoeff = tCurYoungsModulus / ((1.0 + tCurPoissonsRatio) * (1.0 - 2.0 * tCurPoissonsRatio));
+            for(int k=0; k<ElementType::mNumSpatialDims; ++k)
+            {
+              for(int m=0; m<ElementType::mNumSpatialDims; ++m)
+              {
+                if(k==m)
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * (1.0 - tCurPoissonsRatio);
+                }
+                else
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * tCurPoissonsRatio;
+                }
+              }
+            }
+            int tNumShearTerms = ElementType::mNumSpatialDims*(ElementType::mNumSpatialDims-1)/2;
+            for(int m=0; m<tNumShearTerms; ++m)
+            {
+              tStiffness(iCellOrdinal, iGpOrdinal, ElementType::mNumSpatialDims+m, ElementType::mNumSpatialDims+m) = 
+                                 1.0 / 2.0 * tCoeff * (1.0 - 2.0 * tCurPoissonsRatio);
+            }
+        });
+        return tStiffness;
       }
   };
 
@@ -410,6 +441,7 @@ namespace Plato {
     protected:
       using ElementType = typename EvaluationType::ElementType;
       using ControlScalarType = typename EvaluationType::ControlScalarType;
+      using ConfigT = typename EvaluationType::ConfigScalarType;
     public:
 
       /******************************************************************************//**
@@ -425,7 +457,48 @@ namespace Plato {
       /******************************************************************************//**
       **********************************************************************************/
       Plato::ScalarArray4DT<ControlScalarType>
-      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) const {
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) 
+      {
+        Plato::OrdinalType tNumCells = aLocalControl.extent(0);
+        Plato::OrdinalType tNumPoints = ElementType::getCubWeights().size();
+
+        Plato::ScalarVectorT<ControlScalarType> tIndependentVariable("density", tNumCells*tNumPoints);
+        this->calculateIndependentVariable(aLocalControl, tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementYoungsModulus = this->mStiffnessTensorProperties["Youngs Modulus"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementPoissonsRatio = this->mStiffnessTensorProperties["Poissons Ratio"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<ControlScalarType> tElementShearModulus = this->mStiffnessTensorProperties["Shear Modulus"](tIndependentVariable);
+        
+        Plato::ScalarArray4DT<ConfigT> tStiffness("stiffness", tNumCells, tNumPoints, ElementType::mNumVoigtTerms, ElementType::mNumVoigtTerms);   
+        Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal, 0);
+            auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal, 0);
+            auto tCurShearModulus = tElementShearModulus(tEntryOrdinal, 0);
+            auto tCoeff = tCurYoungsModulus / ((1.0 + tCurPoissonsRatio) * (1.0 - 2.0 * tCurPoissonsRatio));
+            for(int k=0; k<ElementType::mNumSpatialDims; ++k)
+            {
+              for(int m=0; m<ElementType::mNumSpatialDims; ++m)
+              {
+                if(k==m)
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * (1.0 - tCurPoissonsRatio);
+                }
+                else
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * tCurPoissonsRatio;
+                }
+              }
+            }
+            int tNumShearTerms = ElementType::mNumSpatialDims*(ElementType::mNumSpatialDims-1)/2;
+            for(int m=0; m<tNumShearTerms; ++m)
+            {
+              tStiffness(iCellOrdinal, iGpOrdinal, ElementType::mNumSpatialDims+m, ElementType::mNumSpatialDims+m) = 
+                                 tCurShearModulus;
+            }
+        });
+        return tStiffness;
       }
   };
 

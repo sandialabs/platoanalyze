@@ -759,3 +759,375 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_parsing_isotropic)
     TEST_ASSERT(fabs(tPR.getConstantsMap().at("v0") - 0.2) < 1e-6);
     TEST_ASSERT(fabs(tPR.getConstantsMap().at("v1") - 0.3) < 1e-6);
 }
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness_no_density_dependence)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='isotropic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
+
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
+    using ControlScalarType = typename EvalType::ControlScalarType;
+
+    Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
+    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
+    for(int i=0; i<4; ++i)
+    {
+      tControl(0, i) = 1.0;
+    }
+    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+
+    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 4.166666666e9) < 1e2);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness_density_1_0)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='isotropic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0*Z'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
+
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
+    using ControlScalarType = typename EvalType::ControlScalarType;
+
+    Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
+    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
+    for(int i=0; i<4; ++i)
+    {
+      tControl(0, i) = 1.0;
+    }
+    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+
+    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 4.166666666e9) < 1e2);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness_density_0_5)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='isotropic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0*Z'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
+
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
+    using ControlScalarType = typename EvalType::ControlScalarType;
+
+    Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
+    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
+    for(int i=0; i<4; ++i)
+    {
+      tControl(0, i) = 0.5;
+    }
+    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    /*
+    using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
+    auto tCubPoints = ElementType::getCubPoints();
+    auto tCubWeights = ElementType::getCubWeights();
+    Plato::OrdinalType tNumPoints = tCubWeights.size();
+    Plato::OrdinalType tNumCells = 1;
+    for(int i=0; i<tNumCells; ++i)
+    {
+      for(int j=0; j<tNumPoints; ++j)
+      {
+        for(int k=0; k<ElementType::mNumVoigtTerms; k++)
+        {
+          for(int m=0; m<ElementType::mNumVoigtTerms; m++)
+          {
+            std::cout << "Index: " << i << "," << j << "," << k << "," << m << ": " << tStiffness(i,j,k,m) << std::endl;
+          }
+        }
+      }
+    }
+    */
+
+    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 2.2727272727272e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 2.2727272727272e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 2.2727272727272e9) < 1e2);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_no_density_dependence)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='cubic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Shear Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{G0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e8}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='G0'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
+
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
+    using ControlScalarType = typename EvalType::ControlScalarType;
+
+    Plato::CubicRank4VoigtField<EvalType> tIsoField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
+    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
+    for(int i=0; i<4; ++i)
+    {
+      tControl(0, i) = 1.0;
+    }
+    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    /*
+    using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
+    auto tCubPoints = ElementType::getCubPoints();
+    auto tCubWeights = ElementType::getCubWeights();
+    Plato::OrdinalType tNumPoints = tCubWeights.size();
+    Plato::OrdinalType tNumCells = 1;
+    for(int i=0; i<tNumCells; ++i)
+    {
+      for(int j=0; j<tNumPoints; ++j)
+      {
+        for(int k=0; k<ElementType::mNumVoigtTerms; k++)
+        {
+          for(int m=0; m<ElementType::mNumVoigtTerms; m++)
+          {
+            std::cout << "Index: " << i << "," << j << "," << k << "," << m << ": " << tStiffness(i,j,k,m) << std::endl;
+          }
+        }
+      }
+    }
+    */
+    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 1e8) < 1e2);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_density_1_0)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='cubic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Shear Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{G0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e8}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='G0*Z'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
+
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
+    using ControlScalarType = typename EvalType::ControlScalarType;
+
+    Plato::CubicRank4VoigtField<EvalType> tIsoField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
+    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
+    for(int i=0; i<4; ++i)
+    {
+      tControl(0, i) = 1.0;
+    }
+    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    /*
+    using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
+    auto tCubPoints = ElementType::getCubPoints();
+    auto tCubWeights = ElementType::getCubWeights();
+    Plato::OrdinalType tNumPoints = tCubWeights.size();
+    Plato::OrdinalType tNumCells = 1;
+    for(int i=0; i<tNumCells; ++i)
+    {
+      for(int j=0; j<tNumPoints; ++j)
+      {
+        for(int k=0; k<ElementType::mNumVoigtTerms; k++)
+        {
+          for(int m=0; m<ElementType::mNumVoigtTerms; m++)
+          {
+            std::cout << "Index: " << i << "," << j << "," << k << "," << m << ": " << tStiffness(i,j,k,m) << std::endl;
+          }
+        }
+      }
+    }
+    */
+    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 1e8) < 1e2);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_density_0_5)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tParamList =
+    Teuchos::getParametersFromXmlString(
+      "        <ParameterList name='Elastic Stiffness Expression'>                                    \n"
+      "          <Parameter name='Symmetry' type='string' value='cubic' /> \n"
+      "          <ParameterList name='Youngs Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{E0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e10}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='E0*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Poissons Ratio'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{v0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{0.2}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='v0*Z'/> \n"
+      "          </ParameterList> \n"
+      "          <ParameterList name='Shear Modulus'> \n"
+      "            <Parameter name='Constant Names' type='Array(string)' value='{G0}'/> \n"
+      "            <Parameter name='Constant Values' type='Array(double)' value='{1e8}'/> \n"
+      "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
+      "            <Parameter name='Expression' type='string' value='G0*Z'/> \n"
+      "          </ParameterList> \n"
+      "        </ParameterList>                                                                   \n"
+    );
+
+    using EvalType = typename Plato::Elliptic::Evaluation<Plato::ThermomechanicsElement<Plato::Tet4>>::Residual;
+    using ControlScalarType = typename EvalType::ControlScalarType;
+
+    Plato::CubicRank4VoigtField<EvalType> tIsoField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
+    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
+    for(int i=0; i<4; ++i)
+    {
+      tControl(0, i) = 0.5;
+    }
+    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    /*
+    using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
+    auto tCubPoints = ElementType::getCubPoints();
+    auto tCubWeights = ElementType::getCubWeights();
+    Plato::OrdinalType tNumPoints = tCubWeights.size();
+    Plato::OrdinalType tNumCells = 1;
+    for(int i=0; i<tNumCells; ++i)
+    {
+      for(int j=0; j<tNumPoints; ++j)
+      {
+        for(int k=0; k<ElementType::mNumVoigtTerms; k++)
+        {
+          for(int m=0; m<ElementType::mNumVoigtTerms; m++)
+          {
+            std::cout << "Index: " << i << "," << j << "," << k << "," << m << ": " << tStiffness(i,j,k,m) << std::endl;
+          }
+        }
+      }
+    }
+    */
+    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 5e7) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 5e7) < 1e2);
+    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 5e7) < 1e2);
+}
+
