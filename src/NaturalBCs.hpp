@@ -49,7 +49,7 @@ private:
      * \return shared pointer to an uniform natural boundary condition
     *******************************************************************************/
     std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-    setUniformNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
+    setLoadNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
 
     /***************************************************************************//**
      * \brief Return natural boundary condition type: uniform or variable pressure.
@@ -119,8 +119,9 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::appendNaturalBC
     switch(tNeumannType)
     {
         case Plato::Neumann::UNIFORM_LOAD:
+        case Plato::Neumann::VARIABLE_LOAD:
         {
-            tBC = this->setUniformNaturalBC(aName, aSubList);
+            tBC = this->setLoadNaturalBC(aName, aSubList);
             break;
         }
         case Plato::Neumann::UNIFORM_PRESSURE:
@@ -141,72 +142,68 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::appendNaturalBC
 
 namespace detail{
 template<Plato::OrdinalType NumDofs, typename ValueType>
-void setValuesFromIndexImpl(Teuchos::ParameterList &aSubList, const ValueType& aZeroValue)
+void setValuesFromIndexImpl(
+    Teuchos::ParameterList &aSubList, const std::string& aParameterName, const ValueType& aZeroValue)
 {
     const auto tDof = aSubList.get<Plato::OrdinalType>("Index", 0);
-    Teuchos::Array<ValueType> tFluxVector(NumDofs, aZeroValue);
-    auto tValue = aSubList.get<ValueType>("Value");
-    tFluxVector[tDof] = tValue;
-    aSubList.set("Values", tFluxVector);
-    aSubList.remove("Value");
+    Teuchos::Array<ValueType> tVector(NumDofs, aZeroValue);
+    auto tValue = aSubList.get<ValueType>(aParameterName);
+    tVector[tDof] = tValue;
+    aSubList.set(aParameterName + "s", tVector);
+    aSubList.remove(aParameterName);
     aSubList.remove("Index");
 }
 /// Converts a ParameterList containing a Value/Index pair to a full Values entry
 /// @todo C++17 use constexpr if instead of enable_if
 template<Plato::OrdinalType NumDofs, typename ValueType, 
     std::enable_if_t<std::is_same<ValueType, Plato::Scalar>::value, int> = 0>
-void setValuesFromIndex(Teuchos::ParameterList &aSubList)
+void setValuesFromIndex(Teuchos::ParameterList &aSubList, const std::string& aParameterName)
 {
-    setValuesFromIndexImpl<NumDofs, ValueType>(aSubList, 0.0);
+    setValuesFromIndexImpl<NumDofs, ValueType>(aSubList, aParameterName, 0.0);
 }
 /// Converts a ParameterList containing a Value/Index pair to a full Values entry
 /// @todo C++17 use constexpr if instead of enable_if
 template<Plato::OrdinalType NumDofs, typename ValueType, 
     std::enable_if_t<std::is_same<ValueType, std::string>::value, int> = 0>
-void setValuesFromIndex(Teuchos::ParameterList &aSubList)
+void setValuesFromIndex(Teuchos::ParameterList &aSubList, const std::string& aParameterName)
 {
-    setValuesFromIndexImpl<NumDofs, ValueType>(aSubList, "0.0");
+    setValuesFromIndexImpl<NumDofs, ValueType>(aSubList, aParameterName, "0.0");
 }
+
+/// @throw std::runtime_error Throws if @a aSubList contains multiple valid entries or no
+///  valid entries. 
+void affirmOneValidInput(const std::string & aName, Teuchos::ParameterList &aSubList);
 }
 
 /***************************************************************************//**
- * \brief NaturalBC::setUniformNaturalBC function definition
+ * \brief NaturalBC::setLoadNaturalBC function definition
 *******************************************************************************/
 template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setUniformNaturalBC
+NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setLoadNaturalBC
 (const std::string & aName, Teuchos::ParameterList &aSubList)
 {
-    const bool tBC_Value = (aSubList.isType<Plato::Scalar>("Value") || aSubList.isType<std::string>("Value"));
+    detail::affirmOneValidInput(aName, aSubList);
 
-    const bool tBC_Values = (aSubList.isType<Teuchos::Array<Plato::Scalar>>("Values") ||
-                             aSubList.isType<Teuchos::Array<std::string>>("Values"));
+    const bool tBC_SingleValue = aSubList.isType<Plato::Scalar>("Value") 
+                                || aSubList.isType<std::string>("Value")
+                                || aSubList.isType<std::string>("Variable");
 
-    if (tBC_Values && tBC_Value)
+    if (tBC_SingleValue)
     {
-        std::cout << "Parameter list: \n" << aSubList << std::endl;
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Values' OR 'Value' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    } 
-    else if (!tBC_Values && !tBC_Value)
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: Uniform Boundary Condition in Parameter Sublist: '"
-            << aName.c_str() << "' was NOT parsed. Check input Parameter Keywords.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-
-    if (tBC_Value)
-    {
+        // For a single value, we expect Index to be specified
+        // This converts that input into the full vector input
         if(aSubList.isType<Plato::Scalar>("Value"))
         {
-            detail::setValuesFromIndex<NumDofs, Plato::Scalar>(aSubList);
+            detail::setValuesFromIndex<NumDofs, Plato::Scalar>(aSubList, "Value");
         } 
         else if(aSubList.isType<std::string>("Value"))
         {
-            detail::setValuesFromIndex<NumDofs, std::string>(aSubList);
+            detail::setValuesFromIndex<NumDofs, std::string>(aSubList, "Value");
+        } 
+        else if(aSubList.isType<std::string>("Variable"))
+        {
+            detail::setValuesFromIndex<NumDofs, std::string>(aSubList, "Variable");
         } 
     }
 
@@ -221,6 +218,7 @@ std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
 NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setPressureNaturalBC
 (const std::string & aName, Teuchos::ParameterList &aSubList)
 {
+    detail::affirmOneValidInput(aName, aSubList);
     return std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
 }
 

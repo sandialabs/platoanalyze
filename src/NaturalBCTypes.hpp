@@ -12,10 +12,10 @@ enum struct Neumann
 {
     UNDEFINED = 0,
     UNIFORM_LOAD = 1,
-    UNIFORM_PRESSURE = 2,
-    VARIABLE_PRESSURE = 3
+    VARIABLE_LOAD = 2,
+    UNIFORM_PRESSURE = 3,
+    VARIABLE_PRESSURE = 4
 };
-
 
 /// @return The boundary condition type corresponding to @a aType
 /// @throw std::runtime_error if @a aType does not match (case insensitive) 

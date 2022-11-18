@@ -17,34 +17,64 @@ namespace Plato
 {
 using NaturalBCScalarData = Utils::NamedType<ScalarVector, struct NaturalBCScalarDataTag>;
 
+template<OrdinalType NumDofs>
+using VectorDataView = Kokkos::View<Scalar*[NumDofs], Plato::MemSpace>;
+
+template<OrdinalType NumDofs>
+using NaturalBCVectorData = Utils::NamedType<VectorDataView<NumDofs>, struct NaturalBCVectorDataTag>;
+
+constexpr static auto kValueParameterName = "Value";
+constexpr static auto kValuesParameterName = "Values";
+constexpr static auto kVariableParameterName = "Variable";
+constexpr static auto kVariablesParameterName = "Variables";
+
+enum struct BCDataType
+{
+    kScalar,
+    kVector
+};
+
+namespace detail
+{
+template<OrdinalType ExpectedSize, typename T>
+void affirmParameterSize(
+    const Teuchos::ParameterList& aSublist, 
+    const std::string& aParameterSingular, 
+    const std::string& aParameterPlural);
+}
+
 /// Interface for data associated with a natural boundary condition.
 /// The main purpose of this class is to provide methods for evaluating
 /// a function on a boundary via the getScalarData and getVectorData members.
-template<Plato::OrdinalType NumDofs>
+template<OrdinalType NumDofs>
 class NaturalBCData
 {
+    static_assert(NumDofs > 0, "NumDofs must be greater than 0.");
 public:
     virtual ~NaturalBCData() = default;
     
     virtual std::unique_ptr<NaturalBCData> clone() const = 0;
 
-    /// @return Vector boundary data at time @a aCurrentTime
-    /// This is uniform over the entire boundary. 
-    virtual Plato::Array<NumDofs> getVectorData(Plato::Scalar aCurrentTime = 0.0) const 
+    /// @return Boundary data at time @a aCurrentTime. The array size is given by the member type `kNumComponents`
+    /// @pre getDataType must return `BCDataType::kVector`
+    virtual NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO, Scalar aCurrentTime) const = 0;
+
+    NaturalBCVectorData<NumDofs> getVectorData(const Scalar aCurrentTime = 0.0) const 
     {
-        assert(false);
-        return Plato::Array<NumDofs>{};
+        return getVectorData(nullptr, aCurrentTime);
+    }
+
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO) const 
+    {
+        constexpr double kDefaultTime = 0.0;
+        return getVectorData(aMeshIO, kDefaultTime);
     }
 
     /// @return Scalar boundary data on the device associated with the data stored in @a aMeshIO.
     /// This is either uniform or spatially varying over a mesh, as given by the derived implementation.
-    virtual NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, const Plato::Scalar /*aCurrentTime*/) const
-    {
-        assert(false);
-        return NaturalBCScalarData{ScalarVector{}};
-    }
+    virtual NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO, const Scalar aCurrentTime) const = 0;
 
-    NaturalBCScalarData getScalarData(const Plato::Scalar aCurrentTime) const
+    NaturalBCScalarData getScalarData(const Scalar aCurrentTime = 0.0) const
     {
         return getScalarData(nullptr, aCurrentTime);
     }
@@ -54,220 +84,249 @@ public:
         constexpr double kDefaultTime = 0.0;
         return getScalarData(aMeshIO, kDefaultTime);
     }
+
+    virtual BCDataType getDataType() const = 0;
 };
 
 /// Uniform in time and space boundary condition data.
-template<Plato::OrdinalType NumDofs>
-class UniformVectorNaturalBCData : public NaturalBCData<NumDofs>
+template<OrdinalType NumDofs, BCDataType DataType>
+class UniformNaturalBCData : public NaturalBCData<NumDofs>
 {
 public:
-    explicit UniformVectorNaturalBCData(const Plato::Array<NumDofs>& aFlux) 
-    : mFlux(aFlux)
+    constexpr static OrdinalType kNumComponents = DataType == BCDataType::kScalar ? 1 : NumDofs;
+
+    explicit UniformNaturalBCData(const std::array<Scalar, kNumComponents> aValues) 
+        : mValues(std::move(aValues))
     {}
 
     /// @throw std::runtime_error
-    explicit UniformVectorNaturalBCData(const Teuchos::ParameterList& aSublist)
+    explicit UniformNaturalBCData(const Teuchos::ParameterList& aSublist)
     {
-        assert(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Values"));
-        const auto& tFlux = aSublist.get<Teuchos::Array<Plato::Scalar>>("Values");
-        for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
+        assert(aSublist.isType<Scalar>(kValueParameterName)
+            || aSublist.isType<Teuchos::Array<Scalar>>(kValuesParameterName));
+        detail::affirmParameterSize<kNumComponents, Scalar>(aSublist, kVariableParameterName, kVariablesParameterName);
+        if(aSublist.isType<Scalar>(kValueParameterName))
         {
-            mFlux(tDof) = tFlux[tDof];
+            mValues[0] = aSublist.get<Scalar>(kValueParameterName);
+        }
+        else if(aSublist.isType<Teuchos::Array<Scalar>>(kValuesParameterName))
+        {
+            const auto& tValues = aSublist.get<Teuchos::Array<Scalar>>(kValuesParameterName);
+            std::copy(tValues.begin(), tValues.end(), std::begin(mValues));
         }
     }
 
     std::unique_ptr<NaturalBCData<NumDofs>> clone() const override
     {
-        return std::make_unique<UniformVectorNaturalBCData<NumDofs>>(mFlux);
+        return std::make_unique<UniformNaturalBCData<NumDofs, DataType>>(mValues);
     }
 
-    Plato::Array<NumDofs> getVectorData(
-        const Plato::Scalar aCurrentTime) const override
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& /*aMeshIO*/, Scalar /*aCurrentTime*/) const override
     {
-        return mFlux;
+        assert(DataType == BCDataType::kVector);
+        VectorDataView<NumDofs> tOutData("Natural BC data", 1);
+        auto tHostData = Kokkos::create_mirror_view(tOutData);
+        for(int i = 0; i < kNumComponents; ++i)
+        {
+            tHostData(0, i) = mValues[i];
+        }
+        Kokkos::deep_copy(tOutData, tHostData);
+        return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
+    }
+
+    NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, Scalar /*aCurrentTime*/) const override
+    {
+        ScalarVector tOutData("Natural BC data", 1);
+        auto tHostData = Kokkos::create_mirror_view(tOutData);
+        tHostData(0) = mValues[0];
+        Kokkos::deep_copy(tOutData, tHostData);
+        return NaturalBCScalarData{tOutData};
+    }
+
+    BCDataType getDataType() const override
+    {
+        return DataType;
     }
 
 private:
-    Plato::Array<NumDofs> mFlux; /*!< force vector values */
+    std::array<Scalar, kNumComponents> mValues;
 };
 
-/// Uniform in time and space boundary condition data.
-template<Plato::OrdinalType NumDofs>
-class UniformScalarNaturalBCData : public NaturalBCData<NumDofs>
+/// Non-uniform in time and uniform in space boundary condition data.
+template<OrdinalType NumDofs, BCDataType DataType>
+class TimeVaryingNaturalBCData : public NaturalBCData<NumDofs>
 {
 public:
-    explicit UniformScalarNaturalBCData(const Plato::Scalar aValue) 
-    : mValue(aValue)
-    {}
+    constexpr static OrdinalType kNumComponents = DataType == BCDataType::kScalar ? 1 : NumDofs;
 
-    /// @throw std::runtime_error
-    explicit UniformScalarNaturalBCData(const Teuchos::ParameterList& aSublist)
+    explicit TimeVaryingNaturalBCData(
+        const std::array<std::unique_ptr<Plato::MathExpr>, kNumComponents>& aExprs)
     {
-        assert(aSublist.isType<Plato::Scalar>("Value"));
-        mValue = aSublist.get<Plato::Scalar>("Value");
+        for(OrdinalType iDof = 0; iDof < kNumComponents; ++iDof)
+        {
+            assert(aExprs[iDof]);
+            mExprs[iDof] = std::make_unique<Plato::MathExpr>(*aExprs[iDof]);
+        }
+    }
+
+    explicit TimeVaryingNaturalBCData(const Teuchos::ParameterList& aSublist)
+    {
+        assert(aSublist.isType<std::string>(kValueParameterName) 
+            || aSublist.isType<Teuchos::Array<std::string>>(kValuesParameterName));
+        detail::affirmParameterSize<kNumComponents, std::string>(aSublist, kVariableParameterName, kVariablesParameterName);
+        if(aSublist.isType<std::string>(kValueParameterName))
+        {
+            const auto& tExpr = aSublist.get<std::string>(kValueParameterName);
+            mExprs[0] = std::make_unique<Plato::MathExpr>(tExpr);
+        }
+        else if(aSublist.isType<Teuchos::Array<std::string>>(kValuesParameterName))
+        {
+            const auto& tExprs = aSublist.get<Teuchos::Array<std::string>>(kValuesParameterName);
+            for(OrdinalType iDof = 0; iDof < kNumComponents; ++iDof)
+            {
+                mExprs[iDof] = std::make_unique<Plato::MathExpr>(tExprs[iDof]);
+            }
+        }
     }
 
     std::unique_ptr<NaturalBCData<NumDofs>> clone() const override
     {
-        return std::make_unique<UniformScalarNaturalBCData<NumDofs>>(mValue);
+        return std::make_unique<TimeVaryingNaturalBCData<NumDofs, DataType>>(mExprs);
     }
 
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, Plato::Scalar /*aCurrentTime*/) const override
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& /*aMeshIO*/, Scalar aCurrentTime) const override
     {
-        ScalarVector tOutData("natural bc data", 1);
+        assert(DataType == BCDataType::kVector);
+        VectorDataView<NumDofs> tOutData("Natural BC data", 1);
         auto tHostData = Kokkos::create_mirror_view(tOutData);
-        tHostData(0) = mValue;
+        for(int i = 0; i < kNumComponents; ++i)
+        {
+            tHostData(0, i) = mExprs[i]->value(aCurrentTime);
+        }
+        Kokkos::deep_copy(tOutData, tHostData);
+        return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
+    }
+
+    NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, Scalar aCurrentTime) const override
+    {
+        ScalarVector tOutData("Natural BC data", 1);
+        auto tHostData = Kokkos::create_mirror_view(tOutData);
+        tHostData(0) = mExprs[0]->value(aCurrentTime);
         Kokkos::deep_copy(tOutData, tHostData);
         return NaturalBCScalarData{std::move(tOutData)};
     }
 
-private:
-    Plato::Scalar mValue;
-};
-
-/// Non-uniform in time and uniform in space boundary condition data.
-template<Plato::OrdinalType NumDofs>
-class TimeVaryingVectorNaturalBCData : public NaturalBCData<NumDofs>
-{
-public:
-    explicit TimeVaryingVectorNaturalBCData(
-        const std::array<std::unique_ptr<Plato::MathExpr>, NumDofs>& aFluxExpr)
+    BCDataType getDataType() const override
     {
-        for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
-        {
-            assert(aFluxExpr[tDof]);
-            mFluxExpr[tDof] = std::make_unique<Plato::MathExpr>(*aFluxExpr[tDof]);
-        }
-    }
-
-    explicit TimeVaryingVectorNaturalBCData(const Teuchos::ParameterList& aSublist)
-    {
-        assert(aSublist.isType<Teuchos::Array<std::string>>("Values"));
-        const auto& tExpr = aSublist.get<Teuchos::Array<std::string>>("Values");
-        for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
-        {
-            mFluxExpr[tDof] = std::make_unique<Plato::MathExpr>(tExpr[tDof]);
-        }
-    }
-
-    std::unique_ptr<NaturalBCData<NumDofs>> clone() const override
-    {
-        return std::make_unique<TimeVaryingVectorNaturalBCData<NumDofs>>(mFluxExpr);
-    }
-
-    Plato::Array<NumDofs> getVectorData(
-        const Plato::Scalar aCurrentTime) const override
-    {
-        Plato::Array<NumDofs> tFluxAtCurrentTime;
-        for(int iDim = 0; iDim < NumDofs; ++iDim)
-        {
-            tFluxAtCurrentTime(iDim) = mFluxExpr[iDim]->value(aCurrentTime);
-        }
-        return tFluxAtCurrentTime;
+        return DataType;
     }
 
 private:
-    std::array<std::unique_ptr<Plato::MathExpr>, NumDofs> mFluxExpr;
+    std::array<std::unique_ptr<Plato::MathExpr>, kNumComponents> mExprs;
 };
 
-/// Non-uniform in time and uniform in space boundary condition data.
-template<Plato::OrdinalType NumDofs>
-class TimeVaryingScalarNaturalBCData : public NaturalBCData<NumDofs>
-{
-public:
-    explicit TimeVaryingScalarNaturalBCData(
-        const Plato::MathExpr& aValueExpr)
-        : mValueExpr(std::make_unique<Plato::MathExpr>(aValueExpr))
-    {
-    }
-
-    explicit TimeVaryingScalarNaturalBCData(const Teuchos::ParameterList& aSublist)
-    {
-        assert(aSublist.isType<std::string>("Value"));
-        const auto& tExpr = aSublist.get<std::string>("Value");
-        mValueExpr = std::make_unique<Plato::MathExpr>(tExpr);
-    }
-
-    std::unique_ptr<NaturalBCData<NumDofs>> clone() const override
-    {
-        assert(mValueExpr);
-        return std::make_unique<TimeVaryingScalarNaturalBCData<NumDofs>>(*mValueExpr);
-    }
-
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, Plato::Scalar aCurrentTime) const override
-    {
-        ScalarVector tOutData("natural bc data", 1);
-        auto tHostData = Kokkos::create_mirror_view(tOutData);
-        tHostData(0) = mValueExpr->value(aCurrentTime);
-        Kokkos::deep_copy(tOutData, tHostData);
-        return NaturalBCScalarData{std::move(tOutData)};
-    }
-
-private:
-    std::unique_ptr<Plato::MathExpr> mValueExpr;
-};
-
-/// Non-uniform in space and uniform in time boundary condition data.
-template<Plato::OrdinalType NumDofs>
+template<OrdinalType NumDofs, BCDataType DataType>
 class SpatiallyVaryingNaturalBCData : public NaturalBCData<NumDofs>
 {
 public:
-    explicit SpatiallyVaryingNaturalBCData(std::string aVariableName)
-    : mVariableName(std::move(aVariableName))
+    constexpr static OrdinalType kNumComponents = DataType == BCDataType::kScalar ? 1 : NumDofs;
+
+    explicit SpatiallyVaryingNaturalBCData(std::array<std::string, kNumComponents> aVariableNames)
+    : mVariableNames(std::move(aVariableNames))
     {}
 
     explicit SpatiallyVaryingNaturalBCData(const Teuchos::ParameterList& aSublist)
     {
-        if(!aSublist.isType<std::string>("Variable"))
+        assert(aSublist.isType<std::string>(kVariableParameterName) 
+            || aSublist.isType<Teuchos::Array<std::string>>(kVariablesParameterName));
+        detail::affirmParameterSize<kNumComponents, std::string>(aSublist, kVariableParameterName, kVariablesParameterName);
+        if(aSublist.isType<std::string>(kVariableParameterName))
         {
-            ANALYZE_THROWERR(R"(Expected "Variable" field of string in variable pressure natural boundary condition.)");
+            mVariableNames[0] = aSublist.get<std::string>(kVariableParameterName);
+        } 
+        else if(aSublist.isType<Teuchos::Array<std::string>>(kVariablesParameterName))
+        {
+            const auto tVariables = aSublist.get<Teuchos::Array<std::string>>(kVariablesParameterName);
+            std::copy(tVariables.begin(), tVariables.end(), std::begin(mVariableNames));
         }
-        mVariableName = aSublist.get<std::string>("Variable");
     }
 
     std::unique_ptr<NaturalBCData<NumDofs>> clone() const override
     {
-        return std::make_unique<SpatiallyVaryingNaturalBCData<NumDofs>>(mVariableName);
+        return std::make_unique<SpatiallyVaryingNaturalBCData<NumDofs, DataType>>(mVariableNames);
     }
 
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO, Plato::Scalar /*aCurrentTime*/) const override
+    NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO, Scalar /*aCurrentTime*/) const override
     {
         assert(aMeshIO->NumTimeSteps() > 0);
-        return NaturalBCScalarData{aMeshIO->ReadNodeData(mVariableName, 0)};
+        constexpr int kStepIndex = 0;
+        return NaturalBCScalarData{aMeshIO->ReadNodeData(mVariableNames[0], kStepIndex)};
+    }
+
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO, Scalar /*aCurrentTime*/) const override
+    {
+        assert(aMeshIO);
+        assert(aMeshIO->NumTimeSteps() > 0);
+        assert(DataType == BCDataType::kVector);
+
+        VectorDataView<NumDofs> tOutData("Natural BC data", aMeshIO->NumNodes());
+        constexpr int kStepIndex = 0;
+        for(OrdinalType i = 0; i < kNumComponents; ++i)
+        {
+            Kokkos::deep_copy(Kokkos::subview(tOutData, Kokkos::ALL(), i), aMeshIO->ReadNodeData(mVariableNames[i], kStepIndex));
+        }
+        return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
+    }
+
+    BCDataType getDataType() const override
+    {
+        return DataType;
     }
 
 private:
-    std::string mVariableName; // nodal field containing pressure values
+    /// @pre Assumes that @a aSublist contains a parameter named `Variables` of type `Array(std::string)` or 
+    ///  a parameter named `Variable` of type `std::string`.
+    std::array<std::string, kNumComponents> mVariableNames; // nodal field containing load values
 };
 
-template<Plato::OrdinalType NumDofs>
+template<OrdinalType NumDofs>
 std::unique_ptr<NaturalBCData<NumDofs>> makeNaturalBCData(const Teuchos::ParameterList& aSublist)
 {
     assert(aSublist.isParameter("Type"));
     switch(naturalBoundaryCondition(aSublist.get<std::string>("Type")))
     {
         case Neumann::UNIFORM_LOAD:
-            if(aSublist.isType<Teuchos::Array<Plato::Scalar>>("Values"))
+            if(aSublist.isType<Teuchos::Array<Scalar>>(kValuesParameterName))
             {
-                return std::make_unique<UniformVectorNaturalBCData<NumDofs>>(aSublist);
+                return std::make_unique<UniformNaturalBCData<NumDofs, BCDataType::kVector>>(aSublist);
             }
-            else if(aSublist.isType<Teuchos::Array<std::string>>("Values"))
+            else if(aSublist.isType<Teuchos::Array<std::string>>(kValuesParameterName))
             {
-                return std::make_unique<TimeVaryingVectorNaturalBCData<NumDofs>>(aSublist);
+                return std::make_unique<TimeVaryingNaturalBCData<NumDofs, BCDataType::kVector>>(aSublist);
             }
             else
             {
                 ANALYZE_THROWERR(R"(Expected "Values" field of type array of double or string in uniform natural boundary condition.)");
             }
             break;
-        case Neumann::UNIFORM_PRESSURE:
-            if(aSublist.isType<Plato::Scalar>("Value"))
+        case Neumann::VARIABLE_LOAD:
+            if(aSublist.isType<std::string>(kVariableParameterName) || aSublist.isType<Teuchos::Array<std::string>>(kVariablesParameterName))
             {
-                return std::make_unique<UniformScalarNaturalBCData<NumDofs>>(aSublist);
+                return std::make_unique<SpatiallyVaryingNaturalBCData<NumDofs, BCDataType::kVector>>(aSublist);
             }
-            else if(aSublist.isType<std::string>("Value"))
+            else
             {
-                return std::make_unique<TimeVaryingScalarNaturalBCData<NumDofs>>(aSublist);
+                ANALYZE_THROWERR(R"(Expected "Variable" or "Variables" field of type string in variable load natural boundary condition.)");
+            }
+            break;
+        case Neumann::UNIFORM_PRESSURE:
+            if(aSublist.isType<Scalar>(kValueParameterName))
+            {
+                return std::make_unique<UniformNaturalBCData<NumDofs, BCDataType::kScalar>>(aSublist);
+            }
+            else if(aSublist.isType<std::string>(kValueParameterName))
+            {
+                return std::make_unique<TimeVaryingNaturalBCData<NumDofs, BCDataType::kScalar>>(aSublist);
             }
             else 
             {
@@ -275,12 +334,63 @@ std::unique_ptr<NaturalBCData<NumDofs>> makeNaturalBCData(const Teuchos::Paramet
             }
             break;
         case Neumann::VARIABLE_PRESSURE:
-            return std::make_unique<SpatiallyVaryingNaturalBCData<NumDofs>>(aSublist);
+            if(aSublist.isType<std::string>(kVariableParameterName))
+            {
+                return std::make_unique<SpatiallyVaryingNaturalBCData<NumDofs, BCDataType::kScalar>>(aSublist);
+            }
+            else
+            {
+                ANALYZE_THROWERR(R"(Expected "Variable" field of type string in variable pressure natural boundary condition.)");
+            }
             break;
         default:
             ANALYZE_THROWERR("Unknown type encountered while constructing NaturalBCData.");
             break;
     }
+}
+
+namespace detail
+{
+template<OrdinalType ExpectedSize, typename T>
+void affirmParameterSize(
+    const Teuchos::ParameterList& aSublist, 
+    const std::string& aParameterSingular, 
+    const std::string& aParameterPlural)
+{
+    using ArrayType = Teuchos::Array<T>;
+    const std::string tBaseMessage = "Natural boundary condition degrees of freedom does not"
+        " match the number of boundary values provided for parameter ";
+    if(aSublist.isType<T>(aParameterSingular) && ExpectedSize != 1)
+    {
+        const std::string tErrorMessage = tBaseMessage + aParameterSingular
+            + ". Required: " + std::to_string(ExpectedSize) + ", received: 1";
+        ANALYZE_THROWERR(tErrorMessage);
+    }
+    else if(aSublist.isType<ArrayType>(aParameterPlural) && ExpectedSize != aSublist.get<ArrayType>(aParameterPlural).size())
+    {
+        const int tSize = aSublist.get<ArrayType>(aParameterPlural).size();
+        const std::string tErrorMessage = tBaseMessage + aParameterPlural
+            + ". Required: " + std::to_string(ExpectedSize) + ", received: " + std::to_string(tSize);
+        ANALYZE_THROWERR(tErrorMessage);
+    }
+}
+
+}
+
+/// The purpose of this function is to retrieve vector boundary data in @a aBoundaryData 
+/// associated with index @a aIndex for both spatially varying and uniform boundary
+/// data types. 
+template<OrdinalType NumDofs>
+KOKKOS_INLINE_FUNCTION
+Array<NumDofs> vectorBoundaryDataAtIndex(const NaturalBCVectorData<NumDofs>& aBoundaryData, const OrdinalType aIndex)
+{
+    Array<NumDofs> tOutData;
+    for(int i = 0; i < NumDofs; ++i)
+    {
+        // Mod with size to support uniform data, which will be size 1
+        tOutData(i) = aBoundaryData.mValue(aIndex % aBoundaryData.mValue.extent(0), i);
+    }
+    return tOutData;
 }
 
 /// The purpose of this function is to retrieve scalar boundary data in @a aBoundaryData 

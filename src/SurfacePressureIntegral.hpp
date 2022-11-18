@@ -110,8 +110,6 @@ void SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::oper
     const auto tNodeOrds     = aSpatialModel.Mesh->GetSideSetLocalNodes(mSidesetName);
     const auto tConnectivity = aSpatialModel.Mesh->Connectivity();
 
-    const auto tNumElements = tElementOrds.size();
-
     const Plato::OrdinalType tNumFaces = tElementOrds.size();
 
     const Plato::WeightedNormalVector<ElementType> weightedNormalVector;

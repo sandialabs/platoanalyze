@@ -21,6 +21,7 @@ set(ANALYZE_SOURCES
     LinearTMKinetics.cpp
     NonLinearTMKinetics.cpp
     NaturalBC.cpp
+    NaturalBCs.cpp
     NaturalBCTypes.cpp
 )
 

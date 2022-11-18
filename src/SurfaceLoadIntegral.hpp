@@ -108,11 +108,14 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
 {
     const auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(mSideSetName);
     const auto tNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(mSideSetName);
+    const auto tConnectivity = aSpatialModel.Mesh->Connectivity();
+
     const Plato::OrdinalType tNumFaces = tElementOrds.size();
 
     const Plato::SurfaceArea<ElementType> surfaceArea;
 
-    const auto tFlux = mBCData->getVectorData(mCurrentTime);
+    Plato::MeshIO tReader = Plato::MeshIOFactory::create(aSpatialModel.Mesh->FileName(), aSpatialModel.Mesh, "Read");
+    const auto tBoundaryData = mBCData->getVectorData(tReader, mCurrentTime);
     const auto tCubatureWeights = ElementType::Face::getCubWeights();
     const auto tCubaturePoints  = ElementType::Face::getCubPoints();
     const auto tNumPoints = tCubatureWeights.size();
@@ -141,6 +144,8 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
       // project into aResult workset
       for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
       {
+          const auto tGlobalNodeOrdinal = tConnectivity(tElementOrdinal*ElementType::mNumNodesPerCell + tLocalNodeOrds(tNode));
+          const auto tFlux = vectorBoundaryDataAtIndex<NumDofs>(tBoundaryData, tGlobalNodeOrdinal);
           for( Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
           {
               const auto tElementDofOrdinal = tLocalNodeOrds[tNode] * DofsPerNode + tDof + DofOffset;
