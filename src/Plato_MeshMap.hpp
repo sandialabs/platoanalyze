@@ -714,7 +714,8 @@ makeMeshMap(
     }
     if( Plato::tolower(tElementType) == "tetra"  ||
         Plato::tolower(tElementType) == "tetra4" ||
-        Plato::tolower(tElementType) == "tet4" )
+        Plato::tolower(tElementType) == "tet4"   ||
+        Plato::tolower(tElementType) == "tet" )
     {
         return std::make_shared<Plato::Geometry::MeshMapDerived<Plato::Tet4, MathMapT<Plato::Tet4::mNumSpatialDims, ScalarT>>>(aMesh, aInput);
     }

@@ -511,7 +511,7 @@ findParentElements(
     Plato::ScalarMultiVectorT<ScalarT> tMin("min", ElementT::mNumSpatialDims, tNElems);
     Plato::ScalarMultiVectorT<ScalarT> tMax("max", ElementT::mNumSpatialDims, tNElems);
 
-    constexpr ScalarT cRelativeTol = 1e-2;
+    constexpr ScalarT cRelativeTol = 0.5;
 
     // fill d_* data
     auto tCoords = aMesh->Coordinates();
@@ -592,14 +592,15 @@ findParentElements(
         typename Plato::ScalarVectorT<int>::value_type iParent = -2;
         for( int iElem=tOffset(iNodeOrdinal); iElem<tOffset(iNodeOrdinal+1); iElem++ )
         {
-            auto tElemIndex = tDomainCellMap(tIndices(iElem));
+            auto tElemIndexInDomain = tIndices(iElem);
+            auto tElemIndexInMesh = tDomainCellMap(tElemIndexInDomain);
 
             for(OrdinalT iDim=0; iDim<ElementT::mNumSpatialDims; iDim++)
             {
                 tInPoint(iDim) = aMappedLocations(iDim, iNodeOrdinal);
             }
 
-            tGetBasis(tElemIndex, tInPoint, tBasis);
+            tGetBasis(tElemIndexInMesh, tInPoint, tBasis);
 
             ScalarT tEleMin = tBasis[0];
             OrdinalT tNegCount = 0;
@@ -612,18 +613,18 @@ findParentElements(
             {
                  tRunningNegCount = tNegCount;
                  tMaxMin = tEleMin;
-                 iParent = tElemIndex;
+                 iParent = tElemIndexInDomain;
             }
             else if ( ( tNegCount == tRunningNegCount ) && ( tEleMin > tMaxMin ) )
             {
                  tMaxMin = tEleMin;
-                 iParent = tElemIndex;
+                 iParent = tElemIndexInDomain;
 
             }
         }
         if( tMaxMin >= cEpsilon )
         {
-            aParentElements(iNodeOrdinal) = iParent;
+            aParentElements(iNodeOrdinal) = tDomainCellMap(iParent);
         }
         else
         {
@@ -635,7 +636,7 @@ findParentElements(
             }
             if( tBoundCheck < 1 )
             {
-                aParentElements(iNodeOrdinal) = iParent;
+                aParentElements(iNodeOrdinal) = tDomainCellMap(iParent);
             }
         }
     }, "find parent element");
