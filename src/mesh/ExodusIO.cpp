@@ -46,7 +46,7 @@ namespace Plato
             return {{0,1,4},{1,2,5},{2,3,6},{3,0,7}};
         } 
         else
-        if (tElemType == "tetra" || tElemType == "tetra4" || tElemType == "tet4")
+        if (tElemType == "tetra" || tElemType == "tetra4" || tElemType == "tet4" || tElemType == "tet")
         {
             return {{0,1,3},{1,2,3},{2,0,3},{0,2,1}};
         } 
