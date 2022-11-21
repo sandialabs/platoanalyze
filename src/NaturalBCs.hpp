@@ -72,6 +72,28 @@ private:
     std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
     setUniformComponentNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
 
+    /***************************************************************************//**
+     * \brief Return natural boundary condition type: state function
+     *
+     * \param  [in] aName    user-defined name for natural boundary condition sublist
+     * \param  [in] aSubList natural boundary condition parameter sublist
+     *
+     * \return shared pointer to an uniform natural boundary condition
+    *******************************************************************************/
+    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
+    setStateFunctionNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
+
+    /***************************************************************************//**
+     * \brief Return natural boundary condition type: state function
+     *
+     * \param  [in] aName    user-defined name for natural boundary condition sublist
+     * \param  [in] aSubList natural boundary condition parameter sublist
+     *
+     * \return shared pointer to an uniform natural boundary condition
+    *******************************************************************************/
+    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
+    setStefanBoltzmannNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
+
 // public functions
 public :
     /***************************************************************************//**
@@ -136,6 +158,16 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::appendNaturalBC
         case Plato::Neumann::UNIFORM_COMPONENT:
         {
             tBC = this->setUniformComponentNaturalBC(aName, aSubList);
+            break;
+        }
+        case Plato::Neumann::STATE_FUNCTION:
+        {
+            tBC = this->setStateFunctionNaturalBC(aName, aSubList);
+            break;
+        }
+        case Plato::Neumann::STEFAN_BOLTZMANN:
+        {
+            tBC = this->setStefanBoltzmannNaturalBC(aName, aSubList);
             break;
         }
         default:
@@ -318,6 +350,65 @@ NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setUniformComponentNat
     aSubList.set("Vector", tFluxVector);
     tBC = std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
     return tBC;
+}
+
+/***************************************************************************//**
+ * \brief NaturalBC::setStateFunctionNaturalBC function definition
+*******************************************************************************/
+template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
+std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
+NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setStateFunctionNaturalBC
+(const std::string & aName, Teuchos::ParameterList &aSubList)
+{
+    bool tBC_Value = aSubList.isType<std::string>("Value");
+
+    bool tBC_Values = aSubList.isType<Teuchos::Array<std::string>>("Values");
+
+    const auto tType = aSubList.get < std::string > ("Type");
+    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>> tBC;
+    if (tBC_Values && tBC_Value)
+    {
+        std::stringstream tMsg;
+        tMsg << "Natural Boundary Condition: Specify 'Values' OR 'Value' Parameter Keyword in "
+            << "Parameter Sublist: '" << aName.c_str();
+        ANALYZE_THROWERR(tMsg.str().c_str())
+    }
+    else if (tBC_Values)
+    {
+        auto tValues = aSubList.get<Teuchos::Array<std::string>>("Values");
+        aSubList.set("Vector", tValues);
+    }
+    else if (tBC_Value)
+    {
+
+        auto tDof = aSubList.get<Plato::OrdinalType>("Index", 0);
+
+        Teuchos::Array<std::string> tFluxVector(NumDofs, "0.0");
+        auto tValue = aSubList.get<std::string>("Value");
+        tFluxVector[tDof] = tValue;
+        aSubList.set("Vector", tFluxVector);
+    }
+    else
+    {
+        std::stringstream tMsg;
+        tMsg << "Natural Boundary Condition: Uniform Boundary Condition in Parameter Sublist: '"
+            << aName.c_str() << "' was NOT parsed. Check input Parameter Keywords.";
+        ANALYZE_THROWERR(tMsg.str().c_str())
+    }
+
+    tBC = std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
+    return tBC;
+}
+
+/***************************************************************************//**
+ * \brief NaturalBC::setStefanBoltzmannNaturalBC function definition
+*******************************************************************************/
+template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
+std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
+NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setStefanBoltzmannNaturalBC
+(const std::string & aName, Teuchos::ParameterList &aSubList)
+{
+    return std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
 }
 
 /***************************************************************************//**

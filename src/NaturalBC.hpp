@@ -14,7 +14,9 @@
 #include "PlatoMathExpr.hpp"
 #include "PlatoUtilities.hpp"
 #include "SurfaceLoadIntegral.hpp"
+#include "SurfaceStateIntegral.hpp"
 #include "SurfacePressureIntegral.hpp"
+#include "StefanBoltzmann.hpp"
 
 namespace Plato
 {
@@ -30,6 +32,8 @@ struct Neumann
         UNIFORM = 1,
         UNIFORM_PRESSURE = 2,
         UNIFORM_COMPONENT = 3,
+        STATE_FUNCTION = 4,
+        STEFAN_BOLTZMANN = 5
     };
 };
 // struct Neumann
@@ -54,6 +58,14 @@ inline Plato::Neumann::bc_t natural_boundary_condition_type(const std::string& a
     {
         return Plato::Neumann::UNIFORM_COMPONENT;
     }
+    else if(tLowerTag == "state function")
+    {
+        return Plato::Neumann::STATE_FUNCTION;
+    }
+    else if(tLowerTag == "stefan boltzmann")
+    {
+        return Plato::Neumann::STEFAN_BOLTZMANN;
+    }
     else
     {
         ANALYZE_THROWERR(std::string("Natural Boundary Condition: 'Type' Parameter Keyword: '") + tLowerTag + "' is not supported.")
@@ -77,9 +89,11 @@ template<
 class NaturalBC
 {
     const std::string mName;         /*!< user-defined load sublist name */
-    const std::string mType;         /*!< natural boundary condition type */
+    Plato::Neumann::bc_t mType;      /*!< natural boundary condition type */
     const std::string mSideSetName;  /*!< side set name */
     Plato::Array<NumDofs> mFlux;  /*!< force vector values */
+    std::vector<std::string> mFluxStrings; 
+    std::vector<std::string> mStateNames;
     std::shared_ptr<Plato::MathExpr> mFluxExpr[NumDofs];
 
 public:
@@ -90,7 +104,7 @@ public:
     *******************************************************************************/
     NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>(const std::string & aLoadName, Teuchos::ParameterList &aSubList) :
         mName(aLoadName),
-        mType(aSubList.get<std::string>("Type")),
+        mType(Plato::natural_boundary_condition_type(aSubList.get<std::string>("Type"))),
         mSideSetName(aSubList.get<std::string>("Sides")),
         mFluxExpr{nullptr}
     {
@@ -106,7 +120,7 @@ public:
             }
         }
         else
-        if (tIsExpr)
+        if (tIsExpr && mType != Plato::Neumann::STATE_FUNCTION)
         {
             auto tExpr = aSubList.get<Teuchos::Array<std::string>>("Vector");
             for(Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
@@ -114,6 +128,12 @@ public:
                 mFluxExpr[tDof] = std::make_shared<Plato::MathExpr>(tExpr[tDof]);
                 mFlux(tDof) = mFluxExpr[tDof]->value(0.0);
             }
+        }
+        else
+        if (tIsExpr && mType == Plato::Neumann::STATE_FUNCTION)
+        {
+            mFluxStrings = aSubList.get<Teuchos::Array<std::string>>("Vector").toVector();
+            mStateNames = aSubList.get<Teuchos::Array<std::string>>("State Names").toVector();
         }
     }
 
@@ -205,8 +225,7 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
         }
     }
 
-    auto tType = Plato::natural_boundary_condition_type(mType);
-    switch(tType)
+    switch(mType)
     {
         case Plato::Neumann::UNIFORM:
         case Plato::Neumann::UNIFORM_COMPONENT:
@@ -221,10 +240,22 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
              tSurfacePress(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
             break;
         }
+        case Plato::Neumann::STATE_FUNCTION:
+        {
+            Plato::SurfaceStateIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfaceState(mSideSetName, mFluxStrings, mStateNames);
+            tSurfaceState(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
+            break;
+        }
+        case Plato::Neumann::STEFAN_BOLTZMANN:
+        {
+            Plato::StefanBoltzmann<ElementType, DofsPerNode, DofOffset> tStefanBoltzmann(mSideSetName, mFluxStrings, mStateNames);
+            tStefanBoltzmann(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
+            break;
+        }
         default:
         {
             std::stringstream tMsg;
-            tMsg << "Natural Boundary Condition: Natural Boundary Condition Type '" << mType.c_str() << "' is NOT supported.";
+            tMsg << "Natural Boundary Condition: Unknown Natural Boundary Condition Type";
             ANALYZE_THROWERR(tMsg.str().c_str())
         }
     }
