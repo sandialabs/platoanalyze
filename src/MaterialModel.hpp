@@ -314,12 +314,13 @@ namespace Plato {
           tIter++;
         }
         mExpEval.set_variable(mIndependentVariableName.c_str(), aIndependentVariable);
+        auto &tExpEval = mExpEval;
         Plato::ScalarMultiVectorT<KineticsScalarType> tResults("Expression Results", tNumCells*tNumPoints, 1);
         Kokkos::parallel_for("compute element values", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            mExpEval.evaluate_expression( tEntryOrdinal, tResults );
+            tExpEval.evaluate_expression( tEntryOrdinal, tResults );
         });
         return tResults;
       }
