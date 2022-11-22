@@ -15,6 +15,7 @@
 #include "elliptic/ScalarFunctionBaseFactory.hpp"
 #include "geometric/ScalarFunctionBaseFactory.hpp"
 
+#include "contact/ContactUtils.hpp"
 
 namespace Plato
 {
@@ -657,6 +658,15 @@ namespace Elliptic
             auto & tMyParams = aProblemParams.sublist("Multipoint Constraints", false);
             mMPCs = std::make_shared<Plato::MultipointConstraints>(mSpatialModel, tNumDofsPerNode, tMyParams);
             mMPCs->setupTransform();
+        }
+
+        if(aProblemParams.isSublist("Contact") == true)
+        {
+            auto & tMyParams = aProblemParams.sublist("Contact", false);
+            auto tPairs = Plato::Contact::parse_contact(tMyParams, mSpatialModel.Mesh);
+            Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, mSpatialModel);
+
+            mSpatialModel.addContact(tPairs);
         }
 
         this->readEssentialBoundaryConditions(aProblemParams);

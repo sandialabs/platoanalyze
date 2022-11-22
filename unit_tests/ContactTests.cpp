@@ -14,27 +14,19 @@
 #include "Plato_InputData.hpp"
 #include "Plato_Exceptions.hpp"
 #include "Plato_Parser.hpp"
-#include "Plato_MeshMap.hpp"
 
 #include "WorksetBase.hpp"
 #include "SpatialModel.hpp"
 
-#include "InterpolateFromNodal.hpp"
-
-#include "WeightedNormalVector.hpp"
-#include "SurfaceArea.hpp"
-
 #include "elliptic/EvaluationTypes.hpp"
+#include "elliptic/VectorFunction.hpp"
+
+#include "Mechanics.hpp"
 
 #include "contact/ContactPair.hpp"
 #include "contact/ContactUtils.hpp"
 #include "contact/SurfaceDisplacementFactory.hpp"
 #include "contact/ContactForceFactory.hpp"
-
-
-
-#include "contact/SurfaceDisplacement.hpp"
-#include "contact/ProjectedSurfaceDisplacement.hpp"
 
 namespace ContactTests
 {
@@ -252,7 +244,7 @@ TEUCHOS_UNIT_TEST(UtilsTests, ParseAllContactPairs)
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
 
     // test number of pairs
     TEST_EQUALITY(tPairs.size(), 1);
@@ -271,7 +263,7 @@ TEUCHOS_UNIT_TEST(UtilsTests, PopulateFullContactArrays)
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
 
     auto tNumTotalNodes = Plato::Contact::count_total_child_nodes(tPairs);
@@ -344,7 +336,7 @@ TEUCHOS_UNIT_TEST(ContactSurfaceTests, ThrowWhenAccessingParentDataIfNotSet)
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     auto tPair = tPairs[0];
 
     TEST_THROW(tPair.surfaceA.parentElements(), std::runtime_error);
@@ -511,16 +503,14 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
     Plato::ScalarMultiVectorT<Plato::Scalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
      
     // get contact pair info
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     auto tPair = tPairs[0]; // there is only 1 pair
 
     // test child elements
@@ -599,16 +589,14 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
     Plato::ScalarMultiVectorT<Plato::Scalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
 
     // get contact pair info
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
     auto tPair = tPairs[0]; // there is only 1 pair
 
@@ -626,8 +614,6 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
         {0.0034 / 3.0, 0.0035 / 3.0, 0.0036 / 3.0},
         {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0}
     };
-
-    Plato::ScalarVector tSurfaceDisp("make on device", ElementType::mNumDofsPerNode);
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -720,9 +706,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
     Plato::ScalarMultiVectorT<Plato::Scalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
@@ -733,15 +717,15 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     DummyResidual<EvaluationType> tResidual;
 
     // get contact pair info
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, tMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
     auto tPair = tPairs[0]; // there is only 1 pair
 
     // construct compute surface displacement functors for side A
     Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tFactory;
 
-    auto computeChildSurfaceDispA  = tFactory.createChildContribution(tPair.surfaceA, -1.0);
-    auto computeParentSurfaceDispA = tFactory.createParentContribution(tPair.surfaceA, tMesh);
+    auto computeChildSurfaceDispA  = tFactory.createChildContribution(tPair.surfaceA);
+    auto computeParentSurfaceDispA = tFactory.createParentContribution(tPair.surfaceA, tMesh, -1.0);
 
     // construct compute surface displacement functors for side B
     auto computeChildSurfaceDispB  = tFactory.createChildContribution(tPair.surfaceB);
@@ -758,8 +742,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     }
 
     std::vector<std::vector<double>> tResult_Gold = {
-        {0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0022 / 3.0, 0.0, 0.0, 0.0},
-        {0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0019 / 3.0, 0.0, 0.0, 0.0}
+        {-0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, -0.0022 / 3.0, 0.0, 0.0, 0.0},
+        {-0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, -0.0019 / 3.0, 0.0, 0.0, 0.0}
     };
 
     auto tResult_Host = Plato::TestHelpers::get( tResultA );
@@ -793,6 +777,624 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
       }
     }
 
+}
+
+TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementJacobian)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    check_element_type_is_tet(tMesh);
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tCubatureWeights = ElementType::Face::getCubWeights();
+    auto tNumPoints = tCubatureWeights.size();
+
+    // set evaluation type to jacobian
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
+    using StateScalar    = typename EvaluationType::StateScalarType;
+
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
+    Plato::Scalar disp = 0.0, dval = 0.0001;
+    for( auto& val : u_host ) val = (disp += dval);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
+
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
+    Plato::ScalarMultiVectorT<StateScalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
+    tWorksetBase.worksetState(u, tDispWS);
+     
+    // get contact pair info
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    auto tPair = tPairs[0]; // there is only 1 pair
+
+    // test child elements
+    auto tChildElements_Host = Plato::TestHelpers::get( tPair.surfaceA.childElements() );
+    std::vector<Plato::OrdinalType> tChildElements_gold = { 2, 4 };
+    for(int iChild=0; iChild<int(tChildElements_gold.size()); iChild++){
+        TEST_EQUALITY(tChildElements_Host(iChild), tChildElements_gold[iChild]);
+    }
+
+    tChildElements_Host = Plato::TestHelpers::get( tPair.surfaceB.childElements() );
+    tChildElements_gold = { 6, 7 };
+    for(int iChild=0; iChild<int(tChildElements_gold.size()); iChild++){
+        TEST_EQUALITY(tChildElements_Host(iChild), tChildElements_gold[iChild]);
+    }
+
+    // construct compute surface displacement functors
+    Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tFactory;
+    auto tComputeSurfaceDispA = tFactory.createChildContribution(tPair.surfaceA, -1.0);
+    auto tComputeSurfaceDispB = tFactory.createChildContribution(tPair.surfaceB, -1.0);
+
+    // compute surface displacement for all child face cells
+    Plato::ScalarArray3DT<StateScalar> tSurfaceDispA("make on device", tPair.surfaceA.childElements().size(), tNumPoints, ElementType::mNumDofsPerNode);
+    (*tComputeSurfaceDispA)(tPair.surfaceA.childElements(), tDispWS, tSurfaceDispA);
+
+    Plato::ScalarArray3DT<StateScalar> tSurfaceDispB("make on device", tPair.surfaceB.childElements().size(), tNumPoints, ElementType::mNumDofsPerNode);
+    (*tComputeSurfaceDispB)(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
+
+    // test surface A displacement jacobian derivatives for child face cell 0
+    Plato::OrdinalType tChildCellOrdinal = 0;
+    Plato::ScalarVector tADerivative0("", ElementType::mNumDofsPerCell);
+    Plato::ScalarVector tADerivative1("", ElementType::mNumDofsPerCell);
+    Plato::ScalarVector tADerivative2("", ElementType::mNumDofsPerCell);
+
+    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    {
+        tADerivative0(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 0).dx(iOrd);
+        tADerivative1(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 1).dx(iOrd);
+        tADerivative2(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 2).dx(iOrd);
+    }, "get derivatives for testing");
+
+    auto tADerivative0_Host = Plato::TestHelpers::get( tADerivative0 );
+    auto tADerivative1_Host = Plato::TestHelpers::get( tADerivative1 );
+    auto tADerivative2_Host = Plato::TestHelpers::get( tADerivative2 );
+
+    std::vector<double> tADerivative0_Gold = {-1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0};
+    std::vector<double> tADerivative1_Gold = {0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, 0.0, 0.0};
+    std::vector<double> tADerivative2_Gold = {0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, 0.0};
+
+    for(int iDof=0; iDof<tADerivative0_Gold.size(); iDof++){
+        TEST_FLOATING_EQUALITY(tADerivative0_Host(iDof), tADerivative0_Gold[iDof], 1e-12);
+        TEST_FLOATING_EQUALITY(tADerivative1_Host(iDof), tADerivative1_Gold[iDof], 1e-12);
+        TEST_FLOATING_EQUALITY(tADerivative2_Host(iDof), tADerivative2_Gold[iDof], 1e-12);
+    }
+
+    // test surface B displacement jacobian derivatives for child face cell 0
+    tChildCellOrdinal = 0;
+    Plato::ScalarVector tBDerivative0("", ElementType::mNumDofsPerCell);
+    Plato::ScalarVector tBDerivative1("", ElementType::mNumDofsPerCell);
+    Plato::ScalarVector tBDerivative2("", ElementType::mNumDofsPerCell);
+
+    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    {
+        tBDerivative0(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 0).dx(iOrd);
+        tBDerivative1(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 1).dx(iOrd);
+        tBDerivative2(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 2).dx(iOrd);
+    }, "get derivatives for testing");
+
+    auto tBDerivative0_Host = Plato::TestHelpers::get( tBDerivative0 );
+    auto tBDerivative1_Host = Plato::TestHelpers::get( tBDerivative1 );
+    auto tBDerivative2_Host = Plato::TestHelpers::get( tBDerivative2 );
+
+    std::vector<double> tBDerivative0_Gold = {0.0, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0};
+    std::vector<double> tBDerivative1_Gold = {0.0, 0.0, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0};
+    std::vector<double> tBDerivative2_Gold = {0.0, 0.0, 0.0, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3, 0.0, 0.0, -1.0 / 3};
+
+    for(int iDof=0; iDof<tBDerivative0_Gold.size(); iDof++){
+        TEST_FLOATING_EQUALITY(tBDerivative0_Host(iDof), tBDerivative0_Gold[iDof], 1e-12);
+        TEST_FLOATING_EQUALITY(tBDerivative1_Host(iDof), tBDerivative1_Gold[iDof], 1e-12);
+        TEST_FLOATING_EQUALITY(tBDerivative2_Host(iDof), tBDerivative2_Gold[iDof], 1e-12);
+    }
+}
+
+TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
+    check_element_type_is_tet(tMesh);
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    auto tCubatureWeights = ElementType::Face::getCubWeights();
+    auto tNumPoints = tCubatureWeights.size();
+
+    // set evaluation type to jacobian
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
+    using StateScalar    = typename EvaluationType::StateScalarType;
+    
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
+    Plato::Scalar disp = 0.0, dval = 0.0001;
+    for( auto& val : u_host ) val = (disp += dval);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
+
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
+    Plato::ScalarMultiVectorT<StateScalar> tDispWS("state workset", tMesh->NumElements(), ElementType::mNumDofsPerCell);
+    tWorksetBase.worksetState(u, tDispWS);
+
+    // get contact pair info
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
+    auto tPair = tPairs[0]; // there is only 1 pair
+
+    // construct compute surface displacement functors
+    Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tFactory;
+    auto tComputeSurfaceDispA = tFactory.createParentContribution(tPair.surfaceA, tMesh);
+    auto tComputeSurfaceDispB = tFactory.createParentContribution(tPair.surfaceB, tMesh);
+
+    // test surface A displacement terms for each child node on child cell 0
+    Plato::OrdinalType tChildCellOrdinal = 0;
+
+    std::vector<std::vector<double>> tADerivative0_Gold = {
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0}
+    };
+
+    std::vector<std::vector<double>> tADerivative1_Gold = {
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0}
+    };
+
+    std::vector<std::vector<double>> tADerivative2_Gold = {
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0}
+    };
+
+    for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
+    {
+        tComputeSurfaceDispA->setChildNode(iChildNode);
+
+        Plato::ScalarArray3DT<StateScalar> tSurfaceDispA("make on device", tPair.surfaceA.childElements().size(), tNumPoints, ElementType::mNumDofsPerNode);
+        (*tComputeSurfaceDispA)(tPair.surfaceA.childElements(), tDispWS, tSurfaceDispA);
+
+        Plato::ScalarVector tADerivative0("", ElementType::mNumDofsPerCell);
+        Plato::ScalarVector tADerivative1("", ElementType::mNumDofsPerCell);
+        Plato::ScalarVector tADerivative2("", ElementType::mNumDofsPerCell);
+        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+        {
+            tADerivative0(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 0).dx(iOrd);
+            tADerivative1(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 1).dx(iOrd);
+            tADerivative2(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 2).dx(iOrd);
+        }, "get derivatives for testing");
+
+        auto tADerivative0_Host = Plato::TestHelpers::get( tADerivative0 );
+        auto tADerivative1_Host = Plato::TestHelpers::get( tADerivative1 );
+        auto tADerivative2_Host = Plato::TestHelpers::get( tADerivative2 );
+        for(int iDof=0; iDof<tADerivative0_Gold[iChildNode].size(); iDof++){
+            TEST_FLOATING_EQUALITY(tADerivative0_Host(iDof), tADerivative0_Gold[iChildNode][iDof], 1e-12);
+            TEST_FLOATING_EQUALITY(tADerivative1_Host(iDof), tADerivative1_Gold[iChildNode][iDof], 1e-12);
+            TEST_FLOATING_EQUALITY(tADerivative2_Host(iDof), tADerivative2_Gold[iChildNode][iDof], 1e-12);
+        }
+    }
+
+    // test surface B displacement terms for each child node on child cell 0
+    std::vector<std::vector<double>> tBDerivative0_Gold = {
+        {0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0},
+    };
+
+    std::vector<std::vector<double>> tBDerivative1_Gold = {
+        {0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0},
+    };
+
+    std::vector<std::vector<double>> tBDerivative2_Gold = {
+        {0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 / 3, 0.0, 0.0, 0.0},
+    };
+
+    for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
+    {
+        tComputeSurfaceDispB->setChildNode(iChildNode);
+
+        Plato::ScalarArray3DT<StateScalar> tSurfaceDispB("make on device", tPair.surfaceB.childElements().size(), tNumPoints, ElementType::mNumDofsPerNode);
+        (*tComputeSurfaceDispB)(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
+
+        Plato::ScalarVector tBDerivative0("", ElementType::mNumDofsPerCell);
+        Plato::ScalarVector tBDerivative1("", ElementType::mNumDofsPerCell);
+        Plato::ScalarVector tBDerivative2("", ElementType::mNumDofsPerCell);
+        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+        {
+            tBDerivative0(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 0).dx(iOrd);
+            tBDerivative1(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 1).dx(iOrd);
+            tBDerivative2(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 2).dx(iOrd);
+        }, "get derivatives for testing");
+
+        auto tBDerivative0_Host = Plato::TestHelpers::get( tBDerivative0 );
+        auto tBDerivative1_Host = Plato::TestHelpers::get( tBDerivative1 );
+        auto tBDerivative2_Host = Plato::TestHelpers::get( tBDerivative2 );
+        for(int iDof=0; iDof<tBDerivative0_Gold[iChildNode].size(); iDof++){
+            TEST_FLOATING_EQUALITY(tBDerivative0_Host(iDof), tBDerivative0_Gold[iChildNode][iDof], 1e-12);
+            TEST_FLOATING_EQUALITY(tBDerivative1_Host(iDof), tBDerivative1_Gold[iChildNode][iDof], 1e-12);
+            TEST_FLOATING_EQUALITY(tBDerivative2_Host(iDof), tBDerivative2_Gold[iChildNode][iDof], 1e-12);
+        }
+    }
+}
+
+TEUCHOS_UNIT_TEST(ResidualTests, ElastoStatic_NoBodyContribution)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs =
+        Teuchos::getParametersFromXmlString(
+        "<ParameterList name='Plato Problem'>                                           \n"
+        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>              \n"
+        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                      \n"
+        "  <ParameterList name='Elliptic'>                                                \n"
+        "    <ParameterList name='Penalty Function'>                                      \n"
+        "      <Parameter name='Exponent' type='double' value='1.0'/>                     \n"
+        "      <Parameter name='Minimum Value' type='double' value='0.0'/>                \n"
+        "      <Parameter name='Type' type='string' value='SIMP'/>                        \n"
+        "    </ParameterList>                                                             \n"
+        "  </ParameterList>                                                               \n"
+
+        "  <ParameterList name='Spatial Model'>                                         \n"
+        "    <ParameterList name='Domains'>                                             \n"
+        "      <ParameterList name='Box 1'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "      <ParameterList name='Box 2'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
+        "        <ParameterList name='A Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "        <ParameterList name='B Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+
+        "  <ParameterList name='Material Models'>                                       \n"
+        "    <ParameterList name='Ether'>                                         \n"
+        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
+        "        <Parameter  name='Poissons Ratio' type='double' value='0.0'/>         \n"
+        "        <Parameter  name='Youngs Modulus' type='double' value='0.0'/>       \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+        "</ParameterList>                                                               \n"
+    );
+
+    // setup spatial model
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    check_element_type_is_tet(tMesh);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
+    // add contact to spatial model
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
+
+    tSpatialModel.addContact(tPairs);
+
+    // create dummy control vector (all 1s)
+    std::vector<Plato::Scalar> z_host( tMesh->NumNodes(), 1.0 );
+    auto z = Plato::TestHelpers::create_device_view(z_host);
+
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
+    Plato::Scalar disp = 0.0, dval = 0.0001;
+    for( auto& val : u_host ) val = (disp += dval);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
+
+    // compute and test residual
+    Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tet4>>
+        tVectorFunction(tSpatialModel, tDataMap, *tInputs, tInputs->get<std::string>("PDE Constraint"));
+
+    auto tResidual = tVectorFunction.value(u,z);
+
+    auto tResidual_Host = Plato::TestHelpers::get( tResidual );
+
+    std::vector<Plato::Scalar> tResidual_Gold = {
+        -0.0041e4 / 3.0, -0.0041e4 / 3.0, -0.0041e4 / 3.0,
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0,
+        -0.0041e4 / 3.0, -0.0041e4 / 3.0, -0.0041e4 / 3.0,
+        -0.0022e4 / 3.0, -0.0022e4 / 3.0, -0.0022e4 / 3.0,
+        -0.0019e4 / 3.0, -0.0019e4 / 3.0, -0.0019e4 / 3.0,
+
+        0.0, 0.0, 0.0,
+        0.0031e4 / 3.0, 0.0031e4 / 3.0, 0.0031e4 / 3.0,
+        0.0012e4 / 3.0, 0.0012e4 / 3.0, 0.0012e4 / 3.0,
+        0.0031e4 / 3.0, 0.0031e4 / 3.0, 0.0031e4 / 3.0,
+        0.0019e4 / 3.0, 0.0019e4 / 3.0, 0.0019e4 / 3.0,
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0
+    };
+
+    for(int iVal=0; iVal<tResidual_Gold.size(); iVal++){
+        TEST_FLOATING_EQUALITY(tResidual_Host(iVal), tResidual_Gold[iVal], 1e-12);
+    }
+}
+
+TEUCHOS_UNIT_TEST(JacobianTests, ElastoStatic_NoBodyContribution)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs =
+        Teuchos::getParametersFromXmlString(
+        "<ParameterList name='Plato Problem'>                                           \n"
+        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>              \n"
+        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                      \n"
+        "  <ParameterList name='Elliptic'>                                                \n"
+        "    <ParameterList name='Penalty Function'>                                      \n"
+        "      <Parameter name='Exponent' type='double' value='1.0'/>                     \n"
+        "      <Parameter name='Minimum Value' type='double' value='0.0'/>                \n"
+        "      <Parameter name='Type' type='string' value='SIMP'/>                        \n"
+        "    </ParameterList>                                                             \n"
+        "  </ParameterList>                                                               \n"
+
+        "  <ParameterList name='Spatial Model'>                                         \n"
+        "    <ParameterList name='Domains'>                                             \n"
+        "      <ParameterList name='Box 1'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "      <ParameterList name='Box 2'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
+        "        <ParameterList name='A Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "        <ParameterList name='B Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+
+        "  <ParameterList name='Material Models'>                                       \n"
+        "    <ParameterList name='Ether'>                                         \n"
+        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
+        "        <Parameter  name='Poissons Ratio' type='double' value='0.0'/>         \n"
+        "        <Parameter  name='Youngs Modulus' type='double' value='0.0'/>       \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+        "</ParameterList>                                                               \n"
+    );
+
+    // setup spatial model
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    check_element_type_is_tet(tMesh);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
+    // add contact to spatial model
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
+
+    tSpatialModel.addContact(tPairs);
+
+    // create dummy control vector (all 1s)
+    std::vector<Plato::Scalar> z_host( tMesh->NumNodes(), 1.0 );
+    auto z = Plato::TestHelpers::create_device_view(z_host);
+
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
+    Plato::Scalar disp = 0.0, dval = 0.0001;
+    for( auto& val : u_host ) val = (disp += dval);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
+
+    // compute and test jacobian
+    Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tet4>>
+        tVectorFunction(tSpatialModel, tDataMap, *tInputs, tInputs->get<std::string>("PDE Constraint"));
+
+    auto tJacobian = tVectorFunction.gradient_u(u,z);
+    auto tEntries = tJacobian->entries();
+
+    auto tEntries_Host = Plato::TestHelpers::get( tEntries );
+
+    std::vector<Plato::Scalar> tEntries_Gold = { 
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+
+        
+
+
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+        -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9, 0, 0, 0, -2.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        2.0e4 / 9, 0, 0, 0, 2.0e4 / 9, 0, 0, 0, 2.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9, 0, 0, 0, -1.0e4 / 9,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+        1.0e4 / 9, 0, 0, 0, 1.0e4 / 9, 0, 0, 0, 1.0e4 / 9,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        };
+
+    for(int iVal=0; iVal<tEntries_Gold.size(); iVal++){
+        TEST_FLOATING_EQUALITY(tEntries_Host(iVal), tEntries_Gold[iVal], 1e-12);
+    }
 }
 
 }

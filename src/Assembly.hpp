@@ -1498,7 +1498,7 @@ assemble_jacobian_fad(
                 for(Plato::OrdinalType tColumnIndex = 0; tColumnIndex < aNumColumnsPerCell; tColumnIndex++)
                 {
                     Plato::OrdinalType tEntryOrdinal = aMatrixEntryOrdinal(tLocalCell, tNonLocalCell, tRowIndex, tColumnIndex);
-                    Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(aCellOrdinal, tRowIndex).dx(tColumnIndex));
+                    Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(tLocalCell, tRowIndex).dx(tColumnIndex));
                 }
             }
         }

@@ -14,28 +14,24 @@ std::vector<ContactPair> parse_contact
  Plato::Mesh                    aMesh)
  {
     std::vector<ContactPair> tPairs;
-    if (aParams.isSublist("Contact"))
+    if (!aParams.isSublist("Pairs"))
     {
-        auto tContactParams = aParams.sublist("Contact");
-        if (!tContactParams.isSublist("Pairs"))
+        ANALYZE_THROWERR("Parsing 'Contact' parameter list. Required 'Pairs' parameter sublist not found");
+    }
+
+    auto tPairsParams = aParams.sublist("Pairs");
+    for (auto tIndex = tPairsParams.begin(); tIndex != tPairsParams.end(); ++tIndex)
+    {
+        const auto &tEntry  = tPairsParams.entry(tIndex);
+        const auto &tMyName = tPairsParams.name(tIndex);
+
+        if (!tEntry.isList())
         {
-            ANALYZE_THROWERR("Parsing 'Contact' parameter list. Required 'Pairs' parameter sublist not found");
+            ANALYZE_THROWERR("Parameter in 'Domains' parameter sublist within 'Spatial Model' parameter list not valid.  Expect lists only.");
         }
 
-        auto tPairsParams = tContactParams.sublist("Pairs");
-        for (auto tIndex = tPairsParams.begin(); tIndex != tPairsParams.end(); ++tIndex)
-        {
-            const auto &tEntry  = tPairsParams.entry(tIndex);
-            const auto &tMyName = tPairsParams.name(tIndex);
-
-            if (!tEntry.isList())
-            {
-                ANALYZE_THROWERR("Parameter in 'Domains' parameter sublist within 'Spatial Model' parameter list not valid.  Expect lists only.");
-            }
-
-            Teuchos::ParameterList &tPairParams = tPairsParams.sublist(tMyName);
-            tPairs.push_back(parse_contact_pair(tPairParams, aMesh));
-        }
+        Teuchos::ParameterList &tPairParams = tPairsParams.sublist(tMyName);
+        tPairs.push_back(parse_contact_pair(tPairParams, aMesh));
     }
     return tPairs;
  }

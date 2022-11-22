@@ -253,7 +253,7 @@ setup_2box_spatial_model(Plato::Mesh aMesh)
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     check_element_type_is_tet(aMesh);
 
-    auto tPairs = Plato::Contact::parse_contact(*tInputs, aMesh);
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), aMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
 
     tSpatialModel.addContact(tPairs);
@@ -387,9 +387,7 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreIdentity)
     std::vector<Plato::Scalar> u_host( tSpaceDim*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::ScalarMultiVectorT<EvaluationType::StateScalarType> tDispWS("state workset", tNumCells, tNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS, tDomain);
@@ -498,9 +496,7 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreShapeFunctions)
     std::vector<Plato::Scalar> u_host( tSpaceDim*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::ScalarMultiVectorT<EvaluationType::StateScalarType> tDispWS("state workset", tNumCells, tNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
@@ -854,9 +850,7 @@ TEUCHOS_UNIT_TEST(JacobianTestsWithContactGraph, ElementDerivativesAreShapeFunct
     std::vector<Plato::Scalar> u_host( tSpaceDim*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::ScalarMultiVectorT<EvaluationType::StateScalarType> tDispWS("state workset", tNumCells, tNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
@@ -1071,9 +1065,7 @@ TEUCHOS_UNIT_TEST(JacobianTestsWithContactGraph, ElementDerivativesAreShapeFunct
     std::vector<Plato::Scalar> u_host( tSpaceDim*tMesh->NumNodes() );
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for( auto& val : u_host ) val = (disp += dval);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-      u_host_view(u_host.data(),u_host.size());
-    auto u = Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), u_host_view);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
 
     Plato::ScalarMultiVectorT<EvaluationType::StateScalarType> tDispWS("state workset", tNumCells, tNumDofsPerCell);
     tWorksetBase.worksetState(u, tDispWS);
@@ -1108,10 +1100,11 @@ TEUCHOS_UNIT_TEST(JacobianTestsWithContactGraph, ElementDerivativesAreShapeFunct
     auto tElementWiseChildMap = tPair.surfaceA.elementWiseChildMap();
     auto tChildFaceLocalNodes = tPair.surfaceA.childFaceLocalNodes();
 
-    tResidual.evaluateNonlocal(tSpatialModel,tSideSet,tContributingCell,tDispWS,tJacobian);
+    Plato::ScalarMultiVectorT<EvaluationType::ResultScalarType> tNonlocalJacobianA("JacobianState", tNumCells, tNumDofsPerCell);
+    tResidual.evaluateNonlocal(tSpatialModel,tSideSet,tContributingCell,tDispWS,tNonlocalJacobianA);
 
     tWorksetBase.assembleJacobianFad
-        (tNumDofsPerCell, tChildCells, tParentCells, tElementWiseChildMap, tChildFaceLocalNodes, tContributingNode, tJacobianMatEntryOrdinal, tJacobian, tJacobianMatEntries);
+        (tNumDofsPerCell, tChildCells, tParentCells, tElementWiseChildMap, tChildFaceLocalNodes, tContributingNode, tJacobianMatEntryOrdinal, tNonlocalJacobianA, tJacobianMatEntries);
 
     // evaluate and assemble (nonlocal) surface terms for node on surface B
     tContributingCell = 4; // "parent" element in which to compute displacement
@@ -1122,10 +1115,11 @@ TEUCHOS_UNIT_TEST(JacobianTestsWithContactGraph, ElementDerivativesAreShapeFunct
     tElementWiseChildMap = tPair.surfaceB.elementWiseChildMap();
     tChildFaceLocalNodes = tPair.surfaceB.childFaceLocalNodes();
 
-    tResidual.evaluateNonlocal(tSpatialModel,tSideSet,tContributingCell,tDispWS,tJacobian);
+    Plato::ScalarMultiVectorT<EvaluationType::ResultScalarType> tNonlocalJacobianB("JacobianState", tNumCells, tNumDofsPerCell);
+    tResidual.evaluateNonlocal(tSpatialModel,tSideSet,tContributingCell,tDispWS,tNonlocalJacobianB);
 
     tWorksetBase.assembleJacobianFad
-        (tNumDofsPerCell, tChildCells, tParentCells, tElementWiseChildMap, tChildFaceLocalNodes, tContributingNode, tJacobianMatEntryOrdinal, tJacobian, tJacobianMatEntries);
+        (tNumDofsPerCell, tChildCells, tParentCells, tElementWiseChildMap, tChildFaceLocalNodes, tContributingNode, tJacobianMatEntryOrdinal, tNonlocalJacobianB, tJacobianMatEntries);
 
     // test assembled jacobian
     auto tJacobianEntries_Host = Plato::TestHelpers::get( tJacobianMatEntries );

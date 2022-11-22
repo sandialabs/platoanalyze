@@ -189,6 +189,7 @@ namespace Elliptic
       if(std::count(mPlotTable.begin(), mPlotTable.end(), "stress")) { Plato::toMap(mDataMap, tCellStress, "stress", mSpatialDomain); }
       if(std::count(mPlotTable.begin(), mPlotTable.end(), "Vonmises")) { this->outputVonMises(tCellStress, mSpatialDomain); }
     }
+
     /******************************************************************************//**
      * \brief Evaluate vector function
      *
@@ -219,6 +220,71 @@ namespace Elliptic
         }
     }
 
+    /******************************************************************************//**
+     * \brief Evaluate contact
+     *
+     * \param [in] aSpatialModel Plato Analyze spatial model
+     * \param [in] aSideSet side set to evaluate contact on
+     * \param [in] aComputeSurfaceDisp functor for computing displacement on surface
+     * \param [in] aComputeContactForce functor for computing contact force
+     * \param [in] aState 2D array with state variables (C,DOF)
+     * \param [in] aControl 2D array with control variables (C,N)
+     * \param [in] aConfig 3D array with control variables (C,N,D)
+     * \param [in] aResult 1D array with control variables (C,DOF)
+     * \param [in] aTimeStep current time step
+     *
+     * Nomenclature: C = number of cells, DOF = number of degrees of freedom per cell
+     * N = number of nodes per cell, D = spatial dimensions
+    **********************************************************************************/
+    template<typename EvaluationType, typename IndicatorFunctionType>
+    void
+    ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_contact(
+        const Plato::SpatialModel                                                       & aSpatialModel,
+        const std::string                                                               & aSideSet,
+              Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>>   aComputeSurfaceDisp,
+              Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>>          aComputeContactForce,
+        const Plato::ScalarMultiVectorT <StateScalarType>                               & aState,
+        const Plato::ScalarMultiVectorT <ControlScalarType>                             & aControl,
+        const Plato::ScalarArray3DT     <ConfigScalarType>                              & aConfig,
+              Plato::ScalarMultiVectorT <ResultScalarType>                              & aResult,
+              Plato::Scalar aTimeStep
+    ) const
+    {
+        auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(aSideSet);
+        Plato::OrdinalType tNumFaces = tElementOrds.size();
+        auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
+
+        auto tCubaturePoints  = ElementType::Face::getCubPoints();
+        auto tCubatureWeights = ElementType::Face::getCubWeights();
+        auto tNumPoints = tCubatureWeights.size();
+
+        Plato::ScalarArray3DT<StateScalarType> tSurfaceDisplacement("displacement on contact surface", tNumFaces, tNumPoints, mNumSpatialDims);
+        (*aComputeSurfaceDisp)(tElementOrds, aState, tSurfaceDisplacement);
+
+        Plato::ScalarArray3DT<ResultScalarType> tContactForce("contact force at cubature points", tNumFaces, tNumPoints, mNumSpatialDims);
+        (*aComputeContactForce)(tElementOrds, tLocalNodeOrds, tSurfaceDisplacement, aConfig, tContactForce);
+
+        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
+        {
+            auto tCellOrdinal = tElementOrds(iCellOrdinal);
+            auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
+            auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
+
+            for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
+            {
+                auto tLocalNodeOrd = tLocalNodeOrds(iCellOrdinal*ElementType::mNumNodesPerFace+tNode);
+
+                for( Plato::OrdinalType tDof=0; tDof<ElementType::mNumSpatialDims; tDof++)
+                {
+                    auto tElementDofOrdinal = tLocalNodeOrd * ElementType::mNumSpatialDims + tDof;
+                    ResultScalarType tResult = tBasisValues(tNode)*tContactForce(iCellOrdinal, iGPOrdinal, tDof);
+                    Kokkos::atomic_add(&aResult(tCellOrdinal, tElementDofOrdinal), tResult);
+                }
+            }
+
+        }, "project contact force to nodes");
+    }
 
     /**********************************************************************//**
      * \brief Compute Von Mises stress field and copy data into output data map

@@ -63,13 +63,13 @@ public:
                 tLocalNodeOrds(tNodeOrd) = aLocalNodeOrds(iCellOrdinal*ElementType::mNumNodesPerFace+tNodeOrd);
             }
 
-            Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tWeightedNormalVec;
+            Plato::Array<ElementType::mNumSpatialDims, ConfigType> tWeightedNormalVec;
             weightedNormalVector(tGlobalCellOrdinal, tLocalNodeOrds, tBasisGrads, aConfig, tWeightedNormalVec);
 
-            Plato::Scalar tSurfaceArea(0.0);
+            ResultType tSurfaceArea(0.0);
             surfaceArea(tGlobalCellOrdinal, tLocalNodeOrds, tBasisGrads, aConfig, tSurfaceArea);
 
-            Plato::Scalar tProduct(0.0);
+            ResultType tProduct(0.0);
             for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
                 tProduct += aState(iCellOrdinal, iGPOrdinal, iDim) * tWeightedNormalVec(iDim) / tSurfaceArea;
 

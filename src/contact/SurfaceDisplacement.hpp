@@ -19,7 +19,7 @@ class SurfaceDisplacement :
 private: 
     using ElementType = typename EvaluationType::ElementType;
     using InStateT    = typename EvaluationType::StateScalarType;  
-    using OutStateT   = typename EvaluationType::ResultScalarType; 
+    using OutStateT   = typename EvaluationType::StateScalarType; 
 
 public:
     SurfaceDisplacement

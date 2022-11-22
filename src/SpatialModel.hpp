@@ -365,7 +365,10 @@ public:
      Plato::OrdinalVector & aNodeOrds) const;
 
     std::vector<Plato::Contact::ContactPair>
-    contactPairs() { return mContactPairs; }
+    contactPairs() const { return mContactPairs; }
+
+    bool
+    hasContact() const { return mHasContact; }
 };
 // class SpatialModel
 

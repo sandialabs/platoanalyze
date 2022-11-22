@@ -4,6 +4,8 @@
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoMathTypes.hpp"
 #include "PlatoMesh.hpp"
+#include "InterpolateFromNodal.hpp"
+#include "Plato_MeshMapUtils.hpp"
 
 namespace Plato
 {
@@ -19,7 +21,7 @@ class ProjectedSurfaceDisplacement :
 private: 
     using ElementType = typename EvaluationType::ElementType;
     using InStateT    = typename EvaluationType::StateScalarType;  
-    using OutStateT   = typename EvaluationType::ResultScalarType; 
+    using OutStateT   = typename EvaluationType::StateScalarType; 
 
 public:
     ProjectedSurfaceDisplacement

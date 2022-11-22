@@ -13,7 +13,7 @@ class AbstractSurfaceDisplacement : public EvaluationType::ElementType
 {
 protected:
     using InStateT  = typename EvaluationType::StateScalarType;  
-    using OutStateT = typename EvaluationType::ResultScalarType; 
+    using OutStateT   = typename EvaluationType::StateScalarType; 
 
 public:
     AbstractSurfaceDisplacement(Plato::Scalar aScale = 1.0) : mScale(aScale) 
