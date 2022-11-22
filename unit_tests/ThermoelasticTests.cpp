@@ -786,24 +786,22 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness
 
     Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    for(int i=0; i<4; ++i)
-    {
-      tControl(0, i) = 1.0;
-    }
+    Kokkos::deep_copy(tControl, 1.0);
     Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
-
-    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 4.166666666e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 4.166666666e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 4.166666666e9) < 1e2);
+    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
+    Kokkos::deep_copy(tStiffness_host, tStiffness);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,3,3) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,4,4) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,5,5) - 4.166666666e9) < 1e2);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness_density_1_0)
@@ -832,24 +830,22 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness
 
     Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    for(int i=0; i<4; ++i)
-    {
-      tControl(0, i) = 1.0;
-    }
+    Kokkos::deep_copy(tControl, 1.0);
     Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
-
-    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 4.166666666e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 4.166666666e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 4.166666666e9) < 1e2);
+    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
+    Kokkos::deep_copy(tStiffness_host, tStiffness);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,3,3) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,4,4) - 4.166666666e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,5,5) - 4.166666666e9) < 1e2);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness_density_0_5)
@@ -878,11 +874,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness
 
     Plato::IsotropicRank4VoigtField<EvalType> tIsoField = Plato::IsotropicRank4VoigtField<EvalType>(*tParamList);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    for(int i=0; i<4; ++i)
-    {
-      tControl(0, i) = 0.5;
-    }
+    Kokkos::deep_copy(tControl, 0.5);
     Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
+    Kokkos::deep_copy(tStiffness_host, tStiffness);
     /*
     using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
     auto tCubPoints = ElementType::getCubPoints();
@@ -904,18 +899,18 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_isotropic_stiffness
     }
     */
 
-    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 5.1136363636363636363e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 5.1136363636363636363e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 5.1136363636363636363e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 2.2727272727272e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 2.2727272727272e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 2.2727272727272e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,0) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,1) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,2) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,3,3) - 2.2727272727272e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,4,4) - 2.2727272727272e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,5,5) - 2.2727272727272e9) < 1e2);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_no_density_dependence)
@@ -950,11 +945,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_no_
 
     Plato::CubicRank4VoigtField<EvalType> tIsoField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    for(int i=0; i<4; ++i)
-    {
-      tControl(0, i) = 1.0;
-    }
+    Kokkos::deep_copy(tControl, 1.0);
     Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
+    Kokkos::deep_copy(tStiffness_host, tStiffness);
     /*
     using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
     auto tCubPoints = ElementType::getCubPoints();
@@ -975,18 +969,18 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_no_
       }
     }
     */
-    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 1e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 1e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,3,3) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,4,4) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,5,5) - 1e8) < 1e2);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_density_1_0)
@@ -1021,11 +1015,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_den
 
     Plato::CubicRank4VoigtField<EvalType> tIsoField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    for(int i=0; i<4; ++i)
-    {
-      tControl(0, i) = 1.0;
-    }
+    Kokkos::deep_copy(tControl, 1.0);
     Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
+    Kokkos::deep_copy(tStiffness_host, tStiffness);
     /*
     using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
     auto tCubPoints = ElementType::getCubPoints();
@@ -1046,18 +1039,18 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_den
       }
     }
     */
-    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 1.111111111e10) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 2.77777777e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 1e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 1e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,0) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,1) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,2) - 1.111111111e10) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,2) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,0) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,1) - 2.77777777e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,3,3) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,4,4) - 1e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,5,5) - 1e8) < 1e2);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_density_0_5)
@@ -1092,11 +1085,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_den
 
     Plato::CubicRank4VoigtField<EvalType> tIsoField = Plato::CubicRank4VoigtField<EvalType>(*tParamList);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    for(int i=0; i<4; ++i)
-    {
-      tControl(0, i) = 0.5;
-    }
+    Kokkos::deep_copy(tControl, 0.5);
     Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tIsoField(tControl);
+    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
+    Kokkos::deep_copy(tStiffness_host, tStiffness);
     /*
     using ElementType = typename EvalType::ElementType;  // ElementType::mNumVoigtTerms
     auto tCubPoints = ElementType::getCubPoints();
@@ -1117,17 +1109,17 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionStiffness_cubic_stiffness_den
       }
     }
     */
-    TEST_ASSERT(fabs(tStiffness(0,0,0,0) - 5.1136363636363636363e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,1) - 5.1136363636363636363e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,2) - 5.1136363636363636363e9) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,1) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,0,2) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,0) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,1,2) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,0) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,2,1) - 5.6818181818181e8) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,3,3) - 5e7) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,4,4) - 5e7) < 1e2);
-    TEST_ASSERT(fabs(tStiffness(0,0,5,5) - 5e7) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,0) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,1) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,2) - 5.1136363636363636363e9) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,0,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,1,2) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,0) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,2,1) - 5.6818181818181e8) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,3,3) - 5e7) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,4,4) - 5e7) < 1e2);
+    TEST_ASSERT(fabs(tStiffness_host(0,0,5,5) - 5e7) < 1e2);
 }
 
