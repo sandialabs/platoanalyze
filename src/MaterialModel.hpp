@@ -518,7 +518,7 @@ namespace Plato {
       { 
         mParams = aParams;
       }
-      Rank4VoigtFieldFactory() { std::cout << "Unexpected call of Rank4VoigtFieldFactory default constructor" << std::endl; }
+      Rank4VoigtFieldFactory() {} 
 
       template<typename EvaluationType>
       std::shared_ptr<Rank4VoigtField<EvaluationType>>
