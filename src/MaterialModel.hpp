@@ -3,6 +3,9 @@
 #include <Teuchos_ParameterList.hpp>
 #include "PlatoStaticsTypes.hpp"
 #include "ParseTools.hpp"
+#include "InterpolateFromNodal.hpp"
+#include "ExpressionEvaluator.hpp"
+#include "FadTypes.hpp"
 
 namespace Plato {
 
@@ -244,6 +247,302 @@ namespace Plato {
           return tRetVal;
       }
   };
+
+  /******************************************************************************/
+  template<typename EvaluationType>
+  class ScalarExpression
+  /******************************************************************************/
+  {
+    private:
+      using StateT  = typename EvaluationType::StateScalarType;
+      using ConfigT = typename EvaluationType::ConfigScalarType;
+      using KineticsScalarType = typename EvaluationType::ResultScalarType;
+      using ElementType = typename EvaluationType::ElementType;
+      using KinematicsScalarType = typename Plato::fad_type_t<ElementType, StateT, ConfigT>;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+
+      std::string mExpression;
+      std::string mIndependentVariableName;
+      std::map<std::string, Plato::Scalar> mConstantsMap;
+      ExpressionEvaluator<Plato::ScalarMultiVectorT<KineticsScalarType>,
+                          Plato::ScalarMultiVectorT<KinematicsScalarType>,
+                          Plato::ScalarVectorT<ControlScalarType>,
+                          Plato::Scalar > mExpEval;
+    public:
+      ScalarExpression() {}
+      ScalarExpression(const std::string &aName, const Teuchos::ParameterList& aParams)
+      {
+          if (aParams.isSublist(aName)) 
+          {
+                auto tSubList = aParams.sublist(aName);
+                std::vector<std::string> tConstantNames = Plato::ParseTools::getParam<Teuchos::Array<std::string>>(tSubList, "Constant Names").toVector();
+                std::vector<Plato::Scalar> tConstantValues = Plato::ParseTools::getParam<Teuchos::Array<Plato::Scalar>>(tSubList, "Constant Values").toVector();
+                if(tConstantNames.size() != tConstantValues.size())
+                {
+                  std::stringstream err;
+                  err << "'Constant Names' and 'Constant Values' arrays must have the same number of entries." << std::endl;
+                  ANALYZE_THROWERR(err.str());
+                }
+                for(size_t j=0; j<tConstantNames.size(); ++j)
+                {
+                  mConstantsMap[tConstantNames[j]] = tConstantValues[j];
+                }
+                mIndependentVariableName = Plato::ParseTools::getParam<std::string>(tSubList, "Independent Variable Name", "");
+                mExpression = Plato::ParseTools::getParam<std::string>(tSubList, "Expression", "");
+          }
+      }  
+      
+      const std::string& getExpression() const { return mExpression; }
+      const std::map<std::string, Plato::Scalar>& getConstantsMap() const { return mConstantsMap; }
+      const std::string& getIndependentVariableName() const { return mIndependentVariableName; }
+
+      Plato::ScalarMultiVectorT<KineticsScalarType>
+      operator()(Plato::ScalarVectorT<ControlScalarType> aIndependentVariable)  
+      {
+        // aIndependentVariable is of dimension (numCells*numCubaturePointsPerCell, 1)
+        auto tCubPoints = ElementType::getCubPoints();
+        auto tCubWeights = ElementType::getCubWeights();
+        Plato::OrdinalType tNumPoints = tCubWeights.size();
+        Plato::OrdinalType tNumCells = aIndependentVariable.size()/tNumPoints;
+
+        mExpEval.parse_expression(mExpression.c_str());
+        mExpEval.setup_storage(tNumCells*tNumPoints, 1);
+        std::map<std::string, Plato::Scalar>::iterator tIter = mConstantsMap.begin();
+        while(tIter != mConstantsMap.end())
+        {
+          mExpEval.set_variable(tIter->first.c_str(), tIter->second);
+          tIter++;
+        }
+        mExpEval.set_variable(mIndependentVariableName.c_str(), aIndependentVariable);
+        auto &tExpEval = mExpEval;
+        Plato::ScalarMultiVectorT<KineticsScalarType> tResults("Expression Results", tNumCells*tNumPoints, 1);
+        Kokkos::parallel_for("compute element values", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            tExpEval.evaluate_expression( tEntryOrdinal, tResults );
+        });
+        return tResults;
+      }
+
+  };
+
+  /******************************************************************************/
+  template<typename EvaluationType>
+  class Rank4VoigtField
+  /******************************************************************************/
+  {
+    protected:
+      using ElementType = typename EvaluationType::ElementType;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+      using KineticsScalarType = typename EvaluationType::ResultScalarType;
+      std::map<std::string, Plato::ScalarExpression<EvaluationType>> mStiffnessTensorProperties;
+
+    public:
+      const Plato::ScalarExpression<EvaluationType>& getTensorProperty(const std::string &aName) const 
+                            { return mStiffnessTensorProperties.at(aName); }
+
+      Rank4VoigtField(const Teuchos::ParameterList& aParams){}
+
+      virtual Plato::ScalarArray4DT<KineticsScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl)  
+      { 
+        Plato::ScalarArray4DT<KineticsScalarType> tStiffness("stiffness", 0,0,0,0);   
+        return tStiffness;
+      }
+
+      void calculateIndependentVariable(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl,
+                                     Plato::ScalarVectorT<ControlScalarType> &aIndependentVariable)
+      {
+        auto tCubPoints = ElementType::getCubPoints();
+        auto tCubWeights = ElementType::getCubWeights();
+        Plato::OrdinalType tNumPoints = tCubWeights.size();
+        Plato::OrdinalType tNumCells = aLocalControl.extent(0);
+        Plato::InterpolateFromNodal<ElementType, 1, 0> tInterpolateFromNodal;
+
+        Kokkos::parallel_for("compute independent variable", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tCubPoint = tCubPoints(iGpOrdinal);
+            auto tBasisValues = ElementType::basisValues(tCubPoint);
+
+            // Calculate the node-averaged independent variable for the element/cell
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            aIndependentVariable(tEntryOrdinal) = tInterpolateFromNodal(iCellOrdinal, tBasisValues, aLocalControl);
+        });
+      }
+  };
+
+  /******************************************************************************/
+  template<typename EvaluationType>
+  class IsotropicRank4VoigtField : public Rank4VoigtField<EvaluationType>
+  /******************************************************************************/
+  {
+    protected:
+      using ElementType = typename EvaluationType::ElementType;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+      using ConfigT = typename EvaluationType::ConfigScalarType;
+      using KineticsScalarType = typename EvaluationType::ResultScalarType;
+    public:
+      IsotropicRank4VoigtField(const Teuchos::ParameterList& aParams) : Rank4VoigtField<EvaluationType>(aParams) 
+      {
+        this->mStiffnessTensorProperties.clear();
+        this->mStiffnessTensorProperties["Youngs Modulus"] = Plato::ScalarExpression<EvaluationType>("Youngs Modulus", aParams);
+        this->mStiffnessTensorProperties["Poissons Ratio"] = Plato::ScalarExpression<EvaluationType>("Poissons Ratio", aParams);
+      }
+
+      Plato::ScalarArray4DT<KineticsScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) override
+      {
+        Plato::OrdinalType tNumCells = aLocalControl.extent(0);
+        Plato::OrdinalType tNumPoints = ElementType::getCubWeights().size();
+
+        Plato::ScalarVectorT<ControlScalarType> tIndependentVariable("density", tNumCells*tNumPoints);
+        this->calculateIndependentVariable(aLocalControl, tIndependentVariable);
+        Plato::ScalarMultiVectorT<KineticsScalarType> tElementYoungsModulus = this->mStiffnessTensorProperties["Youngs Modulus"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<KineticsScalarType> tElementPoissonsRatio = this->mStiffnessTensorProperties["Poissons Ratio"](tIndependentVariable);
+        
+        Plato::ScalarArray4DT<KineticsScalarType> tStiffness("stiffness", tNumCells, tNumPoints, ElementType::mNumVoigtTerms, ElementType::mNumVoigtTerms);   
+        Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal, 0);
+            auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal, 0);
+            auto tCoeff = tCurYoungsModulus / ((1.0 + tCurPoissonsRatio) * (1.0 - 2.0 * tCurPoissonsRatio));
+            for(int k=0; k<ElementType::mNumSpatialDims; ++k)
+            {
+              for(int m=0; m<ElementType::mNumSpatialDims; ++m)
+              {
+                if(k==m)
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * (1.0 - tCurPoissonsRatio);
+                }
+                else
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * tCurPoissonsRatio;
+                }
+              }
+            }
+            int tNumShearTerms = ElementType::mNumSpatialDims*(ElementType::mNumSpatialDims-1)/2;
+            for(int m=0; m<tNumShearTerms; ++m)
+            {
+              tStiffness(iCellOrdinal, iGpOrdinal, ElementType::mNumSpatialDims+m, ElementType::mNumSpatialDims+m) = 
+                                 1.0 / 2.0 * tCoeff * (1.0 - 2.0 * tCurPoissonsRatio);
+            }
+        });
+        return tStiffness;
+      }
+  };
+
+  /******************************************************************************/
+  /*!
+    \brief class for cubic 4th rank voigt tensor field
+  */
+  template<typename EvaluationType>
+  class CubicRank4VoigtField : public Rank4VoigtField<EvaluationType>
+  /******************************************************************************/
+  {
+    protected:
+      using ElementType = typename EvaluationType::ElementType;
+      using ControlScalarType = typename EvaluationType::ControlScalarType;
+      using KineticsScalarType = typename EvaluationType::ResultScalarType;
+    public:
+
+      /******************************************************************************//**
+      **********************************************************************************/
+      CubicRank4VoigtField(const Teuchos::ParameterList& aParams) : Rank4VoigtField<EvaluationType>(aParams) 
+      {
+        this->mStiffnessTensorProperties.clear();
+        this->mStiffnessTensorProperties["Youngs Modulus"] = Plato::ScalarExpression<EvaluationType>("Youngs Modulus", aParams);
+        this->mStiffnessTensorProperties["Poissons Ratio"] = Plato::ScalarExpression<EvaluationType>("Poissons Ratio", aParams);
+        this->mStiffnessTensorProperties["Shear Modulus"] = Plato::ScalarExpression<EvaluationType>("Shear Modulus", aParams);
+      }
+
+      /******************************************************************************//**
+      **********************************************************************************/
+      Plato::ScalarArray4DT<KineticsScalarType>
+      operator()(Plato::ScalarMultiVectorT<ControlScalarType> aLocalControl) override
+      {
+        Plato::OrdinalType tNumCells = aLocalControl.extent(0);
+        Plato::OrdinalType tNumPoints = ElementType::getCubWeights().size();
+
+        Plato::ScalarVectorT<ControlScalarType> tIndependentVariable("density", tNumCells*tNumPoints);
+        this->calculateIndependentVariable(aLocalControl, tIndependentVariable);
+        Plato::ScalarMultiVectorT<KineticsScalarType> tElementYoungsModulus = this->mStiffnessTensorProperties["Youngs Modulus"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<KineticsScalarType> tElementPoissonsRatio = this->mStiffnessTensorProperties["Poissons Ratio"](tIndependentVariable);
+        Plato::ScalarMultiVectorT<KineticsScalarType> tElementShearModulus = this->mStiffnessTensorProperties["Shear Modulus"](tIndependentVariable);
+        
+        Plato::ScalarArray4DT<KineticsScalarType> tStiffness("stiffness", tNumCells, tNumPoints, ElementType::mNumVoigtTerms, ElementType::mNumVoigtTerms);   
+        Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        {
+            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
+            auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal, 0);
+            auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal, 0);
+            auto tCurShearModulus = tElementShearModulus(tEntryOrdinal, 0);
+            auto tCoeff = tCurYoungsModulus / ((1.0 + tCurPoissonsRatio) * (1.0 - 2.0 * tCurPoissonsRatio));
+            for(int k=0; k<ElementType::mNumSpatialDims; ++k)
+            {
+              for(int m=0; m<ElementType::mNumSpatialDims; ++m)
+              {
+                if(k==m)
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * (1.0 - tCurPoissonsRatio);
+                }
+                else
+                {
+                  tStiffness(iCellOrdinal, iGpOrdinal, k, m) = tCoeff * tCurPoissonsRatio;
+                }
+              }
+            }
+            int tNumShearTerms = ElementType::mNumSpatialDims*(ElementType::mNumSpatialDims-1)/2;
+            for(int m=0; m<tNumShearTerms; ++m)
+            {
+              tStiffness(iCellOrdinal, iGpOrdinal, ElementType::mNumSpatialDims+m, ElementType::mNumSpatialDims+m) = 
+                                 tCurShearModulus;
+            }
+        });
+        return tStiffness;
+      }
+  };
+
+  /******************************************************************************/
+  template<int SpaceDim>
+  class Rank4VoigtFieldFactory
+  /******************************************************************************/
+  {
+      Teuchos::ParameterList mParams;
+    public:
+      Rank4VoigtFieldFactory(const Teuchos::ParameterList& aParams) 
+      { 
+        mParams = aParams;
+      }
+      Rank4VoigtFieldFactory() {} 
+
+      template<typename EvaluationType>
+      std::shared_ptr<Rank4VoigtField<EvaluationType>>
+      create() const 
+      {
+        std::string tSymmetry = Plato::ParseTools::getParam<std::string>(mParams, "symmetry");
+        if(tSymmetry != "isotropic" && tSymmetry != "cubic")
+        {
+          std::stringstream err;
+          err << "Attempted to create material with non-supported symmetry." << std::endl;
+          ANALYZE_THROWERR(err.str());
+        }
+        if(tSymmetry == "isotropic")
+        {
+          return std::make_shared<IsotropicRank4VoigtField<EvaluationType>>(mParams);
+        }
+        else 
+        {
+          return std::make_shared<CubicRank4VoigtField<EvaluationType>>(mParams);
+        }
+      }
+  };
+
+
 
   /******************************************************************************/
   /*!
@@ -545,6 +844,8 @@ namespace Plato {
       std::map<std::string, Plato::TensorFunctor<SpatialDim>>     mTensorFunctorsMap;
       std::map<std::string, Plato::Rank4VoigtFunctor<SpatialDim>> mRank4VoigtFunctorsMap;
 
+      std::map<std::string, Plato::Rank4VoigtFieldFactory<SpatialDim>> mRank4VoigtFieldFactoryMap;
+
       Plato::MaterialModelType mType;
       std::string mExpression;
 
@@ -649,6 +950,19 @@ namespace Plato {
       Plato::Rank4VoigtFunctor<SpatialDim> getRank4VoigtFunctor(std::string aFunctorName)
       { return mRank4VoigtFunctorsMap[aFunctorName]; }
 
+      // Rank4Voigt field
+      template<typename EvaluationType>
+      std::shared_ptr<Plato::Rank4VoigtField<EvaluationType>> getRank4VoigtField(std::string aFieldName)
+      {
+          if(mRank4VoigtFieldFactoryMap.count(aFieldName) == 0)
+          {
+              std::stringstream err;
+              err << "Attempted to retrieve non-extistant Rank4VoigtFieldFactory with name " << aFieldName;
+              ANALYZE_THROWERR(err.str());
+          }
+          auto tFactory = mRank4VoigtFieldFactoryMap.at(aFieldName);
+          return tFactory.template create<EvaluationType>();
+      }
 
 
       // setters
@@ -677,6 +991,10 @@ namespace Plato {
       // Rank4Voigt functor
       void setRank4VoigtFunctor(std::string aFunctorName, Plato::Rank4VoigtFunctor<SpatialDim> aFunctorValue)
       { mRank4VoigtFunctorsMap[aFunctorName] = aFunctorValue; }
+
+      // Rank4Voigt field
+      void setRank4VoigtField(std::string aFieldName, Plato::Rank4VoigtFieldFactory<SpatialDim> aFieldValue)
+      { mRank4VoigtFieldFactoryMap[aFieldName] = aFieldValue; }
 
 
       /******************************************************************************/
@@ -823,6 +1141,28 @@ namespace Plato {
               {
                   this->setRank4VoigtFunctor(aName, Plato::Rank4VoigtFunctor<SpatialDim>(tList));
               }
+          }
+          else
+          {
+              std::stringstream err;
+              err << "Required input missing. '" << aName
+                  << "' must be provided as a ParameterList";
+              ANALYZE_THROWERR(err.str());
+          }
+      }
+
+      /******************************************************************************/
+      /*!
+        \brief create either Rank4Voigt constant or Rank4Voigt functor from input
+        unit test: PlatoMaterialModel_MaterialModel
+      */
+      /******************************************************************************/
+      void parseRank4VoigtField(std::string aName, const Teuchos::ParameterList& aParamList)
+      {
+          if( aParamList.isSublist(aName) )
+          {
+              auto tList = aParamList.sublist(aName);
+              this->setRank4VoigtField(aName, Plato::Rank4VoigtFieldFactory<SpatialDim>(tList));
           }
           else
           {
