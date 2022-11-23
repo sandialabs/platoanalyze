@@ -203,6 +203,11 @@ namespace Elliptic
             mResidual = mPDE->value(tStatesSubView, aControl);
             Plato::blas1::scale(-1.0, mResidual);
 
+            mJacobian = mPDE->gradient_u(tStatesSubView, aControl);
+
+            Plato::Scalar tScale = (tNewtonIndex == 0) ? 1.0 : 0.0;
+            this->applyStateConstraints(mJacobian, mResidual, tScale);
+
             if (mNumNewtonSteps > 1) {
                 auto tResidualNorm = Plato::blas1::norm(mResidual);
                 std::cout << " Residual norm: " << tResidualNorm << std::endl;
@@ -211,11 +216,6 @@ namespace Elliptic
                     break;
                 }
             }
-
-            mJacobian = mPDE->gradient_u(tStatesSubView, aControl);
-
-            Plato::Scalar tScale = (tNewtonIndex == 0) ? 1.0 : 0.0;
-            this->applyStateConstraints(mJacobian, mResidual, tScale);
 
             Plato::ScalarVector tDeltaD("increment", tStatesSubView.extent(0));
             Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tDeltaD);
