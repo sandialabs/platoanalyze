@@ -234,8 +234,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "  <ParameterList  name='Natural Boundary Conditions'>\n"
             "    <ParameterList  name='Pressure Boundary Condition'>\n"
             "      <Parameter name='Type' type='string' value='Uniform'/>\n"
-            "      <Parameter name='Variable' type='int' value='1'/>\n"
-            "      <Parameter name='Value' type='int' value='1'/>\n"
+            "      <Parameter name='Variable' type='string' value='burrito'/>\n"
+            "      <Parameter name='Value' type='double' value='1'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
         TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
@@ -286,8 +286,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
         auto tInputParams = pressureBCParameters(
             "  <ParameterList  name='Natural Boundary Conditions'>\n"
             "    <ParameterList  name='Pressure Boundary Condition'>\n"
-            "      <Parameter name='Type' type='double' value='3.14159'/>\n"
-            "      <Parameter name='Variable' type='int' value='1'/>\n"
+            "      <Parameter name='Type' type='string' value='Uniform pressure'/>\n"
+            "      <Parameter name='Value' type='double' value='1'/>\n"
             "      <Parameter name='Side' type='string' value='x'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
@@ -298,12 +298,37 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
         auto tInputParams = pressureBCParameters(
             "  <ParameterList  name='Natural Boundary Conditions'>\n"
             "    <ParameterList  name='Pressure Boundary Condition'>\n"
-            "      <Parameter name='Type' type='double' value='3.14159'/>\n"
-            "      <Parameter name='Variable' type='int' value='1'/>\n"
+            "      <Parameter name='Type' type='string' value='Uniform pressure'/>\n"
+            "      <Parameter name='Value' type='double' value='1'/>\n"
             "      <Parameter name='Sides' type='double' value='42.0'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
         TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+    }
+    // Bad number of components
+    {
+        auto tInputParams = pressureBCParameters(
+            "  <ParameterList  name='Natural Boundary Conditions'>\n"
+            "    <ParameterList  name='Load Boundary Condition'>\n"
+            "      <Parameter name='Type' type='string' value='Uniform'/>\n"
+            "      <Parameter name='Values' type='Array(double)' value='{1.0, 0.0}'/>\n"
+            "      <Parameter name='Sides' type='string' value='x+'/>\n"
+            "    </ParameterList>\n"
+            "  </ParameterList>\n");
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+    }
+    // Bad nodal variable name
+    {
+        auto tInputParams = pressureBCParameters(
+            "<ParameterList  name='Natural Boundary Conditions'>\n"
+            "  <ParameterList  name='Load Boundary Condition'>\n"
+            "    <Parameter name='Type' type='string' value='Variable pressure'/>\n"
+            "    <Parameter name='Variable' type='string' value='surface_pressure_nope'/>\n"
+            "    <Parameter name='Sides' type='string' value='pressure_sideset'/>\n"
+            "  </ParameterList>\n"
+            "</ParameterList>\n");
+
+        TEST_THROW(surfaceIntegralSum(*tInputParams), std::runtime_error);
     }
 }
 
@@ -348,8 +373,28 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, SurfaceIntegralSpatiallyVaryingLoad)
     // \[ \int_{-5}^5 \int_{-5}^5 10 + y + z \,dy \,dz \]
     // gives the answer of 1000
     // For a load, this is done 3 times, so results is 3000
-    std::cout << "tSumResult = " << tSumResult << std::endl;
     TEST_FLOATING_EQUALITY(tSumResult, 3000, 1e-15);
+}
+
+TEUCHOS_UNIT_TEST(NaturalBCDataTests, SurfaceIntegralSpatiallyVaryingLoadWithZero)
+{
+    auto tInputParams = pressureBCParameters(
+        "<ParameterList  name='Natural Boundary Conditions'>\n"
+        "  <ParameterList  name='Load Boundary Condition'>\n"
+        "    <Parameter name='Type' type='string' value='Variable load'/>\n"
+        "    <Parameter name='Variables' type='Array(string)' value='{0, surface_pressure, 0}'/>\n"
+        "    <Parameter name='Sides' type='string' value='pressure_sideset'/>\n"
+        "  </ParameterList>\n"
+        "</ParameterList>\n");
+
+    const Plato::Scalar tSumResult = surfaceIntegralSum(*tInputParams);
+
+    // The boundary condition on the mesh is 10 + y + z, 
+    // integrating this analytically over the face:
+    // \[ \int_{-5}^5 \int_{-5}^5 10 + y + z \,dy \,dz \]
+    // gives the answer of 1000
+    // In this case, only 1 component is set so answer is still 1000
+    TEST_FLOATING_EQUALITY(tSumResult, 1000, 1e-15);
 }
 
 TEUCHOS_UNIT_TEST(NaturalBCDataTests, SurfaceIntegralUniform)

@@ -23,6 +23,7 @@ set(ANALYZE_SOURCES
     NaturalBC.cpp
     NaturalBCs.cpp
     NaturalBCTypes.cpp
+    NaturalBCData.cpp
 )
 
 if(EXPRESSION)

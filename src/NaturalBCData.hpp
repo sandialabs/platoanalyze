@@ -41,6 +41,9 @@ void affirmParameterSize(
     const Teuchos::ParameterList& aSublist, 
     const std::string& aParameterSingular, 
     const std::string& aParameterPlural);
+
+/// @throw std::runtime_error if @a aVariableName cannot be found in the mesh.
+ScalarVector getNodalData(const Plato::MeshIO& aMeshIO, const std::string& aVariableName);
 }
 
 /// Interface for data associated with a natural boundary condition.
@@ -104,7 +107,7 @@ public:
     {
         assert(aSublist.isType<Scalar>(kValueParameterName)
             || aSublist.isType<Teuchos::Array<Scalar>>(kValuesParameterName));
-        detail::affirmParameterSize<kNumComponents, Scalar>(aSublist, kVariableParameterName, kVariablesParameterName);
+        detail::affirmParameterSize<kNumComponents, Scalar>(aSublist, kValueParameterName, kValuesParameterName);
         if(aSublist.isType<Scalar>(kValueParameterName))
         {
             mValues[0] = aSublist.get<Scalar>(kValueParameterName);
@@ -173,7 +176,7 @@ public:
     {
         assert(aSublist.isType<std::string>(kValueParameterName) 
             || aSublist.isType<Teuchos::Array<std::string>>(kValuesParameterName));
-        detail::affirmParameterSize<kNumComponents, std::string>(aSublist, kVariableParameterName, kVariablesParameterName);
+        detail::affirmParameterSize<kNumComponents, std::string>(aSublist, kValueParameterName, kValuesParameterName);
         if(aSublist.isType<std::string>(kValueParameterName))
         {
             const auto& tExpr = aSublist.get<std::string>(kValueParameterName);
@@ -259,8 +262,7 @@ public:
     NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO, Scalar /*aCurrentTime*/) const override
     {
         assert(aMeshIO->NumTimeSteps() > 0);
-        constexpr int kStepIndex = 0;
-        return NaturalBCScalarData{aMeshIO->ReadNodeData(mVariableNames[0], kStepIndex)};
+        return NaturalBCScalarData{detail::getNodalData(aMeshIO, mVariableNames[0])};
     }
 
     NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO, Scalar /*aCurrentTime*/) const override
@@ -273,7 +275,7 @@ public:
         constexpr int kStepIndex = 0;
         for(OrdinalType i = 0; i < kNumComponents; ++i)
         {
-            Kokkos::deep_copy(Kokkos::subview(tOutData, Kokkos::ALL(), i), aMeshIO->ReadNodeData(mVariableNames[i], kStepIndex));
+            Kokkos::deep_copy(Kokkos::subview(tOutData, Kokkos::ALL(), i), detail::getNodalData(aMeshIO, mVariableNames[i]));
         }
         return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
     }
