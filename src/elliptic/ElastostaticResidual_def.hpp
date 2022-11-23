@@ -11,6 +11,8 @@
 #include "VonMisesYieldFunction.hpp"
 #include "GeneralStressDivergence.hpp"
 
+#include "SurfaceArea.hpp"
+
 namespace Plato
 {
 
@@ -258,6 +260,8 @@ namespace Elliptic
         auto tCubatureWeights = ElementType::Face::getCubWeights();
         auto tNumPoints = tCubatureWeights.size();
 
+        Plato::SurfaceArea<ElementType> surfaceArea;
+
         Plato::ScalarArray3DT<StateScalarType> tSurfaceDisplacement("displacement on contact surface", tNumFaces, tNumPoints, mNumSpatialDims);
         (*aComputeSurfaceDisp)(tElementOrds, aState, tSurfaceDisplacement);
 
@@ -270,15 +274,24 @@ namespace Elliptic
             auto tCellOrdinal = tElementOrds(iCellOrdinal);
             auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
             auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
+            auto tBasisGrads = ElementType::Face::basisGrads(tCubaturePoint);
+
+            Plato::Array<ElementType::mNumNodesPerFace, Plato::OrdinalType> tLocalNodes;
+            for( Plato::OrdinalType tNodeOrd=0; tNodeOrd<ElementType::mNumNodesPerFace; tNodeOrd++)
+            {
+                tLocalNodes(tNodeOrd) = tLocalNodeOrds(iCellOrdinal*ElementType::mNumNodesPerFace+tNodeOrd);
+            }
+
+            ResultScalarType tSurfaceArea(0.0);
+            surfaceArea(tCellOrdinal, tLocalNodes, tBasisGrads, aConfig, tSurfaceArea);
+            tSurfaceArea *= tCubatureWeights(iGPOrdinal);
 
             for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
             {
-                auto tLocalNodeOrd = tLocalNodeOrds(iCellOrdinal*ElementType::mNumNodesPerFace+tNode);
-
                 for( Plato::OrdinalType tDof=0; tDof<ElementType::mNumSpatialDims; tDof++)
                 {
-                    auto tElementDofOrdinal = tLocalNodeOrd * ElementType::mNumSpatialDims + tDof;
-                    ResultScalarType tResult = tBasisValues(tNode)*tContactForce(iCellOrdinal, iGPOrdinal, tDof);
+                    auto tElementDofOrdinal = tLocalNodes(tNode) * ElementType::mNumSpatialDims + tDof;
+                    ResultScalarType tResult = tSurfaceArea*tBasisValues(tNode)*tContactForce(iCellOrdinal, iGPOrdinal, tDof);
                     Kokkos::atomic_add(&aResult(tCellOrdinal, tElementDofOrdinal), tResult);
                 }
             }
