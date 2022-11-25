@@ -5,7 +5,7 @@
 #include "PlatoMathTypes.hpp"
 #include "PlatoMesh.hpp"
 #include "PlatoStaticsTypes.hpp"
-#include "AbstractPlatoMeshIO.hpp"
+#include "AbstractPlatoMesh.hpp"
 #include "Plato_Utils.hpp"
 
 #include <Teuchos_ParameterList.hpp>
@@ -60,32 +60,32 @@ public:
 
     /// @return Boundary data at time @a aCurrentTime. The array size is given by the member type `kNumComponents`
     /// @pre getDataType must return `BCDataType::kVector`
-    virtual NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO, Scalar aCurrentTime) const = 0;
+    virtual NaturalBCVectorData<NumDofs> getVectorData(const Plato::Mesh& aMesh, Scalar aCurrentTime) const = 0;
 
     NaturalBCVectorData<NumDofs> getVectorData(const Scalar aCurrentTime = 0.0) const 
     {
         return getVectorData(nullptr, aCurrentTime);
     }
 
-    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO) const 
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::Mesh& aMesh) const 
     {
         constexpr double kDefaultTime = 0.0;
-        return getVectorData(aMeshIO, kDefaultTime);
+        return getVectorData(aMesh, kDefaultTime);
     }
 
-    /// @return Scalar boundary data on the device associated with the data stored in @a aMeshIO.
+    /// @return Scalar boundary data on the device associated with the data stored in @a aMesh.
     /// This is either uniform or spatially varying over a mesh, as given by the derived implementation.
-    virtual NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO, const Scalar aCurrentTime) const = 0;
+    virtual NaturalBCScalarData getScalarData(const Plato::Mesh& aMesh, const Scalar aCurrentTime) const = 0;
 
     NaturalBCScalarData getScalarData(const Scalar aCurrentTime = 0.0) const
     {
         return getScalarData(nullptr, aCurrentTime);
     }
 
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO) const
+    NaturalBCScalarData getScalarData(const Plato::Mesh& aMesh) const
     {
         constexpr double kDefaultTime = 0.0;
-        return getScalarData(aMeshIO, kDefaultTime);
+        return getScalarData(aMesh, kDefaultTime);
     }
 
     virtual BCDataType getDataType() const = 0;
@@ -124,7 +124,7 @@ public:
         return std::make_unique<UniformNaturalBCData<NumDofs, DataType>>(mValues);
     }
 
-    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& /*aMeshIO*/, Scalar /*aCurrentTime*/) const override
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::Mesh& /*aMesh*/, Scalar /*aCurrentTime*/) const override
     {
         assert(DataType == BCDataType::kVector);
         VectorDataView<NumDofs> tOutData("Natural BC data", 1);
@@ -137,7 +137,7 @@ public:
         return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
     }
 
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, Scalar /*aCurrentTime*/) const override
+    NaturalBCScalarData getScalarData(const Plato::Mesh& /*aMesh*/, Scalar /*aCurrentTime*/) const override
     {
         ScalarVector tOutData("Natural BC data", 1);
         auto tHostData = Kokkos::create_mirror_view(tOutData);
@@ -197,7 +197,7 @@ public:
         return std::make_unique<TimeVaryingNaturalBCData<NumDofs, DataType>>(mExprs);
     }
 
-    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& /*aMeshIO*/, Scalar aCurrentTime) const override
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::Mesh& /*aMesh*/, Scalar aCurrentTime) const override
     {
         assert(DataType == BCDataType::kVector);
         VectorDataView<NumDofs> tOutData("Natural BC data", 1);
@@ -210,7 +210,7 @@ public:
         return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
     }
 
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& /*aMeshIO*/, Scalar aCurrentTime) const override
+    NaturalBCScalarData getScalarData(const Plato::Mesh& /*aMesh*/, Scalar aCurrentTime) const override
     {
         ScalarVector tOutData("Natural BC data", 1);
         auto tHostData = Kokkos::create_mirror_view(tOutData);
@@ -259,23 +259,24 @@ public:
         return std::make_unique<SpatiallyVaryingNaturalBCData<NumDofs, DataType>>(mVariableNames);
     }
 
-    NaturalBCScalarData getScalarData(const Plato::MeshIO& aMeshIO, Scalar /*aCurrentTime*/) const override
+    NaturalBCScalarData getScalarData(const Plato::Mesh& aMesh, Scalar /*aCurrentTime*/) const override
     {
-        assert(aMeshIO->NumTimeSteps() > 0);
-        return NaturalBCScalarData{detail::getNodalData(aMeshIO, mVariableNames[0])};
+        assert(aMesh);
+
+        Plato::MeshIO tReader = Plato::MeshIOFactory::create(aMesh->FileName(), aMesh, "Read");
+        return NaturalBCScalarData{detail::getNodalData(tReader, mVariableNames[0])};
     }
 
-    NaturalBCVectorData<NumDofs> getVectorData(const Plato::MeshIO& aMeshIO, Scalar /*aCurrentTime*/) const override
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::Mesh& aMesh, Scalar /*aCurrentTime*/) const override
     {
-        assert(aMeshIO);
-        assert(aMeshIO->NumTimeSteps() > 0);
+        assert(aMesh);
         assert(DataType == BCDataType::kVector);
 
-        VectorDataView<NumDofs> tOutData("Natural BC data", aMeshIO->NumNodes());
-        constexpr int kStepIndex = 0;
+        Plato::MeshIO tReader = Plato::MeshIOFactory::create(aMesh->FileName(), aMesh, "Read");
+        VectorDataView<NumDofs> tOutData("Natural BC data", aMesh->NumNodes());
         for(OrdinalType i = 0; i < kNumComponents; ++i)
         {
-            Kokkos::deep_copy(Kokkos::subview(tOutData, Kokkos::ALL(), i), detail::getNodalData(aMeshIO, mVariableNames[i]));
+            Kokkos::deep_copy(Kokkos::subview(tOutData, Kokkos::ALL(), i), detail::getNodalData(tReader, mVariableNames[i]));
         }
         return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
     }

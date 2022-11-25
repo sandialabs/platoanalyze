@@ -114,8 +114,7 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
 
     const Plato::SurfaceArea<ElementType> surfaceArea;
 
-    Plato::MeshIO tReader = Plato::MeshIOFactory::create(aSpatialModel.Mesh->FileName(), aSpatialModel.Mesh, "Read");
-    const auto tBoundaryData = mBCData->getVectorData(tReader, mCurrentTime);
+    const auto tBoundaryData = mBCData->getVectorData(aSpatialModel.Mesh, mCurrentTime);
     const auto tCubatureWeights = ElementType::Face::getCubWeights();
     const auto tCubaturePoints  = ElementType::Face::getCubPoints();
     const auto tNumPoints = tCubatureWeights.size();

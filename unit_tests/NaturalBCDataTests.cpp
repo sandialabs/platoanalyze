@@ -169,7 +169,7 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputUniform)
 
     constexpr int kMeshWidth = 2;
     constexpr auto kMeshName = "test.exo";
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", kMeshWidth);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", kMeshWidth, kMeshName);
     // Write node data
     {
         Plato::MeshIO tWriter = Plato::MeshIOFactory::create(kMeshName, tMesh, "Write");
@@ -182,7 +182,6 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputUniform)
         tWriter->Write(kStepIndex, kTime);
     }
 
-    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
     constexpr int kNumDofs = 3;
     std::unique_ptr<Plato::NaturalBCData<kNumDofs>> tBCData = Plato::makeNaturalBCData<kNumDofs>(*tInputs);
 
@@ -191,7 +190,7 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputUniform)
     TEST_ASSERT(dynamic_cast<ExpectedType*>(tBCData.get()) != nullptr);
     TEST_ASSERT(tBCData->getDataType() == Plato::BCDataType::kScalar);
 
-    const auto tBoundaryData = tBCData->getScalarData(tReader);
+    const auto tBoundaryData = tBCData->getScalarData(tMesh);
     constexpr unsigned int kNumIndices = 3;
     Plato::ScalarVector tResult = boundaryDataAtIndices<kNumIndices>(tBoundaryData, {0, 26, 27});
     auto tHostMirror = Kokkos::create_mirror_view(tResult);
@@ -214,7 +213,6 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVarying)
     );
     constexpr auto kMeshName = "brick_with_data.exo";
     Plato::Mesh tMesh = Plato::MeshFactory::create(kMeshName);
-    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
 
     constexpr int kNumDofs = 3;
     std::unique_ptr<Plato::NaturalBCData<kNumDofs>> tBCData = Plato::makeNaturalBCData<kNumDofs>(*tInputs);
@@ -224,7 +222,7 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVarying)
     TEST_ASSERT(dynamic_cast<ExpectedType*>(tBCData.get()) != nullptr);
     TEST_ASSERT(tBCData->getDataType() == Plato::BCDataType::kScalar);
 
-    const auto tBoundaryData = tBCData->getScalarData(tReader);
+    const auto tBoundaryData = tBCData->getScalarData(tMesh);
     constexpr unsigned int kNumTestNodes = 105;
     TEST_EQUALITY(tBoundaryData.mValue.size(), kNumTestNodes);
 
@@ -250,7 +248,6 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVaryingLoad)
     );
     constexpr auto kMeshName = "brick_with_data.exo";
     Plato::Mesh tMesh = Plato::MeshFactory::create(kMeshName);
-    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
 
     constexpr int kNumDofs = 2;
     std::unique_ptr<Plato::NaturalBCData<kNumDofs>> tBCData = Plato::makeNaturalBCData<kNumDofs>(*tInputs);
@@ -260,7 +257,7 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVaryingLoad)
     TEST_ASSERT(dynamic_cast<ExpectedType*>(tBCData.get()) != nullptr);
     TEST_ASSERT(tBCData->getDataType() == Plato::BCDataType::kVector);
 
-    const auto tBoundaryData = tBCData->getVectorData(tReader);
+    const auto tBoundaryData = tBCData->getVectorData(tMesh);
     constexpr unsigned int kNumTestNodes = 105;
     TEST_EQUALITY(tBoundaryData.mValue.size(), kNumDofs * kNumTestNodes);
     TEST_EQUALITY(tBoundaryData.mValue.extent(0), kNumTestNodes);
@@ -291,7 +288,6 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVaryingElementIteration)
     );
     constexpr auto kMeshName = "nodal_surface_pressure_field.exo";
     Plato::Mesh tMesh = Plato::MeshFactory::create(kMeshName);
-    Plato::MeshIO tReader = Plato::MeshIOFactory::create(kMeshName, tMesh, "Read");
    
     constexpr int kNumDofs = 3;
     std::unique_ptr<Plato::NaturalBCData<kNumDofs>> tBCData = Plato::makeNaturalBCData<kNumDofs>(*tInputs);
@@ -301,7 +297,7 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, MeshInputVaryingElementIteration)
     TEST_ASSERT(dynamic_cast<ExpectedType*>(tBCData.get()) != nullptr);
     TEST_ASSERT(tBCData->getDataType() == Plato::BCDataType::kScalar);
 
-    const auto tBoundaryData = tBCData->getScalarData(tReader);
+    const auto tBoundaryData = tBCData->getScalarData(tMesh);
     constexpr unsigned int kNumTestNodes = 11 * 11 * 11;
     TEST_EQUALITY(tBoundaryData.mValue.size(), kNumTestNodes);
 

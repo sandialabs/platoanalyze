@@ -114,8 +114,7 @@ void SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::oper
 
     const Plato::WeightedNormalVector<ElementType> weightedNormalVector;
 
-    Plato::MeshIO tReader = Plato::MeshIOFactory::create(aSpatialModel.Mesh->FileName(), aSpatialModel.Mesh, "Read");
-    const auto tBoundaryData = mBCData->getScalarData(tReader, mCurrentTime);
+    const auto tBoundaryData = mBCData->getScalarData(aSpatialModel.Mesh, mCurrentTime);
 
     const auto tCubatureWeights = ElementType::Face::getCubWeights();
     const auto tCubaturePoints  = ElementType::Face::getCubPoints();
