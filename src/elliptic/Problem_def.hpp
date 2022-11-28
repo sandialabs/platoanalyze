@@ -199,6 +199,7 @@ namespace Elliptic
         mDataMap.scalarNodeFields["Topology"] = aControl;
 
         // inner loop for non-linear models
+        bool tNewtonHasConverged = false;
         for(Plato::OrdinalType tNewtonIndex = 0; tNewtonIndex < mNumNewtonSteps; tNewtonIndex++)
         {
             mResidual = mPDE->value(tStatesSubView, aControl);
@@ -209,6 +210,7 @@ namespace Elliptic
                 std::cout << " Residual norm: " << tResidualNorm << std::endl;
                 if (tResidualNorm < mNewtonResTol) {
                     std::cout << " Residual norm tolerance satisfied." << std::endl;
+                    tNewtonHasConverged = true;
                     break;
                 }
             }
@@ -229,10 +231,14 @@ namespace Elliptic
                 std::cout << " Delta norm: " << tIncrementNorm << std::endl;
                 if (tIncrementNorm < mNewtonIncTol) {
                     std::cout << " Solution increment norm tolerance satisfied." << std::endl;
+                    tNewtonHasConverged = true;
                     break;
                 }
             }
         }
+
+        if (mNumNewtonSteps > 1 && tNewtonHasConverged == false )
+            ANALYZE_THROWERR("No convergence achieved in specified number of Newton iterations.")
 
         if ( mSaveState )
         {
