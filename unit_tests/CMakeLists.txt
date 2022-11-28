@@ -2,6 +2,10 @@ configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/amgx.json
                  ${CMAKE_CURRENT_BINARY_DIR}/amgx.json COPYONLY)
 configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/points.xyz
                  ${CMAKE_CURRENT_BINARY_DIR}/points.xyz COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/brick_with_data.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/brick_with_data.exo COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/nodal_surface_pressure_field.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/nodal_surface_pressure_field.exo COPYONLY)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/BamG)
 
@@ -29,6 +33,8 @@ Plato_add_test(Element ElementTests.cpp)
 Plato_add_test(PlatoMathTypes PlatoMathTypesTests.cpp)
 Plato_add_test(TensorNorm TensorNormTests.cpp)
 Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
+Plato_add_test(NaturalBCsTests NaturalBCsTests.cpp)
+Plato_add_test(NaturalBCDataTests NaturalBCDataTests.cpp)
 
 if(ELLIPTIC)
 Plato_add_test(MultipointConstraint PlatoMultipointConstraintTests.cpp)
