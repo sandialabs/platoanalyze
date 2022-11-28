@@ -50,6 +50,8 @@ Plato::OrdinalVector convert_to_elementwise_map
  const Plato::OrdinalVector                            & aMap,
        Plato::Mesh                                       aMesh,
        Plato::OrdinalType                                aNumNodesPerFace);
+    
+void check_for_missing_parent_elements(const Plato::OrdinalVector & aParentElements);
 
 template<typename ElementType>
 void set_parent_data_for_surface
@@ -68,6 +70,8 @@ void set_parent_data_for_surface
     Plato::OrdinalVector tParentElements("parent elements", tChildNodes.size());
     Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
     (aSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
+    
+    check_for_missing_parent_elements(tParentElements);
 
     aSurface.addParentData(tParentElements, tElementWiseChildNodeOrdMap, tMappedChildLocations);
 }

@@ -304,6 +304,14 @@ TEUCHOS_UNIT_TEST(UtilsTests, CheckForRepeatedChildNodes)
     TEST_THROW(Plato::Contact::check_for_repeated_child_nodes(dAllChildNodes, tMesh->NumNodes()), std::runtime_error);
 }
 
+TEUCHOS_UNIT_TEST(UtilsTests, CheckForMissingParentElements)
+{
+    std::vector<Plato::OrdinalType> tParentElements = {1, 5, -2, 7};
+    auto dParentElements = Plato::TestHelpers::create_device_view(tParentElements);
+
+    TEST_THROW(Plato::Contact::check_for_missing_parent_elements(dParentElements), std::runtime_error);
+}
+
 TEUCHOS_UNIT_TEST(ContactSurfaceTests, InitialAssignmentOfParentDataIsPersistent)
 {
     // add initial parent data

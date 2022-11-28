@@ -195,6 +195,25 @@ Plato::OrdinalVector convert_to_elementwise_map
     return tElementWiseMap;
 }
 
+void check_for_missing_parent_elements(const Plato::OrdinalVector & aParentElements)
+{
+    Plato::OrdinalType tNumMissingParent(0);
+    Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, aParentElements.size()),
+    KOKKOS_LAMBDA(const Plato::OrdinalType& aElemOrdinal, Plato::OrdinalType & aUpdate)
+    {
+        if ( aParentElements(aElemOrdinal) == -2 ) 
+        {  
+            Kokkos::atomic_increment(&aUpdate);
+        }
+    }, tNumMissingParent);
+    if ( tNumMissingParent > 0 )
+    {
+        std::ostringstream tMsg;
+        tMsg << "NO PARENT ELEMENT COULD BE FOUND FOR AT LEAST ONE CHILD NODE IN CONTACT PAIR. \n";
+        ANALYZE_THROWERR(tMsg.str())
+    }
+}
+
 }
 
 }
