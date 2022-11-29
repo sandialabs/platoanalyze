@@ -184,6 +184,7 @@ TEUCHOS_UNIT_TEST(UtilsTests, ParseSingleContactPair)
         "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
         "        <Parameter name='Penalty Value' type='double' value='1.0e4' />  \n"
         "        <Parameter name='Penalty Type' type='string' value='normal' />  \n"
+        "        <Parameter name='Search Tolerance' type='double' value='0.5' />  \n"
         "        <ParameterList name='A Surface'>                                                  \n"
         "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
         "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
@@ -235,6 +236,9 @@ TEUCHOS_UNIT_TEST(UtilsTests, ParseSingleContactPair)
     TEST_EQUALITY(tPair.penaltyType, "normal");
     TEST_EQUALITY(tPair.penaltyValue.size(), 1);
     TEST_FLOATING_EQUALITY(tPair.penaltyValue[0], 1.0e4, 1e-13)
+
+    // test search tolerance
+    TEST_FLOATING_EQUALITY(tPair.searchTolerance, 0.5, 1e-13)
 }
 
 TEUCHOS_UNIT_TEST(UtilsTests, ParseAllContactPairs)

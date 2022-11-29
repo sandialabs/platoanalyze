@@ -57,7 +57,8 @@ template<typename ElementType>
 void set_parent_data_for_surface
 (ContactSurface                      & aSurface,
  const Teuchos::Array<Plato::Scalar> & aTranslation,
- const Plato::SpatialModel           & aSpatialModel)
+ const Plato::SpatialModel           & aSpatialModel,
+       Plato::Scalar                   aSearchTolerance)
 {
     auto tChildNodes = aSurface.childNodes();
     auto tGlobalLocalChildNodeOrdMap = global_local_child_node_ord_map(tChildNodes, aSpatialModel.Mesh->NumNodes());
@@ -68,8 +69,16 @@ void set_parent_data_for_surface
     Plato::SpatialDomain tDomain = get_domain(aSurface.parentBlock(), aSpatialModel.Domains);
 
     Plato::OrdinalVector tParentElements("parent elements", tChildNodes.size());
-    Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
-    (aSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
+    if (aSearchTolerance > 0)
+    {
+        Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
+        (aSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements, aSearchTolerance);
+    }
+    else
+    { 
+        Plato::Geometry::findParentElements<ElementType, Plato::Scalar>
+        (aSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
+    }
     
     check_for_missing_parent_elements(tParentElements);
 
@@ -83,10 +92,10 @@ void set_parent_data_for_pairs
 {
     for (auto & tPair : aPairs)
     {
-        set_parent_data_for_surface<ElementType>(tPair.surfaceA, tPair.initialGap, aSpatialModel);
+        set_parent_data_for_surface<ElementType>(tPair.surfaceA, tPair.initialGap, aSpatialModel, tPair.searchTolerance);
 
         auto tScaledGap = scale_initial_gap(tPair.initialGap, -1.0);
-        set_parent_data_for_surface<ElementType>(tPair.surfaceB, tScaledGap, aSpatialModel);
+        set_parent_data_for_surface<ElementType>(tPair.surfaceB, tScaledGap, aSpatialModel, tPair.searchTolerance);
     }
 }
 

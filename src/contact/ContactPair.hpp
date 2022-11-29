@@ -72,6 +72,7 @@ struct ContactPair
     Teuchos::Array<Plato::Scalar> initialGap;
     std::string penaltyType;
     Teuchos::Array<Plato::Scalar> penaltyValue;
+    Plato::Scalar searchTolerance;
 };
 
 Teuchos::Array<Plato::Scalar> 

@@ -67,6 +67,11 @@ ContactPair parse_contact_pair
         ANALYZE_THROWERR("Initial Gap vector provided in contact pair has different dimensions than mesh.")
     tContactPair.initialGap = tVector;
 
+    if (aParams.isType<Plato::Scalar>("Search Tolerance"))
+        tContactPair.searchTolerance = aParams.get<Plato::Scalar>("Search Tolerance");
+    else
+        tContactPair.searchTolerance = -1.0;
+
     parse_contact_penalty(aParams, tContactPair);
 
     return tContactPair;
