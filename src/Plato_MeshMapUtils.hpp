@@ -633,7 +633,7 @@ findParentElements(
             OrdinalT tBoundCheck = 0;
             for(OrdinalT iDim=0; iDim<ElementT::mNumSpatialDims; iDim++)
             {
-                ScalarT tBoundTol = cRelativeTol * (tMax(iDim, iParent) - tMin(iDim, iParent));
+                ScalarT tBoundTol = cRelativeTol * (tMax(iDim, tLocalElemIndex) - tMin(iDim, tLocalElemIndex));
                 if( tMaxMin < -tBoundTol ) tBoundCheck += 1;
             }
             if( tBoundCheck < 1 )
