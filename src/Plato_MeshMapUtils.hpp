@@ -511,7 +511,7 @@ findParentElements(
     Plato::ScalarMultiVectorT<ScalarT> tMin("min", ElementT::mNumSpatialDims, tNElems);
     Plato::ScalarMultiVectorT<ScalarT> tMax("max", ElementT::mNumSpatialDims, tNElems);
 
-    constexpr ScalarT cRelativeTol = 1e-2;
+    constexpr ScalarT cRelativeTol = 1e-1;
 
     // fill d_* data
     auto tCoords = aMesh->Coordinates();
@@ -589,17 +589,19 @@ findParentElements(
         constexpr ScalarT cEpsilon = -1e-8; // small negative number for checking if float greater than 0
         ScalarT tMaxMin = cNotFound;
         OrdinalT tRunningNegCount = 4;
+        OrdinalT tLocalElemIndex = -1;
         typename Plato::ScalarVectorT<int>::value_type iParent = -2;
         for( int iElem=tOffset(iNodeOrdinal); iElem<tOffset(iNodeOrdinal+1); iElem++ )
         {
-            auto tElemIndex = tDomainCellMap(tIndices(iElem));
+            auto tLocalIndex = tIndices(iElem);
+            auto tGlobalElemIndex = tDomainCellMap(tLocalIndex);
 
             for(OrdinalT iDim=0; iDim<ElementT::mNumSpatialDims; iDim++)
             {
                 tInPoint(iDim) = aMappedLocations(iDim, iNodeOrdinal);
             }
 
-            tGetBasis(tElemIndex, tInPoint, tBasis);
+            tGetBasis(tGlobalElemIndex, tInPoint, tBasis);
 
             ScalarT tEleMin = tBasis[0];
             OrdinalT tNegCount = 0;
@@ -610,15 +612,16 @@ findParentElements(
             }
             if( tNegCount < tRunningNegCount )
             {
-                 tRunningNegCount = tNegCount;
-                 tMaxMin = tEleMin;
-                 iParent = tElemIndex;
+                tRunningNegCount = tNegCount;
+                tMaxMin = tEleMin;
+                iParent = tGlobalElemIndex;
+                tLocalElemIndex = tLocalIndex;
             }
             else if ( ( tNegCount == tRunningNegCount ) && ( tEleMin > tMaxMin ) )
             {
-                 tMaxMin = tEleMin;
-                 iParent = tElemIndex;
-
+                tMaxMin = tEleMin;
+                iParent = tGlobalElemIndex;
+                tLocalElemIndex = tLocalIndex;
             }
         }
         if( tMaxMin >= cEpsilon )
