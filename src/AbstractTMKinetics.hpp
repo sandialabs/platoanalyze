@@ -68,12 +68,12 @@ public:
     {
         if(mUniformMaterialBasis)
         {
-            mUniformMaterialBasis->VoigtTensorToMaterialBasis(aStrain);
+            mUniformMaterialBasis->VoigtTensorToMaterialBasis(aStrain, /*shear_factor*/0.5);
             mUniformMaterialBasis->VectorToMaterialBasis(aTGrad);
         }
         if(mVaryingMaterialBasis)
         {
-            mVaryingMaterialBasis->VoigtTensorToMaterialBasis(aStrain);
+            mVaryingMaterialBasis->VoigtTensorToMaterialBasis(aStrain, /*shear_factor=*/0.5);
             mVaryingMaterialBasis->VectorToMaterialBasis(aTGrad);
         }
 
@@ -84,7 +84,7 @@ public:
             mVaryingMaterialBasis->VoigtTensorFromMaterialBasis(aStress);
             mVaryingMaterialBasis->VectorFromMaterialBasis(aFlux);
             // rotate the kinematics back for output
-            mVaryingMaterialBasis->VoigtTensorFromMaterialBasis(aStrain);
+            mVaryingMaterialBasis->VoigtTensorFromMaterialBasis(aStrain, /*shear_factor*/0.5);
             mVaryingMaterialBasis->VectorFromMaterialBasis(aTGrad);
         }
         if(mUniformMaterialBasis)
@@ -92,7 +92,7 @@ public:
             mUniformMaterialBasis->VoigtTensorFromMaterialBasis(aStress);
             mUniformMaterialBasis->VectorFromMaterialBasis(aFlux);
             // rotate the kinematics back for output
-            mUniformMaterialBasis->VoigtTensorFromMaterialBasis(aStrain);
+            mUniformMaterialBasis->VoigtTensorFromMaterialBasis(aStrain, /*shear_factor*/0.5);
             mUniformMaterialBasis->VectorFromMaterialBasis(aTGrad);
         }
     };
