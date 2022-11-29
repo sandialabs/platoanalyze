@@ -143,7 +143,10 @@ class BlockMatrixTransposeEntryOrdinal
 
     KOKKOS_INLINE_FUNCTION
     Plato::OrdinalType
-    operator()(Plato::OrdinalType cellOrdinal, Plato::OrdinalType icellDof, Plato::OrdinalType jcellDof) const
+    operator()
+    (Plato::OrdinalType cellOrdinal, 
+     Plato::OrdinalType icellDof, 
+     Plato::OrdinalType jcellDof) const
     {
         auto iNode = icellDof / DofsPerNode;
         auto iDof  = icellDof % DofsPerNode;
@@ -151,6 +154,35 @@ class BlockMatrixTransposeEntryOrdinal
         auto jDof  = jcellDof % DofsPerNode;
         Plato::OrdinalType iLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + iNode);
         Plato::OrdinalType jLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + jNode);
+        return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Plato::OrdinalType
+    operator()
+    (Plato::OrdinalType icellOrdinal, 
+     Plato::OrdinalType jcellOrdinal, 
+     Plato::OrdinalType icellDof, 
+     Plato::OrdinalType jcellDof) const
+    {
+        auto iNode = icellDof / DofsPerNode;
+        auto iDof  = icellDof % DofsPerNode;
+        auto jNode = jcellDof / DofsPerNode;
+        auto jDof  = jcellDof % DofsPerNode;
+        Plato::OrdinalType iLocalOrdinal = mCells2nodes(icellOrdinal * NodesPerCell + iNode);
+        Plato::OrdinalType jLocalOrdinal = mCells2nodes(jcellOrdinal * NodesPerCell + jNode);
+        return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
+    }
+
+  private:
+    KOKKOS_INLINE_FUNCTION
+    Plato::OrdinalType
+    getEntryOrdinal
+    (Plato::OrdinalType iLocalOrdinal, 
+     Plato::OrdinalType jLocalOrdinal,
+     Plato::OrdinalType iDof,
+     Plato::OrdinalType jDof) const
+    {
         Plato::OrdinalType rowStart = mRowMap(jLocalOrdinal);
         Plato::OrdinalType rowEnd   = mRowMap(jLocalOrdinal+1);
         for (Plato::OrdinalType entryOrdinal=rowStart; entryOrdinal<rowEnd; entryOrdinal++)
