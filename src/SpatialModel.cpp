@@ -216,4 +216,15 @@ SpatialModel::NodeNodeGraph
         Mesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
 }
 
+void 
+SpatialModel::NodeNodeGraphTranspose
+(Plato::OrdinalVector & aOffsetMap,
+ Plato::OrdinalVector & aNodeOrds) const
+{
+    if (mHasContact)
+        mUpdateGraphForContact.NodeNodeGraphTranspose(aOffsetMap, aNodeOrds);
+    else
+        Mesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
+}
+
 } // namespace Plato

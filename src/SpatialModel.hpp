@@ -364,6 +364,11 @@ public:
     (Plato::OrdinalVector & aOffsetMap,
      Plato::OrdinalVector & aNodeOrds) const;
 
+    void 
+    NodeNodeGraphTranspose
+    (Plato::OrdinalVector & aOffsetMap,
+     Plato::OrdinalVector & aNodeOrds) const;
+
     std::vector<Plato::Contact::ContactPair>
     contactPairs() const { return mContactPairs; }
 

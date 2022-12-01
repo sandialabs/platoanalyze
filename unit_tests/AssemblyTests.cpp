@@ -20,6 +20,10 @@
 
 #include "InterpolateFromNodal.hpp"
 
+
+
+#include "PlatoMathHelpers.hpp"
+
 #ifdef PLATO_MESHMAP
 #include "contact/ContactUtils.hpp"
 #endif
@@ -716,6 +720,63 @@ TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, AddContactContributionsToNodeMap)
         0, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13, 15,
         0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
         0, 1, 2, 3, 5, 6, 7, 8, 9, 11, 12,
+        8, 10, 11, 13, 14, 15,
+        8, 11, 13, 14,
+        8, 9, 10, 13, 15
+        };
+
+    for(int iVal=0; iVal<tColumnIndices_Gold.size(); iVal++){
+        TEST_EQUALITY(tColumnIndices_Host(iVal), tColumnIndices_Gold[iVal]);
+    }
+}
+
+TEUCHOS_UNIT_TEST(ContactNodeNodeMapTests, TransposeNodeMapWithContactContributions)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    check_element_type_is_tet(tMesh);
+    constexpr int tNumDofsPerNode  = ElementType::mNumDofsPerNode;
+
+    auto tSpatialModel = setup_2box_spatial_model(tMesh);
+
+    // add contact graph through spatial model when constructing block matrix transpose
+    Teuchos::RCP<Plato::CrsMatrixType> tJacobianT =
+        Plato::CreateBlockMatrixTranspose<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>( tSpatialModel );
+
+    auto tFullOffsetMap = tJacobianT->rowMap();
+    auto tFullNodeOrds  = tJacobianT->columnIndices();
+
+    // check row map
+    auto tRowMap_Host = Plato::TestHelpers::get( tFullOffsetMap );
+    std::vector<Plato::OrdinalType> tRowMap_Gold = {
+        0, 12, 21, 31, 42, 46, 56, 64, 73, 
+        85, 95, 105, 116, 124, 130, 134, 139};
+
+    for(int iVal=0; iVal<tRowMap_Gold.size(); iVal++){
+        TEST_EQUALITY(tRowMap_Host(iVal), tRowMap_Gold[iVal]);
+    }
+
+    // check column indices
+    auto tColumnIndices_Host = Plato::TestHelpers::get( tFullNodeOrds );
+    std::vector<Plato::OrdinalType> tColumnIndices_Gold = {
+        0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12,
+        0, 1, 2, 3, 4, 7, 9, 11, 12,
+        0, 1, 2, 3, 5, 7, 9, 10, 11, 12,
+        0, 1, 2, 3, 4, 5, 6, 9, 10, 11, 12,
+        0, 1, 3, 4,
+        0, 2, 3, 5, 6, 7, 9, 10, 11, 12,
+        0, 3, 5, 6, 9, 10, 11, 12,
+        0, 1, 2, 5, 7, 9, 10, 11, 12,
+
+        0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        0, 5, 6, 7, 8, 9, 10, 11, 12, 15,
+        0, 5, 6, 7, 8, 9, 10, 11, 13, 15,
+        0, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+        0, 5, 6, 7, 8, 9, 11, 12,
         8, 10, 11, 13, 14, 15,
         8, 11, 13, 14,
         8, 9, 10, 13, 15

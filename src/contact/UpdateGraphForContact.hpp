@@ -24,6 +24,11 @@ public:
     (Plato::OrdinalVector & aOffsetMap,
      Plato::OrdinalVector & aNodeOrds) const;
 
+    void
+    NodeNodeGraphTranspose
+    (Plato::OrdinalVector & aOffsetMap,
+     Plato::OrdinalVector & aNodeOrds) const;
+
     Plato::OrdinalType 
     extractChildNodeOffsets(const Plato::OrdinalVector & aChildNodes);
 
@@ -37,6 +42,17 @@ public:
 
     void 
     updateNodeOrds();
+
+    void 
+    countNonzerosForTranspose(Plato::OrdinalVector & aOffsetMap) const;
+
+    Plato::OrdinalType 
+    constructTransposeOffsetMap(Plato::OrdinalVector & aOffsetMap) const;
+
+    Plato::OrdinalType 
+    constructTransposeNodeOrds
+    (const Plato::OrdinalVector & aOffsetMap,
+           Plato::OrdinalVector & aNodeOrds) const;
 
 private:
     Plato::OrdinalVectorT<const Plato::OrdinalType> mConnectivity;

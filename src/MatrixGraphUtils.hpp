@@ -155,4 +155,34 @@ CreateBlockMatrix( const Plato::SpatialModel & aSpatialModel )
     return retMatrix;
 }
 
+/******************************************************************************/
+/*!
+  \brief Create a matrix transpose of type MatrixType
+
+  \param mesh Plato abstract mesh on which the matrix is based.  
+
+  Create a block matrix from connectivity in mesh with block size
+  DofsPerNode_J X DofsPerNode_I.
+*/
+template <typename MatrixType, Plato::OrdinalType DofsPerNode_I, Plato::OrdinalType DofsPerNode_J=DofsPerNode_I>
+Teuchos::RCP<MatrixType>
+CreateBlockMatrixTranspose( const Plato::SpatialModel & aSpatialModel )
+/******************************************************************************/
+{
+    Plato::OrdinalVector tOffsetMap;
+    Plato::OrdinalVector tNodeOrds;
+    aSpatialModel.NodeNodeGraphTranspose(tOffsetMap, tNodeOrds);
+
+    auto numRows = tOffsetMap.size() - 1;
+    auto nnz = tNodeOrds.size();
+    constexpr Plato::OrdinalType numBlockDofs = DofsPerNode_I*DofsPerNode_J;
+    typename MatrixType::ScalarVectorT entries("matrix entries", nnz*numBlockDofs);
+    auto retMatrix = Teuchos::rcp(
+     new MatrixType( tOffsetMap, tNodeOrds, entries,
+                     numRows*DofsPerNode_J, numRows*DofsPerNode_I,
+                     DofsPerNode_J, DofsPerNode_I )
+    );
+    return retMatrix;
+}
+
 } // end namespace Plato

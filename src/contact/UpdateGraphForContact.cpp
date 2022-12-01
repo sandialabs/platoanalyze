@@ -55,6 +55,19 @@ UpdateGraphForContact::NodeNodeGraph
     aNodeOrds = mFullNodeOrds;
  }
 
+void
+UpdateGraphForContact::NodeNodeGraphTranspose
+(Plato::OrdinalVector & aOffsetMap,
+ Plato::OrdinalVector & aNodeOrds) const
+ {
+    this->countNonzerosForTranspose(aOffsetMap);
+    auto tNumEntries = this->constructTransposeOffsetMap(aOffsetMap);
+
+    Kokkos::resize(aNodeOrds, tNumEntries);
+    this->constructTransposeNodeOrds(aOffsetMap, aNodeOrds);
+
+ }
+
 Plato::OrdinalType 
 UpdateGraphForContact::extractChildNodeOffsets(const Plato::OrdinalVector & aChildNodes)
 {
@@ -219,6 +232,71 @@ UpdateGraphForContact::updateNodeOrds()
             }
         }
     }, "node ordinals accounting for contact");
+}
+
+void 
+UpdateGraphForContact::countNonzerosForTranspose
+(Plato::OrdinalVector & aOffsetMap) const
+{
+    auto& tFullOffsetMap = mFullOffsetMap;
+    auto& tFullNodeOrds = mFullNodeOrds;
+
+    Kokkos::resize(aOffsetMap, mFullOffsetMap.size());
+    Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
+    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNumTotalNodes), KOKKOS_LAMBDA(OrdinalType iNodeOrdinal)
+    {
+        auto tFrom = tFullOffsetMap(iNodeOrdinal);
+        auto tTo = tFullOffsetMap(iNodeOrdinal + 1);
+        for (auto tEntryIndex = tFrom; tEntryIndex < tTo; tEntryIndex++)
+        {
+            auto iColumnIndex = tFullNodeOrds(tEntryIndex);
+            Kokkos::atomic_increment(&aOffsetMap(iColumnIndex));
+        }
+    }, "nonzeros");
+}
+
+Plato::OrdinalType 
+UpdateGraphForContact::constructTransposeOffsetMap
+(Plato::OrdinalVector & aOffsetMap) const
+{
+    Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
+    Plato::OrdinalType tNumEntries(0);
+    Kokkos::parallel_scan (Kokkos::RangePolicy<OrdinalType>(0,tNumTotalNodes+1),
+    KOKKOS_LAMBDA (const OrdinalType& iOrdinal, OrdinalType& aUpdate, const bool& tIsFinal)
+    {
+        const OrdinalType tVal = aOffsetMap(iOrdinal);
+        if( tIsFinal )
+        {
+            aOffsetMap(iOrdinal) = aUpdate;
+        }
+        aUpdate += tVal;
+    }, tNumEntries);
+
+    return tNumEntries;
+}
+
+Plato::OrdinalType 
+UpdateGraphForContact::constructTransposeNodeOrds
+(const Plato::OrdinalVector & aOffsetMap,
+       Plato::OrdinalVector & aNodeOrds) const
+{
+    auto& tFullOffsetMap = mFullOffsetMap;
+    auto& tFullNodeOrds = mFullNodeOrds;
+
+    Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
+    Plato::OrdinalVector tOffsetT("offsets", tNumTotalNodes);
+    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNumTotalNodes), KOKKOS_LAMBDA(OrdinalType iNodeOrdinal)
+    {
+        auto tFrom = tFullOffsetMap(iNodeOrdinal);
+        auto tTo = tFullOffsetMap(iNodeOrdinal + 1);
+        for (auto iEntryIndex = tFrom; iEntryIndex < tTo; iEntryIndex++)
+        {
+            auto iRowIndexT = tFullNodeOrds(iEntryIndex);
+            auto tMyOffset = Kokkos::atomic_fetch_add(&tOffsetT(iRowIndexT), 1);
+            auto iEntryIndexT = aOffsetMap(iRowIndexT) + tMyOffset;
+            aNodeOrds(iEntryIndexT) = iNodeOrdinal;
+        }
+    }, "node ords");
 }
 
 }
