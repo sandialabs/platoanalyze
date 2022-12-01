@@ -504,7 +504,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
+                Plato::CreateBlockMatrixTranspose<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
