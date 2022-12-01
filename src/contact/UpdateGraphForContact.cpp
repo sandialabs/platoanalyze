@@ -66,6 +66,7 @@ UpdateGraphForContact::NodeNodeGraphTranspose
     Kokkos::resize(aNodeOrds, tNumEntries);
     this->constructTransposeNodeOrds(aOffsetMap, aNodeOrds);
 
+    Plato::sort_matrix_column_ordinals(aOffsetMap, aNodeOrds);
  }
 
 Plato::OrdinalType 
