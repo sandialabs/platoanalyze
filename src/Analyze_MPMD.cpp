@@ -24,7 +24,7 @@ void printTimingResultsMPMD(MPI_Comm &aComm)
 
 void safeExit(int aExitCode=0){
   Plato::MeshFactory::finalize();
-  Kokkos::finalize_all();
+  Kokkos::finalize();
   MPI_Finalize();
   exit(aExitCode);
 }

@@ -6,7 +6,6 @@
 #include <cassert>
 
 #include <Kokkos_Macros.hpp>
-#include <KokkosKernels_SparseUtils.hpp>
 #include <KokkosSparse_spgemm.hpp>
 #include <KokkosSparse_spadd.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>

@@ -9,11 +9,9 @@ add_library(BamGlib ${BamG_SRCS} ${BamG_HDRS})
 
 add_executable(BamG BamG_main.cpp)
 
-set(BamG_LIBS BamGlib ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} )
-target_include_directories(BamGlib PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
+set(BamG_LIBS BamGlib Trilinos::all_selected_libs )
 
 target_link_libraries(BamG ${BamG_LIBS})
-target_include_directories(BamG PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
 
 if( CMAKE_INSTALL_PREFIX )
   install( TARGETS BamG DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )

@@ -7,7 +7,6 @@
 #pragma once
 
 #include <Kokkos_Macros.hpp>
-#include <Kokkos_Serial.hpp>
 
 #include "AnalyzeMacros.hpp"
 #include "PlatoStaticsTypes.hpp"

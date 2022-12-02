@@ -99,14 +99,12 @@ if(PLATOANALYZE_ENABLE_MPMD)
     Analyze_App
     analyzelib
     ${PLATO_LIBS}
-    ${Trilinos_LIBRARIES}
-    ${Trilinos_TPL_LIBRARIES}
+    Trilinos::all_selected_libs
     )
 
   target_include_directories(AnalyzeAppIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
   target_include_directories(AnalyzeAppIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
   target_include_directories(AnalyzeAppIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-  target_include_directories(AnalyzeAppIntxTests PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
   target_compile_definitions(AnalyzeAppIntxTests PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
 
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
@@ -121,15 +119,13 @@ if(PLATOANALYZE_ENABLE_MPMD)
       analyzelib
       BamGlib
       ${PLATO_LIBS}
-      ${Trilinos_LIBRARIES}
-      ${Trilinos_TPL_LIBRARIES}
+      Trilinos::all_selected_libs
       Analyze_UnitTestUtils
       )
 
     target_include_directories(EngineMeshIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
     target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
     target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-    target_include_directories(EngineMeshIntxTests PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
   endif()
 
   if(PLATOANALYZE_ENABLE_MESHMAP)
@@ -144,14 +140,12 @@ if(PLATOANALYZE_ENABLE_MPMD)
     target_link_libraries(MeshMapUnitTests
       analyzelib
       ${PLATO_LIBS}
-      ${Trilinos_LIBRARIES}
-      ${Trilinos_TPL_LIBRARIES}
+      Trilinos::all_selected_libs
       Analyze_UnitTestUtils
       )
     target_include_directories(MeshMapUnitTests PRIVATE "${PLATOENGINE_PREFIX}/include")
     target_include_directories(MeshMapUnitTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
     target_include_directories(MeshMapUnitTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-    target_include_directories(MeshMapUnitTests PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
     target_link_libraries(MeshMapUnitTests ArborX::ArborX BamGlib)
     target_compile_definitions(MeshMapUnitTests PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
 

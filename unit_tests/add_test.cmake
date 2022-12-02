@@ -20,9 +20,9 @@ function( Plato_add_test TEST_BASENAME CPP_FILE)
   set(Test_NAME "${TEST_BASENAME}UnitTests")
   add_executable(${Test_NAME} ${Test_SOURCES})
 
-  target_link_libraries(${Test_NAME} analyzelib BamGlib ${PLATO_LIBS} ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} Analyze_UnitTestUtils)
+  target_link_libraries(${Test_NAME} analyzelib BamGlib ${PLATO_LIBS} Trilinos::all_selected_libs Analyze_UnitTestUtils)
   target_include_directories(${Test_NAME} PRIVATE .)
-  target_include_directories(${Test_NAME} PRIVATE "${PLATOENGINE_PREFIX}/include" ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
+  target_include_directories(${Test_NAME} PRIVATE "${PLATOENGINE_PREFIX}/include")
   target_include_directories(${Test_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
 
   if(NOT EXTRA_ARG STREQUAL "SKIP_MATH")

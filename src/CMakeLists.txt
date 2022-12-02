@@ -260,7 +260,6 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/mesh)
-include_directories(${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
 
 add_library( analyzelib ${ANALYZE_SOURCES})
 SET_TARGET_PROPERTIES(analyzelib PROPERTIES OUTPUT_NAME analyze)
@@ -273,8 +272,7 @@ target_include_directories(analyzelib PRIVATE "${PLATOENGINE_PREFIX}/include")
 
 set(LINK_LIBS
     ${PLATO_LIBS}
-    ${Trilinos_LIBRARIES}
-    ${Trilinos_TPL_LIBRARIES}
+    Trilinos::all_selected_libs
     ${Trilinos_EXTRA_LD_FLAGS}
     ${SOLVER_INTERFACE_LIBRARIES}
     )
