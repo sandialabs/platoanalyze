@@ -127,7 +127,8 @@ public:
 
 /******************************************************************************/
 template<Plato::OrdinalType NodesPerCell,
-         Plato::OrdinalType DofsPerNode>
+         Plato::OrdinalType DofsPerNode_I,
+         Plato::OrdinalType DofsPerNode_J=DofsPerNode_I>
 class BlockMatrixTransposeEntryOrdinal
 {
   private:
@@ -148,10 +149,10 @@ class BlockMatrixTransposeEntryOrdinal
      Plato::OrdinalType icellDof, 
      Plato::OrdinalType jcellDof) const
     {
-        auto iNode = icellDof / DofsPerNode;
-        auto iDof  = icellDof % DofsPerNode;
-        auto jNode = jcellDof / DofsPerNode;
-        auto jDof  = jcellDof % DofsPerNode;
+        auto iNode = icellDof / DofsPerNode_I;
+        auto iDof  = icellDof % DofsPerNode_I;
+        auto jNode = jcellDof / DofsPerNode_J;
+        auto jDof  = jcellDof % DofsPerNode_J;
         Plato::OrdinalType iLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + iNode);
         Plato::OrdinalType jLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + jNode);
         return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
@@ -165,10 +166,10 @@ class BlockMatrixTransposeEntryOrdinal
      Plato::OrdinalType icellDof, 
      Plato::OrdinalType jcellDof) const
     {
-        auto iNode = icellDof / DofsPerNode;
-        auto iDof  = icellDof % DofsPerNode;
-        auto jNode = jcellDof / DofsPerNode;
-        auto jDof  = jcellDof % DofsPerNode;
+        auto iNode = icellDof / DofsPerNode_I;
+        auto iDof  = icellDof % DofsPerNode_I;
+        auto jNode = jcellDof / DofsPerNode_J;
+        auto jDof  = jcellDof % DofsPerNode_J;
         Plato::OrdinalType iLocalOrdinal = mCells2nodes(icellOrdinal * NodesPerCell + iNode);
         Plato::OrdinalType jLocalOrdinal = mCells2nodes(jcellOrdinal * NodesPerCell + jNode);
         return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
@@ -189,7 +190,7 @@ class BlockMatrixTransposeEntryOrdinal
         {
           if (mColumnIndices(entryOrdinal) == iLocalOrdinal)
           {
-            return entryOrdinal*DofsPerNode*DofsPerNode+jDof*DofsPerNode+iDof;
+            return entryOrdinal*DofsPerNode_I*DofsPerNode_J+jDof*DofsPerNode_I+iDof;
           }
         }
         return Plato::OrdinalType(-1);

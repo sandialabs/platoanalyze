@@ -848,7 +848,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( mSpatialModel );
+                Plato::CreateBlockMatrixTranspose<Plato::CrsMatrixType, mNumDofsPerNode, mNumControl>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -879,11 +879,11 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             mGradientZFunctions.at(tName)->evaluate( tStateWS, tControlWS, tConfigWS, tJacobian, aTimeStep );
 
             // assembly to return matrix
-            Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumControl, mNumDofsPerNode>
+            Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode, mNumControl>
               tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
 
             auto tJacobianMatEntries = tJacobianMat->entries();
-            Plato::WorksetBase<ElementType>::assembleTransposeJacobian
+            Plato::WorksetBase<ElementType>::assembleJacobianFad
                 (mNumDofsPerCell, mNumNodesPerCell, tJacobianMatEntryOrdinal, tJacobian, tJacobianMatEntries, tDomain);
         }
 
@@ -914,13 +914,93 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             mGradientZFunctions.at(tFirstBlockName)->evaluate_boundary(mSpatialModel, tStateWS, tControlWS, tConfigWS, tJacobian, aTimeStep );
 
             // assembly to return matrix
-            Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumControl, mNumDofsPerNode>
+            Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode, mNumControl>
               tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
 
             auto tJacobianMatEntries = tJacobianMat->entries();
-            Plato::WorksetBase<ElementType>::assembleTransposeJacobian
+            Plato::WorksetBase<ElementType>::assembleJacobianFad
                 (mNumDofsPerCell, mNumNodesPerCell, tJacobianMatEntryOrdinal, tJacobian, tJacobianMatEntries);
         }
+
+        if (mSpatialModel.hasContact())
+        {
+            // Workset state
+            Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", mNumCells, mNumDofsPerCell);
+            Plato::WorksetBase<ElementType>::worksetState(aState, tStateWS);
+
+            // Workset control
+            //
+            Plato::ScalarMultiVectorT<ControlScalar> tControlWS("Control Workset", mNumCells, mNumNodesPerCell);
+            Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
+
+            // Workset config
+            //
+            Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", mNumCells, mNumNodesPerCell, mNumSpatialDims);
+            Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS);
+
+            auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+            auto tPairs = mSpatialModel.contactPairs();
+            Plato::Contact::SurfaceDisplacementFactory<GradientZ> tSurfaceDispFactory;
+            Plato::Contact::ContactForceFactory<GradientZ>        tContactForceFactory;
+
+            Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode, mNumControl>
+              tJacobianMatEntryOrdinal( tJacobianMat, tMesh );
+            auto tJacobianMatEntries = tJacobianMat->entries();
+
+            for (auto tPair : tPairs)
+            {
+                auto computeContactForce = tContactForceFactory.create(tPair.penaltyType, tPair.penaltyValue);
+
+                auto tSideSet = tPair.surfaceA.childSideSet();
+                auto tChildCells = tPair.surfaceA.childElements();
+                auto tParentCells = tPair.surfaceA.parentElements();
+                auto tElementWiseChildMap = tPair.surfaceA.elementWiseChildMap();
+                auto tChildFaceLocalNodes = tPair.surfaceA.childFaceLocalNodes();
+
+                auto computeChildSurfaceDispA = tSurfaceDispFactory.createChildContribution(tPair.surfaceA);
+                Plato::ScalarMultiVectorT<ResultScalar> tJacobianA("JacobianState", mNumCells, mNumDofsPerCell);
+                mGradientZFunctions.at(tFirstBlockName)->evaluate_contact(mSpatialModel, tSideSet, computeChildSurfaceDispA, computeContactForce, tStateWS, tControlWS, tConfigWS, tJacobianA, aTimeStep);
+
+                Plato::WorksetBase<ElementType>::assembleJacobianFad
+                    (mNumDofsPerCell, mNumNodesPerCell, tJacobianMatEntryOrdinal, tJacobianA, tJacobianMatEntries);
+
+                auto computeParentSurfaceDispA = tSurfaceDispFactory.createParentContribution(tPair.surfaceA, mSpatialModel.Mesh, -1.0);
+                for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
+                {
+                    computeParentSurfaceDispA->setChildNode(iChildNode);
+                    Plato::ScalarMultiVectorT<ResultScalar> tJacobianA("JacobianState", mNumCells, mNumDofsPerCell);
+                    mGradientZFunctions.at(tFirstBlockName)->evaluate_contact(mSpatialModel, tSideSet, computeParentSurfaceDispA, computeContactForce, tStateWS, tControlWS, tConfigWS, tJacobianA, aTimeStep);
+
+                    Plato::WorksetBase<ElementType>::assembleJacobianFad
+                        (mNumNodesPerCell, tChildCells, tParentCells, tElementWiseChildMap, tChildFaceLocalNodes, iChildNode, tJacobianMatEntryOrdinal, tJacobianA, tJacobianMatEntries);
+                }
+
+                tSideSet = tPair.surfaceB.childSideSet();
+                tChildCells = tPair.surfaceB.childElements();
+                tParentCells = tPair.surfaceB.parentElements();
+                tElementWiseChildMap = tPair.surfaceB.elementWiseChildMap();
+                tChildFaceLocalNodes = tPair.surfaceB.childFaceLocalNodes();
+
+                auto computeChildSurfaceDispB = tSurfaceDispFactory.createChildContribution(tPair.surfaceB);
+                Plato::ScalarMultiVectorT<ResultScalar> tJacobianB("JacobianState", mNumCells, mNumDofsPerCell);
+                mGradientZFunctions.at(tFirstBlockName)->evaluate_contact(mSpatialModel, tSideSet, computeChildSurfaceDispB, computeContactForce, tStateWS, tControlWS, tConfigWS, tJacobianB, aTimeStep);
+
+                Plato::WorksetBase<ElementType>::assembleJacobianFad
+                    (mNumDofsPerCell, mNumNodesPerCell, tJacobianMatEntryOrdinal, tJacobianB, tJacobianMatEntries);
+
+                auto computeParentSurfaceDispB = tSurfaceDispFactory.createParentContribution(tPair.surfaceB, mSpatialModel.Mesh, -1.0);
+                for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
+                {
+                    computeParentSurfaceDispB->setChildNode(iChildNode);
+                    Plato::ScalarMultiVectorT<ResultScalar> tJacobianB("JacobianState", mNumCells, mNumDofsPerCell);
+                    mGradientZFunctions.at(tFirstBlockName)->evaluate_contact(mSpatialModel, tSideSet, computeParentSurfaceDispB, computeContactForce, tStateWS, tControlWS, tConfigWS, tJacobianB, aTimeStep);
+
+                    Plato::WorksetBase<ElementType>::assembleJacobianFad
+                        (mNumNodesPerCell, tChildCells, tParentCells, tElementWiseChildMap, tChildFaceLocalNodes, iChildNode, tJacobianMatEntryOrdinal, tJacobianB, tJacobianMatEntries);
+                }
+            }
+        }
+
         return tJacobianMat;
     }
 };
