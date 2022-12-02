@@ -124,7 +124,7 @@ inline void identity(const Plato::OrdinalType& aNumCells, Plato::ScalarArray3D& 
         ANALYZE_THROWERR("\nNumber of cell mismatch. Input array has different number of cells than input number of cell argument.\n")
     }
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas3::identity", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < NumRowsPerCell; tRowIndex++)
         {
@@ -133,7 +133,7 @@ inline void identity(const Plato::OrdinalType& aNumCells, Plato::ScalarArray3D& 
                 aIdentity(aCellOrdinal, tRowIndex, tColumnIndex) = tRowIndex == tColumnIndex ? 1.0 : 0.0;
             }
         }
-    }, "blas3::identity");
+    });
 }
 // function identity
 
@@ -170,7 +170,7 @@ inline void inverse(const Plato::OrdinalType& aNumCells, AViewType& aA, BViewTyp
     Plato::blas3::identity<NumRowsPerCell, NumColumnsPerCell>(aNumCells, aInverse);
 
     using namespace KokkosBatched;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("compute matrix inverse 3DView", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tA = Kokkos::subview(aA, aCellOrdinal, Kokkos::ALL(), Kokkos::ALL());
         auto tAinv = Kokkos::subview(aInverse, aCellOrdinal, Kokkos::ALL(), Kokkos::ALL());
@@ -179,7 +179,7 @@ inline void inverse(const Plato::OrdinalType& aNumCells, AViewType& aA, BViewTyp
         SerialLU<Algo::LU::Blocked>::invoke(tA);
         SerialTrsm<Side::Left,Uplo::Lower,Trans::NoTranspose,Diag::Unit   ,Algo::Trsm::Blocked>::invoke(tAlpha, tA, tAinv);
         SerialTrsm<Side::Left,Uplo::Upper,Trans::NoTranspose,Diag::NonUnit,Algo::Trsm::Blocked>::invoke(tAlpha, tA, tAinv);
-    }, "compute matrix inverse 3DView");
+    });
 }
 // function inverse
 
@@ -208,7 +208,7 @@ inline void fill(const Plato::OrdinalType& aNumCells,
         ANALYZE_THROWERR("\nInvalid number of input cells, i.e. elements. Value is <= 0.\n")
     }
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas3::fill", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < NumRowsPerCell; tRowIndex++)
         {
@@ -217,7 +217,7 @@ inline void fill(const Plato::OrdinalType& aNumCells,
                 aOutput(aCellOrdinal, tRowIndex, tColIndex) = aAlpha;
             }
         }
-    }, "blas3::fill");
+    });
 }
 // function fill
 
@@ -263,7 +263,7 @@ inline void update(const Plato::OrdinalType& aNumCells,
 
     const auto tNumRows = aA.extent(1);
     const auto tNumCols = aA.extent(2);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas3::update", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < tNumRows; tRowIndex++)
         {
@@ -273,7 +273,7 @@ inline void update(const Plato::OrdinalType& aNumCells,
                         aBeta * aB(aCellOrdinal, tRowIndex, tColIndex);
             }
         }
-    }, "blas3::update");
+    });
 }
 // function update
 
@@ -360,7 +360,7 @@ inline void multiply(const Plato::OrdinalType& aNumCells,
     const auto tNumOutRows = aC.extent(1);
     const auto tNumOutCols = aC.extent(2);
     const auto tNumInnerCols = aA.extent(2);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas3::multiply", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < tNumOutRows; tRowIndex++)
         {
@@ -382,7 +382,7 @@ inline void multiply(const Plato::OrdinalType& aNumCells,
                 aC(aCellOrdinal, tOutRowIndex, tOutColIndex) += tValue;
             }
         }
-    }, "blas3::multiply");
+    });
 }
 // function multiply
 

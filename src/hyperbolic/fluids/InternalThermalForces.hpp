@@ -151,7 +151,7 @@ public:
 
         auto tCubWeight = mCubatureRule.getCubWeight();
         auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("energy conservation residual", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
             tCellVolume(aCellOrdinal) = tCellVolume(aCellOrdinal) * tCubWeight;
@@ -193,7 +193,7 @@ public:
             tIntrplScalarField(aCellOrdinal, tBasisFunctions, tCurTempWS, tCurTempGP);
             Plato::Fluids::integrate_scalar_field<mNumNodesPerCell>
                 (aCellOrdinal, tBasisFunctions, tCellVolume, tCurTempGP, aResultWS, 1.0);
-        }, "energy conservation residual");
+        });
     }
 
 private:
@@ -359,7 +359,7 @@ public:
 
         auto tCubWeight = mCubatureRule.getCubWeight();
         auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("energy conservation residual", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             // compte cell volumes
             tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
@@ -404,7 +404,7 @@ public:
             // 7. add current inertial force contribution to residual, i.e. R += M T^{n+1}
             tIntrplScalarField(aCellOrdinal, tBasisFunctions, tCurTempWS, tCurTempGP);
             Plato::Fluids::integrate_scalar_field<mNumNodesPerCell>(aCellOrdinal, tBasisFunctions, tCellVolume, tCurTempGP, aResultWS, 1.0);
-        }, "energy conservation residual");
+        });
     }
 
 private:

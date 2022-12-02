@@ -49,7 +49,7 @@ void MatrixTimesVectorPlusVector(const Teuchos::RCP<Plato::CrsMatrixType> & aMat
         auto tEntries = aMatrix->entries();
         auto tNumNodeRows = tNodeRowMap.size() - 1;
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodeRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeRowOrdinal)
+        Kokkos::parallel_for("BlockMatrix * Vector_a + Vector_b", Kokkos::RangePolicy<>(0, tNumNodeRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeRowOrdinal)
         {
             auto tRowStartIndex = tNodeRowMap(aNodeRowOrdinal);
             auto tRowEndIndex = tNodeRowMap(aNodeRowOrdinal + 1);
@@ -75,7 +75,7 @@ void MatrixTimesVectorPlusVector(const Teuchos::RCP<Plato::CrsMatrixType> & aMat
                     aOutput(tDofRowIndex) += tSum;
                 }
             }
-        }, "BlockMatrix * Vector_a + Vector_b");
+        });
     }
     else
     {
@@ -84,7 +84,7 @@ void MatrixTimesVectorPlusVector(const Teuchos::RCP<Plato::CrsMatrixType> & aMat
         auto tEntries = aMatrix->entries();
         auto tNumRows = tRowMap.size() - 1;
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRowOrdinal)
+        Kokkos::parallel_for("Matrix * Vector_a + Vector_b", Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRowOrdinal)
         {
             auto tRowStart = tRowMap(aRowOrdinal);
             auto tRowEnd = tRowMap(aRowOrdinal + 1);
@@ -95,7 +95,7 @@ void MatrixTimesVectorPlusVector(const Teuchos::RCP<Plato::CrsMatrixType> & aMat
                 tSum += tEntries(tEntryIndex) * aInput(tColumnIndex);
             }
             aOutput(aRowOrdinal) += tSum;
-        },"Matrix * Vector_a + Vector_b");
+        });
     }
 }
 
@@ -164,7 +164,7 @@ void shiftDiagonal(
         ANALYZE_THROWERR("shiftDiagonal expects a square matrix");
       }
 
-      Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodeRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeRowOrdinal)
+      Kokkos::parallel_for("shift diagonal", Kokkos::RangePolicy<>(0, tNumNodeRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeRowOrdinal)
       {
         auto tRowStartIndex = tNodeRowMap(aNodeRowOrdinal);
         auto tRowEndIndex = tNodeRowMap(aNodeRowOrdinal + 1);
@@ -179,7 +179,7 @@ void shiftDiagonal(
             }
           }
         }
-    }, "shift diagonal");
+    });
   }
   else
   {
@@ -220,7 +220,7 @@ void VectorTimesMatrixPlusVector(
         auto tEntries = aMatrix->entries();
         auto tNumNodeRows = tNodeRowMap.size() - 1;
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodeRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeRowOrdinal)
+        Kokkos::parallel_for("Vector_a * BlockMatrix + Vector_b", Kokkos::RangePolicy<>(0, tNumNodeRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeRowOrdinal)
         {
             auto tRowStartIndex = tNodeRowMap(aNodeRowOrdinal);
             auto tRowEndIndex = tNodeRowMap(aNodeRowOrdinal + 1);
@@ -244,7 +244,7 @@ void VectorTimesMatrixPlusVector(
                     }
                 }
             }
-        }, "Vector_a * BlockMatrix + Vector_b");
+        });
     }
     else
     {
@@ -253,7 +253,7 @@ void VectorTimesMatrixPlusVector(
         auto tEntries = aMatrix->entries();
         auto tNumRows = tRowMap.size() - 1;
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRowOrdinal)
+        Kokkos::parallel_for("Vector_a * Matrix + Vector_b", Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRowOrdinal)
         {
             auto tRowStart = tRowMap(aRowOrdinal);
             auto tRowEnd = tRowMap(aRowOrdinal + 1);
@@ -262,7 +262,7 @@ void VectorTimesMatrixPlusVector(
                 auto tColumnIndex = tColIndices(tEntryIndex);
                 Kokkos::atomic_add(&aOutput(tColumnIndex), tEntries(tEntryIndex) * aInput(aRowOrdinal));
             }
-        },"Vector_a * Matrix + Vector_b");
+        });
     }
 }
 
@@ -695,7 +695,7 @@ MatrixTranspose( const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix,
 
     // determine rowmap
     OrdinalType tNumRows = tRowMap.size() - 1;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNumRows), KOKKOS_LAMBDA(OrdinalType iRowOrdinal)
+    Kokkos::parallel_for("nonzeros", Kokkos::RangePolicy<OrdinalType>(0, tNumRows), KOKKOS_LAMBDA(OrdinalType iRowOrdinal)
     {
         auto tRowStart = tRowMap(iRowOrdinal);
         auto tRowEnd = tRowMap(iRowOrdinal + 1);
@@ -704,7 +704,7 @@ MatrixTranspose( const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix,
             auto iColumnIndex = tColMap(tEntryIndex);
             Kokkos::atomic_increment(&tRowMapT(iColumnIndex));
         }
-    }, "nonzeros");
+    });
 
     OrdinalType tNumEntries(0);
     Kokkos::parallel_scan (Kokkos::RangePolicy<OrdinalType>(0,tNumRowsT+1),
@@ -720,7 +720,7 @@ MatrixTranspose( const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix,
 
     // determine column map and entries
     OrdinalView tOffsetT("offsets", tNumRowsT);
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNumRows), KOKKOS_LAMBDA(OrdinalType iRowOrdinal)
+    Kokkos::parallel_for("colmap and entries", Kokkos::RangePolicy<OrdinalType>(0, tNumRows), KOKKOS_LAMBDA(OrdinalType iRowOrdinal)
     {
         auto tRowStart = tRowMap(iRowOrdinal);
         auto tRowEnd = tRowMap(iRowOrdinal + 1);
@@ -732,7 +732,7 @@ MatrixTranspose( const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix,
             tColMapT(iEntryIndexT) = iRowOrdinal;
             tEntriesT(iEntryIndexT) = tEntries(iEntryIndex);
         }
-    }, "colmap and entries");
+    });
 
     // update matrix transpose 
     if (aMatrixTranspose->isBlockMatrix())

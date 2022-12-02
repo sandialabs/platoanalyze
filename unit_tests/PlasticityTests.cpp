@@ -125,13 +125,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_GetLocalStateData_2D)
     Plato::ScalarMultiVector tPlasticStrain("plastic strain", tNumCells, tNumStressTerms);
     Plato::ScalarMultiVector tBackStress("back-stress stress", tNumCells, tNumStressTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("GetLocalStateData Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tJ2PlasticityUtils.getAccumulatedPlasticStrain(aCellOrdinal, tCurrentLocalState, tAccumPlasticStrain);
         tJ2PlasticityUtils.getPlasticMultiplierIncrement(aCellOrdinal, tCurrentLocalState, tPlasticMultiplier);
         tJ2PlasticityUtils.getPlasticStrainTensor(aCellOrdinal, tCurrentLocalState, tPlasticStrain);
         tJ2PlasticityUtils.getBackstressTensor(aCellOrdinal, tCurrentLocalState, tBackStress);
-    }, "GetLocalStateData Unit Test");
+    });
 
     // Check results
     auto tHostBackStress = Kokkos::create_mirror(tBackStress);
@@ -191,13 +191,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_GetLocalStateData_3D)
     Plato::ScalarMultiVector tPlasticStrain("plastic strain", tNumCells, tNumStressTerms);
     Plato::ScalarMultiVector tBackStress("back-stress stress", tNumCells, tNumStressTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("GetLocalStateData Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tJ2PlasticityUtils.getAccumulatedPlasticStrain(aCellOrdinal, tCurrentLocalState, tAccumPlasticStrain);
         tJ2PlasticityUtils.getPlasticMultiplierIncrement(aCellOrdinal, tCurrentLocalState, tPlasticMultiplier);
         tJ2PlasticityUtils.getPlasticStrainTensor(aCellOrdinal, tCurrentLocalState, tPlasticStrain);
         tJ2PlasticityUtils.getBackstressTensor(aCellOrdinal, tCurrentLocalState, tBackStress);
-    }, "GetLocalStateData Unit Test");
+    });
 
     // Check results
     auto tHostBackStress = Kokkos::create_mirror(tBackStress);
@@ -264,11 +264,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_UpdatePlasticStep2D)
 
     Plato::Scalar tPenalizedHardeningModulusKinematic = 3.0;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.updatePlasticStrainAndBackstressPlasticStep(tCellOrdinal, tPrevLocalState, tYieldSurfaceNormal,
                                                                        tPenalizedHardeningModulusKinematic, tLocalState);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = 
@@ -317,11 +317,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_UpdatePlasticStep3D)
 
     Plato::Scalar tPenalizedHardeningModulusKinematic = 3.0;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.updatePlasticStrainAndBackstressPlasticStep(tCellOrdinal, tPrevLocalState, tYieldSurfaceNormal,
                                                                        tPenalizedHardeningModulusKinematic, tLocalState);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = 
@@ -356,10 +356,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_UpdateElasticStep2D)
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.updatePlasticStrainAndBackstressElasticStep(tCellOrdinal, tPrevLocalState, tLocalState);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-10;
     Kokkos::deep_copy(tHostPrevLocalState, tPrevLocalState);
@@ -393,10 +393,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_UpdateElasticStep3D)
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.updatePlasticStrainAndBackstressElasticStep(tCellOrdinal, tPrevLocalState, tLocalState);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-10;
     Kokkos::deep_copy(tHostPrevLocalState, tPrevLocalState);
@@ -445,10 +445,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_computePlasticStrainM
     // 2. CALL FUNCTION
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
     Plato::ScalarMultiVector tMisfit("misfit", tNumCells, tNumStressTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.computePlasticStrainMisfit(tCellOrdinal, tLocalStateOne, tLocalStateTwo, tMisfit);
-    }, "Unit Test");
+    });
 
     // 3. TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -501,10 +501,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_computePlasticStrainM
     // 2. CALL FUNCTION
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
     Plato::ScalarMultiVector tMisfit("misfit", tNumCells, tNumStressTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.computePlasticStrainMisfit(tCellOrdinal, tLocalStateOne, tLocalStateTwo, tMisfit);
-    }, "Unit Test");
+    });
 
     // 3. TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -555,11 +555,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_YieldSurfaceNormal2D)
 
     Plato::ScalarVector tDevStressMinusBackstressNorm("deviatoric stress minus backstress", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.computeDeviatoricStressMinusBackstressNormalized(tCellOrdinal, tDeviatoricStress, tLocalState,
                                                                        tYieldSurfaceNormal, tDevStressMinusBackstressNorm);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {-0.372578,-0.417739,-0.4629,-0.508061};
@@ -608,11 +608,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_YieldSurfaceNormal3D)
 
     Plato::ScalarVector tDevStressMinusBackstressNorm("deviatoric stress minus backstress", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.computeDeviatoricStressMinusBackstressNormalized(tCellOrdinal, tDeviatoricStress, tLocalState,
                                                                        tYieldSurfaceNormal, tDevStressMinusBackstressNorm);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {-0.25878,-0.28286,-0.30693,-0.33100,-0.35508,-0.37915};
@@ -669,11 +669,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_PlasticStrainResidual
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillPlasticStrainTensorResidualPlasticStep(tCellOrdinal, tLocalState, 
                                                    tPrevLocalState, tYieldSurfaceNormal, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {0.0101021,-0.0681803,-1.12626,-0.224745};
@@ -727,11 +727,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_PlasticStrainResidual
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillPlasticStrainTensorResidualPlasticStep(tCellOrdinal, tLocalState, 
                                                    tPrevLocalState, tYieldSurfaceNormal, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {0.0101021,-0.0681803,-0.146463,-1.44949,-1.77272,-2.09595};
@@ -787,11 +787,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_BackstressResidualPla
 
     Plato::Scalar tHardeningModulusKinematic = 3.2;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillBackstressTensorResidualPlasticStep(tCellOrdinal, tHardeningModulusKinematic,
                                                    tLocalState, tPrevLocalState, tYieldSurfaceNormal, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {0.121551,-0.23434,-0.590231,-0.946122};
@@ -847,11 +847,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_BackstressResidualPla
 
     Plato::Scalar tHardeningModulusKinematic = 3.2;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillBackstressTensorResidualPlasticStep(tCellOrdinal, tHardeningModulusKinematic,
                                                    tLocalState, tPrevLocalState, tYieldSurfaceNormal, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {2.00465,1.84031,1.67597,1.51163,1.34729,1.18295};
@@ -895,11 +895,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_PlasticStrainResidual
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillPlasticStrainTensorResidualElasticStep(tCellOrdinal, tLocalState, 
                                                                       tPrevLocalState, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {0.5,2.0/3.0,0.833333,1};
@@ -943,11 +943,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_PlasticStrainResidual
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillPlasticStrainTensorResidualElasticStep(tCellOrdinal, tLocalState, 
                                                                       tPrevLocalState, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {0.5,0.666666,0.83333,1.0,1.16666,1.33333};
@@ -991,11 +991,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_BackstressResidualEla
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillBackstressTensorResidualElasticStep(tCellOrdinal, tLocalState, 
                                                                    tPrevLocalState, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {1.16667,1.33333,1.5,1.66667};
@@ -1039,11 +1039,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, J2PlasticityUtils_BackstressResidualEla
 
     Plato::J2PlasticityUtilities<tSpaceDim> tJ2PlasticityUtils;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tJ2PlasticityUtils.fillBackstressTensorResidualElasticStep(tCellOrdinal, tLocalState, 
                                                                    tPrevLocalState, tResult);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-5;
     std::vector<Plato::Scalar> tGold = {1.5, 1.666666, 1.8333333, 2.0, 2.1666666, 2.333333};
@@ -1149,13 +1149,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ThermoPlasticityUtils_ElasticStrainWith
     Plato::ScalarArray3DT<ConfigT> tGradient("gradient", tNumCells, tNodesPerCell, tSpaceDim);
     Plato::ScalarMultiVectorT<TotalStrainT> tTotalStrain("total strain", tNumCells, tNumStressTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tComputeTotalStrain(aCellOrdinal, tTotalStrain, tGlobalStateWS, tGradient);
         tThermoPlasticityUtils.computeElasticStrain(aCellOrdinal,  tGlobalStateWS, tLocalStateWS,
                                                     tBasisFunctions, tTotalStrain, tElasticStrain);
-    }, "Unit Test");
+    });
 
 
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -1259,13 +1259,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ThermoPlasticityUtils_ElasticStrainWith
     Plato::ScalarArray3DT<ConfigT> tGradient("gradient", tNumCells, tNodesPerCell, tSpaceDim);
     Plato::ScalarMultiVectorT<TotalStrainT> tTotalStrain("total strain", tNumCells, tNumStressTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tComputeTotalStrain(aCellOrdinal, tTotalStrain, tGlobalStateWS, tGradient);
         tThermoPlasticityUtils.computeElasticStrain(aCellOrdinal,  tGlobalStateWS, tLocalStateWS,
                                                     tBasisFunctions, tTotalStrain, tElasticStrain);
-    }, "Unit Test");
+    });
 
 
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -1383,13 +1383,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ThermoPlasticityUtils_ElasticStrainWith
     Plato::ScalarArray3DT<ConfigT> tGradient("gradient", tNumCells, tNodesPerCell, tSpaceDim);
     Plato::ScalarMultiVectorT<TotalStrainT> tTotalStrain("total strain", tNumCells, tNumStressTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tComputeTotalStrain(aCellOrdinal, tTotalStrain, tGlobalStateWS, tGradient);
         tThermoPlasticityUtils.computeElasticStrain(aCellOrdinal,  tGlobalStateWS, tLocalStateWS,
                                                     tBasisFunctions, tTotalStrain, tElasticStrain);
-    }, "Unit Test");
+    });
 
 
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -1507,13 +1507,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ThermoPlasticityUtils_ElasticStrainWith
     Plato::ScalarArray3DT<ConfigT> tGradient("gradient", tNumCells, tNodesPerCell, tSpaceDim);
     Plato::ScalarMultiVectorT<TotalStrainT> tTotalStrain("total strain", tNumCells, tNumStressTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tComputeTotalStrain(aCellOrdinal, tTotalStrain, tGlobalStateWS, tGradient);
         tThermoPlasticityUtils.computeElasticStrain(aCellOrdinal,  tGlobalStateWS, tLocalStateWS,
                                                     tBasisFunctions, tTotalStrain, tElasticStrain);
-    }, "Unit Test");
+    });
 
 
     constexpr Plato::Scalar tTolerance = 1e-4;

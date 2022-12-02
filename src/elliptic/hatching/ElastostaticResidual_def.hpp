@@ -247,12 +247,12 @@ namespace Hatching
             auto tNumCells = aSpatialDomain.numCells();
             Plato::VonMisesYieldFunction<mNumSpatialDims, mNumVoigtTerms> tComputeVonMises;
             Plato::ScalarVectorT<ResultScalarType> tVonMises("Von Mises", tNumCells);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+            Kokkos::parallel_for("Compute VonMises Stress", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
             {
                 ResultScalarType tCellVonMises(0);
                 tComputeVonMises(aCellOrdinal, aCauchyStress, tCellVonMises);
                 tVonMises(aCellOrdinal) = tCellVonMises;
-            }, "Compute VonMises Stress");
+            });
 
             Plato::toMap(mDataMap, tVonMises, "Vonmises", aSpatialDomain);
     }

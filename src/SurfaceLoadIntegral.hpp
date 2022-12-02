@@ -119,7 +119,7 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
     const auto tCubaturePoints  = ElementType::Face::getCubPoints();
     const auto tNumPoints = tCubatureWeights.size();
 
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+    Kokkos::parallel_for("surface load integral", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal, const Plato::OrdinalType & aPointOrdinal)
     {
       const auto tElementOrdinal = tElementOrds(aSideOrdinal);
@@ -152,7 +152,7 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
               Kokkos::atomic_add(&aResult(tElementOrdinal,tElementDofOrdinal), tResult);
           }
       }
-    }, "surface load integral");
+    });
 }
 // class SurfaceLoadIntegral::operator()
 

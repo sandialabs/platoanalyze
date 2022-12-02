@@ -155,7 +155,7 @@ public:
 
             auto tCubWeight = mCubatureRule.getCubWeight();
             auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+            Kokkos::parallel_for("intergate stabilizing thermal source term", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
             {
                 // 1. calculate weighted cell volume
                 tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
@@ -175,7 +175,7 @@ public:
                 tIntrplVectorField(aCellOrdinal, tBasisFunctions, tCurVelWS, tCurVelGP);
                 Plato::Fluids::integrate_stabilizing_scalar_forces<mNumNodesPerCell, mNumSpatialDims>
                     (aCellOrdinal, tCellVolume, tGradient, tCurVelGP, tThermalSource, aResultWS, -tScalar);
-            },"intergate stabilizing thermal source term");
+            });
         }
     }
 
@@ -354,7 +354,7 @@ public:
 
             auto tCubWeight = mCubatureRule.getCubWeight();
             auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+            Kokkos::parallel_for("intergate stabilizing thermal source term", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
             {
                 // 1. calculate weighted cell volume
                 tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
@@ -371,7 +371,7 @@ public:
                 tIntrplVectorField(aCellOrdinal, tBasisFunctions, tCurVelWS, tCurVelGP);
                 Plato::Fluids::integrate_stabilizing_scalar_forces<mNumNodesPerCell, mNumSpatialDims>
                     (aCellOrdinal, tCellVolume, tGradient, tCurVelGP, tThermalSource, aResultWS, -tScalar);
-            },"intergate stabilizing thermal source term");
+            });
         }
     }
 

@@ -203,14 +203,14 @@ inline void print_array_ordinals_1D(const Plato::OrdinalVector & aInput, std::st
 {
     printf("\nBEGIN PRINT: %s\n", aName.c_str());
     Plato::OrdinalType tSize = aInput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tSize), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("print array ordinals 1D", Kokkos::RangePolicy<>(0, tSize), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
 #ifdef PLATOANALYZE_LONG_LONG_ORDINALTYPE
         printf("X[%lld] = %lld\n", aIndex, aInput(aIndex));
 #else
         printf("X[%d] = %d\n", aIndex, aInput(aIndex));
 #endif
-    }, "print array ordinals 1D");
+    });
     printf("END PRINT: %s\n", aName.c_str());
 }
 // function print
@@ -286,14 +286,14 @@ inline void print(const ArrayT & aInput, std::string aName = "")
 {
     printf("\nBEGIN PRINT: %s\n", aName.c_str());
     Plato::OrdinalType tSize = aInput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tSize), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("print 1D array", Kokkos::RangePolicy<>(0, tSize), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
 #ifdef PLATOANALYZE_LONG_LONG_ORDINALTYPE
         printf("X[%lld] = %e\n", aIndex, aInput(aIndex));
 #else
         printf("X[%d] = %e\n", aIndex, aInput(aIndex));
 #endif
-    }, "print 1D array");
+    });
     printf("END PRINT: %s\n", aName.c_str());
 }
 // function print
@@ -310,7 +310,7 @@ inline void print_array_2D(const ArrayT & aInput, const std::string & aName)
     printf("\nBEGIN PRINT: %s\n", aName.c_str());
     const Plato::OrdinalType tNumRows = aInput.extent(0);
     const Plato::OrdinalType tNumCols = aInput.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRow)
+    Kokkos::parallel_for("print 2D array", Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRow)
     {
         for(Plato::OrdinalType tCol = 0; tCol < tNumCols; tCol++)
         {
@@ -320,7 +320,7 @@ inline void print_array_2D(const ArrayT & aInput, const std::string & aName)
             printf("X(%d,%d) = %e\n", aRow, tCol, aInput(aRow, tCol));
 #endif
         }
-    }, "print 2D array");
+    });
     printf("END PRINT: %s\n", aName.c_str());
 }
 // function print_array_2D
@@ -332,7 +332,7 @@ inline void print_array_2D_Fad(Plato::OrdinalType aNumCells,
                                std::string aName = "")
 {
     printf("\nBEGIN PRINT: %s\n", aName.c_str());
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCell)
+    Kokkos::parallel_for("print 2D array Fad", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCell)
     {
         for(Plato::OrdinalType tDof = 0; tDof < aNumDofsPerCell; tDof++)
         {
@@ -342,7 +342,7 @@ inline void print_array_2D_Fad(Plato::OrdinalType aNumCells,
             printf("X(%d,%d) = %e\n", aCell, tDof, aInput(aCell).dx(tDof));
 #endif
         }
-    }, "print 2D array Fad");
+    });
     printf("END PRINT: %s\n", aName.c_str());
 }
 
@@ -359,7 +359,7 @@ inline void print_array_3D(const ArrayT & aInput, const std::string & aName)
     const Plato::OrdinalType tNumRows = aInput.extent(1);
     const Plato::OrdinalType tNumCols = aInput.extent(2);
     const Plato::OrdinalType tNumMatrices = aInput.extent(0);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumMatrices), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("print 3D array", Kokkos::RangePolicy<>(0, tNumMatrices), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         for(Plato::OrdinalType tRow = 0; tRow < tNumRows; tRow++)
         {
@@ -372,7 +372,7 @@ inline void print_array_3D(const ArrayT & aInput, const std::string & aName)
 #endif
             }
         }
-    }, "print 3D array");
+    });
     printf("END PRINT: %s\n", aName.c_str());
 }
 // function print
@@ -395,13 +395,13 @@ inline void print_fad_val_values
     std::cout << "\nSTART: Print ScalarMultiVectorT '" << aName << "'.\n";
     const auto tLenghtDim1 = aInput.extent(0);
     const auto tLenghtDim2 = aInput.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLenghtDim1), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("print_fad_val_values", Kokkos::RangePolicy<>(0, tLenghtDim1), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         for(Plato::OrdinalType tIndex = 0; tIndex < tLenghtDim2; tIndex++)
         {
             printf("X(%d,%d) = %f\n", aOrdinal, tIndex, aInput(aOrdinal,tIndex).val());
         }
-    }, "print_fad_val_values");
+    });
     std::cout << "\nEND: Print ScalarMultiVectorT '" << aName << "'.\n";
 }
 // function print_fad_val_values
@@ -423,10 +423,10 @@ inline void print_fad_val_values
 {
     std::cout << "\nStart: Print ScalarVector '" << aName << "'.\n";
     const auto tLength = aInput.extent(0);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("print_fad_val_values", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         printf("Input(%d) = %f\n", aOrdinal, aInput(aOrdinal).val());
-    }, "print_fad_val_values");
+    });
     std::cout << "End: Print ScalarVector '" << aName << "'.\n";
 }
 // function print_fad_val_values
@@ -452,7 +452,7 @@ inline void print_fad_dx_values
 {
     std::cout << "\nStart: Print ScalarVector '" << aName << "'.\n";
     const auto tLength = aInput.extent(0);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("print_fad_dx_values", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         for(Plato::OrdinalType tNode=0; tNode < NumNodesPerCell; tNode++)
         {
@@ -461,7 +461,7 @@ inline void print_fad_dx_values
                 printf("Input(Cell=%d,Node=%d,Dof=%d) = %f\n", aOrdinal, tNode, tDof, aInput(aOrdinal).dx(tNode * NumDofsPerNode + tDof));
             }
         }
-    }, "print_fad_dx_values");
+    });
     std::cout << "End: Print ScalarVector '" << aName << "'.\n";
 }
 // function print_fad_dx_values

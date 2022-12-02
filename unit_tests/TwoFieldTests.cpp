@@ -54,7 +54,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   int tNumDofs = tNumNodes*tNumDofsPerNode;
 
   Plato::ScalarMultiVector tPGradWS("Projected pressure gradient workset", tNumDofs, spaceDim*nodesPerCell);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumCells), KOKKOS_LAMBDA(const int & aCellOrdinal)
+  Kokkos::parallel_for("projected pgrad", Kokkos::RangePolicy<int>(0,tNumCells), KOKKOS_LAMBDA(const int & aCellOrdinal)
   {
       for(int iNode=0; iNode<nodesPerCell; iNode++)
       {
@@ -63,11 +63,11 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
               tPGradWS(aCellOrdinal, iNode*spaceDim+iDim) = (4e-7)*(iNode+1)*(iDim+1)*(aCellOrdinal+1);
           }
       }
-  }, "projected pgrad");
+  });
 
   Plato::ScalarVector state("state", tNumDofs);
   Plato::ScalarVector z("control", tNumDofs);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+  Kokkos::parallel_for("state", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      z(aNodeOrdinal) = 1.0;
 
@@ -76,7 +76,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
      state(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal;
      state(aNodeOrdinal*tNumDofsPerNode+3) = (5e-7)*aNodeOrdinal;
      state(aNodeOrdinal*tNumDofsPerNode+4) = (4e-7)*aNodeOrdinal;
-  }, "state");
+  });
 
   Plato::WorksetBase<ElementType> worksetBase(tMesh);
 
@@ -588,7 +588,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, StabilizedThermomechResidual3D )
   Plato::ScalarVector tProjPGrad    ("ProjPGrad",     tNumNodes*spaceDim);
   Plato::ScalarVector tProjectState ("Project state", tNumNodes);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+  Kokkos::parallel_for("state", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      tControl(aNodeOrdinal) = 1.0;
 
@@ -597,7 +597,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, StabilizedThermomechResidual3D )
      tState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal;
      tState(aNodeOrdinal*tNumDofsPerNode+4) = (4e-7)*aNodeOrdinal;
      tState(aNodeOrdinal*tNumDofsPerNode+3) =    0.0*aNodeOrdinal;
-  }, "state");
+  });
 
 
   // create input for stabilized thermomechanics
@@ -786,10 +786,10 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
   Plato::ScalarVector tControl      ("Control",   tNumNodes);
   Plato::blas1::fill( 1.0, tControl );
   Plato::blas1::fill( 0.0, tProjPGrad );
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+  Kokkos::parallel_for("state", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      tProjectState(aNodeOrdinal) = 1.0*aNodeOrdinal;
-  }, "state");
+  });
 
   // create input
   //
@@ -888,12 +888,12 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
     Plato::ScalarVector tRowSum("row sum", tResidual.extent(0));
 
     auto tNumBlockRows = tJacobian->rowMap().size() - 1;
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumBlockRows), KOKKOS_LAMBDA(int blockRowOrdinal)
+    Kokkos::parallel_for("row sum inverse", Kokkos::RangePolicy<int>(0,tNumBlockRows), KOKKOS_LAMBDA(int blockRowOrdinal)
     {
       // compute row sum
       rowSum(blockRowOrdinal, tRowSum);
 
-    }, "row sum inverse");
+    });
 
     auto tRowSum_Host = Kokkos::create_mirror_view( tRowSum );
     Kokkos::deep_copy( tRowSum_Host, tRowSum );

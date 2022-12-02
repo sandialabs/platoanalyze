@@ -143,13 +143,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
         Plato::OrdinalType tNumNodesPerCell = tSpaceDim+1;
         Plato::OrdinalType tNumDofsPerCell = tSpaceDim*tNumNodesPerCell;
         Plato::ScalarMultiVector tResultWS_POD("result pod", tNumCells, tNumDofsPerCell);
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(int aCellOrdinal)
+        Kokkos::parallel_for("flatten", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(int aCellOrdinal)
         {
             for(Plato::OrdinalType iDof=0; iDof<tNumDofsPerCell; iDof++)
             {
                 tResultWS_POD(aCellOrdinal, iDof) = tResultWS(aCellOrdinal).dx(iDof);
             }
-        }, "flatten");
+        });
 
 
         auto tResultWS_Host = Kokkos::create_mirror_view(tResultWS_POD);

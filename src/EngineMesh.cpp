@@ -150,14 +150,14 @@ namespace Plato
         Kokkos::resize(mNodeElementGraph_offsets, tNumNodes+1);
 
         Plato::OrdinalVector tNumConnectedElems("number of connected elements", tNumNodes+1);
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumElems), KOKKOS_LAMBDA(Plato::OrdinalType aElemOrdinal)
+        Kokkos::parallel_for("count connections", Kokkos::RangePolicy<>(0,tNumElems), KOKKOS_LAMBDA(Plato::OrdinalType aElemOrdinal)
         {
             for( decltype(tNumNodesPerElement) tElemLocalNodeOrd=0; tElemLocalNodeOrd<tNumNodesPerElement; tElemLocalNodeOrd++)
             {
                 auto tProcLocalNodeOrd = tConnectivity(aElemOrdinal*tNumNodesPerElement+tElemLocalNodeOrd);
                 Kokkos::atomic_increment(&tNumConnectedElems(tProcLocalNodeOrd));
             }
-        }, "count connections");
+        });
 
         // compute offsets
         auto& tNodeElementGraph_offsets = mNodeElementGraph_offsets;
@@ -180,7 +180,7 @@ namespace Plato
         auto& tNodeElementGraph_ordinals = mNodeElementGraph_ordinals;
 
         Kokkos::deep_copy(tNumConnectedElems, 0);
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(Plato::OrdinalType aElemOrdinal)
+        Kokkos::parallel_for("element ordinals", Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(Plato::OrdinalType aElemOrdinal)
         {
             for( decltype(tNumNodesPerElement) tElemLocalNodeOrd=0; tElemLocalNodeOrd<tNumNodesPerElement; tElemLocalNodeOrd++)
             {
@@ -189,12 +189,12 @@ namespace Plato
                 auto tLocalOrd = Kokkos::atomic_fetch_add(&tNumConnectedElems(tProcLocalNodeOrd), 1);
                 tNodeElementGraph_ordinals(tStart+tLocalOrd) = aElemOrdinal;
             }
-        }, "element ordinals");
+        });
 
         // sort list of connected elements (otherwise cpu and gpu builds produce different graphs)
         auto tOrds = tNodeElementGraph_ordinals;
         auto tOffs = tNodeElementGraph_offsets;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
+        Kokkos::parallel_for("sort element ordinals", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
         {
             auto tFrom = tOffs(aNodeOrdinal);
             auto tTo = tOffs(aNodeOrdinal+1)-1;
@@ -210,7 +210,7 @@ namespace Plato
                     }
                 }
             }
-        }, "sort element ordinals");
+        });
     }
 
     void
@@ -227,7 +227,7 @@ namespace Plato
         Plato::OrdinalVector tFatGraph_ordinals("node ordinals", tNumOrdinals);
         auto tNumEntries = tNumNodes+1;
         Plato::OrdinalVector tNumConnectedNodes("number of connected nodes", tNumEntries);
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
+        Kokkos::parallel_for("node ordinals", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
         {
             Plato::OrdinalType tNumUnique(0);
             auto tFrom = tNodeElementGraph_offsets(aNodeOrdinal);
@@ -256,7 +256,7 @@ namespace Plato
                 }
             }
             tNumConnectedNodes(aNodeOrdinal) = tNumUnique;
-        }, "node ordinals");
+        });
 
         // compute offsets
         auto& tNodeNodeGraph_offsets = mNodeNodeGraph_offsets;
@@ -277,7 +277,7 @@ namespace Plato
         Kokkos::resize(mNodeNodeGraph_ordinals, tNumNodeNodeEntries);
 
         auto& tNodeNodeGraph_ordinals = mNodeNodeGraph_ordinals;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
+        Kokkos::parallel_for("node ordinals", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
         {
             auto tFrom = tNodeNodeGraph_offsets(aNodeOrdinal);
             auto tTo   = tNodeNodeGraph_offsets(aNodeOrdinal+1);
@@ -289,12 +289,12 @@ namespace Plato
             {
                 tNodeNodeGraph_ordinals(tIndex) = tFatGraph_ordinals(tFatGraphOffset++);
             }
-        }, "node ordinals");
+        });
 
         // sort list of connected nodes (otherwise cpu and gpu builds produce different graphs)
         auto tOrds = tNodeNodeGraph_ordinals;
         auto tOffs = tNodeNodeGraph_offsets;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
+        Kokkos::parallel_for("sort ordinals", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
         {
             auto tFrom = tOffs(aNodeOrdinal);
             auto tTo = tOffs(aNodeOrdinal+1)-1;
@@ -310,7 +310,7 @@ namespace Plato
                     }
                 }
             }
-        }, "sort ordinals");
+        });
     }
 
     void
@@ -327,10 +327,10 @@ namespace Plato
             auto tBlockName = mMeshIO->getBlockName(tBlockIndex);
             auto tNumElemInBlk = mMeshIO->getNumElemInBlk(tBlockIndex);
             Plato::OrdinalVector tElementOrdinals("element ordinals", tNumElemInBlk);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumElemInBlk), KOKKOS_LAMBDA(Plato::OrdinalType aElemOrdinal)
+            Kokkos::parallel_for("element ordinals", Kokkos::RangePolicy<>(0,tNumElemInBlk), KOKKOS_LAMBDA(Plato::OrdinalType aElemOrdinal)
             {
                 tElementOrdinals(aElemOrdinal) = tElementOrdinalOffset+aElemOrdinal;
-            }, "element ordinals");
+            });
             tBlockElementOrdinals[tBlockName] = tElementOrdinals;
             tElementOrdinalOffset += tNumElemInBlk;
         }
@@ -427,7 +427,7 @@ namespace Plato
             auto tNumNodesPerElement = mNumNodesPerElement;
             auto& tConnectivity = mConnectivity;
             Plato::OrdinalVector tLocalNodeOrds("local node ordinals", tNumFaceNodes);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumSidesThisSet), KOKKOS_LAMBDA(Plato::OrdinalType aSideOrdinal)
+            Kokkos::parallel_for("local node numbers", Kokkos::RangePolicy<>(0,tNumSidesThisSet), KOKKOS_LAMBDA(Plato::OrdinalType aSideOrdinal)
             {
                 auto tElementOrd = tElementOrds(aSideOrdinal);
                 for( decltype(tNumNodesPerFace) tNodeI = 0; tNodeI < tNumNodesPerFace; tNodeI++)
@@ -440,7 +440,7 @@ namespace Plato
                         }
                     }
                 }
-            }, "local node numbers");
+            });
 
             mSideSetLocalNodeOrdinals[tName] = tLocalNodeOrds;
         }
@@ -647,10 +647,10 @@ namespace Plato
         auto tElements = mFullSurfaceSideSetElementOrdinals;
 
         auto tNumFaces = tFaces.size();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumFaces), KOKKOS_LAMBDA(Plato::OrdinalType aFaceOrdinal)
+        Kokkos::parallel_for("create indexable array", Kokkos::RangePolicy<>(0,tNumFaces), KOKKOS_LAMBDA(Plato::OrdinalType aFaceOrdinal)
         {
             tFullSurfaceArray(tElements(aFaceOrdinal)*tNumFacesPerElement + tFaces(aFaceOrdinal)) = 1;
-        }, "create indexable array");
+        });
 
         Kokkos::deep_copy(tRemainingSurfaceArray, tFullSurfaceArray);
 
@@ -662,10 +662,10 @@ namespace Plato
             auto tElements = mSideSetElementOrdinals[tExcludeName];
 
             auto tNumFaces = tFaces.size();
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumFaces), KOKKOS_LAMBDA(Plato::OrdinalType aFaceOrdinal)
+            Kokkos::parallel_for("subtract", Kokkos::RangePolicy<>(0,tNumFaces), KOKKOS_LAMBDA(Plato::OrdinalType aFaceOrdinal)
             {
                 tRemainingSurfaceArray(tElements(aFaceOrdinal)*tNumFacesPerElement + tFaces(aFaceOrdinal)) = 0;
-            }, "subtract");
+            });
         }
 
         // count remaining sides and create resulting views
@@ -700,7 +700,7 @@ namespace Plato
 
         // populate local nodes 
         auto tFaceGraph = mFaceGraph;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumRemainingFaces), KOKKOS_LAMBDA(Plato::OrdinalType aFaceOrdinal)
+        Kokkos::parallel_for("local nodes", Kokkos::RangePolicy<>(0,tNumRemainingFaces), KOKKOS_LAMBDA(Plato::OrdinalType aFaceOrdinal)
         {
             auto tOffset = aFaceOrdinal*tNumNodesPerFace;
             auto tLocalFaceOrdinal = tNewComplementFaces(aFaceOrdinal);
@@ -708,7 +708,7 @@ namespace Plato
             {
                 tNewComplementLocalNodes(tOffset+tNodeOrdinal) = tFaceGraph(tLocalFaceOrdinal, tNodeOrdinal);
             }
-        }, "local nodes");
+        });
 
         // add to Complements maps
         mSideSetFacesComplementOrdinals[aExcludeNames] = tNewComplementFaces;

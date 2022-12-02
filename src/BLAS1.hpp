@@ -27,10 +27,10 @@ namespace blas1
 inline void abs(const Plato::ScalarVector & aVector)
 {
     Plato::OrdinalType tLength = aVector.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("calculate absolute value", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aVector(aOrdinal) = fabs(aVector(aOrdinal));
-    }, "calculate absolute value");
+    });
 }
 // function abs
 
@@ -122,10 +122,10 @@ inline void fill(const Plato::Scalar & aInput, const VectorT & aVector)
     }
 
     Plato::OrdinalType tNumLocalVals = aVector.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aVector(aOrdinal) = aInput;
-    }, "fill vector");
+    });
 }
 // function fill
 
@@ -171,10 +171,10 @@ inline void fill(const Plato::Scalar & aMultiplier,
     }
 
     const Plato::OrdinalType tNumLocalVals = aOutput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         aOutput(aOrdinals(aIndex)) = aMultiplier * aValues(aIndex);
-    }, "fill vector");
+    });
 }
 // function fill
 
@@ -195,10 +195,10 @@ inline void copy(const VecOneT & aInput, const VecTwoT & aOutput)
     }
 
     Plato::OrdinalType tNumLocalVals = aInput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("copy vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aOutput(aOrdinal) = aInput(aOrdinal);
-    }, "copy vector");
+    });
 }
 // function copy
 
@@ -223,10 +223,10 @@ inline void scale(const Plato::Scalar & aInput, const VecT & aVector)
     }
 
     Plato::OrdinalType tNumLocalVals = aVector.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("scale vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aVector(aOrdinal) *= aInput;
-    }, "scale vector");
+    });
 }
 // function scale
 
@@ -248,10 +248,10 @@ inline void axpy(const Plato::Scalar & aAlpha, const VecT & aInput, const VecT &
     }
 
     Plato::OrdinalType tNumLocalVals = aInput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("Plato::axpy", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aOutput(aOrdinal) += aAlpha * aInput(aOrdinal);
-    }, "Plato::axpy");
+    });
 }
 // function axpy
 
@@ -285,10 +285,10 @@ void update(const Plato::Scalar & aAlpha, const VecT & aInput, const Plato::Scal
     }
 
     Plato::OrdinalType tNumLocalVals = aInput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("update vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aOutput(aOrdinal) = aAlpha * aInput(aOrdinal) + aBeta * aOutput(aOrdinal);
-    }, "update vector");
+    });
 }
 // function update
 
@@ -404,10 +404,10 @@ inline void extract(const Plato::ScalarVector& aFromVector, Plato::ScalarVector&
 
     auto tNumRows = aToVector.extent(0);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("extract", Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aToVector(aOrdinal) = aFromVector(aOrdinal*NumStride + NumOffset);
-    }, "extract");
+    });
 }
 // function extract
 

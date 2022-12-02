@@ -456,7 +456,7 @@ public:
 
         auto tQuadratureWeight = mCubatureRule->getCubWeight();
         auto tBasisFunctions = mCubatureRule->getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+        Kokkos::parallel_for("stabilized infinitesimal strain plasticity residual", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
         {
             // compute configuration gradients
             tComputeGradient(aCellOrdinal, tConfigurationGradient, aConfig, tCellVolume);
@@ -506,7 +506,7 @@ public:
             tJ2PlasticityUtils.getAccumulatedPlasticStrain(aCellOrdinal, aCurrentLocalState, tAccumPlasticStrain);
             tJ2PlasticityUtils.getPlasticStrainTensor(aCellOrdinal, aCurrentLocalState, tPlasticStrain);
             tJ2PlasticityUtils.getBackstressTensor(aCellOrdinal, aCurrentLocalState, tBackStress);
-        }, "stabilized infinitesimal strain plasticity residual");
+        });
 
         this->addBodyForces(aCurrentGlobalState, aControls, aConfig, aResult);
 

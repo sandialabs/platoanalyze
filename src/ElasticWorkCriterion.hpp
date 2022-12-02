@@ -213,7 +213,7 @@ public:
 
         auto tQuadratureWeight = mCubatureRule.getCubWeight();
         auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+        Kokkos::parallel_for("elastic work criterion", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
         {
             // compute configuration gradients
             tComputeGradient(aCellOrdinal, tConfigurationGradient, aConfig, tCellVolume);
@@ -257,7 +257,7 @@ public:
             for (Plato::OrdinalType tIndex = 0; tIndex < tNumStressTerms; ++tIndex)
                 aResult(aCellOrdinal) += tAverageCauchyStress(aCellOrdinal, tIndex) * tElasticStrainMisfit(aCellOrdinal, tIndex);
             aResult(aCellOrdinal) *= tCellVolume(aCellOrdinal);
-        }, "elastic work criterion");
+        });
     }
 
     /******************************************************************************//**

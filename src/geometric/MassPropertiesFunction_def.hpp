@@ -788,7 +788,7 @@ namespace Geometric
         Plato::ScalarVector tYCoordinates("Y-Coordinates", tNumVertices);
         Plato::ScalarVector tZCoordinates("Z-Coordinates", tNumVertices);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & tVertexIndex)
+        Kokkos::parallel_for("Fill vertex coordinate views", Kokkos::RangePolicy<>(0, tNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & tVertexIndex)
         {
             const Plato::Scalar x_coordinate = tNodeCoordinates[tVertexIndex * tSpaceDim + 0];
             const Plato::Scalar y_coordinate = tNodeCoordinates[tVertexIndex * tSpaceDim + 1];
@@ -797,7 +797,7 @@ namespace Geometric
             tXCoordinates(tVertexIndex) = x_coordinate;
             tYCoordinates(tVertexIndex) = y_coordinate;
             tZCoordinates(tVertexIndex) = z_coordinate;
-        }, "Fill vertex coordinate views");
+        });
 
         Plato::Scalar tXmin;
         Plato::Scalar tXmax;

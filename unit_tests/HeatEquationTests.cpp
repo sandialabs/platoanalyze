@@ -647,7 +647,7 @@ TEUCHOS_UNIT_TEST( HeatEquationTests, InternalThermalEnergy3D )
   Plato::ScalarMultiVector T("temperature history", tNumSteps, tNumNodes);
   Plato::ScalarMultiVector Tdot("temperature rate history", tNumSteps, tNumNodes);
   Plato::ScalarVector z("density", tNumNodes);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+  Kokkos::parallel_for("temperature history", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
   {
      z(aNodeOrdinal) = 1.0;
 
@@ -655,7 +655,7 @@ TEUCHOS_UNIT_TEST( HeatEquationTests, InternalThermalEnergy3D )
        T(i, aNodeOrdinal) = (i+1)*aNodeOrdinal;
        Tdot(i, aNodeOrdinal) = 0.0;
      }
-  }, "temperature history");
+  });
 
 
   Plato::DataMap tDataMap;
@@ -817,12 +817,12 @@ TEUCHOS_UNIT_TEST( HeatEquationTests, ComputedField_UniformScalar )
   Plato::ScalarVector ycoords("y", tNumNodes);
   Plato::ScalarVector zcoords("z", tNumNodes);
   auto coords = tMesh->Coordinates();
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(int nodeOrdinal)
+  Kokkos::parallel_for("get coords", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(int nodeOrdinal)
   {
     xcoords(nodeOrdinal) = coords[nodeOrdinal*spaceDim+0];
     ycoords(nodeOrdinal) = coords[nodeOrdinal*spaceDim+1];
     zcoords(nodeOrdinal) = coords[nodeOrdinal*spaceDim+2];
-  }, "get coords");
+  });
 
   auto xCoords_Host = Kokkos::create_mirror_view( xcoords );
   auto yCoords_Host = Kokkos::create_mirror_view( ycoords );

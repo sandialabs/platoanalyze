@@ -147,7 +147,7 @@ public:
 
             auto tCubWeight = mCubatureRule.getCubWeight();
             auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+            Kokkos::parallel_for("intergate thermal source term", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
             {
                 tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
                 tCellVolume(aCellOrdinal) = tCellVolume(aCellOrdinal) * tCubWeight;
@@ -157,7 +157,7 @@ public:
                     (aCellOrdinal, tUnpenalizedDimLessConstant, tPenaltyExponent, tControlWS);
                 Plato::Fluids::integrate_scalar_field<mNumTempDofsPerCell>
                     (aCellOrdinal, tBasisFunctions, tCellVolume, tThermalSource, aResultWS, -tPenalizedDimLessConstant);
-            },"intergate thermal source term");
+            });
         }
     }
 
@@ -326,7 +326,7 @@ public:
 
             auto tCubWeight = mCubatureRule.getCubWeight();
             auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+            Kokkos::parallel_for("intergate thermal source term", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
             {
                 tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
                 tCellVolume(aCellOrdinal) = tCellVolume(aCellOrdinal) * tCubWeight;
@@ -334,7 +334,7 @@ public:
                 auto tScalarConstant = aMultiplier * tDimLessConstant;
                 Plato::Fluids::integrate_scalar_field<mNumTempDofsPerCell>
                     (aCellOrdinal, tBasisFunctions, tCellVolume, tThermalSource, aResultWS, -tScalarConstant);
-            },"intergate thermal source term");
+            });
         }
     }
 

@@ -24,13 +24,13 @@ applyBlockConstraints(
 
     Plato::OrdinalVector tDofs("dof ids", tNumNodes * NumDofPerNode);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("dof ids", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         for(Plato::OrdinalType tDof=0; tDof<NumDofPerNode; tDof++)
         {
             tDofs(aNodeOrdinal*NumDofPerNode + tDof) = aNodes(aNodeOrdinal)*NumDofPerNode+tDof;
         }
-    }, "dof ids");
+    });
 
     Plato::ScalarVector tVals("values", tDofs.extent(0));
     applyBlockConstraints<NumDofPerNode>(aMatrix, aRhs, tDofs, tVals, 1.0);
@@ -58,7 +58,7 @@ applyBlockConstraints(
     auto tRowMap        = aMatrix->rowMap();
     auto tColumnIndices = aMatrix->columnIndices();
     ScalarVector tMatrixEntries = aMatrix->entries();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumBCs), KOKKOS_LAMBDA(const Plato::OrdinalType & aBcOrdinal)
+    Kokkos::parallel_for("Dirichlet BC imposition - First loop", Kokkos::RangePolicy<>(0, tNumBCs), KOKKOS_LAMBDA(const Plato::OrdinalType & aBcOrdinal)
     {
         OrdinalType tRowDofOrdinal = aDirichletDofs[aBcOrdinal];
         Scalar tValue = aScale*aDirichletValues[aBcOrdinal];
@@ -101,13 +101,13 @@ applyBlockConstraints(
                 }
             }
         }
-    },"Dirichlet BC imposition - First loop");
+    });
   
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumBCs), KOKKOS_LAMBDA(int bcOrdinal){
+    Kokkos::parallel_for("Dirichlet BC imposition - Second loop", Kokkos::RangePolicy<int>(0,tNumBCs), KOKKOS_LAMBDA(int bcOrdinal){
         OrdinalType tDofOrdinal = aDirichletDofs[bcOrdinal];
         Scalar tValue = aScale*aDirichletValues[bcOrdinal];
         aRhs(tDofOrdinal) = tValue;
-    },"Dirichlet BC imposition - Second loop");
+    });
 
 }
 
@@ -124,13 +124,13 @@ applyConstraints(
 
     Plato::OrdinalVector tDofs("dof ids", tNumNodes * NumDofPerNode);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("dof ids", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         for(Plato::OrdinalType tDof=0; tDof<NumDofPerNode; tDof++)
         {
             tDofs(aNodeOrdinal*NumDofPerNode + tDof) = aNodes(aNodeOrdinal)*NumDofPerNode+tDof;
         }
-    }, "dof ids");
+    });
 
     Plato::ScalarVector tVals("values", tDofs.extent(0));
     applyConstraints<NumDofPerNode>(aMatrix, aRhs, tDofs, tVals, 1.0);
@@ -157,7 +157,7 @@ applyConstraints(
   auto rowMap        = matrix->rowMap();
   auto columnIndices = matrix->columnIndices();
   ScalarVector matrixEntries = matrix->entries();
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,numBCs), KOKKOS_LAMBDA(int bcOrdinal)
+  Kokkos::parallel_for("BC imposition", Kokkos::RangePolicy<int>(0,numBCs), KOKKOS_LAMBDA(int bcOrdinal)
   {
     OrdinalType nodeNumber = bcDofs[bcOrdinal];
     Scalar value = aScale*bcValues[bcOrdinal];
@@ -189,14 +189,14 @@ applyConstraints(
         }
       }
     }
-  },"BC imposition");
+  });
   
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,numBCs), KOKKOS_LAMBDA(int bcOrdinal)
+  Kokkos::parallel_for("BC imposition", Kokkos::RangePolicy<int>(0,numBCs), KOKKOS_LAMBDA(int bcOrdinal)
   {
     OrdinalType nodeNumber = bcDofs[bcOrdinal];
     Scalar value = aScale*bcValues[bcOrdinal];
     rhs(nodeNumber) = value;
-  },"BC imposition");
+  });
 }
 
 /******************************************************************************//**
@@ -249,11 +249,11 @@ enforce_boundary_condition
  const Plato::ScalarVector  & aState)
 {
     auto tLength = aBcValues.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("enforce boundary condition", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         auto tDOF = aBcDofs(aOrdinal);
         aState(tDOF) = aBcValues(aOrdinal);
-    }, "enforce boundary condition");
+    });
 }
 // function enforce_boundary_condition
 
@@ -272,10 +272,10 @@ inline void set_dofs_values
        Plato::ScalarVector  & aOutput,
        Plato::Scalar          aValue = 0.0)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aBcDofs.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("set values at bc dofs to zero", Kokkos::RangePolicy<>(0, aBcDofs.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         aOutput(aBcDofs(aOrdinal)) = aValue;
-    }, "set values at bc dofs to zero");
+    });
 }
 // function set_dofs_values
 

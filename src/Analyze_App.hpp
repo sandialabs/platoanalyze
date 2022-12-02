@@ -594,10 +594,10 @@ public:
 
         int tNumData = aDeviceData.extent(0);
         Plato::ScalarVector tCopy("copy", tNumData);
-        Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumData), KOKKOS_LAMBDA(int datumOrdinal)
+        Kokkos::parallel_for("get subview", Kokkos::RangePolicy<int>(0,tNumData), KOKKOS_LAMBDA(int datumOrdinal)
         {
             tCopy(datumOrdinal) = aDeviceData(datumOrdinal,aIndex);
-        }, "get subview");
+        });
 
         copyFieldFromAnalyze(tCopy, aSharedField);
     }

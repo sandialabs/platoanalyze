@@ -256,10 +256,10 @@ public:
         mMaskedElemLids = Plato::OrdinalVector("masked element list", tNumElems);
 
         auto tTotalElemLids = mTotalElemLids;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("get element ids", Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             tTotalElemLids(aCellOrdinal) = tElemLids[aCellOrdinal];
-        }, "get element ids");
+        });
         Kokkos::deep_copy(mMaskedElemLids, mTotalElemLids);
     }
 

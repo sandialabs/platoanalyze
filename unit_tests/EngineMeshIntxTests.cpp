@@ -673,7 +673,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet4ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -683,7 +683,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet4ScalarField)
         }
         tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
         tNodalScalarField(tNodeOrdinal) = tDistance;
-    }, "loop on nodes");
+    });
 
     // write field
     std::string tOutFileName = "unit_cube_tet4_scalarField_out.exo";
@@ -709,7 +709,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet10ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -719,7 +719,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet10ScalarField)
         }
         tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
         tNodalScalarField(tNodeOrdinal) = tDistance;
-    }, "loop on nodes");
+    });
 
     // write field
     std::string tOutFileName = "unit_cube_tet10_scalarField_out.exo";
@@ -745,7 +745,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex8ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -755,7 +755,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex8ScalarField)
         }
         tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
         tNodalScalarField(tNodeOrdinal) = tDistance;
-    }, "loop on nodes");
+    });
 
     // write field
     std::string tOutFileName = "unit_cube_hex8_scalarField_out.exo";
@@ -781,7 +781,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex20ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
+    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
     {
         Plato::Scalar tDistance = 0.0;
         for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
@@ -791,7 +791,7 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex20ScalarField)
         }
         tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
         tNodalScalarField(tNodeOrdinal) = tDistance;
-    }, "loop on nodes");
+    });
 
     // write field
     std::string tOutFileName = "unit_cube_hex20_scalarField_out.exo";
