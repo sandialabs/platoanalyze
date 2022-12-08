@@ -14,6 +14,7 @@
 #include "Plato_InputData.hpp"
 #include "Plato_Exceptions.hpp"
 #include "Plato_Parser.hpp"
+#include "PlatoMathHelpers.hpp"
 
 #include "WorksetBase.hpp"
 #include "SpatialModel.hpp"
@@ -1388,6 +1389,292 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElastoStatic_NoBodyContribution)
         1.0e4 / 9 / 2, 0, 0, 0, 1.0e4 / 9 / 2, 0, 0, 0, 1.0e4 / 9 / 2,
         1.0e4 / 9 / 2, 0, 0, 0, 1.0e4 / 9 / 2, 0, 0, 0, 1.0e4 / 9 / 2,
         1.0e4 / 9 / 2, 0, 0, 0, 1.0e4 / 9 / 2, 0, 0, 0, 1.0e4 / 9 / 2,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        };
+
+    for(int iVal=0; iVal<tEntries_Gold.size(); iVal++){
+        TEST_FLOATING_EQUALITY(tEntries_Host(iVal), tEntries_Gold[iVal], 1e-12);
+    }
+}
+
+TEUCHOS_UNIT_TEST(GradientXTests, ElastoStatic_NoBodyContribution)
+{
+    Teuchos::RCP<Teuchos::ParameterList> tInputs =
+        Teuchos::getParametersFromXmlString(
+        "<ParameterList name='Plato Problem'>                                           \n"
+        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>              \n"
+        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                      \n"
+        "  <ParameterList name='Elliptic'>                                                \n"
+        "    <ParameterList name='Penalty Function'>                                      \n"
+        "      <Parameter name='Exponent' type='double' value='1.0'/>                     \n"
+        "      <Parameter name='Minimum Value' type='double' value='0.0'/>                \n"
+        "      <Parameter name='Type' type='string' value='SIMP'/>                        \n"
+        "    </ParameterList>                                                             \n"
+        "  </ParameterList>                                                               \n"
+
+        "  <ParameterList name='Spatial Model'>                                         \n"
+        "    <ParameterList name='Domains'>                                             \n"
+        "      <ParameterList name='Box 1'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "      <ParameterList name='Box 2'>                                             \n"
+        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
+        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+
+        "  <ParameterList name='Contact'>                                                     \n"
+        "    <ParameterList name='Pairs'>                                                     \n"
+        "      <ParameterList name='Pair 1'>                                                  \n"
+        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
+        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
+        "        <ParameterList name='A Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "        <ParameterList name='B Surface'>                                                  \n"
+        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
+        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
+        "        </ParameterList>                                                               \n"
+        "      </ParameterList>                                                               \n"
+        "    </ParameterList>                                                                 \n"
+        "  </ParameterList>                                                                   \n"
+
+        "  <ParameterList name='Material Models'>                                       \n"
+        "    <ParameterList name='Ether'>                                         \n"
+        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
+        "        <Parameter  name='Poissons Ratio' type='double' value='0.0'/>         \n"
+        "        <Parameter  name='Youngs Modulus' type='double' value='0.0'/>       \n"
+        "      </ParameterList>                                                         \n"
+        "    </ParameterList>                                                           \n"
+        "  </ParameterList>                                                             \n"
+        "</ParameterList>                                                               \n"
+    );
+
+    // setup spatial model
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    check_element_type_is_tet(tMesh);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+
+    // add contact to spatial model
+    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
+
+    tSpatialModel.addContact(tPairs);
+
+    // create dummy control vector (all 1s)
+    std::vector<Plato::Scalar> z_host( tMesh->NumNodes(), 1.0 );
+    auto z = Plato::TestHelpers::create_device_view(z_host);
+
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> u_host( ElementType::mNumSpatialDims*tMesh->NumNodes() );
+    Plato::Scalar disp = 0.0, dval = 0.0001;
+    for( auto& val : u_host ) val = (disp += dval);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
+
+    // compute and test gradientX
+    Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tet4>>
+        tVectorFunction(tSpatialModel, tDataMap, *tInputs, tInputs->get<std::string>("PDE Constraint"));
+
+    auto tGradientXTranspose = tVectorFunction.gradient_x(u,z); // recall this returns (dR/dX)^T
+
+    // get dR/dX from transpose
+    auto tNumRows = tGradientXTranspose->numCols();
+    auto tNumCols = tGradientXTranspose->numRows();
+    auto tNumRowsPerBlock = tGradientXTranspose->numColsPerBlock();
+    auto tNumColsPerBlock = tGradientXTranspose->numRowsPerBlock();
+    auto tGradientX = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock ) );
+    Plato::MatrixTranspose(tGradientXTranspose, tGradientX);
+
+    auto tEntries = tGradientX->entries();
+
+    auto tEntries_Host = Plato::TestHelpers::get( tEntries );
+
+    // 1/3 is the face basis function value at gauss point (for tet4)
+    // 1/2 is the face weight at gauss point (for tet4)
+    // Surface Area gradients for nodes on element faces:
+        // Element 2
+            // Node 0: [0 0 1]
+            // Node 5: [0 1 0]
+            // Node 6: [0 -1 -1]
+        // Element 4
+            // Node 0: [0 -1 0]
+            // Node 5: [0 0 -1]
+            // Node 7: [0 1 1]
+        // Element 6
+            // Node 9:  [0 0 1]
+            // Node 10: [0 1 -1]
+            // Node 11: [0 -1 0]
+        // Element 4
+            // Node 9:  [0 1 0]
+            // Node 11: [0 0 -1]
+            // Node 12: [0 -1 1]
+    std::vector<Plato::Scalar> tEntries_Gold = { 
+        0, 0.0019e4 / 3 / 2, -0.0022e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, -0.0022e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, -0.0022e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, -0.0022e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0022e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0022e4 / 3 / 2, 0.0019e4 / 3 / 2,
+        0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2, 0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2, 0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2,
+        0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+ 
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0.0019e4 / 3 / 2, -0.0022e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, -0.0022e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, -0.0022e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, -0.0022e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0022e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0022e4 / 3 / 2, 0.0019e4 / 3 / 2,
+        0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2, 0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2, 0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2,
+        0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, -0.0022e4 / 3 / 2, 0, 0, -0.0022e4 / 3 / 2, 0, 0, -0.0022e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, -0.0022e4 / 3 / 2, 0, 0, -0.0022e4 / 3 / 2, 0, 0, -0.0022e4 / 3 / 2, 0,
+        0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2, 0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2, 0, 0.0022e4 / 3 / 2, 0.0022e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0.0019e4 / 3 / 2, 0, 0, 0.0019e4 / 3 / 2, 0, 0, 0.0019e4 / 3 / 2, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0.0019e4 / 3 / 2, 0, 0, 0.0019e4 / 3 / 2, 0, 0, 0.0019e4 / 3 / 2,
+        0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, -0.0019e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        
+
+
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0.0019e4 / 3 / 2, 0.0012e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, 0.0012e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, 0.0012e4 / 3 / 2,
+        0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2, 0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2, 0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2,
+        0, -0.0012e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0012e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0012e4 / 3 / 2, -0.0019e4 / 3 / 2,
+        0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0.0012e4 / 3 / 2, 0, 0, 0.0012e4 / 3 / 2, 0, 0, 0.0012e4 / 3 / 2,
+        0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2, 0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2, 0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2,
+        0, -0.0012e4 / 3 / 2, 0, 0, -0.0012e4 / 3 / 2, 0, 0, -0.0012e4 / 3 / 2, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0.0019e4 / 3 / 2, 0.0012e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, 0.0012e4 / 3 / 2, 0, 0.0019e4 / 3 / 2, 0.0012e4 / 3 / 2,
+        0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2, 0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2, 0, 0.0012e4 / 3 / 2, -0.0012e4 / 3 / 2,
+        0, -0.0012e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0012e4 / 3 / 2, -0.0019e4 / 3 / 2, 0, -0.0012e4 / 3 / 2, -0.0019e4 / 3 / 2,
+        0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0.0019e4 / 3 / 2, 0, 0, 0.0019e4 / 3 / 2, 0, 0, 0.0019e4 / 3 / 2, 0,
+        0, 0, -0.0019e4 / 3 / 2, 0, 0, -0.0019e4 / 3 / 2, 0, 0, -0.0019e4 / 3 / 2,
+        0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2, 0, -0.0019e4 / 3 / 2, 0.0019e4 / 3 / 2,
 
         0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0,

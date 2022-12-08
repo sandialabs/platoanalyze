@@ -20,10 +20,6 @@
 
 #include "InterpolateFromNodal.hpp"
 
-
-
-#include "PlatoMathHelpers.hpp"
-
 #ifdef PLATO_MESHMAP
 #include "contact/ContactUtils.hpp"
 #endif
