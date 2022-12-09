@@ -486,7 +486,7 @@ namespace Elliptic
             Plato::blas1::scale(static_cast<Plato::Scalar>(-1), tPartialCriterionWRT_State);
 
             // compute dgdu: partial of PDE wrt state
-            mJacobian = mPDE->gradient_u(tStatesSubView, aControl);
+            mJacobian = mPDE->gradient_u_T(tStatesSubView, aControl);
             this->applyStateConstraints(mJacobian, tPartialCriterionWRT_State, 1.0);
 
             // adjoint problem uses transpose of global stiffness, but we're assuming the constrained
