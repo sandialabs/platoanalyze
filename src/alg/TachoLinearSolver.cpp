@@ -305,6 +305,8 @@ void TachoLinearSolver::innerSolve(Plato::CrsMatrix<int> aA,
     tachoSolver<double>::value_type_matrix b(aB.data(), aA.numRows(), 1);
     mSolver.MySolve(1, b, x);
     if (Plato::has_nan<CrsOrdinal>(aX)) {
+        Plato::print_matrix_to_file<CrsOrdinal>(tRowBegin, tColumns, tValues, "bad_tacho_matrix.m");
+        Plato::print_vector_to_file<CrsOrdinal>(aB, "bad_tacho_vector.m");
         throw std::runtime_error("Tacho solution vector contains nan.");
     }
 }
