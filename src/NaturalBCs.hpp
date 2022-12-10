@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <type_traits>
 
 #include "NaturalBC.hpp"
 
@@ -48,10 +49,10 @@ private:
      * \return shared pointer to an uniform natural boundary condition
     *******************************************************************************/
     std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-    setUniformNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
+    setLoadNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
 
     /***************************************************************************//**
-     * \brief Return natural boundary condition type: uniform pressure.
+     * \brief Return natural boundary condition type: uniform or variable pressure.
      *
      * \param  [in] aName    user-defined name for natural boundary condition sublist
      * \param  [in] aSubList natural boundary condition parameter sublist
@@ -59,18 +60,7 @@ private:
      * \return shared pointer to an uniform pressure natural boundary condition
     *******************************************************************************/
     std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-    setUniformPressureNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
-
-    /***************************************************************************//**
-     * \brief Return natural boundary condition type: uniform component.
-     *
-     * \param  [in] aName    user-defined name for natural boundary condition sublist
-     * \param  [in] aSubList natural boundary condition parameter sublist
-     *
-     * \return shared pointer to an uniform component natural boundary condition
-    *******************************************************************************/
-    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-    setUniformComponentNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
+    setPressureNaturalBC(const std::string & aName, Teuchos::ParameterList &aSubList);
 
     /***************************************************************************//**
      * \brief Return natural boundary condition type: state function
@@ -130,6 +120,11 @@ public :
         const Plato::ScalarMultiVectorT< ResultScalarType> &,
               Plato::Scalar aScale = 1.0,
               Plato::Scalar aCurrentTime = 0.0) const;
+
+    std::size_t numNaturalBCs() const;
+
+    /// @pre @a aIndex must be less than numNaturalBCs
+    const NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>& getNaturalBC(int aIndex) const;
 };
 // class NaturalBCs
 
@@ -141,28 +136,20 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::appendNaturalBC
 (const std::string & aName, Teuchos::ParameterList &aSubList)
 {
     const auto tType = aSubList.get<std::string>("Type");
-    const auto tNeumannType = Plato::natural_boundary_condition_type(tType);
+    const auto tNeumannType = Plato::naturalBoundaryCondition(tType);
     std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>> tBC;
     switch(tNeumannType)
     {
-        case Plato::Neumann::UNIFORM:
+        case Plato::Neumann::UNIFORM_LOAD:
+        case Plato::Neumann::VARIABLE_LOAD:
         {
-            tBC = this->setUniformNaturalBC(aName, aSubList);
+            tBC = this->setLoadNaturalBC(aName, aSubList);
             break;
         }
         case Plato::Neumann::UNIFORM_PRESSURE:
+        case Plato::Neumann::VARIABLE_PRESSURE:
         {
-            tBC = this->setUniformPressureNaturalBC(aName, aSubList);
-            break;
-        }
-        case Plato::Neumann::UNIFORM_COMPONENT:
-        {
-            tBC = this->setUniformComponentNaturalBC(aName, aSubList);
-            break;
-        }
-        case Plato::Neumann::STATE_FUNCTION:
-        {
-            tBC = this->setStateFunctionNaturalBC(aName, aSubList);
+            tBC = this->setPressureNaturalBC(aName, aSubList);
             break;
         }
         case Plato::Neumann::STEFAN_BOLTZMANN:
@@ -180,176 +167,86 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::appendNaturalBC
     mBCs.push_back(tBC);
 }
 
+namespace detail{
+template<Plato::OrdinalType NumDofs, typename ValueType>
+void setValuesFromIndexImpl(
+    Teuchos::ParameterList &aSubList, const std::string& aParameterName, const ValueType& aZeroValue)
+{
+    const auto tDof = aSubList.get<Plato::OrdinalType>("Index", 0);
+    Teuchos::Array<ValueType> tVector(NumDofs, aZeroValue);
+    auto tValue = aSubList.get<ValueType>(aParameterName);
+    tVector[tDof] = tValue;
+    aSubList.set(aParameterName + "s", tVector);
+    aSubList.remove(aParameterName);
+    aSubList.remove("Index");
+}
+/// Converts a ParameterList containing a Value/Index pair to a full Values entry
+/// @todo C++17 use constexpr if instead of enable_if
+template<Plato::OrdinalType NumDofs, typename ValueType, 
+    std::enable_if_t<std::is_same<ValueType, Plato::Scalar>::value, int> = 0>
+void setValuesFromIndex(Teuchos::ParameterList &aSubList, const std::string& aParameterName)
+{
+    setValuesFromIndexImpl<NumDofs, ValueType>(aSubList, aParameterName, 0.0);
+}
+/// Converts a ParameterList containing a Value/Index pair to a full Values entry
+/// @todo C++17 use constexpr if instead of enable_if
+template<Plato::OrdinalType NumDofs, typename ValueType, 
+    std::enable_if_t<std::is_same<ValueType, std::string>::value, int> = 0>
+void setValuesFromIndex(Teuchos::ParameterList &aSubList, const std::string& aParameterName)
+{
+    setValuesFromIndexImpl<NumDofs, ValueType>(aSubList, aParameterName, "0.0");
+}
+
+/// @throw std::runtime_error Throws if @a aSubList contains multiple valid entries or no
+///  valid entries. 
+void affirmOneValidInput(const std::string & aName, Teuchos::ParameterList &aSubList);
+}
+
 /***************************************************************************//**
- * \brief NaturalBC::setUniformNaturalBC function definition
+ * \brief NaturalBC::setLoadNaturalBC function definition
 *******************************************************************************/
 template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setUniformNaturalBC
+NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setLoadNaturalBC
 (const std::string & aName, Teuchos::ParameterList &aSubList)
 {
-    bool tBC_Value = (aSubList.isType<Plato::Scalar>("Value") || aSubList.isType<std::string>("Value"));
+    detail::affirmOneValidInput(aName, aSubList);
 
-    bool tBC_Values = (aSubList.isType<Teuchos::Array<Plato::Scalar>>("Values") ||
-                       aSubList.isType<Teuchos::Array<std::string>>("Values"));
+    const bool tBC_SingleValue = aSubList.isType<Plato::Scalar>("Value") 
+                                || aSubList.isType<std::string>("Value")
+                                || aSubList.isType<std::string>("Variable");
 
-    const auto tType = aSubList.get < std::string > ("Type");
-    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>> tBC;
-    if (tBC_Values && tBC_Value)
+    if (tBC_SingleValue)
     {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Values' OR 'Value' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-    else if (tBC_Values)
-    {
-        if(aSubList.isType<Teuchos::Array<Plato::Scalar>>("Values"))
-        {
-            auto tValues = aSubList.get<Teuchos::Array<Plato::Scalar>>("Values");
-            aSubList.set("Vector", tValues);
-        } else
-        if(aSubList.isType<Teuchos::Array<std::string>>("Values"))
-        {
-            auto tValues = aSubList.get<Teuchos::Array<std::string>>("Values");
-            aSubList.set("Vector", tValues);
-        } else
-        {
-            std::stringstream tMsg;
-            tMsg << "Natural Boundary Condition: unexpected type encountered for 'Values' Parameter Keyword."
-                 << "Specify 'type' of 'Array(double)' or 'Array(string)'.";
-            ANALYZE_THROWERR(tMsg.str().c_str())
-        }
-    }
-    else if (tBC_Value)
-    {
-
-        auto tDof = aSubList.get<Plato::OrdinalType>("Index", 0);
-
+        // For a single value, we expect Index to be specified
+        // This converts that input into the full vector input
         if(aSubList.isType<Plato::Scalar>("Value"))
         {
-            Teuchos::Array<Plato::Scalar> tFluxVector(NumDofs, 0.0);
-            auto tValue = aSubList.get<Plato::Scalar>("Value");
-            tFluxVector[tDof] = tValue;
-            aSubList.set("Vector", tFluxVector);
-        } else
-        if(aSubList.isType<std::string>("Value"))
+            detail::setValuesFromIndex<NumDofs, Plato::Scalar>(aSubList, "Value");
+        } 
+        else if(aSubList.isType<std::string>("Value"))
         {
-            Teuchos::Array<std::string> tFluxVector(NumDofs, "0.0");
-            auto tValue = aSubList.get<std::string>("Value");
-            tFluxVector[tDof] = tValue;
-            aSubList.set("Vector", tFluxVector);
-        } else
+            detail::setValuesFromIndex<NumDofs, std::string>(aSubList, "Value");
+        } 
+        else if(aSubList.isType<std::string>("Variable"))
         {
-            std::stringstream tMsg;
-            tMsg << "Natural Boundary Condition: unexpected type encountered for 'Value' Parameter Keyword."
-                 << "Specify 'type' of 'double' or 'string'.";
-            ANALYZE_THROWERR(tMsg.str().c_str())
-        }
-    }
-    else
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: Uniform Boundary Condition in Parameter Sublist: '"
-            << aName.c_str() << "' was NOT parsed. Check input Parameter Keywords.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
+            detail::setValuesFromIndex<NumDofs, std::string>(aSubList, "Variable");
+        } 
     }
 
-    tBC = std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
-    return tBC;
+    return std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
 }
 
 /***************************************************************************//**
- * \brief NaturalBC::setUniformPressureNaturalBC function definition
+ * \brief NaturalBC::setPressureNaturalBC function definition
 *******************************************************************************/
 template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setUniformPressureNaturalBC
+NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setPressureNaturalBC
 (const std::string & aName, Teuchos::ParameterList &aSubList)
 {
-    if(aSubList.isParameter("Value") == false)
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Value' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-
-    if(aSubList.isType<Plato::Scalar>("Value"))
-    {
-        Teuchos::Array<Plato::Scalar> tFluxVector(NumDofs, aSubList.get<Plato::Scalar>("Value"));
-        aSubList.set("Vector", tFluxVector);
-    } else
-    if(aSubList.isType<std::string>("Value"))
-    {
-        Teuchos::Array<std::string> tFluxVector(NumDofs, aSubList.get<std::string>("Value"));
-        aSubList.set("Vector", tFluxVector);
-    } else
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: unexpected type encountered for 'Value' Parameter Keyword."
-                << "Specify 'type' of 'double' or 'string'.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-
-    auto tBC = std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
-    return tBC;
-}
-
-/***************************************************************************//**
- * \brief NaturalBC::setUniformComponentNaturalBC function definition
-*******************************************************************************/
-template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
-std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>
-NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::setUniformComponentNaturalBC
-(const std::string & aName, Teuchos::ParameterList &aSubList)
-{
-    if(aSubList.isParameter("Value") == false)
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Value' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-    auto tValue = aSubList.get<Plato::Scalar>("Value");
-
-    if(aSubList.isParameter("Component") == false)
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Component' Parameter Keyword in "
-            << "Parameter Sublist: '" << aName.c_str() << "' is NOT defined.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-    Teuchos::Array<Plato::Scalar> tFluxVector(NumDofs, 0.0);
-    auto tFluxComponent = aSubList.get<std::string>("Component");
-
-    std::shared_ptr<NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>> tBC;
-    if( (tFluxComponent == "x" || tFluxComponent == "X") )
-    {
-        tFluxVector[0] = tValue;
-    }
-    else
-    if( (tFluxComponent == "y" || tFluxComponent == "Y") && DofsPerNode > 1 )
-    {
-        tFluxVector[1] = tValue;
-    }
-    else
-    if( (tFluxComponent == "z" || tFluxComponent == "Z") && DofsPerNode > 2 )
-    {
-        tFluxVector[2] = tValue;
-    }
-    else
-    {
-        std::stringstream tMsg;
-        tMsg << "Natural Boundary Condition: 'Component' Parameter Keyword: '" << tFluxComponent.c_str()
-            << "' in Parameter Sublist: '" << aName.c_str() << "' is NOT supported. "
-            << "Options are: 'X' or 'x', 'Y' or 'y', and 'Z' or 'z'.";
-        ANALYZE_THROWERR(tMsg.str().c_str())
-    }
-
-    aSubList.set("Vector", tFluxVector);
-    tBC = std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
-    return tBC;
+    detail::affirmOneValidInput(aName, aSubList);
+    return std::make_shared<Plato::NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>>(aName, aSubList);
 }
 
 /***************************************************************************//**
@@ -471,6 +368,17 @@ void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
     }
 }
 
+template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
+std::size_t NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::numNaturalBCs() const
+{
+    return mBCs.size();
+}
+
+template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
+const NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>& NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::getNaturalBC(int aIndex) const
+{
+    return *mBCs.at(aIndex);
+}
 }
 // namespace Plato
 

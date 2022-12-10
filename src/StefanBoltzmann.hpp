@@ -10,7 +10,7 @@ namespace Plato
 
 /***************************************************************************//**
  * \brief Class for the evaluation of natural boundary condition surface integrals
- * of type: STATE_FUNCTION
+ * of type: STEFAN_BOLTZMANN
  *
  * \tparam ElementType  Element type (e.g., MechanicsElement<Tet10>)
  * \tparam DofsPerNode  number degrees of freedom per node
@@ -25,17 +25,13 @@ class StefanBoltzmann
 {
 private:
     const std::string mSideSetName; /*!< side set name */
-    const std::vector<std::string> mFluxExpressions;
-    const std::vector<std::string> mStateNames;
 
 public:
     /******************************************************************************//**
      * \brief Constructor
      **********************************************************************************/
     StefanBoltzmann(
-        const std::string & aSideSetName,
-        const std::vector<std::string>& aFlux,
-        const std::vector<std::string>& aStateNames);
+        const std::string & aSideSetName);
 
     /***************************************************************************//**
      * \brief Evaluate natural boundary condition surface integrals.
@@ -79,13 +75,9 @@ public:
 *******************************************************************************/
 template<typename ElementType, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 StefanBoltzmann<ElementType, DofsPerNode, DofOffset>::StefanBoltzmann(
-  const std::string & aSideSetName,
-  const std::vector<std::string>& aFlux,
-  const std::vector<std::string>& aStateNames
+  const std::string & aSideSetName
 ) :
-    mSideSetName(aSideSetName),
-    mFluxExpressions(aFlux),
-    mStateNames(aStateNames)
+    mSideSetName(aSideSetName)
 {
 }
 
