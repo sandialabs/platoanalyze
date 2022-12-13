@@ -10,8 +10,7 @@
 #include "GradientMatrix.hpp"
 #include "VonMisesYieldFunction.hpp"
 #include "GeneralStressDivergence.hpp"
-
-#include "SurfaceArea.hpp"
+#include "contact/IntegrateContactForce.hpp"
 
 namespace Plato
 {
@@ -252,51 +251,8 @@ namespace Elliptic
               Plato::Scalar aTimeStep
     ) const
     {
-        auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(aSideSet);
-        Plato::OrdinalType tNumFaces = tElementOrds.size();
-        auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
-
-        auto tCubaturePoints  = ElementType::Face::getCubPoints();
-        auto tCubatureWeights = ElementType::Face::getCubWeights();
-        auto tNumPoints = tCubatureWeights.size();
-
-        Plato::SurfaceArea<ElementType> surfaceArea;
-
-        Plato::ScalarArray3DT<StateScalarType> tSurfaceDisplacement("displacement on contact surface", tNumFaces, tNumPoints, mNumSpatialDims);
-        (*aComputeSurfaceDisp)(tElementOrds, aState, tSurfaceDisplacement);
-
-        Plato::ScalarArray3DT<ResultScalarType> tContactForce("contact force at cubature points", tNumFaces, tNumPoints, mNumSpatialDims);
-        (*aComputeContactForce)(tElementOrds, tLocalNodeOrds, tSurfaceDisplacement, aConfig, tContactForce);
-
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
-        {
-            auto tCellOrdinal = tElementOrds(iCellOrdinal);
-            auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
-            auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
-            auto tBasisGrads = ElementType::Face::basisGrads(tCubaturePoint);
-
-            Plato::Array<ElementType::mNumNodesPerFace, Plato::OrdinalType> tLocalNodes;
-            for( Plato::OrdinalType tNodeOrd=0; tNodeOrd<ElementType::mNumNodesPerFace; tNodeOrd++)
-            {
-                tLocalNodes(tNodeOrd) = tLocalNodeOrds(iCellOrdinal*ElementType::mNumNodesPerFace+tNodeOrd);
-            }
-
-            ResultScalarType tSurfaceArea(0.0);
-            surfaceArea(tCellOrdinal, tLocalNodes, tBasisGrads, aConfig, tSurfaceArea);
-            tSurfaceArea *= tCubatureWeights(iGPOrdinal);
-
-            for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
-            {
-                for( Plato::OrdinalType tDof=0; tDof<ElementType::mNumSpatialDims; tDof++)
-                {
-                    auto tElementDofOrdinal = tLocalNodes(tNode) * ElementType::mNumSpatialDims + tDof;
-                    ResultScalarType tResult = tSurfaceArea*tBasisValues(tNode)*tContactForce(iCellOrdinal, iGPOrdinal, tDof);
-                    Kokkos::atomic_add(&aResult(tCellOrdinal, tElementDofOrdinal), tResult);
-                }
-            }
-
-        }, "project contact force to nodes");
+        Plato::Contact::IntegrateContactForce<EvaluationType> integrateContactForce(aSpatialModel, aSideSet, aComputeSurfaceDisp, aComputeContactForce);
+        integrateContactForce(aState, aConfig, aResult, aTimeStep);
     }
 
     /**********************************************************************//**
