@@ -271,16 +271,18 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         using ControlScalar = typename EvaluationType::ControlScalarType;
         using ResultScalar  = typename EvaluationType::ResultScalarType;
 
-        Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", mNumCells, mNumNodesPerCell, mNumSpatialDims);
+        auto tNumCells = aDomain.numCells();
+
+        Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
         Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, aDomain);
 
-        Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", mNumCells, mNumDofsPerCell);
+        Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", tNumCells, mNumDofsPerCell);
         Plato::WorksetBase<ElementType>::worksetState(aState, tStateWS, aDomain);
 
-        Plato::ScalarMultiVectorT<ControlScalar> tControlWS("Control Workset", mNumCells, mNumNodesPerCell);
+        Plato::ScalarMultiVectorT<ControlScalar> tControlWS("Control Workset", tNumCells, mNumNodesPerCell);
         Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, aDomain);
 
-        Plato::ScalarMultiVectorT<ResultScalar> tValues("Values", mNumCells, mNumDofsPerCell);
+        Plato::ScalarMultiVectorT<ResultScalar> tValues("Values", tNumCells, mNumDofsPerCell);
 
         aFunction->evaluate( tStateWS, tControlWS, tConfigWS, tValues, aTimeStep );
 
@@ -510,7 +512,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             auto tName = tDomain.getDomainName();
             auto tInternalForceValues = this->template internalForceContribution<GradientX>(mGradientXFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad
-                (mNumDofsPerCell, mNumConfigDofsPerCell, tGradientXMatEntryOrdinal, tInternalForceValues, tMatEntries);
+                (mNumDofsPerCell, mNumConfigDofsPerCell, tGradientXMatEntryOrdinal, tInternalForceValues, tMatEntries, tDomain);
         }
 
         auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
@@ -550,7 +552,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             auto tName = tDomain.getDomainName();
             auto tInternalForceValues = this->template internalForceContribution<Jacobian>(mJacobianFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad
-                (mNumDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tInternalForceValues, tMatEntries);
+                (mNumDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tInternalForceValues, tMatEntries, tDomain);
         }
 
         auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
@@ -588,7 +590,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             auto tName = tDomain.getDomainName();
             auto tInternalForceValues = this->template internalForceContribution<Jacobian>(mJacobianFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad
-                (mNumDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tInternalForceValues, tMatEntries);
+                (mNumDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tInternalForceValues, tMatEntries, tDomain);
         }
 
         auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
@@ -626,7 +628,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
             auto tName = tDomain.getDomainName();
             auto tInternalForceValues = this->template internalForceContribution<GradientZ>(mGradientZFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad
-                (mNumDofsPerCell, mNumNodesPerCell, tGradientZMatEntryOrdinal, tInternalForceValues, tMatEntries);
+                (mNumDofsPerCell, mNumNodesPerCell, tGradientZMatEntryOrdinal, tInternalForceValues, tMatEntries, tDomain);
         }
 
         auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
