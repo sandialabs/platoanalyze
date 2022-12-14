@@ -45,11 +45,11 @@ public:
      const Plato::ScalarMultiVectorT<InStateT>             & aState,
            Plato::ScalarArray3DT<OutStateT>                & aSurfaceDisp) const override
     {
-        auto tNumFaces = aElementOrds.size();
+        Plato::OrdinalType tNumFaces = aElementOrds.size();
 
         auto tCubaturePoints  = ElementType::Face::getCubPoints();
         auto tCubatureWeights = ElementType::Face::getCubWeights();
-        auto tNumPoints = tCubatureWeights.size();
+        Plato::OrdinalType tNumPoints = tCubatureWeights.size();
 
         Plato::InterpolateFromNodal<ElementType, NumDofsPerNode, /*offset=*/0, ElementType::mNumSpatialDims> tInterpolateFromNodal;
 

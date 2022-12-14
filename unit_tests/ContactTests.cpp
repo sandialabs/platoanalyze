@@ -389,7 +389,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_CompliantContactForce)
 
     check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tNumPoints = ElementType::Face::getCubWeights().size();
+    Plato::OrdinalType tNumPoints = ElementType::Face::getCubWeights().size();
     using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
 
     auto tPairsParams = tContactParams->sublist("Pairs");
@@ -399,7 +399,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_CompliantContactForce)
     // get pair data
     Plato::Contact::ContactPair tPair = Plato::Contact::parse_contact_pair(tPairParams, tMesh);
     auto tChildElements = tPair.surfaceA.childElements();
-    auto tNumChildElements = tChildElements.size();
+    Plato::OrdinalType tNumChildElements = tChildElements.size();
     auto tChildFaceLocalNodes = tPair.surfaceA.childFaceLocalNodes();
 
     // apply contact penalty
@@ -456,7 +456,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_NormalContactForce)
 
     check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    auto tNumPoints = ElementType::Face::getCubWeights().size();
+    Plato::OrdinalType tNumPoints = ElementType::Face::getCubWeights().size();
     using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
 
     // get config workset
@@ -472,7 +472,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_NormalContactForce)
     // get pair data
     Plato::Contact::ContactPair tPair = Plato::Contact::parse_contact_pair(tPairParams, tMesh);
     auto tChildElements = tPair.surfaceA.childElements();
-    auto tNumChildElements = tChildElements.size();
+    Plato::OrdinalType tNumChildElements = tChildElements.size();
     auto tChildFaceLocalNodes = tPair.surfaceA.childFaceLocalNodes();
 
     // apply contact penalty

@@ -39,11 +39,11 @@ public:
      const Plato::ScalarArray3DT<ConfigType> & aConfig,
            Plato::ScalarArray3DT<ResultType> & aResult) const override
     {
-        auto tNumCells = aElementOrds.size();
+        Plato::OrdinalType tNumCells = aElementOrds.size();
 
         auto tCubaturePoints  = ElementType::Face::getCubPoints();
         auto tCubatureWeights = ElementType::Face::getCubWeights();
-        auto tNumPoints = tCubatureWeights.size();
+        Plato::OrdinalType tNumPoints = tCubatureWeights.size();
 
         Plato::WeightedNormalVector<ElementType> weightedNormalVector;
         Plato::SurfaceArea<ElementType> surfaceArea;
