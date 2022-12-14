@@ -192,6 +192,7 @@ void print_vector_to_file(
     auto tValuesOnHost = detail::host_mirror(aValues);
 
     tFileStream << "b = [";
+    tFileStream.precision(16);
     for(int i = 0; i < tValuesOnHost.size(); ++i){
         tFileStream << tValuesOnHost(i) << '\n';
     }
