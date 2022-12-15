@@ -1450,6 +1450,63 @@ assemble_jacobian_fad(
 // function assemble_jacobian_fad
 
 /***************************************************************************//**
+* \brief Assemble Jacobian matrix: overloaded for nonlocal element contributions on surface
+*
+* \tparam MatrixEntriesOrdinal  matrix entries index map class
+* \tparam Jacobian              input Jacobian workset forward automatic differentiation (FAD) class
+* \tparam ReturnVal             output Jacobian FAD class
+*
+* \param [in]     aNumRowsPerCell      number of rows
+* \param [in]     aNumColumnsPerCell   number of columns
+* \param [in]     aLocalCells array of local cells whose DOF contributions are being assembled
+* \param [in]     aNonLocalCells array of nonlocal cells whose contributions are being assembled in
+* \param [in]     aNonLocalCellMap array mapping each node in local cells to corresponding index in nonlocal cell array
+* \param [in]     aFaceLocalNodes array of cell nodes that are on faces
+* \param [in]     aContributingNode ordinal of node on local face whose nonlocal cell contributions are being assembled in
+* \param [in]     aMatrixEntryOrdinal  matrix entries index map
+* \param [in]     aJacobianWorkset     jacobian workset, i.e. jacobian for each element/cell
+* \param [in/out] aReturnValue         assembled Jacobian
+*
+*******************************************************************************/
+template<class MatrixEntriesOrdinal, class Jacobian, class ReturnVal>
+inline void
+assemble_jacobian_fad(
+          Plato::OrdinalType                                aNumNodesPerFace,
+          Plato::OrdinalType                                aNumDofsPerNode,
+          Plato::OrdinalType                                aNumColumnsPerCell,
+    const Plato::OrdinalVectorT<const Plato::OrdinalType> & aLocalCells,
+    const Plato::OrdinalVector                            & aNonLocalCells,
+    const Plato::OrdinalVector                            & aNonLocalCellMap,
+    const Plato::OrdinalVectorT<const Plato::OrdinalType> & aFaceLocalNodes,
+          Plato::OrdinalType                                aContributingNode,
+    const MatrixEntriesOrdinal                            & aMatrixEntryOrdinal,
+    const Jacobian                                        & aJacobianWorkset,
+          ReturnVal                                       & aReturnValue)
+{
+    Plato::OrdinalType tNumCells = aLocalCells.size();
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    {
+        auto tLocalCell = aLocalCells(aCellOrdinal); 
+        auto tMapOrdinal = aNonLocalCellMap(aCellOrdinal * aNumNodesPerFace + aContributingNode); 
+        auto tNonLocalCell = aNonLocalCells(tMapOrdinal); 
+        for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < aNumNodesPerFace; tNodeIndex++)
+        {
+            auto tLocalNode = aFaceLocalNodes(aCellOrdinal * aNumNodesPerFace + tNodeIndex);
+            for(Plato::OrdinalType tDofIndex = 0; tDofIndex < aNumDofsPerNode; tDofIndex++)
+            {
+                Plato::OrdinalType tRowIndex = tLocalNode*aNumDofsPerNode + tDofIndex; 
+                for(Plato::OrdinalType tColumnIndex = 0; tColumnIndex < aNumColumnsPerCell; tColumnIndex++)
+                {
+                    Plato::OrdinalType tEntryOrdinal = aMatrixEntryOrdinal(tLocalCell, tNonLocalCell, tRowIndex, tColumnIndex);
+                    Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(tLocalCell, tRowIndex).dx(tColumnIndex));
+                }
+            }
+        }
+    }, "assemble jacobian fad");
+}
+// function assemble_jacobian_fad
+
+/***************************************************************************//**
 * \brief Assemble transpose of Jacobian matrix
 *
 * \tparam MatrixEntriesOrdinal  matrix entries index map class

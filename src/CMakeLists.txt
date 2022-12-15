@@ -36,6 +36,7 @@ if(EXPRESSION)
   )
 endif()
 
+## criterion sources
 set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     TensileEnergyDensityLocalMeasure.cpp
     Plato_AugLagStressCriterionQuadratic.cpp
@@ -54,11 +55,13 @@ set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     PlatoMask.cpp
     EngineMesh.cpp
     EngineMeshIO.cpp
+    SpatialModel.cpp
     PlatoMathHelpers.cpp
     mesh/ExodusIO.cpp
     alg/ParseInput.cpp
     alg/ParallelComm.cpp
     alg/AmgXConfigs.cpp
+    alg/CrsMatrixUtils.cpp
     alg/AmgXLinearSolver.cpp
     alg/PlatoSolverFactory.cpp
     alg/PlatoAbstractSolver.cpp
@@ -117,6 +120,9 @@ if(PLATOANALYZE_ENABLE_MESHMAP)
   ## Mesh constraint sources
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
       MultipointConstraints.cpp
+      contact/ContactPair.cpp
+      contact/ContactUtils.cpp
+      contact/UpdateGraphForContact.cpp
   )
 
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
