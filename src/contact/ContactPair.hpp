@@ -28,7 +28,7 @@ public:
      const Plato::OrdinalVector     & aElementWiseChildMap,
      const Plato::ScalarMultiVector & aMappedChildNodeLocations);
 
-    std::string
+    const std::string &
     childSideSet() const { return mChildSideSet; }
 
     Plato::OrdinalVectorT<const Plato::OrdinalType>
@@ -40,7 +40,7 @@ public:
     Plato::OrdinalVectorT<const Plato::OrdinalType>
     childFaceLocalNodes() const { return mChildFaceLocalNodes; }
 
-    std::string
+    const std::string &
     parentBlock() const { return mParentBlock; }
 
     Plato::OrdinalVector

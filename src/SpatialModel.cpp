@@ -13,22 +13,20 @@ namespace Plato
 SpatialDomain::SpatialDomain
 (      Plato::Mesh      aMesh,
        Plato::DataMap & aDataMap,
- const std::string    & aName) :
+       std::string      aName) :
     Mesh(aMesh),
     mDataMap(aDataMap),
-    mSpatialDomainName(aName),
-    mIsFixedBlock(false)
+    mSpatialDomainName(std::move(aName))
 {}
 
 SpatialDomain::SpatialDomain
 (      Plato::Mesh              aMesh,
        Plato::DataMap         & aDataMap,
  const Teuchos::ParameterList & aInputParams,
- const std::string            & aName) :
+       std::string              aName) :
     Mesh(aMesh),
     mDataMap(aDataMap),
-    mSpatialDomainName(aName),
-    mIsFixedBlock(false)
+    mSpatialDomainName(std::move(aName))
 {
     this->initialize(aInputParams);
 }

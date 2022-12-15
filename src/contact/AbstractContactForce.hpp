@@ -17,7 +17,7 @@ protected:
     using ResultType = typename EvaluationType::ResultScalarType; 
 
 public:
-    AbstractContactForce(){}
+    AbstractContactForce() = default;
 
     virtual ~AbstractContactForce(){}
 

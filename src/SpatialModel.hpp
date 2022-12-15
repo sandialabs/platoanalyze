@@ -28,7 +28,7 @@ private:
     std::string         mElementBlockName;  /*!< element block name */
     std::string         mMaterialModelName; /*!< material model name */
     std::string         mSpatialDomainName; /*!< element block name */
-    bool                mIsFixedBlock;      /*!< flag for fixed block */
+    bool                mIsFixedBlock = false;      /*!< flag for fixed block */
 
     Plato::OrdinalVector mTotalElemLids;   /*!< List of local elements ids in this domain */
     Plato::OrdinalVector mMaskedElemLids;  /*!< List of local elements ids after application of a masked operation */
@@ -170,7 +170,7 @@ public:
     SpatialDomain
     (      Plato::Mesh      aMesh,
            Plato::DataMap & aDataMap,
-     const std::string    & aName);
+           std::string      aName);
 
     /******************************************************************************//**
      * \brief Constructor for Plato::SpatialModel base class
@@ -183,7 +183,7 @@ public:
     (      Plato::Mesh              aMesh,
            Plato::DataMap         & aDataMap,
      const Teuchos::ParameterList & aInputParams,
-     const std::string            & aName);
+           std::string              aName);
 
     /******************************************************************************//**
      * \brief Apply mask to this Domain
