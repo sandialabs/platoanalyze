@@ -6,6 +6,8 @@ configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/brick_with_data.exo
                  ${CMAKE_CURRENT_BINARY_DIR}/brick_with_data.exo COPYONLY)
 configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/nodal_surface_pressure_field.exo
                  ${CMAKE_CURRENT_BINARY_DIR}/nodal_surface_pressure_field.exo COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/two_block_contact.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/two_block_contact.exo COPYONLY)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/BamG)
 
