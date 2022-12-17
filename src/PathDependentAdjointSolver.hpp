@@ -12,6 +12,7 @@
 #include "ParseTools.hpp"
 #include "Projection.hpp"
 #include "Plato_Solve.hpp"
+#include "SpatialModel.hpp"
 #include "AnalyzeMacros.hpp"
 #include "ApplyConstraints.hpp"
 #include "VectorFunctionVMS.hpp"
@@ -265,8 +266,9 @@ private:
         Plato::blas3::update(tNumCells, tAlpha, tSchurComplement, tBeta, tDrDu);
 
         // Assemble full Jacobian
-        auto tMesh = mGlobalEquation->getMesh();
-        auto tGlobalJacobian = Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumGlobalDofsPerNode, mNumGlobalDofsPerNode>(tMesh);
+        auto tSpatialModel = mGlobalEquation->getSpatialModel();
+        auto tMesh = tSpatialModel.Mesh;
+        auto tGlobalJacobian = Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumGlobalDofsPerNode, mNumGlobalDofsPerNode>(tSpatialModel);
         Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumGlobalDofsPerNode> tGlobalJacEntryOrdinal(tGlobalJacobian, tMesh);
         auto tJacEntries = tGlobalJacobian->entries();
         Plato::assemble_jacobian_transpose_pod(tNumCells, mNumGlobalDofsPerCell, mNumGlobalDofsPerCell, tGlobalJacEntryOrdinal, tDrDu, tJacEntries);

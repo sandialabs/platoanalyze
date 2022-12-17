@@ -85,8 +85,8 @@ namespace Plato
 
             void
             NodeNodeGraph(
-                Plato::OrdinalVectorT<const Plato::OrdinalType> & aOffsetMap,
-                Plato::OrdinalVectorT<const Plato::OrdinalType> & aNodeOrds
+                Plato::OrdinalVectorT<Plato::OrdinalType> & aOffsetMap,
+                Plato::OrdinalVectorT<Plato::OrdinalType> & aNodeOrds
             ) override;
 
             void

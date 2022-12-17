@@ -2,6 +2,7 @@
 #include <cstring>
 
 #include "EngineMesh.hpp"
+#include "alg/CrsMatrixUtils.hpp"
 
 namespace Plato
 {
@@ -192,25 +193,7 @@ namespace Plato
         });
 
         // sort list of connected elements (otherwise cpu and gpu builds produce different graphs)
-        auto tOrds = tNodeElementGraph_ordinals;
-        auto tOffs = tNodeElementGraph_offsets;
-        Kokkos::parallel_for("sort element ordinals", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-        {
-            auto tFrom = tOffs(aNodeOrdinal);
-            auto tTo = tOffs(aNodeOrdinal+1)-1;
-            for( decltype(tFrom) tIndexI=tFrom; tIndexI<tTo; tIndexI++ )
-            {
-                for( decltype(tFrom) tIndexJ=tFrom; tIndexJ<tTo; tIndexJ++ )
-                {
-                    if( tOrds(tIndexJ) > tOrds(tIndexJ+1) )
-                    {
-                        auto tHereHoldThis = tOrds(tIndexJ+1);
-                        tOrds(tIndexJ+1) = tOrds(tIndexJ);
-                        tOrds(tIndexJ) = tHereHoldThis;
-                    }
-                }
-            }
-        });
+        Plato::sort_matrix_column_ordinals(tNodeElementGraph_offsets, tNodeElementGraph_ordinals);
     }
 
     void
@@ -248,7 +231,7 @@ namespace Plato
                             isUnique = false;
                         }
                     }
-                    if(isUnique && tNodeOrd != aNodeOrdinal)
+                    if(isUnique)
                     {
                         tFatGraph_ordinals(tFatGraphOffset+tNumUnique) = tNodeOrd;
                         tNumUnique++;
@@ -292,25 +275,7 @@ namespace Plato
         });
 
         // sort list of connected nodes (otherwise cpu and gpu builds produce different graphs)
-        auto tOrds = tNodeNodeGraph_ordinals;
-        auto tOffs = tNodeNodeGraph_offsets;
-        Kokkos::parallel_for("sort ordinals", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-        {
-            auto tFrom = tOffs(aNodeOrdinal);
-            auto tTo = tOffs(aNodeOrdinal+1)-1;
-            for( decltype(tFrom) tIndexI=tFrom; tIndexI<tTo; tIndexI++ )
-            {
-                for( decltype(tFrom) tIndexJ=tFrom; tIndexJ<tTo; tIndexJ++ )
-                {
-                    if( tOrds(tIndexJ) > tOrds(tIndexJ+1) )
-                    {
-                        auto tHereHoldThis = tOrds(tIndexJ+1);
-                        tOrds(tIndexJ+1) = tOrds(tIndexJ);
-                        tOrds(tIndexJ) = tHereHoldThis;
-                    }
-                }
-            }
-        });
+        Plato::sort_matrix_column_ordinals(tNodeNodeGraph_offsets, tNodeNodeGraph_ordinals);
     }
 
     void
@@ -531,8 +496,8 @@ namespace Plato
 
     void
     EngineMesh::NodeNodeGraph(
-        Plato::OrdinalVectorT<const Plato::OrdinalType> & aOffsetMap,
-        Plato::OrdinalVectorT<const Plato::OrdinalType> & aNodeOrds
+        Plato::OrdinalVectorT<Plato::OrdinalType> & aOffsetMap,
+        Plato::OrdinalVectorT<Plato::OrdinalType> & aNodeOrds
     )
     {
         aOffsetMap = mNodeNodeGraph_offsets;

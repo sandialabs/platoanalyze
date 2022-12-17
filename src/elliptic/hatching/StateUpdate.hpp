@@ -5,6 +5,7 @@
 #include "SpatialModel.hpp"
 #include "GradientMatrix.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "elliptic/hatching/EvaluationTypes.hpp"
 
 namespace Plato

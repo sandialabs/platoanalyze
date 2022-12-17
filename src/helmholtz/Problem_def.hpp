@@ -28,8 +28,6 @@ namespace Helmholtz
       mPDEType       (aProblemParams.get<std::string>("PDE Constraint")),
       mPhysics       (aProblemParams.get<std::string>("Physics"))
     {
-        this->initialize(aMesh,aProblemParams);
-
         Plato::SolverFactory tSolverFactory(aProblemParams.sublist("Linear Solver"), LinearSystemType::SYMMETRIC_INDEFINITE);
         mSolver = tSolverFactory.create(aMesh->NumNodes(), aMachine, ElementType::mNumDofsPerNode);
     }
@@ -247,18 +245,6 @@ namespace Helmholtz
     )
     {
         ANALYZE_THROWERR("CRITERION GRADIENT X: NO CRITERION ASSOCIATED WITH HELMHOLTZ FILTER PROBLEM.")
-    }
-
-    /******************************************************************************//**
-     * \brief Initialize member data
-     * \param [in] aProblemParams input parameters database
-    **********************************************************************************/
-    template<typename PhysicsType>
-    void Problem<PhysicsType>::initialize(Plato::Mesh& aMesh,
-                    Teuchos::ParameterList& aProblemParams)
-    {
-        auto tName = aProblemParams.get<std::string>("PDE Constraint");
-        mPDE = std::make_shared<Plato::Helmholtz::VectorFunction<PhysicsType>>(mSpatialModel, mDataMap, aProblemParams, tName);
     }
 
     /******************************************************************************/ /**
