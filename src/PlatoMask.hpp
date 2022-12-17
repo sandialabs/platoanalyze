@@ -92,7 +92,7 @@ namespace Plato {
             auto tNodeMask = mNodeMask;
 
             auto tNumCells = mCellMask.extent(0);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+            Kokkos::parallel_for("compute node mask", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
             {
                 if (tCellMask(aCellOrdinal) == 1)
                 {
@@ -102,7 +102,7 @@ namespace Plato {
                         tNodeMask(tNodeOrdinal) = 1;
                     }
                 }
-            }, "compute node mask");
+            });
         }
 
         /******************************************************************************//**
@@ -117,7 +117,7 @@ namespace Plato {
             auto tNumCells = aMesh->NumElements();
             Plato::ScalarMultiVector tCellCenters("cell centers", tNumCells, mSpaceDim);
 
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells),
+            Kokkos::parallel_for("get cell centers", Kokkos::RangePolicy<>(0, tNumCells),
             KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
             {
                 for (Plato::OrdinalType tNode=0; tNode<mSpaceDim+1; tNode++)
@@ -131,7 +131,7 @@ namespace Plato {
                 {
                     tCellCenters(aCellOrdinal, tDim) /= (mSpaceDim+1);
                 }
-            }, "get cell centers");
+            });
 
             return tCellCenters;
         }
@@ -221,7 +221,7 @@ namespace Plato {
             auto tCellMask = mCellMask;
             auto tLimits = mLimits;
             auto tNumCells = tCellCenters.extent(0);
-            Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+            Kokkos::parallel_for("cell mask", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
             {
                 tCellMask(aCellOrdinal) = 1;
 
@@ -231,7 +231,7 @@ namespace Plato {
                     if (tVal > tLimits.mMaximum[tDim]) tCellMask(aCellOrdinal) = 0;
                     if (tVal < tLimits.mMinimum[tDim]) tCellMask(aCellOrdinal) = 0;
                 }
-            }, "cell mask");
+            });
 
             this->computeNodeMask(aMesh);
         }

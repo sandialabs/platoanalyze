@@ -43,7 +43,7 @@ namespace Plato {
 
         auto tNumCells = aCellCenters.extent(0);
         auto tNumDims = aCellCenters.extent(1);
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("cell mask", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             bool tInside = true;
             for (Plato::OrdinalType tDim=0; tDim<tNumDims; tDim++)
@@ -53,7 +53,7 @@ namespace Plato {
                 tInside = tInside && (tVal > tLimits.mMinimum[tDim]);
             }
             if (tInside) aCellMask(aCellOrdinal) = tOperation;
-        }, "cell mask");
+        });
     }
 
 } // namespace Plato

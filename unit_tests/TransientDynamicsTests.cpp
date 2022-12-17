@@ -1380,7 +1380,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsResidualTests, 3D_ScalarFunction )
   Plato::ScalarMultiVector tU("Displacement", tNumSteps, tNumDofs);
   Plato::ScalarMultiVector tV("Velocity",     tNumSteps, tNumDofs);
   Plato::ScalarMultiVector tA("Acceleration", tNumSteps, tNumDofs);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int aDofOrdinal)
+  Kokkos::parallel_for("initial data", Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int aDofOrdinal)
   {
     for(int i=0; i<tNumSteps; i++)
     {
@@ -1388,7 +1388,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsResidualTests, 3D_ScalarFunction )
       tV(i, aDofOrdinal) = 2.0*i*aDofOrdinal * 1.0e-7;
       tA(i, aDofOrdinal) = 3.0*i*aDofOrdinal * 1.0e-7;
     }
-  }, "initial data");
+  });
 
   /**************************************
    Test ScalarFunction value

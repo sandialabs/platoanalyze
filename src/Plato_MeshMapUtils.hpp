@@ -354,7 +354,7 @@ findParentElements(
     // fill d_* data
     auto tCoords = aMesh->Coordinates();
     auto tCells2Nodes = aMesh->Connectivity();
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iCellOrdinal)
+    Kokkos::parallel_for("element bounding boxes", Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iCellOrdinal)
     {
         // set min and max of element bounding box to first node
         for(size_t iDim=0; iDim<ElementT::mNumSpatialDims; ++iDim)
@@ -386,7 +386,7 @@ findParentElements(
             tMax(iDim, iCellOrdinal) += aSearchTolerance * tLen;
             tMin(iDim, iCellOrdinal) -= aSearchTolerance * tLen;
         }
-    }, "element bounding boxes");
+    });
 
     auto d_x0 = Kokkos::subview(tMin, (size_t)Dim::X, Kokkos::ALL());
     auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
@@ -413,7 +413,7 @@ findParentElements(
 
     // loop over indices and find containing element
     GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumLocations), KOKKOS_LAMBDA(OrdinalT iNodeOrdinal)
+    Kokkos::parallel_for("find parent element", Kokkos::RangePolicy<OrdinalT>(0, tNumLocations), KOKKOS_LAMBDA(OrdinalT iNodeOrdinal)
     {
         Plato::Array<ElementT::mNumNodesPerCell, Plato::Scalar> tBasis(0.0);
         Plato::Array<ElementT::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -480,7 +480,7 @@ findParentElements(
                 }
             }
         }
-    }, "find parent element");
+    });
 }
 /***************************************************************************//**
 * @brief Find element that contains each mapped node
@@ -516,7 +516,7 @@ findParentElements(
     auto tCells2Nodes = aMesh->Connectivity();
     auto tDomainCellMap = aDomainCellMap;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iCellOrdinal)
+    Kokkos::parallel_for("element bounding boxes", Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iCellOrdinal)
     {
         OrdinalT tCellOrdinal = tDomainCellMap(iCellOrdinal);
 
@@ -550,7 +550,7 @@ findParentElements(
             tMax(iDim, iCellOrdinal) += aSearchTolerance * tLen;
             tMin(iDim, iCellOrdinal) -= aSearchTolerance * tLen;
         }
-    }, "element bounding boxes");
+    });
 
     auto d_x0 = Kokkos::subview(tMin, (size_t)Dim::X, Kokkos::ALL());
     auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
@@ -577,7 +577,7 @@ findParentElements(
 
     // loop over indices and find containing element
     GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumLocations), KOKKOS_LAMBDA(OrdinalT iNodeOrdinal)
+    Kokkos::parallel_for("find parent element", Kokkos::RangePolicy<OrdinalT>(0, tNumLocations), KOKKOS_LAMBDA(OrdinalT iNodeOrdinal)
     {
         Plato::Array<ElementT::mNumNodesPerCell, Plato::Scalar> tBasis(0.0);
         Plato::Array<ElementT::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -639,7 +639,7 @@ findParentElements(
                 aParentElements(iNodeOrdinal) = iParent;
             }
         }
-    }, "find parent element");
+    });
 }
 
 }  // end namespace Geometry

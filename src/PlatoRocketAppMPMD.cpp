@@ -32,7 +32,7 @@ int main(int aArgc, char **aArgv)
     }
     catch(...)
     {
-        Kokkos::finalize_all();
+        Kokkos::finalize();
         MPI_Finalize();
     }
 
@@ -46,7 +46,7 @@ int main(int aArgc, char **aArgv)
     }
     catch(...)
     {
-        Kokkos::finalize_all();
+        Kokkos::finalize();
         MPI_Finalize();
     }
 
@@ -56,7 +56,7 @@ int main(int aArgc, char **aArgv)
     }
     catch(...)
     {
-        Kokkos::finalize_all();
+        Kokkos::finalize();
         MPI_Finalize();
     }
 
@@ -64,6 +64,6 @@ int main(int aArgc, char **aArgv)
 
     delete tMyApp;
 
-    Kokkos::finalize_all();
+    Kokkos::finalize();
     MPI_Finalize();
 }

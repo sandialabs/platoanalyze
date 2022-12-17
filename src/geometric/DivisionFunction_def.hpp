@@ -154,12 +154,12 @@ namespace Geometric
 
         Plato::ScalarVector tNumeratorGradX = mScalarFunctionBaseNumerator->gradient_x(aControl);
         Plato::ScalarVector tDenominatorGradX = mScalarFunctionBaseDenominator->gradient_x(aControl);
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
+        Kokkos::parallel_for("Division Function Grad X", Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
         {
             tGradientX(tDof) = (tNumeratorGradX(tDof) * tDenominatorValue - 
                                 tDenominatorGradX(tDof) * tNumeratorValue) 
                                / (pow(tDenominatorValue, 2));
-        },"Division Function Grad X");
+        });
         return tGradientX;
     }
 
@@ -182,12 +182,12 @@ namespace Geometric
 
         Plato::ScalarVector tNumeratorGradZ = mScalarFunctionBaseNumerator->gradient_z(aControl);
         Plato::ScalarVector tDenominatorGradZ = mScalarFunctionBaseDenominator->gradient_z(aControl);
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
+        Kokkos::parallel_for("Division Function Grad Z", Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
         {
             tGradientZ(tDof) = (tNumeratorGradZ(tDof) * tDenominatorValue - 
                                 tDenominatorGradZ(tDof) * tNumeratorValue) 
                                / (pow(tDenominatorValue, 2));
-        },"Division Function Grad Z");
+        });
 
         return tGradientZ;
     }

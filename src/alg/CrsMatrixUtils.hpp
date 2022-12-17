@@ -45,6 +45,13 @@ void print_matrix_to_file(
     const std::string& aFileName);
 
 template<typename Ordinal>
+void write_matrix_to_binary_file(
+    typename Plato::CrsMatrix<Ordinal>::RowMapVectorT aRowBegin,
+    typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT aColumns,
+    typename Plato::CrsMatrix<Ordinal>::ScalarVectorT aValues,
+    const std::string& aFileName);
+
+template<typename Ordinal>
 bool has_symmetric_sparsity_pattern(
     const typename Plato::CrsMatrix<Ordinal>::RowMapVectorT& aRowBegin,
     const typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT& aColumns);
@@ -251,6 +258,34 @@ void print_matrix_to_file(
             tFileStream << aValue << '\n';
         });
     tFileStream << "];\n";
+    tFileStream.close();
+}
+
+template<typename Ordinal>
+void write_matrix_to_binary_file(
+    typename Plato::CrsMatrix<Ordinal>::RowMapVectorT aRowBegin,
+    typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT aColumns,
+    typename Plato::CrsMatrix<Ordinal>::ScalarVectorT aValues,
+    const std::string& aFileName)
+{
+    std::ofstream tFileStream;
+    tFileStream.open(aFileName, std::ofstream::out | std::ofstream::binary);
+
+    auto tRowBeginOnHost = detail::host_mirror(aRowBegin);
+    auto tColumnsOnHost = detail::host_mirror(aColumns);
+    auto tValuesOnHost = detail::host_mirror(aValues);
+
+    const auto sizeRows = tRowBeginOnHost.size();
+    const auto sizeCols = tColumnsOnHost.size();
+    const auto sizeVals = tValuesOnHost.size();
+
+    tFileStream.write((char*)&sizeRows, sizeof(size_t));
+    tFileStream.write((char*)tRowBeginOnHost.data(), sizeRows*sizeof(Ordinal));
+    tFileStream.write((char*)&sizeCols, sizeof(size_t));
+    tFileStream.write((char*)tColumnsOnHost.data(), sizeCols*sizeof(Ordinal));
+    tFileStream.write((char*)&sizeVals, sizeof(size_t));
+    tFileStream.write((char*)tValuesOnHost.data(), sizeVals*sizeof(double));
+
     tFileStream.close();
 }
 

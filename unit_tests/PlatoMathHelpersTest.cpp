@@ -35,7 +35,6 @@
 #include "KokkosBatched_Trsm_Serial_Impl.hpp"
 
 #include <Kokkos_Concepts.hpp>
-#include "KokkosKernels_SparseUtils.hpp"
 #include "KokkosSparse_spgemm.hpp"
 #include "KokkosSparse_spadd.hpp"
 #include "KokkosSparse_CrsMatrix.hpp"
@@ -1118,22 +1117,22 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, HyperbolicTangentProjection)
     Plato::ScalarVectorT<Plato::Scalar> tOutputVal("OutputVal", tNumCells);
     Plato::ScalarVectorT<Plato::Scalar> tOutputGrad("OutputGrad", tNumNodesPerCell);
     Plato::ScalarMultiVectorT<FadType> tControl("Control", tNumCells, tNumNodesPerCell);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Set Controls", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tControl(aCellOrdinal, 0) = FadType(tNumNodesPerCell, 0, 1.0);
         tControl(aCellOrdinal, 1) = FadType(tNumNodesPerCell, 1, 1.0);
-    }, "Set Controls");
+    });
 
     // SET EVALUATION TYPES FOR UNIT TEST
     Plato::HyperbolicTangentProjection tProjection;
     Plato::ApplyProjection<Plato::HyperbolicTangentProjection> tApplyProjection(tProjection);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest: HyperbolicTangentProjection_GradZ", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         FadType tValue = tApplyProjection(aCellOrdinal, tControl);
         tOutputVal(aCellOrdinal) = tValue.val();
         tOutputGrad(0) = tValue.dx(0);
         tOutputGrad(1) = tValue.dx(1);
-    }, "UnitTest: HyperbolicTangentProjection_GradZ");
+    });
 
     // TEST OUTPUT
     auto tHostVal = Kokkos::create_mirror(tOutputVal);
@@ -1153,7 +1152,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ConditionalExpression)
 {
     const Plato::OrdinalType tRange = 1;
     Plato::ScalarVector tOuput("Output", 2 /* number of outputs */);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tRange), KOKKOS_LAMBDA(Plato::OrdinalType tOrdinal)
+    Kokkos::parallel_for("Test inline conditional_expression function", Kokkos::RangePolicy<>(0, tRange), KOKKOS_LAMBDA(Plato::OrdinalType tOrdinal)
     {
         Plato::Scalar tConditionalValOne = 5;
         Plato::Scalar tConditionalValTwo = 4;
@@ -1163,7 +1162,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ConditionalExpression)
 
         tConditionalValOne = 3;
         tOuput(tOrdinal + 1) = Plato::conditional_expression(tConditionalValOne, tConditionalValTwo, tConsequentValOne, tConsequentValTwo);
-    }, "Test inline conditional_expression function");
+    });
 
     auto tHostOuput = Kokkos::create_mirror(tOuput);
     Kokkos::deep_copy(tHostOuput, tOuput);

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12)
 CMAKE_POLICY(SET CMP0057 NEW)
 
 project(PLATOANALYZE VERSION 0.0.0 LANGUAGES CXX)
@@ -64,7 +64,6 @@ SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
 # Get Trilinos as one entity
 FIND_PACKAGE(Trilinos REQUIRED)
-list(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
 
 IF(NOT Trilinos_FOUND)
   MESSAGE(FATAL_ERROR "Cannot find Trilinos - build exiting!!!")
@@ -195,9 +194,9 @@ add_executable(
 if( CMAKE_INSTALL_PREFIX )
   install( TARGETS analyze DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 endif()
-target_include_directories(analyze PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
+target_include_directories(analyze PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 #target_link_libraries(analyze analyzelib)
-target_link_libraries( analyze analyzelib ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} )
+target_link_libraries( analyze analyzelib Trilinos::all_selected_libs )
 
 IF (DEFINED AMGX_PREFIX)
   ADD_DEFINITIONS(-DHAVE_AMGX)
@@ -315,7 +314,7 @@ if (PLATOANALYZE_ENABLE_TPETRA)
   message("adding define: -DPLATO_TPETRA")
   add_definitions(-DPLATO_TPETRA)
 endif()
-target_link_libraries(analyze ${PLATO_LIBS} ${Trilinos_LIBRARIES})
+target_link_libraries(analyze ${PLATO_LIBS} Trilinos::all_selected_libs)
 
 if (PLATOANALYZE_ENABLE_EPETRA)
   find_package(Epetra REQUIRED)
@@ -347,20 +346,19 @@ if (PLATOANALYZE_ENABLE_MPMD)
       ${PLATO_PARSER_LIB}
       ${PLATO_EXCEPTIONS_LIB}
       ${PLATO_CONSOLE_LIB}
-      aztecoo
-      epetra
-      intrepid
-      shards
-      sacado
-      teuchoscore
-      nemesis
-      exodus
+      AztecOO::aztecoo
+      Epetra::epetra
+      Intrepid::intrepid
+      Shards::shards
+      Sacado::sacado
+      TeuchosCore::teuchoscore
+      SEACASNemesis::nemesis
+      SEACASExodus::exodus
      )
 
   add_library( Analyze_App src/Analyze_App.cpp )
   target_include_directories(Analyze_App PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
   target_include_directories(Analyze_App PRIVATE "${PLATOENGINE_PREFIX}/include")
-  target_include_directories(Analyze_App PRIVATE "${Trilinos_INCLUDE_DIRS}")
   if( CMAKE_INSTALL_PREFIX )
     install( TARGETS Analyze_App DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
   endif()
@@ -375,7 +373,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
   endif()
   target_include_directories(analyze_MPMD PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
   target_include_directories(analyze_MPMD PRIVATE "${PLATOENGINE_PREFIX}/include")
-  target_include_directories(analyze_MPMD PRIVATE "${Trilinos_INCLUDE_DIRS}")
 
   target_include_directories(analyze PRIVATE "${PLATOENGINE_PREFIX}/include")
 
@@ -384,7 +381,7 @@ if (PLATOANALYZE_ENABLE_MPMD)
     find_library(PLATO_GEOMETRY_MLS_LIB NAMES PlatoGeometryMLS PATHS ${PLATOENGINE_PREFIX}/lib)
     find_library(PLATO_GEOMETRY_COGENT_LIB NAMES PlatoGeometryCogent PATHS ${PLATOENGINE_PREFIX}/lib)
     find_package(Pamgen REQUIRED)
-    set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_MLS_LIB} ${PLATO_GEOMETRY_COGENT_LIB} pamgen)
+    set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_MLS_LIB} ${PLATO_GEOMETRY_COGENT_LIB} Pamgen::pamgen)
   endif()
 
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
@@ -426,8 +423,7 @@ if (PLATOANALYZE_ENABLE_MPMD)
       add_library( PlatoPython SHARED src/PlatoPythonModule.cpp )
       target_include_directories( PlatoPython PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
       target_include_directories( PlatoPython PRIVATE "${PLATOENGINE_PREFIX}/include")
-      target_include_directories( PlatoPython PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
-      target_link_libraries( PlatoPython Analyze_App analyzelib ${PLATO_LIBS} ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} ${Python3_LIBRARIES} )
+      target_link_libraries( PlatoPython Analyze_App analyzelib ${PLATO_LIBS} Trilinos::all_selected_libs ${Python3_LIBRARIES} )
       target_compile_definitions( PlatoPython PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
       set_target_properties( PlatoPython PROPERTIES PREFIX "" )
       target_compile_options( PlatoPython PRIVATE "-lmpi" )
@@ -437,11 +433,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
   endif()
 
 endif()
-
-list(REVERSE Trilinos_TPL_LIBRARIES)
-list(REMOVE_DUPLICATES Trilinos_TPL_LIBRARIES)
-list(REVERSE Trilinos_TPL_LIBRARIES)
-message(STATUS "Trilinos_EXTRA_LD_FLAGS: ${Trilinos_EXTRA_LD_FLAGS}")
 
 IF(OMEGA_H_PREFIX)
  # omega-h adds -Werror which currently breaks build

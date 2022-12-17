@@ -162,7 +162,7 @@ public:
         auto & tPenaltyFunction = mPenaltyFunction;
         auto tQuadratureWeight = mCubatureRule->getCubWeight();
         auto tBasisFunctions = mCubatureRule->getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("Dynamic Compliance Calculation", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             // Internal forces contribution
             tComputeGradientWorkset(aCellOrdinal, tCellGradient, aConfig, tCellVolume);
@@ -185,7 +185,7 @@ public:
             // Add inertial forces contribution
             aResult(aCellOrdinal) = static_cast<Plato::Scalar>(0.5) *
                 ( tElasticEnergy(aCellOrdinal) + tInertialEnergy(aCellOrdinal) );
-        }, "Dynamic Compliance Calculation");
+        });
     }
 };
 // class DynamicCompliance

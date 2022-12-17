@@ -169,7 +169,7 @@ public:
 
         auto tQuadratureWeight = mCubatureRule.getCubWeight();
         auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+        Kokkos::parallel_for("thermal energy criterion", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
         {
             // compute configuration gradients
             tComputeGradient(aCellOrdinal, tConfigurationGradient, aConfig, tCellVolume);
@@ -187,7 +187,7 @@ public:
                 aResult(aCellOrdinal) += tTemperatureGrad(aCellOrdinal, tIndex) * tTemperatureGrad(aCellOrdinal, tIndex);
             aResult(aCellOrdinal) *= 
                 tPenalizedThermalConductivityCoefficient * (tCellVolume(aCellOrdinal) * tTemperatureScalingSquared * tOneHalf);
-        }, "thermal energy criterion");
+        });
     }
 
     /******************************************************************************//**

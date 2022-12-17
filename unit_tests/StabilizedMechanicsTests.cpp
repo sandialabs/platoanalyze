@@ -38,13 +38,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Kinematics3D)
     // Set state workset
     auto tNumNodes = tMesh->NumNodes();
     Plato::ScalarVector tState("state", tNumDofsPerNode * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // disp_z
         tState(aNodeOrdinal*tNumDofsPerNode+3) = (4e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVector tStateWS("current state", tNumCells, tNumDofsPerCell);
     tWorksetBase.worksetState(tState, tStateWS);
 
@@ -174,36 +174,36 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Solution3D)
             tDirichletIndicesBoundaryX0_Zdof.size() + tDirichletIndicesBoundaryX1_Ydof.size();
     Plato::ScalarVector tDirichletValues("Dirichlet Values", tNumDirichletDofs);
     Plato::OrdinalVector tDirichletDofs("Dirichlet Dofs", tNumDirichletDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Xdof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("set dirichlet values and indices", Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Xdof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         tDirichletValues(aIndex) = tValueToSet;
         tDirichletDofs(aIndex) = tDirichletIndicesBoundaryX0_Xdof(aIndex);
-    }, "set dirichlet values and indices");
+    });
 
     auto tOffset = tDirichletIndicesBoundaryX0_Xdof.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Ydof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("set dirichlet values and indices", Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Ydof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         auto tIndex = tOffset + aIndex;
         tDirichletValues(tIndex) = tValueToSet;
         tDirichletDofs(tIndex) = tDirichletIndicesBoundaryX0_Ydof(aIndex);
-    }, "set dirichlet values and indices");
+    });
 
     tOffset += tDirichletIndicesBoundaryX0_Ydof.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Zdof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("set dirichlet values and indices", Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX0_Zdof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         auto tIndex = tOffset + aIndex;
         tDirichletValues(tIndex) = tValueToSet;
         tDirichletDofs(tIndex) = tDirichletIndicesBoundaryX0_Zdof(aIndex);
-    }, "set dirichlet values and indices");
+    });
 
     tValueToSet = -1e-3;
     tOffset += tDirichletIndicesBoundaryX0_Zdof.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX1_Ydof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("set dirichlet values and indices", Kokkos::RangePolicy<>(0, tDirichletIndicesBoundaryX1_Ydof.size()), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         auto tIndex = tOffset + aIndex;
         tDirichletValues(tIndex) = tValueToSet;
         tDirichletDofs(tIndex) = tDirichletIndicesBoundaryX1_Ydof(aIndex);
-    }, "set dirichlet values and indices");
+    });
     tEllipticVMSProblem.setEssentialBoundaryConditions(tDirichletDofs, tDirichletValues);
 
     // 4. Solve problem
@@ -312,13 +312,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
     // 2.3 SET GLOBAL STATE
     auto tNumDofsPerNode = ElementType::mNumDofsPerNode;
     Plato::ScalarVector tState("state", tNumDofsPerNode * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // disp_z
         tState(aNodeOrdinal*tNumDofsPerNode+3) = (4e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVectorT<EvalType::StateScalarType> tStateWS("current global state", tNumCells, ElementType::mNumDofsPerCell);
     tWorksetBase.worksetState(tState, tStateWS);
 
@@ -326,7 +326,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
     auto tNumNodesPerCell = ElementType::mNumNodesPerCell;
     auto tNumSpatialDims  = ElementType::mNumSpatialDims;
     Plato::ScalarMultiVectorT<EvalType::NodeStateScalarType> tProjPressGradWS("projected pressure grad", tNumCells, ElementType::mNumNodeStatePerCell);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("set projected pressure grad", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex< tNumNodesPerCell; tNodeIndex++)
         {
@@ -335,7 +335,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StabilizedMechanics_Residual3D)
                 tProjPressGradWS(aCellOrdinal, tNodeIndex*tNumSpatialDims+tDimIndex) = (4e-7)*(tNodeIndex+1)*(tDimIndex+1)*(aCellOrdinal+1);
             }
         }
-    }, "set projected pressure grad");
+    });
 
     auto tOnlyDomain = tSpatialModel.Domains.front();
 

@@ -91,12 +91,12 @@ getMaps(
 
     auto tChildNodes = mChildNodes;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType childOrdinal)
+    Kokkos::parallel_for("Set child node type and constraint number", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType childOrdinal)
     {
         OrdinalType childNode = tChildNodes(childOrdinal);
         tCondensedNodeCounter(childNode) = 0; // mark child DOF with 0
         nodeConNum(childNode) = childOrdinal;
-    }, "Set child node type and constraint number");
+    });
 
     // assign condensed DOF ordinals
     Plato::OrdinalType tNumCondensedDofs(0);
@@ -139,7 +139,7 @@ assembleTransformMatrix(
     Plato::CrsMatrixType::ScalarVectorT outEntries("transform matrix entries", tOutNnz);
 
     // build row map
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, mNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType iRowOrdinal)
+    Kokkos::parallel_for("row map", Kokkos::RangePolicy<Plato::OrdinalType>(0, mNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType iRowOrdinal)
     {
         OrdinalType nodeType = aNodeTypes(iRowOrdinal);
         if(nodeType == -1) // Child Node
@@ -152,7 +152,7 @@ assembleTransformMatrix(
         {
             outRowMap(iRowOrdinal) = 1;
         }
-    }, "row map");
+    });
 
     OrdinalType tNumEntries(0);
     Kokkos::parallel_scan (Kokkos::RangePolicy<Plato::OrdinalType>(0,mNumNodes+1),
@@ -171,7 +171,7 @@ assembleTransformMatrix(
 
     auto tParentNodes = mParentNodes;
     auto tNumDofsPerNode = mNumDofsPerNode;
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, mNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
+    Kokkos::parallel_for("Build block transformation matrix", Kokkos::RangePolicy<Plato::OrdinalType>(0, mNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
     {
         OrdinalType tColMapOrdinal = outRowMap(nodeOrdinal);
         OrdinalType nodeType = aNodeTypes(nodeOrdinal);
@@ -204,7 +204,7 @@ assembleTransformMatrix(
                 outEntries(entryOrdinal) = 1.0;
             }
         }
-    }, "Build block transformation matrix");
+    });
 
     // construct full CRS matrix
     OrdinalType tNdof = mNumNodes*mNumDofsPerNode;
@@ -226,7 +226,7 @@ assembleRhs(const ScalarVector & aMpcValues)
     auto tChildNodes = mChildNodes;
     auto tRhs = mRhs;
     auto tNumDofsPerNode = mNumDofsPerNode;
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType childOrdinal)
+    Kokkos::parallel_for("Set RHS vector values", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType childOrdinal)
     {
         OrdinalType childNode = tChildNodes(childOrdinal);
         for(OrdinalType dofOrdinal=0; dofOrdinal<tNumDofsPerNode; dofOrdinal++)
@@ -234,7 +234,7 @@ assembleRhs(const ScalarVector & aMpcValues)
             OrdinalType entryOrdinal = tNumDofsPerNode*childNode + dofOrdinal; 
             tRhs(entryOrdinal) = aMpcValues(childOrdinal);
         }
-    }, "Set RHS vector values");
+    });
 }
 
 /****************************************************************************/

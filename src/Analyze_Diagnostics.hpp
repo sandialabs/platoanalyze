@@ -563,7 +563,7 @@ local_workset_matrix_vector_multiply(const Plato::ScalarArray3D & aWorkset,
 
     Plato::ScalarVector tResult("result", tVectorSize);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), 
+    Kokkos::parallel_for("matrix vector multiply", Kokkos::RangePolicy<>(0, tNumCells), 
                          KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::OrdinalType tStartingRowIndex = aCellOrdinal * tNumLocalDofsPerCell;
@@ -577,7 +577,7 @@ local_workset_matrix_vector_multiply(const Plato::ScalarArray3D & aWorkset,
                 tResult(tStartingRowIndex + tRow) += tValue;
             }
         }
-    }, "matrix vector multiply");
+    });
     return tResult;
 }
 
@@ -595,7 +595,7 @@ global_workset_matrix_vector_multiply(const Plato::ScalarArray3D & aWorkset,
 
     Plato::ScalarVector tResult("result", aNumMatrixRows);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumWorksetRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("matrix vector multiply", Kokkos::RangePolicy<>(0, tNumWorksetRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for (Plato::OrdinalType tWorksetCol = 0; tWorksetCol < tNumWorksetCols; ++tWorksetCol)
         {
@@ -615,7 +615,7 @@ global_workset_matrix_vector_multiply(const Plato::ScalarArray3D & aWorkset,
                 }
             }
         }
-    }, "matrix vector multiply");
+    });
     return tResult;
 }
 
@@ -633,7 +633,7 @@ control_workset_matrix_vector_multiply(const Plato::ScalarArray3D & aWorkset,
 
     Plato::ScalarVector tResult("result", aNumMatrixRows);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumWorksetRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("matrix vector multiply", Kokkos::RangePolicy<>(0, tNumWorksetRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for (Plato::OrdinalType tWorksetCol = 0; tWorksetCol < tNumWorksetCols; ++tWorksetCol)
         {
@@ -646,7 +646,7 @@ control_workset_matrix_vector_multiply(const Plato::ScalarArray3D & aWorkset,
                 tResult(tMatrixRow) += tValue;
             }
         }
-    }, "matrix vector multiply");
+    });
     return tResult;
 }
 
@@ -760,7 +760,7 @@ test_partial_global_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<Eleme
                                                                          tLocalState, tPrevLocalState,
                                                                          tControl, tTimeData);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tTotalNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal)
+        Kokkos::parallel_for("compute error", Kokkos::RangePolicy<>(0, tTotalNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal)
         {
             Plato::Scalar tValuePlus1Eps  = tVectorValueOne(aDofOrdinal);
             Plato::Scalar tValueMinus1Eps = tVectorValueTwo(aDofOrdinal);
@@ -776,7 +776,7 @@ test_partial_global_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<Eleme
 
             tErrorVector(aDofOrdinal) = tAppxError;
 
-        }, "compute error");
+        });
 
         Plato::Scalar tL1Error = 0.0;
         Plato::blas1::local_sum(tErrorVector, tL1Error);
@@ -898,7 +898,7 @@ test_partial_prev_global_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<
                                                                          tLocalState, tPrevLocalState,
                                                                          tControl, tTimeData);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tTotalNumDofs), 
+        Kokkos::parallel_for("compute error", Kokkos::RangePolicy<>(0, tTotalNumDofs), 
                                  KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal)
         {
             Plato::Scalar tValuePlus1Eps  = tVectorValueOne(aDofOrdinal);
@@ -915,7 +915,7 @@ test_partial_prev_global_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<
 
             tErrorVector(aDofOrdinal) = tAppxError;
 
-        }, "compute error");
+        });
 
         Plato::Scalar tL1Error = 0.0;
         Plato::blas1::local_sum(tErrorVector, tL1Error);
@@ -1032,7 +1032,7 @@ test_partial_local_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<Elemen
                                                                          tTrialLocalState, tPrevLocalState,
                                                                          tControl, tTimeData);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tTotalNumLocalDofs), 
+        Kokkos::parallel_for("compute error", Kokkos::RangePolicy<>(0, tTotalNumLocalDofs), 
                                  KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal)
         {
             Plato::Scalar tValuePlus1Eps  = tVectorValueOne(aDofOrdinal);
@@ -1049,7 +1049,7 @@ test_partial_local_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<Elemen
 
             tErrorVector(aDofOrdinal) = tAppxError;
 
-        }, "compute error");
+        });
 
         Plato::Scalar tL1Error = 0.0;
         Plato::blas1::local_sum(tErrorVector, tL1Error);
@@ -1166,7 +1166,7 @@ test_partial_prev_local_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<E
                                                                          tLocalState, tTrialPrevLocalState,
                                                                          tControl, tTimeData);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tTotalNumLocalDofs), 
+        Kokkos::parallel_for("compute error", Kokkos::RangePolicy<>(0, tTotalNumLocalDofs), 
                                  KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal)
         {
             Plato::Scalar tValuePlus1Eps  = tVectorValueOne(aDofOrdinal);
@@ -1183,7 +1183,7 @@ test_partial_prev_local_state(Plato::Mesh aMesh, Plato::LocalVectorFunctionInc<E
 
             tErrorVector(aDofOrdinal) = tAppxError;
 
-        }, "compute error");
+        });
 
         Plato::Scalar tL1Error = 0.0;
         Plato::blas1::local_sum(tErrorVector, tL1Error);
@@ -1305,7 +1305,7 @@ test_partial_local_vect_func_inc_wrt_control(Plato::Mesh aMesh, Plato::LocalVect
                                                                          tLocalState, tPrevLocalState,
                                                                          tTrialControl, tTimeData);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tTotalNumLocalDofs), 
+        Kokkos::parallel_for("compute error", Kokkos::RangePolicy<>(0, tTotalNumLocalDofs), 
                                  KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal)
         {
             Plato::Scalar tValuePlus1Eps  = tVectorValueOne(aDofOrdinal);
@@ -1322,7 +1322,7 @@ test_partial_local_vect_func_inc_wrt_control(Plato::Mesh aMesh, Plato::LocalVect
 
             tErrorVector(aDofOrdinal) = tAppxError;
 
-        }, "compute error");
+        });
 
         Plato::Scalar tL1Error = 0.0;
         Plato::blas1::local_sum(tErrorVector, tL1Error);

@@ -8,7 +8,6 @@
 #include <KokkosBatched_Trsm_Decl.hpp>
 #include <KokkosBatched_Trsm_Serial_Impl.hpp>
 
-#include <KokkosKernels_SparseUtils.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
 #include <KokkosSparse_spadd.hpp>
 #include <KokkosSparse_spgemm.hpp>

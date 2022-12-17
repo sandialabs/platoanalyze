@@ -140,7 +140,7 @@ public:
 
             Plato::OrdinalType tNumCells = tTotalStrain.extent(0);
             Plato::OrdinalType tNumTerms = tTotalStrain.extent(1);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+            Kokkos::parallel_for("Save total strain", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
             {
                 for (ordT iTerm=0; iTerm<tNumTerms; iTerm++)
                 {
@@ -151,7 +151,7 @@ public:
                     }
                     tTotalStrain(aCellOrdinal, iTerm) /= tNumGP;
                 }
-            }, "Save total strain");
+            });
         }
     }
 

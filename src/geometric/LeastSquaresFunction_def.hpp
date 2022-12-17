@@ -240,11 +240,11 @@ namespace Geometric
             const Plato::Scalar tFunctionScale = mFunctionNormalization[tFunctionIndex];
             Plato::Scalar tFunctionValue = mScalarFunctionBaseContainer[tFunctionIndex]->value(aControl);
             Plato::ScalarVector tFunctionGradX = mScalarFunctionBaseContainer[tFunctionIndex]->gradient_x(aControl);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
+            Kokkos::parallel_for("Least Squares Function Summation Grad X", Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
             {
                 tGradientX(tDof) += 2.0 * tFunctionWeight * (tFunctionValue - tFunctionGoldValue) 
                                         * tFunctionGradX(tDof) / (tFunctionScale * tFunctionScale);
-            },"Least Squares Function Summation Grad X");
+            });
         }
         return tGradientX;
     }
@@ -268,11 +268,11 @@ namespace Geometric
             const Plato::Scalar tFunctionScale = mFunctionNormalization[tFunctionIndex];
             Plato::Scalar tFunctionValue = mScalarFunctionBaseContainer[tFunctionIndex]->value(aControl);
             Plato::ScalarVector tFunctionGradZ = mScalarFunctionBaseContainer[tFunctionIndex]->gradient_z(aControl);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
+            Kokkos::parallel_for("Least Squares Function Summation Grad Z", Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
             {
                 tGradientZ(tDof) += 2.0 * tFunctionWeight * (tFunctionValue - tFunctionGoldValue) 
                                         * tFunctionGradZ(tDof) / (tFunctionScale * tFunctionScale);
-            },"Least Squares Function Summation Grad Z");
+            });
         }
         return tGradientZ;
     }

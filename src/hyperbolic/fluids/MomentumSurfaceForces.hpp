@@ -154,7 +154,7 @@ public:
         // evaluate integral
         auto tSurfaceCubatureWeight = mSurfaceCubatureRule.getCubWeight();
         auto tSurfaceBasisFunctions = mSurfaceCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumFaces), KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal)
+        Kokkos::parallel_for("calculate surface momentum integral", Kokkos::RangePolicy<>(0, tNumFaces), KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal)
         {
             auto tElementOrdinal = tElementOrds(aSideOrdinal);
             auto tElemFaceOrdinal = tFaceOrds(aSideOrdinal);
@@ -187,7 +187,7 @@ public:
                         tPrevVelGP(tElementOrdinal, tDim) * tSurfaceBasisFunctions(tNode) * tSurfaceAreaTimesCubWeight;
                 }
             }
-        }, "calculate surface momentum integral");
+        });
     }
 };
 // class MomentumSurfaceForces

@@ -255,13 +255,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
     const Plato::OrdinalType tNumVoigtTerms = 6;
     Plato::ScalarMultiVectorT<StrainT> tRealLinearStrain("RealLinearStrain", tNumCells, tNumVoigtTerms);
     Plato::ScalarMultiVectorT<StrainT> tImagLinearStrain("ImagLinearStrain", tNumCells, tNumVoigtTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest::LinearStrains", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         // compute strain
         tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
         tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
-    }, "UnitTest::LinearStrains");
+    });
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
     using SD_ResidualT = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Residual;
@@ -310,13 +310,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
     Plato::ComplexStrain<tSpaceDim, tNumDofsPerNode> tComputeComplexStrain;
     Plato::ScalarArray3DT<StrainT> tComplexStrain("ComplexStrain", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest::ComplexStrain", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tCellVolume(aCellOrdinal) = 0.0;
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         // compute strain
         tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
-    }, "UnitTest::ComplexStrain");
+    });
 
     // TEST OUTPUTS: LINEAR STRAINS AND COMPLEX STRAINS SHOULD BE EQUAL
     auto tHostRealLinearStrain = Kokkos::create_mirror(tRealLinearStrain);
@@ -424,7 +424,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealLinearStress("RealLinearStress", tNumCells, tNumVoigtTerms);
     Plato::ScalarMultiVectorT<StrainT> tImagLinearStrain("ImagLinearStrain", tNumCells, tNumVoigtTerms);
     Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagLinearStress("ImagLinearStress", tNumCells, tNumVoigtTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest::LinearStress", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
 
@@ -435,7 +435,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
         // compute stress
         tComputeLinearStress(aCellOrdinal, tRealLinearStress, tRealLinearStrain);
         tComputeLinearStress(aCellOrdinal, tImagLinearStress, tImagLinearStrain);
-    }, "UnitTest::LinearStress");
+    });
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
     using SD_ResidualT = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Residual;
@@ -488,7 +488,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     Plato::ScalarArray3DT<ResidualT::ResultScalarType>
         tComplexStress("ComplexStress", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest::ComplexStress", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tCellVolume(aCellOrdinal) = 0.0;
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
@@ -496,7 +496,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
         tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
         // compute stress
         tComputeComplexStress(aCellOrdinal, tComplexStrain, tComplexStress);
-    }, "UnitTest::ComplexStress");
+    });
 
     // TEST OUTPUTS: LINEAR STRESSES AND COMPLEX STRESSES SHOULD BE EQUAL
     auto tHostRealLinearStress = Kokkos::create_mirror(tRealLinearStress);
@@ -610,7 +610,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagElasticForces("ImagElasticForces", tNumCells, tNumDofsPerCell);
 
     auto tQuadratureWeight = tCubatureRule.getCubWeight();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest::ElasticForces", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tCellVolume(aCellOrdinal) = 0.0;
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
@@ -624,7 +624,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
         // compute elastic forces
         tComputeElasticForces(aCellOrdinal, tRealElasticForces, tRealLinearStress, tGradient, tCellVolume);
         tComputeElasticForces(aCellOrdinal, tImagElasticForces, tImagLinearStress, tGradient, tCellVolume);
-    }, "UnitTest::ElasticForces");
+    });
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
     using SD_ResidualT = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Residual;
@@ -680,7 +680,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     Plato::ScalarMultiVectorT<ResidualT::ResultScalarType>
         tComplexElasticForces("ComplexElasticForces", tNumCells, tNumDofsPerCell);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest::ComplexElasticForces", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tCellVolume(aCellOrdinal) = 0.0;
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
@@ -691,7 +691,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
         tComputeComplexStress(aCellOrdinal, tComplexStrain, tComplexStress);
         // compute elastic forces
         tComputeComplexElasticForces(aCellOrdinal, tCellVolume, tGradient, tComplexStress, tComplexElasticForces);
-    }, "UnitTest::ComplexElasticForces");
+    });
 
     // TEST OUTPUTS: LINEAR AND COMPLEX ELASTIC FORCES SHOULD BE EQUAL
     auto tHostRealElasticForces = Kokkos::create_mirror(tRealElasticForces);

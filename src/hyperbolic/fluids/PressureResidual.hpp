@@ -175,7 +175,7 @@ public:
 
         auto tCubWeight = mCubatureRule.getCubWeight();
         auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+        Kokkos::parallel_for("calculate continuity residual", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
         {
             tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
             tCellVolume(aCellOrdinal) *= tCubWeight;
@@ -216,7 +216,7 @@ public:
 
             // 7. add right hand side force vector to residual, i.e. R -= RHS
             Plato::blas2::update<mNumPressDofsPerCell>(aCellOrdinal, -1.0, tRightHandSide, 1.0, aResultWS);
-        }, "calculate continuity residual");
+        });
     }
 
     /***************************************************************************//**

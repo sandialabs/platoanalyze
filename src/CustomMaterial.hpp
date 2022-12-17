@@ -121,11 +121,11 @@ public:
 
 #ifdef DO_KOKKOS
           // Device - GPU
-          Kokkos::parallel_for(Kokkos::RangePolicy<>(0, nThreads),
+          Kokkos::parallel_for("Compute", Kokkos::RangePolicy<>(0, nThreads),
                                KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
                                {
                                  expEval.evaluate_expression( tCellOrdinal, results );
-                               }, "Compute");
+                               });
 
           // Wait for the GPU to finish so to get the data on to the CPU.
           Kokkos::fence();

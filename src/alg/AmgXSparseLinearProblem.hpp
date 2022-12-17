@@ -235,7 +235,7 @@ public:
         auto tNumNonZero = Plato::OrdinalType(tColIndices.extent(0));
         assert(Plato::OrdinalType(aMatrix.entries().extent(0)) == tNumNonZero * BlockSize * BlockSize);
         assert(cudaSuccess == cudaDeviceSynchronize());
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumBlocks), KOKKOS_LAMBDA(Plato::OrdinalType aBlockIndex)
+        Kokkos::parallel_for("check_inputs", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumBlocks), KOKKOS_LAMBDA(Plato::OrdinalType aBlockIndex)
         {
             auto tBegin = tRowMap(aBlockIndex);
             assert(0 <= tBegin);
@@ -249,7 +249,7 @@ public:
                 assert(0 <= tJ);
                 assert(tJ < tNumBlocks);
             }
-        }, "check_inputs");
+        });
         assert(cudaSuccess == cudaDeviceSynchronize());
     }
 

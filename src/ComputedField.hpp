@@ -49,12 +49,12 @@ class ComputedField
 
     auto tCoords = aMesh->Coordinates();
     auto tValues = mValues;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
+    Kokkos::parallel_for("fill coords", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
     {
       if (SpaceDim > 0) tXcoords(aPointOrdinal) = tCoords(aPointOrdinal*SpaceDim + 0);
       if (SpaceDim > 1) tYcoords(aPointOrdinal) = tCoords(aPointOrdinal*SpaceDim + 1);
       if (SpaceDim > 2) tZcoords(aPointOrdinal) = tCoords(aPointOrdinal*SpaceDim + 2);
-    },"fill coords");
+    });
 
     ExpressionEvaluator<Plato::ScalarMultiVectorT<ScalarType>,
                         Plato::ScalarMultiVectorT<ScalarType>,
@@ -70,7 +70,7 @@ class ComputedField
 //    tExpEval.set_variable("y", tYcoords);
 //    tExpEval.set_variable("z", tZcoords);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
+    Kokkos::parallel_for("evaluate", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
     {
         // Set the coords as a constant on a per thread basis. This
         // call works but is not needed as the coords are indexed by
@@ -88,7 +88,7 @@ class ComputedField
         // tExpEval.set_variable("z", tZcoords, aPointOrdinal);
 
         tExpEval.evaluate_expression( aPointOrdinal, tValues );
-    }, "evaluate");
+    });
     Kokkos::fence();
     tExpEval.clear_storage();
   }
@@ -112,10 +112,10 @@ class ComputedField
       "Size mismatch in field initialization:  Mod(view, stride) != 0");
     auto tFromValues = mValues;
     auto tToValues = aValues;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tFromValues.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
+    Kokkos::parallel_for("copy", Kokkos::RangePolicy<>(0,tFromValues.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
     {
         tToValues(aStride*aPointOrdinal+aOffset) = tFromValues(aPointOrdinal, 0);
-    }, "copy");
+    });
   }
 
   /******************************************************************************/

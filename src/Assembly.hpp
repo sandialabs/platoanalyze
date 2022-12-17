@@ -62,14 +62,14 @@ inline void flatten_vector_workset(const Plato::OrdinalType& aNumCells,
         ANALYZE_THROWERR("\nNumber of cells, i.e. elements, argument is <= zero.\n");
     }
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells),KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("flatten residual vector", Kokkos::RangePolicy<>(0, aNumCells),KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         const auto tDofOffset = aCellOrdinal * NumDofsPerCell;
         for (Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerCell; tDofIndex++)
         {
           aOutput(tDofOffset + tDofIndex) = aInput(aCellOrdinal, tDofIndex);
         }
-    }, "flatten residual vector");
+    });
 }
 // function flatten_vector_workset
 
@@ -108,7 +108,7 @@ flatten_vector_workset(
         ANALYZE_THROWERR("\nNumber of cells, i.e. elements, argument is <= zero.\n");
     }
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells),KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("flatten residual vector", Kokkos::RangePolicy<>(0, tNumCells),KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         const auto tDofOffset = tCellOrdinal * NumDofsPerCell;
@@ -116,7 +116,7 @@ flatten_vector_workset(
         {
           aOutput(tDofOffset + tDofIndex) = aInput(aCellOrdinal, tDofIndex);
         }
-    }, "flatten residual vector");
+    });
 }
 // function flatten_vector_workset
 
@@ -155,14 +155,14 @@ assemble_vector_workset(
         ANALYZE_THROWERR("\nNumber of cells, i.e. elements, argument is <= zero.\n");
     }
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells),KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("combine residual vector", Kokkos::RangePolicy<>(0, tNumCells),KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for (Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerCell; tDofIndex++)
         {
             aOutput(tCellOrdinal, tDofIndex) = aInput(aCellOrdinal, tDofIndex);
         }
-    }, "combine residual vector");
+    });
 }
 // function assemble_vector_workset
 
@@ -187,14 +187,14 @@ transform_ad_type_to_pod_1Dview(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Convert AD Partial to POD type", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tDimIndex=0; tDimIndex < NumDofsPerCell; tDimIndex++)
         {
             aOutput(tCellOrdinal * NumDofsPerCell + tDimIndex) = aInput(aCellOrdinal).dx(tDimIndex);
         }
-    }, "Convert AD Partial to POD type");
+    });
 }
 // function transform_ad_type_to_pod_1Dview
 
@@ -224,13 +224,13 @@ inline void transform_ad_type_to_pod_2Dview(const Plato::ScalarVectorT<ADType>& 
     }
 
     Plato::OrdinalType tNumCells = aOutput.extent(0);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Convert AD Partial to POD type", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tDimIndex=0; tDimIndex < NumDofsPerCell; tDimIndex++)
         {
             aOutput(aCellOrdinal, tDimIndex) = aInput(aCellOrdinal).dx(tDimIndex);
         }
-    }, "Convert AD Partial to POD type");
+    });
 }
 // function transform_ad_type_to_pod_2Dview
 
@@ -264,14 +264,14 @@ transform_ad_type_to_pod_2Dview(
 
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Convert AD Partial to POD type", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tDimIndex=0; tDimIndex < NumDofsPerCell; tDimIndex++)
         {
             aOutput(tCellOrdinal, tDimIndex) = aInput(aCellOrdinal).dx(tDimIndex);
         }
-    }, "Convert AD Partial to POD type");
+    });
 }
 // function transform_ad_type_to_pod_2Dview
 
@@ -311,7 +311,7 @@ transform_ad_type_to_pod_3Dview(
 
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("convert AD type to Scalar type", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < NumRowsPerCell; tRowIndex++)
@@ -321,7 +321,7 @@ transform_ad_type_to_pod_3Dview(
                 aOutput(tCellOrdinal, tRowIndex, tColumnIndex) = aInput(aCellOrdinal, tRowIndex).dx(tColumnIndex);
             }
         }
-    }, "convert AD type to Scalar type");
+    });
 }
 // function transform_ad_type_to_pod_3Dview
 /************************************************************************//**
@@ -355,7 +355,7 @@ inline void transform_ad_type_to_pod_3Dview(const Plato::OrdinalType& aNumCells,
         ANALYZE_THROWERR("\nOutput 3D array size is zero.\n");
     }
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("convert AD type to Scalar type", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
       for(Plato::OrdinalType tRowIndex = 0; tRowIndex < NumRowsPerCell; tRowIndex++)
       {
@@ -364,7 +364,7 @@ inline void transform_ad_type_to_pod_3Dview(const Plato::OrdinalType& aNumCells,
               aOutput(aCellOrdinal, tRowIndex, tColumnIndex) += aInput(aCellOrdinal, tRowIndex).dx(tColumnIndex);
           }
       }
-    }, "convert AD type to Scalar type");
+    });
 }
 // function transform_ad_type_to_pod_3Dview
 
@@ -418,7 +418,7 @@ inline void assemble_vector_gradient(const Plato::OrdinalType& aNumCells,
                                      const Gradient& aGradient,
                                      ReturnVal& aOutput)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Assemble - Vector Gradient Calculation", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
         {
@@ -428,7 +428,7 @@ inline void assemble_vector_gradient(const Plato::OrdinalType& aNumCells,
                 Kokkos::atomic_add(&aOutput(tEntryOrdinal), aGradient(aCellOrdinal, tNodeIndex * NumDofsPerNode + tDimIndex));
             }
         }
-    }, "Assemble - Vector Gradient Calculation");
+    });
 }
 
 // function assemble_vector_gradient
@@ -454,7 +454,7 @@ inline void assemble_vector_gradient_fad(const Plato::OrdinalType& aNumCells,
                                          const Gradient& aGradient,
                                          ReturnVal& aOutput)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Assemble - Vector Gradient Calculation", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
         {
@@ -464,7 +464,7 @@ inline void assemble_vector_gradient_fad(const Plato::OrdinalType& aNumCells,
                 Kokkos::atomic_add(&aOutput(tEntryOrdinal), aGradient(aCellOrdinal).dx(tNodeIndex * NumDofsPerNode + tDimIndex));
             }
         }
-    }, "Assemble - Vector Gradient Calculation");
+    });
 }
 // function assemble_vector_gradient_fad
 
@@ -495,7 +495,7 @@ assemble_vector_gradient_fad(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Assemble - Vector Gradient Calculation", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
@@ -506,7 +506,7 @@ assemble_vector_gradient_fad(
                 Kokkos::atomic_add(&aOutput(tEntryOrdinal), aGradient(aCellOrdinal).dx(tNodeIndex * NumDofsPerNode + tDimIndex));
             }
         }
-    }, "Assemble - Vector Gradient Calculation");
+    });
 }
 // function assemble_vector_gradient_fad
 
@@ -531,14 +531,14 @@ inline void assemble_scalar_gradient(const Plato::OrdinalType& aNumCells,
                                      const Gradient& aGradient,
                                      ReturnVal& aOutput)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Assemble - Scalar Gradient Calculation", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
       for(Plato::OrdinalType tNodeIndex=0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
       {
           Plato::OrdinalType tEntryOrdinal = aEntryOrdinal(aCellOrdinal, tNodeIndex);
           Kokkos::atomic_add(&aOutput(tEntryOrdinal), aGradient(aCellOrdinal, tNodeIndex));
       }
-    }, "Assemble - Scalar Gradient Calculation");
+    });
 }
 // function assemble_scalar_gradient
 
@@ -563,14 +563,14 @@ inline void assemble_scalar_gradient_fad(const Plato::OrdinalType& aNumCells,
                                          const Gradient& aGradient,
                                          ReturnVal& aOutput)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Assemble - Scalar Gradient Calculation", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
       for(Plato::OrdinalType tNodeIndex=0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
       {
           Plato::OrdinalType tEntryOrdinal = aEntryOrdinal(aCellOrdinal, tNodeIndex);
           Kokkos::atomic_add(&aOutput(tEntryOrdinal), aGradient(aCellOrdinal).dx(tNodeIndex));
       }
-    }, "Assemble - Scalar Gradient Calculation");
+    });
 }
 
 // function assemble_scalar_gradient_fad
@@ -600,7 +600,7 @@ assemble_scalar_gradient_fad(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Assemble - Scalar Gradient Calculation", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
@@ -608,7 +608,7 @@ assemble_scalar_gradient_fad(
             Plato::OrdinalType tEntryOrdinal = aEntryOrdinal(tCellOrdinal, tNodeIndex);
             Kokkos::atomic_add(&aOutput(tEntryOrdinal), aGradient(aCellOrdinal).dx(tNodeIndex));
         }
-    }, "Assemble - Scalar Gradient Calculation");
+    });
 }
 // function assemble_scalar_gradient_fad
 
@@ -638,7 +638,7 @@ workset_control_scalar_scalar(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_control_scalar_scalar", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
@@ -646,7 +646,7 @@ workset_control_scalar_scalar(
             Plato::OrdinalType tEntryOrdinal = aControlEntryOrdinal(tCellOrdinal, tNodeIndex);
             aControlWS(aCellOrdinal, tNodeIndex) = aControl(tEntryOrdinal);
         }
-    }, "workset_control_scalar_scalar");
+    });
 }
 // function workset_control_scalar_scalar
 
@@ -674,14 +674,14 @@ workset_control_scalar_scalar(
           ControlWS           & aControlWS
 )
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_control_scalar_scalar", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
         {
             Plato::OrdinalType tEntryOrdinal = aControlEntryOrdinal(aCellOrdinal, tNodeIndex);
             aControlWS(aCellOrdinal, tNodeIndex) = aControl(tEntryOrdinal);
         }
-    }, "workset_control_scalar_scalar");
+    });
 }
 // function workset_control_scalar_scalar
 
@@ -710,7 +710,7 @@ workset_control_scalar_fad(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_control_scalar_fad", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
@@ -718,7 +718,7 @@ workset_control_scalar_fad(
             Plato::OrdinalType tEntryOrdinal = aControlEntryOrdinal(tCellOrdinal, tNodeIndex);
             aFadControlWS(aCellOrdinal, tNodeIndex) = ControlFad( NumNodesPerCell, tNodeIndex, aControl(tEntryOrdinal));
         }
-    }, "workset_control_scalar_fad");
+    });
 }
 // function workset_control_scalar_fad
 
@@ -745,14 +745,14 @@ workset_control_scalar_fad(
     const Control             & aControl,
           FadControlWS        & aFadControlWS)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_control_scalar_fad", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
         {
             Plato::OrdinalType tEntryOrdinal = aControlEntryOrdinal(aCellOrdinal, tNodeIndex);
             aFadControlWS(aCellOrdinal, tNodeIndex) = ControlFad( NumNodesPerCell, tNodeIndex, aControl(tEntryOrdinal));
         }
-    }, "workset_control_scalar_fad");
+    });
 }
 // function workset_control_scalar_fad
 
@@ -783,7 +783,7 @@ workset_state_scalar_scalar(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_state_scalar_scalar", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerNode; tDofIndex++)
@@ -795,7 +795,7 @@ workset_state_scalar_scalar(
                 aStateWS(aCellOrdinal, tLocalDof) = aState(tEntryOrdinal);
             }
         }
-    }, "workset_state_scalar_scalar");
+    });
 }
 // function workset_state_scalar_scalar
 
@@ -823,7 +823,7 @@ workset_state_scalar_scalar(
           StateWS            & aStateWS
 )
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_state_scalar_scalar", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerNode; tDofIndex++)
         {
@@ -834,7 +834,7 @@ workset_state_scalar_scalar(
                 aStateWS(aCellOrdinal, tLocalDof) = aState(tEntryOrdinal);
             }
         }
-    }, "workset_state_scalar_scalar");
+    });
 }
 // function workset_state_scalar_scalar
 
@@ -866,7 +866,7 @@ workset_state_scalar_fad(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_state_scalar_fad", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerNode; tDofIndex++)
@@ -878,7 +878,7 @@ workset_state_scalar_fad(
                 aFadStateWS(aCellOrdinal, tLocalDof) = StateFad(NumDofsPerNode*NumNodesPerCell, tLocalDof, aState(tEntryOrdinal));
             }
         }
-    }, "workset_state_scalar_fad");
+    });
 }
 // function workset_state_scalar_fad
 
@@ -908,7 +908,7 @@ workset_state_scalar_fad(
           FadStateWS         & aFadStateWS
 )
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_state_scalar_fad", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerNode; tDofIndex++)
         {
@@ -919,7 +919,7 @@ workset_state_scalar_fad(
                 aFadStateWS(aCellOrdinal, tLocalDof) = StateFad(NumDofsPerNode*NumNodesPerCell, tLocalDof, aState(tEntryOrdinal));
             }
         }
-    }, "workset_state_scalar_fad");
+    });
 }
 // function workset_state_scalar_fad
 
@@ -1087,7 +1087,7 @@ workset_config_scalar(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_config_scalar", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
@@ -1097,7 +1097,7 @@ workset_config_scalar(
                 aConfigWS(aCellOrdinal,tNodeIndex,tDimIndex) = aNodeCoordinate(tCellOrdinal,tNodeIndex,tDimIndex);
             }
         }
-    }, "workset_config_scalar");
+    });
 }
 // function workset_config_scalar
 
@@ -1122,7 +1122,7 @@ workset_config_scalar(
           ConfigWS           & aConfigWS
 )
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_config_scalar", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
         {
@@ -1131,7 +1131,7 @@ workset_config_scalar(
                 aConfigWS(aCellOrdinal,tNodeIndex,tDimIndex) = aNodeCoordinate(aCellOrdinal,tNodeIndex,tDimIndex);
             }
         }
-    }, "workset_config_scalar");
+    });
 }
 // function workset_config_scalar
 
@@ -1161,7 +1161,7 @@ workset_config_fad(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_config_fad", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
@@ -1173,7 +1173,7 @@ workset_config_fad(
                         ConfigFad(numConfigDofsPerCell, tLocalDim, aNodeCoordinate(tCellOrdinal,tNodeIndex,tDimIndex));
             }
         }
-    }, "workset_config_fad");
+    });
 }
 // function workset_config_fad
 
@@ -1200,7 +1200,7 @@ workset_config_fad(
           FadConfigWS        & aFadConfigWS
 )
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("workset_config_fad", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
         {
@@ -1211,7 +1211,7 @@ workset_config_fad(
                         ConfigFad(numConfigDofsPerCell, tLocalDim, aNodeCoordinate(aCellOrdinal,tNodeIndex,tDimIndex));
             }
         }
-    }, "workset_config_fad");
+    });
 }
 // function workset_config_fad
 
@@ -1241,7 +1241,7 @@ assemble_residual(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble_residual", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
@@ -1252,7 +1252,7 @@ assemble_residual(
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aResidual(aCellOrdinal,tNodeIndex*NumDofsPerNode+tDofIndex));
             }
         }
-    }, "assemble_residual");
+    });
 }
 // function assemble_residual
 
@@ -1279,7 +1279,7 @@ assemble_residual(
     const Residual           & aResidual,
           ReturnVal          & aReturnValue)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble_residual", Kokkos::RangePolicy<Plato::OrdinalType>(0,aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < NumNodesPerCell; tNodeIndex++)
         {
@@ -1289,7 +1289,7 @@ assemble_residual(
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aResidual(aCellOrdinal,tNodeIndex*NumDofsPerNode+tDofIndex));
             }
         }
-    }, "assemble_residual");
+    });
 }
 // function assemble_residual
 
@@ -1316,7 +1316,7 @@ inline void assemble_jacobian(Plato::OrdinalType aNumCells,
                               const Plato::ScalarArray3D &aJacobianWorkset,
                               ReturnVal &aReturnValue)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+    Kokkos::parallel_for("assemble jacobian", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < aNumRowsPerCell; tRowIndex++)
         {
@@ -1326,7 +1326,7 @@ inline void assemble_jacobian(Plato::OrdinalType aNumCells,
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(aCellOrdinal,tRowIndex, tColumnIndex));
             }
         }
-    }, "assemble jacobian");
+    });
 }
 // function assemble_jacobian
 
@@ -1353,7 +1353,7 @@ inline void assemble_jacobian_transpose_pod(Plato::OrdinalType aNumCells,
                               const Plato::ScalarArray3D &aJacobianWorkset,
                               ReturnVal &aReturnValue)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+    Kokkos::parallel_for("assemble jacobian", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < aNumRowsPerCell; tRowIndex++)
         {
@@ -1363,7 +1363,7 @@ inline void assemble_jacobian_transpose_pod(Plato::OrdinalType aNumCells,
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(aCellOrdinal,tRowIndex, tColumnIndex));
             }
         }
-    }, "assemble jacobian");
+    });
 }
 // function assemble_jacobian
 
@@ -1395,7 +1395,7 @@ assemble_jacobian_fad(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble jacobian fad", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < aNumRowsPerCell; tRowIndex++)
@@ -1406,7 +1406,7 @@ assemble_jacobian_fad(
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(aCellOrdinal,tRowIndex).dx(tColumnIndex));
             }
         }
-    }, "assemble jacobian fad");
+    });
 }
 // function assemble_jacobian_fad
 
@@ -1435,7 +1435,7 @@ assemble_jacobian_fad(
     const Jacobian             & aJacobianWorkset,
           ReturnVal            & aReturnValue)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble jacobian fad", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < aNumRowsPerCell; tRowIndex++)
         {
@@ -1445,7 +1445,7 @@ assemble_jacobian_fad(
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(aCellOrdinal, tRowIndex).dx(tColumnIndex));
             }
         }
-    }, "assemble jacobian fad");
+    });
 }
 // function assemble_jacobian_fad
 
@@ -1534,7 +1534,7 @@ assemble_transpose_jacobian(
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble_transpose_jacobian", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tCellOrdinal = tCellOrdinals[aCellOrdinal];
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < aNumRowsPerCell; tRowIndex++)
@@ -1545,7 +1545,7 @@ assemble_transpose_jacobian(
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), aJacobianWorkset(aCellOrdinal, tRowIndex).dx(tColumnIndex));
             }
         }
-    }, "assemble_transpose_jacobian");
+    });
 }
 // function assemble_transpose_jacobian
 
@@ -1620,7 +1620,7 @@ assemble_transpose_jacobian(
           ReturnVal            & aReturnValue
 )
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble_transpose_jacobian", Kokkos::RangePolicy<>(0, aNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tRowIndex = 0; tRowIndex < aNumRowsPerCell; tRowIndex++)
         {
@@ -1631,7 +1631,7 @@ assemble_transpose_jacobian(
                 Kokkos::atomic_add(&aReturnValue(tEntryOrdinal), tEntryValue);
             }
         }
-    }, "assemble_transpose_jacobian");
+    });
 }
 // function assemble_transpose_jacobian
 

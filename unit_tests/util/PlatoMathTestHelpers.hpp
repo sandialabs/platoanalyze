@@ -5,9 +5,6 @@
 
 #include <Teuchos_RCP.hpp>
 
-#include <Kokkos_View.hpp>
-#include <Kokkos_CopyViews.hpp>
-
 #include <vector>
 
 namespace Plato{
