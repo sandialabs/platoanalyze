@@ -587,7 +587,7 @@ findParentElements(
         constexpr ScalarT cEpsilon = -1e-8; // small negative number for checking if float greater than 0
         ScalarT tMaxMin = cNotFound;
         OrdinalT tRunningNegCount = 4;
-        OrdinalT tLocalElemIndex = -1;
+        int tLocalElemIndex = -1;
         typename Plato::ScalarVectorT<int>::value_type iParent = -2;
         for( int iElem=tOffset(iNodeOrdinal); iElem<tOffset(iNodeOrdinal+1); iElem++ )
         {
