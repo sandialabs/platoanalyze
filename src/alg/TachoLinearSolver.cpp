@@ -293,17 +293,28 @@ void TachoLinearSolver::innerSolve(Plato::CrsMatrix<int> aA,
         ++iter;
     }
     const std::size_t tNewMatrixHash = Plato::crs_matrix_row_column_hash<CrsOrdinal>(tRowBegin, tColumns);
-    if (!mCurrentMatrixHash.has_value() || tNewMatrixHash != mCurrentMatrixHash.get()) {
-        // Initialize on first call or sparsity pattern change
-        mSolver.Initialize(aA.numRows(), tRowBegin, tColumns, tValues);
-        mCurrentMatrixHash = tNewMatrixHash;
-    } else {
-        mSolver.refactorMatrix(tValues);
+
+    try {
+        if (!mCurrentMatrixHash.has_value() || tNewMatrixHash != mCurrentMatrixHash.get()) {
+          // Initialize on first call or sparsity pattern change
+            mSolver.Initialize(aA.numRows(), tRowBegin, tColumns, tValues);
+            mCurrentMatrixHash = tNewMatrixHash;
+        } else {
+            mSolver.refactorMatrix(tValues);
+        }
+    } catch(const std::exception&) {
+        Plato::print_matrix_to_file<CrsOrdinal>(tRowBegin, tColumns, tValues, "bad_tacho_matrix.m");
+        throw;
     }
 
     tachoSolver<double>::value_type_matrix x(aX.data(), aA.numRows(), 1);
     tachoSolver<double>::value_type_matrix b(aB.data(), aA.numRows(), 1);
-    mSolver.MySolve(1, b, x);
+    try {
+        mSolver.MySolve(1, b, x);
+    } catch(const std::exception&) {
+        Plato::print_matrix_to_file<CrsOrdinal>(tRowBegin, tColumns, tValues, "bad_tacho_matrix.m");
+        throw;
+    }
     if (Plato::has_nan<CrsOrdinal>(aX)) {
         Plato::print_matrix_to_file<CrsOrdinal>(tRowBegin, tColumns, tValues, "bad_tacho_matrix.m");
         Plato::print_vector_to_file<CrsOrdinal>(aB, "bad_tacho_vector.m");
