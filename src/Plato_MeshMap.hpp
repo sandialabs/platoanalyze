@@ -423,7 +423,13 @@ class MeshMap
         //
         auto d_x = Kokkos::subview(aLocations, (size_t)Dim::X, Kokkos::ALL());
         auto d_y = Kokkos::subview(aLocations, (size_t)Dim::Y, Kokkos::ALL());
-        auto d_z = Kokkos::subview(aLocations, (size_t)Dim::Z, Kokkos::ALL());
+
+        decltype(d_x) d_z("z", d_x.layout());
+        if(aLocations.extent(0) > 2)
+        {
+          d_z = Kokkos::subview(aLocations, (size_t)Dim::Z, Kokkos::ALL());
+        }
+
         decltype(d_x) d_r("radii", d_x.layout());
         Kokkos::deep_copy(d_r, aRadius);
 
@@ -474,6 +480,8 @@ class MeshMap
         }, tNumEntries);
         aMatrix.mRowMap = tRowMap;
 
+        auto tNumDims = aLocations.extent(0);
+
         // determine column map and entries
         auto tRadius = aRadius;
         OrdinalArrayT tColMap("row map", tNumEntries);
@@ -481,18 +489,18 @@ class MeshMap
         Kokkos::parallel_for("colmap and entries", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             auto iMatrixEntryOrdinal = tRowMap(iRowOrdinal);
-            auto x = aLocations(Dim::X, iRowOrdinal);
-            auto y = aLocations(Dim::Y, iRowOrdinal);
-            auto z = aLocations(Dim::Z, iRowOrdinal);
-            decltype(x) tTotalWeight(0.0);
+            ScalarT tTotalWeight(0.0);
             for( int iOffset=aOffset(iRowOrdinal); iOffset<aOffset(iRowOrdinal+1); iOffset++ )
             {
                 auto iVertOrdinal = aIndices(iOffset);
                 tColMap(iMatrixEntryOrdinal) = iVertOrdinal;
-                auto dx = x - aLocations(Dim::X, iVertOrdinal);
-                auto dy = y - aLocations(Dim::Y, iVertOrdinal);
-                auto dz = z - aLocations(Dim::Z, iVertOrdinal);
-                auto d2 = dx*dx + dy*dy + dz*dz;
+
+                ScalarT d2(0.0);
+                for( int iDim=0; iDim<tNumDims; iDim++ )
+                {
+                  ScalarT dv = aLocations(iDim, iRowOrdinal) - aLocations(iDim, iVertOrdinal);
+                  d2 += dv*dv;
+                }
                 auto tDistance = (d2 > 0.0) ? sqrt(d2) : 0.0;
                 auto tEntry = tRadius - tDistance;
                 tTotalWeight += tEntry;
