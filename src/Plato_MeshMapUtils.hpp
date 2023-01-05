@@ -389,11 +389,18 @@ findParentElements(
     });
 
     auto d_x0 = Kokkos::subview(tMin, (size_t)Dim::X, Kokkos::ALL());
-    auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_z0 = Kokkos::subview(tMin, (size_t)Dim::Z, Kokkos::ALL());
     auto d_x1 = Kokkos::subview(tMax, (size_t)Dim::X, Kokkos::ALL());
+
+    auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
     auto d_y1 = Kokkos::subview(tMax, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_z1 = Kokkos::subview(tMax, (size_t)Dim::Z, Kokkos::ALL());
+
+    decltype(d_x0) d_z0("min", tNElems);
+    decltype(d_x0) d_z1("max", tNElems);
+    if(tMin.extent(0) > 2)
+    {
+      d_z0 = Kokkos::subview(tMin, (size_t)Dim::Z, Kokkos::ALL());
+      d_z1 = Kokkos::subview(tMax, (size_t)Dim::Z, Kokkos::ALL());
+    }
 
     ExecSpace tExecSpace;
 
@@ -405,7 +412,11 @@ findParentElements(
     // conduct search for bounding box elements
     auto d_x = Kokkos::subview(aMappedLocations, (size_t)Dim::X, Kokkos::ALL());
     auto d_y = Kokkos::subview(aMappedLocations, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_z = Kokkos::subview(aMappedLocations, (size_t)Dim::Z, Kokkos::ALL());
+    decltype(d_x) d_z("z", d_x.layout());
+    if(aMappedLocations.extent(0) > 2)
+    {
+      d_z = Kokkos::subview(aMappedLocations, (size_t)Dim::Z, Kokkos::ALL());
+    }
 
     auto tNumLocations = aParentElements.size();
     Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
@@ -553,11 +564,17 @@ findParentElements(
     });
 
     auto d_x0 = Kokkos::subview(tMin, (size_t)Dim::X, Kokkos::ALL());
-    auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_z0 = Kokkos::subview(tMin, (size_t)Dim::Z, Kokkos::ALL());
     auto d_x1 = Kokkos::subview(tMax, (size_t)Dim::X, Kokkos::ALL());
+    auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
     auto d_y1 = Kokkos::subview(tMax, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_z1 = Kokkos::subview(tMax, (size_t)Dim::Z, Kokkos::ALL());
+
+    decltype(d_x0) d_z0("min", tNElems);
+    decltype(d_x0) d_z1("max", tNElems);
+    if(tMin.extent(0) > 2)
+    {
+      d_z0 = Kokkos::subview(tMin, (size_t)Dim::Z, Kokkos::ALL());
+      d_z1 = Kokkos::subview(tMax, (size_t)Dim::Z, Kokkos::ALL());
+    }
 
     ExecSpace tExecSpace;
 
@@ -569,7 +586,12 @@ findParentElements(
     // conduct search for bounding box elements
     auto d_x = Kokkos::subview(aMappedLocations, (size_t)Dim::X, Kokkos::ALL());
     auto d_y = Kokkos::subview(aMappedLocations, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_z = Kokkos::subview(aMappedLocations, (size_t)Dim::Z, Kokkos::ALL());
+
+    decltype(d_x) d_z("z", d_x.layout());
+    if(aMappedLocations.extent(0) > 2)
+    {
+      d_z = Kokkos::subview(aMappedLocations, (size_t)Dim::Z, Kokkos::ALL());
+    }
 
     auto tNumLocations = aParentElements.size();
     Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
