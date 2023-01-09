@@ -429,32 +429,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ToFromFull)
 
 /******************************************************************************/
 /*! 
-  \brief Create a square matrix, A, then compute A.A and compare.
-*/
-/******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2)
-{
-  auto tMatrixA = createSquareMatrix();
-  auto tMatrixB = createSquareMatrix();
-
-  auto tNumRows = tMatrixA->numRows();
-  auto tNumCols = tMatrixB->numCols();
-  auto tNumRowsPerBlock = tMatrixA->numRowsPerBlock();
-  auto tNumColsPerBlock = tMatrixB->numColsPerBlock();
-  auto tMatrixAB         = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock) );
-  auto tSlowDumbMatrixAB = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock) );
-
-  Plato::MatrixMatrixMultiply              ( tMatrixA, tMatrixB, tMatrixAB);
-  pth::slow_dumb_matrix_matrix_multiply ( tMatrixA, tMatrixB, tSlowDumbMatrixAB);
-
-  TEST_ASSERT(pth::is_same(tMatrixAB->rowMap(), tSlowDumbMatrixAB->rowMap()));
-  TEST_ASSERT(pth::is_equivalent(tMatrixAB->rowMap(),
-                            tMatrixAB->columnIndices(), tMatrixAB->entries(),
-                            tSlowDumbMatrixAB->columnIndices(), tSlowDumbMatrixAB->entries()));
-}
-
-/******************************************************************************/
-/*! 
   \brief Create a square matrix, A, then verify that A - A = 0.
 */
 /******************************************************************************/
@@ -1492,7 +1466,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixTimesVectorPlusV
   \brief Check multiplication of block with non-block matrices.
 */
 /******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_3)
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2)
 {
   auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(4, 4, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapA = { 0, 1, 2, 3, 4 };
@@ -1557,6 +1531,91 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_3
                             tMatrixBAbBlock->columnIndices(), tMatrixBAbBlock->entries(),
                             tGoldMatrixBlock->columnIndices(), tGoldMatrixBlock->entries()));
 
+}
+
+/******************************************************************************/
+/*! 
+  \brief Check multiplication row and column vectors expressed as matrices
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_InnerProduct)
+{
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapA = { 0, 1, 2, 3, 4 };
+  const std::vector<Plato::OrdinalType> tColMapA = { 0, 0, 0, 0 };
+  const std::vector<Plato::Scalar>      tValuesA = { 2, 1, 3, 4 };
+  pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
+
+  auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapB = { 0, 4 };
+  const std::vector<Plato::OrdinalType> tColMapB = { 0, 1, 2, 3 };
+  const std::vector<Plato::Scalar>      tValuesB = { 1, 3, 2, 0 };
+  pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+  auto tMatrixBA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+
+  Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
+
+  const Plato::Scalar tExpected = std::inner_product(tValuesA.cbegin(), tValuesA.cend(), tValuesB.cbegin(), 0.0);
+  TEST_EQUALITY(tMatrixBA->entries()[0], tExpected);
+}
+
+/******************************************************************************/
+/*! 
+  \brief Check multiplication of matrices with some dimension 1
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_Dim1)
+{
+  constexpr Plato::Scalar tScalarValue = 2.0;
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapA = { 0, 1 };
+  const std::vector<Plato::OrdinalType> tColMapA = { 0, };
+  const std::vector<Plato::Scalar>      tValuesA = { tScalarValue };
+  pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
+
+  auto tMatrixD = Teuchos::rcp( new Plato::CrsMatrixType(2, 2, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapD = { 0, 2, 4 };
+  const std::vector<Plato::OrdinalType> tColMapD = { 0, 1, 0, 1 };
+  const std::vector<Plato::Scalar>      tValuesD = { 2, 1, 3, 4 };
+  pth::set_matrix_data(tMatrixD, tRowMapD, tColMapD, tValuesD);
+
+  // 1x1 * 1x1
+  {
+    auto tMatrixAA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+    Plato::MatrixMatrixMultiply( tMatrixA, tMatrixA, tMatrixAA);
+    TEST_EQUALITY(tMatrixAA->entries()[0], tValuesA.front() * tValuesA.front() );
+  }
+  // 1x1 * 1x4
+  {
+    auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+    const std::vector<Plato::OrdinalType> tRowMapB = { 0, 4 };
+    const std::vector<Plato::OrdinalType> tColMapB = { 0, 1, 2, 3 };
+    const std::vector<Plato::Scalar>      tValuesB = { 1, 3, 2, 0 };
+    pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+    auto tMatrixAB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+    Plato::MatrixMatrixMultiply( tMatrixA, tMatrixB, tMatrixAB);
+    for(int i = 0; i < tValuesB.size(); ++i)
+    {
+      TEST_EQUALITY(tMatrixAB->entries()[i], tScalarValue * tValuesB[i]);
+    }
+  }
+  // 4x1 * 1x1
+  {
+    auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+    const std::vector<Plato::OrdinalType> tRowMapB = { 0, 1, 2, 3, 4 };
+    const std::vector<Plato::OrdinalType> tColMapB = { 0, 0, 0, 0 };
+    const std::vector<Plato::Scalar>      tValuesB = { 2, 1, 3, 4 };
+    pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+    auto tMatrixBA = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+    Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
+    for(int i = 0; i < tValuesB.size(); ++i)
+    {
+      TEST_EQUALITY(tMatrixBA->entries()[i], tScalarValue * tValuesB[i]);
+    }
+  }
 }
 
 /******************************************************************************/
