@@ -429,32 +429,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ToFromFull)
 
 /******************************************************************************/
 /*! 
-  \brief Create a square matrix, A, then compute A.A and compare.
-*/
-/******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2)
-{
-  auto tMatrixA = createSquareMatrix();
-  auto tMatrixB = createSquareMatrix();
-
-  auto tNumRows = tMatrixA->numRows();
-  auto tNumCols = tMatrixB->numCols();
-  auto tNumRowsPerBlock = tMatrixA->numRowsPerBlock();
-  auto tNumColsPerBlock = tMatrixB->numColsPerBlock();
-  auto tMatrixAB         = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock) );
-  auto tSlowDumbMatrixAB = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock) );
-
-  Plato::MatrixMatrixMultiply              ( tMatrixA, tMatrixB, tMatrixAB);
-  pth::slow_dumb_matrix_matrix_multiply ( tMatrixA, tMatrixB, tSlowDumbMatrixAB);
-
-  TEST_ASSERT(pth::is_same(tMatrixAB->rowMap(), tSlowDumbMatrixAB->rowMap()));
-  TEST_ASSERT(pth::is_equivalent(tMatrixAB->rowMap(),
-                            tMatrixAB->columnIndices(), tMatrixAB->entries(),
-                            tSlowDumbMatrixAB->columnIndices(), tSlowDumbMatrixAB->entries()));
-}
-
-/******************************************************************************/
-/*! 
   \brief Create a square matrix, A, then verify that A - A = 0.
 */
 /******************************************************************************/
@@ -1492,7 +1466,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixTimesVectorPlusV
   \brief Check multiplication of block with non-block matrices.
 */
 /******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_3)
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2)
 {
   auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(4, 4, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapA = { 0, 1, 2, 3, 4 };
