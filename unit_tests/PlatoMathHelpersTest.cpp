@@ -1535,6 +1535,33 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2
 
 /******************************************************************************/
 /*! 
+  \brief Check multiplication row and column vectors expressed as matrices
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_3)
+{
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapA = { 0, 1, 2, 3, 4 };
+  const std::vector<Plato::OrdinalType> tColMapA = { 0, 0, 0, 0 };
+  const std::vector<Plato::Scalar>      tValuesA = { 2, 1, 3, 4 };
+  pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
+
+  auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapB = { 0, 4 };
+  const std::vector<Plato::OrdinalType> tColMapB = { 0, 1, 2, 3 };
+  const std::vector<Plato::Scalar>      tValuesB = { 1, 3, 2, 0 };
+  pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+  auto tMatrixBA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+
+  Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
+
+  const Plato::Scalar tExpected = std::inner_product(tValuesA.cbegin(), tValuesA.cend(), tValuesB.cbegin(), 0.0);
+  TEST_EQUALITY(tMatrixBA->entries()[0], tExpected);
+}
+
+/******************************************************************************/
+/*! 
   \brief Check multiplication of block rectangular matrices with gold.
 */
 /******************************************************************************/
