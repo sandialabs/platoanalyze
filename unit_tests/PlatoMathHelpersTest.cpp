@@ -1557,7 +1557,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_I
   Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
 
   const Plato::Scalar tExpected = std::inner_product(tValuesA.cbegin(), tValuesA.cend(), tValuesB.cbegin(), 0.0);
-  TEST_EQUALITY(tMatrixBA->entries()[0], tExpected);
+
+  auto tBAEntriesHost = Kokkos::create_mirror(tMatrixBA->entries());
+  Kokkos::deep_copy(tBAEntriesHost, tMatrixBA->entries());
+  TEST_EQUALITY(tBAEntriesHost[0], tExpected);
 }
 
 /******************************************************************************/
@@ -1574,17 +1577,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_D
   const std::vector<Plato::Scalar>      tValuesA = { tScalarValue };
   pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
 
-  auto tMatrixD = Teuchos::rcp( new Plato::CrsMatrixType(2, 2, 1, 1) );
-  const std::vector<Plato::OrdinalType> tRowMapD = { 0, 2, 4 };
-  const std::vector<Plato::OrdinalType> tColMapD = { 0, 1, 0, 1 };
-  const std::vector<Plato::Scalar>      tValuesD = { 2, 1, 3, 4 };
-  pth::set_matrix_data(tMatrixD, tRowMapD, tColMapD, tValuesD);
-
   // 1x1 * 1x1
   {
     auto tMatrixAA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
     Plato::MatrixMatrixMultiply( tMatrixA, tMatrixA, tMatrixAA);
-    TEST_EQUALITY(tMatrixAA->entries()[0], tValuesA.front() * tValuesA.front() );
+    auto tAAEntriesHost = Kokkos::create_mirror(tMatrixAA->entries());
+    Kokkos::deep_copy(tAAEntriesHost, tMatrixAA->entries());
+    TEST_EQUALITY(tAAEntriesHost[0], tValuesA.front() * tValuesA.front() );
   }
   // 1x1 * 1x4
   {
@@ -1596,9 +1595,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_D
 
     auto tMatrixAB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
     Plato::MatrixMatrixMultiply( tMatrixA, tMatrixB, tMatrixAB);
+    auto tABEntriesHost = Kokkos::create_mirror(tMatrixAB->entries());
+    Kokkos::deep_copy(tABEntriesHost, tMatrixAB->entries());
     for(int i = 0; i < tValuesB.size(); ++i)
     {
-      TEST_EQUALITY(tMatrixAB->entries()[i], tScalarValue * tValuesB[i]);
+      TEST_EQUALITY(tABEntriesHost[i], tScalarValue * tValuesB[i]);
     }
   }
   // 4x1 * 1x1
@@ -1611,9 +1612,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_D
 
     auto tMatrixBA = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
     Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
+    auto tBAEntriesHost = Kokkos::create_mirror(tMatrixBA->entries());
+    Kokkos::deep_copy(tBAEntriesHost, tMatrixBA->entries());
     for(int i = 0; i < tValuesB.size(); ++i)
     {
-      TEST_EQUALITY(tMatrixBA->entries()[i], tScalarValue * tValuesB[i]);
+      TEST_EQUALITY(tBAEntriesHost[i], tScalarValue * tValuesB[i]);
     }
   }
 }
