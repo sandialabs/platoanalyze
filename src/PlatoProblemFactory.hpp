@@ -117,8 +117,9 @@ makeProblem(
     {
         return std::make_shared<ProblemT<PhysicsT<Plato::Tri3>>>(aMesh, aPlatoProb, aMachine);
     }
-    if( Plato::tolower(tElementType) == "hex8" ||
-        Plato::tolower(tElementType) == "hexa8" )
+    if( Plato::tolower(tElementType) == "hex8"  ||
+        Plato::tolower(tElementType) == "hexa8" ||
+        Plato::tolower(tElementType) == "hex" )
     {
 #ifdef PLATO_HEX_ELEMENTS
         return std::make_shared<ProblemT<PhysicsT<Plato::Hex8>>>(aMesh, aPlatoProb, aMachine);

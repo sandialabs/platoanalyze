@@ -3,7 +3,9 @@
 #include <memory>
 
 #include "SpatialModel.hpp"
-#include "../WorksetBase.hpp"
+#include "WorksetBase.hpp"
+#include "ImplicitFunctors.hpp"
+#include "MatrixGraphUtils.hpp"
 #include "parabolic/EvaluationTypes.hpp"
 #include "parabolic/AbstractVectorFunction.hpp"
 
@@ -284,7 +286,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tGradientMat =
-                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(tMesh);
+                Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(mSpatialModel);
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -388,7 +390,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tGradientMat =
-             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -493,7 +495,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tGradientMat =
-             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -598,7 +600,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tGradientMat =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -703,7 +705,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tGradientMat =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {
@@ -808,7 +810,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         //
         auto tMesh = mSpatialModel.Mesh;
         Teuchos::RCP<Plato::CrsMatrixType> tGradientMat =
-            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( tMesh );
+            Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>( mSpatialModel );
 
         for(const auto& tDomain : mSpatialModel.Domains)
         {

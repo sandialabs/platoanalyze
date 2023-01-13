@@ -59,6 +59,11 @@ namespace Plato {
               this->parseRank4Voigt("Elastic Stiffness", aParamList);
           }
       }
+      else
+      if(aParamList.isSublist("Elastic Stiffness Expression"))
+      {
+          this->parseRank4VoigtField("Elastic Stiffness Expression", aParamList);
+      }
   }
 
   /******************************************************************************/

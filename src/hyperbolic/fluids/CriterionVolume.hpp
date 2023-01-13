@@ -118,7 +118,7 @@ public:
             auto tBasisFunctions = mCubatureRule.getBasisFunctions();
 
             auto tNumCells = mSpatialDomain.numCells();
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+            Kokkos::parallel_for("volume", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
             {
                 ConfigT tCellVolume;
                 tComputeCellVolume(aCellOrdinal, tConfigWS, tCellVolume);
@@ -127,7 +127,7 @@ public:
                 ControlT tDensity = Plato::cell_density<mNumNodesPerCell>(aCellOrdinal, tControlWS);
                 ControlT tPenalizedDensity = pow(tDensity, tPenaltyExponent);
                 aResult(aCellOrdinal) = tPenalizedDensity * tCellVolume;
-            },"volume");
+            });
         }
     }
 

@@ -7,14 +7,14 @@
 #pragma once
 
 #include "SpatialModel.hpp"
+#include "NaturalBCData.hpp"
 #include "WeightedNormalVector.hpp"
 
 namespace Plato
 {
-
 /***************************************************************************//**
  * \brief Class for the evaluation of natural boundary condition surface integrals
- * of type: UNIFORM PRESSURE.
+ * of type uniform or variable pressure.
  *
  * \tparam SpatialDim   spatial dimension
  * \tparam NumDofs      number degrees of freedom per natural boundary condition force vector
@@ -27,17 +27,21 @@ template<
   Plato::OrdinalType NumDofs=ElementType::mNumSpatialDims,
   Plato::OrdinalType DofsPerNode=NumDofs,
   Plato::OrdinalType DofOffset=0 >
-class SurfacePressureIntegral
+class SurfacePressureIntegral final
 {
 private:
-    const std::string mSideSetName; /*!< side set name */
-    const Plato::Array<NumDofs> mFlux; /*!< force vector values */
+    const std::string mSidesetName;
+    const Plato::Scalar mCurrentTime;
+    std::unique_ptr<NaturalBCData<NumDofs>> mBCData;
 
 public:
     /******************************************************************************//**
      * \brief Constructor
+     * \pre @a aBCData must not be null. Checked with an assertion.
      **********************************************************************************/
-    SurfacePressureIntegral(const std::string & aSideSetName, const Plato::Array<NumDofs>& aFlux);
+    SurfacePressureIntegral(const std::string aSidesetName,
+                            const Plato::Scalar aCurrentTime,
+                            std::unique_ptr<NaturalBCData<NumDofs>> aBCData);
 
     /***************************************************************************//**
      * \brief Evaluate natural boundary condition surface integrals.
@@ -74,10 +78,14 @@ public:
 *******************************************************************************/
 template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::SurfacePressureIntegral
-(const std::string & aSideSetName, const Plato::Array<NumDofs>& aFlux) :
-    mSideSetName(aSideSetName),
-    mFlux(aFlux)
+(const std::string aSidesetName,
+ const Plato::Scalar aCurrentTime,
+ std::unique_ptr<NaturalBCData<NumDofs>> aBCData) :
+    mSidesetName(aSidesetName),
+    mCurrentTime(aCurrentTime),
+    mBCData(std::move(aBCData))
 {
+    assert(mBCData);
 }
 // class SurfacePressureIntegral::SurfacePressureIntegral
 
@@ -98,26 +106,26 @@ void SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::oper
         Plato::Scalar aScale
 ) const
 {
-    auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(mSideSetName);
-    auto tNodeOrds    = aSpatialModel.Mesh->GetSideSetLocalNodes(mSideSetName);
-    auto tFaceOrds    = aSpatialModel.Mesh->GetSideSetFaces(mSideSetName);
+    const auto tElementOrds  = aSpatialModel.Mesh->GetSideSetElements(mSidesetName);
+    const auto tNodeOrds     = aSpatialModel.Mesh->GetSideSetLocalNodes(mSidesetName);
+    const auto tConnectivity = aSpatialModel.Mesh->Connectivity();
 
-    Plato::OrdinalType tNumFaces = tElementOrds.size();
+    const Plato::OrdinalType tNumFaces = tElementOrds.size();
 
-    Plato::WeightedNormalVector<ElementType> weightedNormalVector;
+    const Plato::WeightedNormalVector<ElementType> weightedNormalVector;
 
-    auto tFlux = mFlux;
-    auto tCubatureWeights = ElementType::Face::getCubWeights();
-    auto tCubaturePoints  = ElementType::Face::getCubPoints();
-    auto tNumPoints = tCubatureWeights.size();
+    const auto tBoundaryData = mBCData->getScalarData(aSpatialModel.Mesh, mCurrentTime);
+
+    const auto tCubatureWeights = ElementType::Face::getCubWeights();
+    const auto tCubaturePoints  = ElementType::Face::getCubPoints();
+    const auto tNumPoints = tCubatureWeights.size();
 
     // pressure forces should act towards the surface; thus, -1.0 is used to invert the outward facing normal inwards.
-    Plato::Scalar tNormalMultiplier(-1.0);
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+    constexpr Plato::Scalar tNormalMultiplier = -1.0;
+    Kokkos::parallel_for("surface pressure integral", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal, const Plato::OrdinalType & aPointOrdinal)
     {
-        auto tElementOrdinal = tElementOrds(aSideOrdinal);
-        auto tElemFaceOrdinal = tFaceOrds(aSideOrdinal);
+        const auto tElementOrdinal = tElementOrds(aSideOrdinal);
 
         Plato::Array<ElementType::mNumNodesPerFace, Plato::OrdinalType> tLocalNodeOrds;
         for( Plato::OrdinalType tNodeOrd=0; tNodeOrd<ElementType::mNumNodesPerFace; tNodeOrd++)
@@ -125,10 +133,10 @@ void SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::oper
             tLocalNodeOrds(tNodeOrd) = tNodeOrds(aSideOrdinal*ElementType::mNumNodesPerFace+tNodeOrd);
         }
 
-        auto tCubatureWeight = tCubatureWeights(aPointOrdinal);
-        auto tCubaturePoint = tCubaturePoints(aPointOrdinal);
-        auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
-        auto tBasisGrads  = ElementType::Face::basisGrads(tCubaturePoint);
+        const auto tCubatureWeight = tCubatureWeights(aPointOrdinal);
+        const auto tCubaturePoint = tCubaturePoints(aPointOrdinal);
+        const auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
+        const auto tBasisGrads  = ElementType::Face::basisGrads(tCubaturePoint);
 
         // compute area weighted normal vector
         Plato::Array<ElementType::mNumSpatialDims, ConfigScalarType> tWeightedNormalVec;
@@ -137,15 +145,17 @@ void SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::oper
         // project into aResult workset
         for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
         {
+            const auto tGlobalNodeOrdinal = tConnectivity(tElementOrdinal*ElementType::mNumNodesPerCell + tLocalNodeOrds(tNode));
+            const Plato::Scalar tPressure = scalarBoundaryDataAtIndex(tBoundaryData, tGlobalNodeOrdinal);
             for( Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
             {
-                auto tElementDofOrdinal = (tLocalNodeOrds[tNode] * DofsPerNode) + tDof + DofOffset;
-                ResultScalarType tVal = 
-                  tWeightedNormalVec(tDof) * tFlux(tDof) * aScale * tCubatureWeight * tNormalMultiplier * tBasisValues(tNode);
+                const auto tElementDofOrdinal = (tLocalNodeOrds[tNode] * DofsPerNode) + tDof + DofOffset;
+                const ResultScalarType tVal = 
+                  tWeightedNormalVec(tDof) * tPressure * aScale * tCubatureWeight * tNormalMultiplier * tBasisValues(tNode);
                 Kokkos::atomic_add(&aResult(tElementOrdinal, tElementDofOrdinal), tVal);
             }
         }
-    }, "surface pressure integral");
+    });
 }
 // class SurfacePressureIntegral::operator()
 

@@ -269,10 +269,10 @@ namespace Plato
             ANALYZE_THROWERR("Dimension mismatch");
         }
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("extract column", Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             aToVector(aOrdinal) = aFromVector(aOrdinal, aColIndex);
-        }, "extract column");
+        });
     }
 
     void EngineMeshIO::AddElementData(

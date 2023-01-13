@@ -183,25 +183,25 @@ namespace Plato
       auto tLength = tX0.extent(0);
       tY0 = Plato::ScalarVector("Y0", tLength);
       tY1 = Plato::ScalarVector("Y1", tLength);
-      Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength),
+      Kokkos::parallel_for("perpendicular", Kokkos::RangePolicy<>(0, tLength),
       KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
       {
         tY0(tDof) =-tX1(tDof);
         tY1(tDof) = tX0(tDof);
-      }, "perpendicular");
+      });
     }
 
     auto tLength = tX0.extent(0);
     Plato::ScalarArray3D tTensor("orthonormal tensor", tLength, 2, 2);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength),
+    Kokkos::parallel_for("create tensor", Kokkos::RangePolicy<>(0, tLength),
     KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
     {
       tTensor(tDof, 0, 0) = tX0(tDof);
       tTensor(tDof, 1, 0) = tX1(tDof);
       tTensor(tDof, 0, 1) = tY0(tDof);
       tTensor(tDof, 1, 1) = tY1(tDof);
-    }, "create tensor");
+    });
 
     return tTensor;
   }
@@ -245,19 +245,19 @@ namespace Plato
       tZ0 = Plato::ScalarVector("Z0", tLength);
       tZ1 = Plato::ScalarVector("Z1", tLength);
       tZ2 = Plato::ScalarVector("Z2", tLength);
-      Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength),
+      Kokkos::parallel_for("cross product", Kokkos::RangePolicy<>(0, tLength),
       KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
       {
         tZ0(tDof) = tX1(tDof)*tY2(tDof) - tX2(tDof)*tY1(tDof);
         tZ1(tDof) = tX2(tDof)*tY0(tDof) - tX0(tDof)*tY2(tDof);
         tZ2(tDof) = tX0(tDof)*tY1(tDof) - tX1(tDof)*tY0(tDof);
-      }, "cross product");
+      });
     }
 
     auto tLength = tX0.extent(0);
     Plato::ScalarArray3D tTensor("orthonormal tensor", tLength, 3, 3);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength),
+    Kokkos::parallel_for("create tensor", Kokkos::RangePolicy<>(0, tLength),
     KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
     {
       tTensor(tDof, 0, 0) = tX0(tDof);
@@ -269,7 +269,7 @@ namespace Plato
       tTensor(tDof, 0, 2) = tZ0(tDof);
       tTensor(tDof, 1, 2) = tZ1(tDof);
       tTensor(tDof, 2, 2) = tZ2(tDof);
-    }, "create tensor");
+    });
 
     auto tHost = Kokkos::create_mirror_view(tTensor);
     Kokkos::deep_copy(tHost, tTensor);

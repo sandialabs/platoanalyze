@@ -175,10 +175,10 @@ void perturbMesh(MeshT& aMesh, VectorT aPerturb)
     auto tNumDims = aMesh->NumDimensions();
     auto tNumDofs = tNumDims*aMesh->NumNodes();
     Plato::ScalarVector tCoordsCopy("coordinates", tNumDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType &aDofOrdinal)
+    Kokkos::parallel_for("tweak mesh", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType &aDofOrdinal)
     {
         tCoordsCopy(aDofOrdinal) = tCoords[aDofOrdinal] + aPerturb(aDofOrdinal);
-    }, "tweak mesh");
+    });
     aMesh->SetCoordinates(tCoordsCopy);
 }
 template <class ElementType, class VectorFunctionT, class SolutionT, class ControlT>
@@ -1254,12 +1254,12 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
   auto tNumNodes = tMesh->NumNodes();
   auto tCoords = tMesh->Coordinates();
   Plato::ScalarVector tU("displacement", tNumNodes * cNumDm);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(int aNodeOrdinal)
+  Kokkos::parallel_for("initial data", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(int aNodeOrdinal)
   {
     tU(aNodeOrdinal * cNumDm + 0) = tCoords[aNodeOrdinal * cNumDm + 0];
     tU(aNodeOrdinal * cNumDm + 1) = 0.0;
     tU(aNodeOrdinal * cNumDm + 2) = 0.0;
-  }, "initial data");
+  });
 
   auto t_dHdx = tStateUpdate->gradient_x(tU, tUpdatedLocalState, tLocalState);
 

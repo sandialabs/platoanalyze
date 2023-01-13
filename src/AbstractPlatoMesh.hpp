@@ -99,8 +99,8 @@ namespace Plato
             **********************************************************************************/
             virtual void
             NodeNodeGraph(
-                Plato::OrdinalVectorT<const Plato::OrdinalType> & aOffsetMap,
-                Plato::OrdinalVectorT<const Plato::OrdinalType> & aNodeOrds) = 0;
+                Plato::OrdinalVectorT<Plato::OrdinalType> & aOffsetMap,
+                Plato::OrdinalVectorT<Plato::OrdinalType> & aNodeOrds) = 0;
         
             /******************************************************************************//**
             * \brief Get node-to-element graph

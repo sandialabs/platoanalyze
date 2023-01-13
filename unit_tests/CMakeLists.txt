@@ -2,6 +2,12 @@ configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/amgx.json
                  ${CMAKE_CURRENT_BINARY_DIR}/amgx.json COPYONLY)
 configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/points.xyz
                  ${CMAKE_CURRENT_BINARY_DIR}/points.xyz COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/brick_with_data.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/brick_with_data.exo COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/nodal_surface_pressure_field.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/nodal_surface_pressure_field.exo COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/two_block_contact.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/two_block_contact.exo COPYONLY)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/BamG)
 
@@ -29,6 +35,9 @@ Plato_add_test(Element ElementTests.cpp)
 Plato_add_test(PlatoMathTypes PlatoMathTypesTests.cpp)
 Plato_add_test(TensorNorm TensorNormTests.cpp)
 Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
+Plato_add_test(Assembly AssemblyTests.cpp)
+Plato_add_test(NaturalBCsTests NaturalBCsTests.cpp)
+Plato_add_test(NaturalBCDataTests NaturalBCDataTests.cpp)
 
 if(ELLIPTIC)
 Plato_add_test(MultipointConstraint PlatoMultipointConstraintTests.cpp)
@@ -93,14 +102,12 @@ if(PLATOANALYZE_ENABLE_MPMD)
     Analyze_App
     analyzelib
     ${PLATO_LIBS}
-    ${Trilinos_LIBRARIES}
-    ${Trilinos_TPL_LIBRARIES}
+    Trilinos::all_selected_libs
     )
 
   target_include_directories(AnalyzeAppIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
   target_include_directories(AnalyzeAppIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
   target_include_directories(AnalyzeAppIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-  target_include_directories(AnalyzeAppIntxTests PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
   target_compile_definitions(AnalyzeAppIntxTests PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
 
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
@@ -115,42 +122,18 @@ if(PLATOANALYZE_ENABLE_MPMD)
       analyzelib
       BamGlib
       ${PLATO_LIBS}
-      ${Trilinos_LIBRARIES}
-      ${Trilinos_TPL_LIBRARIES}
+      Trilinos::all_selected_libs
       Analyze_UnitTestUtils
       )
 
     target_include_directories(EngineMeshIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
     target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
     target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-    target_include_directories(EngineMeshIntxTests PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
   endif()
 
   if(PLATOANALYZE_ENABLE_MESHMAP)
-    set(MeshMapTests_SOURCES
-      PlatoMeshMapTests.cpp
-      PlatoUnitTestMain.cpp
-    )
-
-    add_executable(MeshMapUnitTests
-      ${MeshMapTests_SOURCES}
-    )
-    target_link_libraries(MeshMapUnitTests
-      analyzelib
-      ${PLATO_LIBS}
-      ${Trilinos_LIBRARIES}
-      ${Trilinos_TPL_LIBRARIES}
-      Analyze_UnitTestUtils
-      )
-    target_include_directories(MeshMapUnitTests PRIVATE "${PLATOENGINE_PREFIX}/include")
-    target_include_directories(MeshMapUnitTests PRIVATE ${CMAKE_SOURCE_DIR}/src)
-    target_include_directories(MeshMapUnitTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-    target_include_directories(MeshMapUnitTests PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
-    target_link_libraries(MeshMapUnitTests ArborX::ArborX BamGlib)
-    target_compile_definitions(MeshMapUnitTests PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
-
-    build_mpi_test_string(ES_MPI_TEST 1 ${CMAKE_CURRENT_BINARY_DIR}/MeshMapUnitTests)
-    add_test(NAME runMeshMapUnitTests COMMAND ${ES_MPI_TEST})
+    Plato_add_test(PlatoMeshMap PlatoMeshMapTests.cpp)
+    Plato_add_test(Contact ContactTests.cpp)
   endif()
 
 endif()

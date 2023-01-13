@@ -249,7 +249,7 @@ check_inputs(
     auto nnz = int(col_inds.extent(0));
     assert(int(A.entries().extent(0)) == nnz * mDofsPerNode * mDofsPerNode);
     assert(cudaSuccess == cudaDeviceSynchronize());
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, nblocks), KOKKOS_LAMBDA(int i) {
+    Kokkos::parallel_for("check_inputs", Kokkos::RangePolicy<int>(0, nblocks), KOKKOS_LAMBDA(int i) {
         auto begin = row_map(i);
         assert(0 <= begin);
         auto end = row_map(i + 1);
@@ -262,7 +262,7 @@ check_inputs(
             assert(0 <= j);
             assert(j < nblocks);
         }
-    }, "check_inputs");
+    });
     assert(cudaSuccess == cudaDeviceSynchronize());
 }
 

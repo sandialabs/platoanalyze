@@ -37,7 +37,7 @@ inline void copy(const Plato::OrdinalType & aOffset,
                  const Plato::ScalarVector & aInput,
                        Plato::ScalarVector & aOutput)
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
+    Kokkos::parallel_for("PlatoDriver::copy", Kokkos::RangePolicy<>(0, aNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & aIndex)
     {
         for(Plato::OrdinalType tIndex = 0; tIndex < NumDofsPerNodeInOutputArray; tIndex++)
         {
@@ -45,7 +45,7 @@ inline void copy(const Plato::OrdinalType & aOffset,
             Plato::OrdinalType tInputDofIndex = (aIndex * NumDofsPerNodeInInputArray) + (aOffset + tIndex);
             aOutput(tOutputDofIndex) = aInput(tInputDofIndex);
         }
-    },"PlatoDriver::copy");
+    });
 }
 // function copy
 
@@ -58,14 +58,14 @@ inline void copy_2Dview_to_write(const Plato::ScalarMultiVector & aInput, Omega_
 {
     auto tNumMajorEntries      = aInput.extent(0);
     auto tNumDofsPerMajorEntry = aInput.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumMajorEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tMajorIndex)
+    Kokkos::parallel_for("PlatoDriver::compress_copy_2Dview_to_write", Kokkos::RangePolicy<>(0, tNumMajorEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tMajorIndex)
     {
         for(Plato::OrdinalType tMinorIndex = 0; tMinorIndex < tNumDofsPerMajorEntry; tMinorIndex++)
         {
             Plato::OrdinalType tOutputDofIndex = (tMajorIndex * tNumDofsPerMajorEntry) + tMinorIndex;
             aOutput[tOutputDofIndex] = aInput(tMajorIndex, tMinorIndex);
         }
-    },"PlatoDriver::compress_copy_2Dview_to_write");
+    });
 }
 
 /******************************************************************************//**
@@ -76,10 +76,10 @@ inline void copy_2Dview_to_write(const Plato::ScalarMultiVector & aInput, Omega_
 inline void copy_1Dview_to_write(const Plato::ScalarVector & aInput, Omega_h::Write<Omega_h::Real> & aOutput)
 {
     auto tNumEntries      = aInput.extent(0);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tIndex)
+    Kokkos::parallel_for("PlatoDriver::compress_copy_1Dview_to_write", Kokkos::RangePolicy<>(0, tNumEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tIndex)
     {
         aOutput[tIndex] = aInput(tIndex);
-    },"PlatoDriver::compress_copy_1Dview_to_write");
+    });
 }
 
 
@@ -102,10 +102,10 @@ inline Omega_h::LOs copy(const ScalarVectorT<ViewType> & aInput)
 {
     auto tLength = aInput.size();
     Omega_h::Write<ViewType> tWrite(tLength);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("copy", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         tWrite[aOrdinal] = aInput(aOrdinal);
-    }, "copy");
+    });
 
     return (Omega_h::LOs(tWrite));
 }
@@ -123,10 +123,10 @@ inline ScalarVectorT<ViewType> copy(const Omega_h::LOs & aInput)
 {
   auto tLength = aInput.size();
   Plato::ScalarVectorT<ViewType> tOutput("kokkos-view-copy", tLength);
-  Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+  Kokkos::parallel_for("copy", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
   {
       tOutput(aOrdinal) = aInput[aOrdinal];
-  }, "copy");
+  });
   return tOutput;
 }
 
@@ -147,10 +147,10 @@ void print
 {
     std::cout << "Start Printing Array with Name '" << aName << "'\n";
     auto tLength = aInput.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("print", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         printf("Array(%d)=%d\n",aOrdinal,aInput[aOrdinal]);
-    }, "print");
+    });
     std::cout << "Finished Printing Array with Name '" << aName << "'\n";
 }
 // function print
@@ -209,10 +209,10 @@ read_metadata_from_mesh
     }
     const Plato::OrdinalType tSize = tData.size();
     Plato::ScalarVector tOutput(aTagName, tSize);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tSize), KOKKOS_LAMBDA(const Plato::OrdinalType& tIndex)
+    Kokkos::parallel_for("copy read array into output array", Kokkos::RangePolicy<>(0, tSize), KOKKOS_LAMBDA(const Plato::OrdinalType& tIndex)
     {
         tOutput(tIndex) = tData[tIndex];
-    }, "copy read array into output array");
+    });
     return tOutput;
 }
 // function read_metadata_from_mesh

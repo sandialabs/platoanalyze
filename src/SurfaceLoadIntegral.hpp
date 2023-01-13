@@ -7,6 +7,7 @@
 #pragma once
 
 #include "FadTypes.hpp"
+#include "NaturalBCData.hpp"
 #include "SpatialModel.hpp"
 #include "SurfaceArea.hpp"
 
@@ -27,17 +28,20 @@ template<
   Plato::OrdinalType NumDofs=ElementType::mNumSpatialDims,
   Plato::OrdinalType DofsPerNode=NumDofs,
   Plato::OrdinalType DofOffset=0 >
-class SurfaceLoadIntegral
+class SurfaceLoadIntegral final
 {
 private:
     const std::string mSideSetName; /*!< side set name */
-    const Plato::Array<NumDofs> mFlux; /*!< force vector values */
+    const Plato::Scalar mCurrentTime;
+    std::unique_ptr<NaturalBCData<NumDofs>> mBCData;
 
 public:
     /******************************************************************************//**
      * \brief Constructor
      **********************************************************************************/
-    SurfaceLoadIntegral(const std::string & aSideSetName, const Plato::Array<NumDofs>& aFlux);
+    SurfaceLoadIntegral(const std::string & aSideSetName, 
+     const Plato::Scalar aCurrentTime,
+     std::unique_ptr<NaturalBCData<NumDofs>> aBCData);
 
     /***************************************************************************//**
      * \brief Evaluate natural boundary condition surface integrals.
@@ -74,10 +78,14 @@ public:
 *******************************************************************************/
 template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::SurfaceLoadIntegral
-(const std::string & aSideSetName, const Plato::Array<NumDofs>& aFlux) :
+(const std::string & aSideSetName, 
+const Plato::Scalar aCurrentTime,
+std::unique_ptr<NaturalBCData<NumDofs>> aBCData) :
     mSideSetName(aSideSetName),
-    mFlux(aFlux)
+    mCurrentTime(aCurrentTime),
+    mBCData(std::move(aBCData))
 {
+    assert(mBCData);
 }
 // class SurfaceLoadIntegral::SurfaceLoadIntegral
 
@@ -98,21 +106,23 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
           Plato::Scalar aScale
 ) const
 {
-    auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(mSideSetName);
-    auto tNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(mSideSetName);
-    Plato::OrdinalType tNumFaces = tElementOrds.size();
+    const auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(mSideSetName);
+    const auto tNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(mSideSetName);
+    const auto tConnectivity = aSpatialModel.Mesh->Connectivity();
 
-    Plato::SurfaceArea<ElementType> surfaceArea;
+    const Plato::OrdinalType tNumFaces = tElementOrds.size();
 
-    auto tFlux = mFlux;
-    auto tCubatureWeights = ElementType::Face::getCubWeights();
-    auto tCubaturePoints  = ElementType::Face::getCubPoints();
-    auto tNumPoints = tCubatureWeights.size();
+    const Plato::SurfaceArea<ElementType> surfaceArea;
 
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+    const auto tBoundaryData = mBCData->getVectorData(aSpatialModel.Mesh, mCurrentTime);
+    const auto tCubatureWeights = ElementType::Face::getCubWeights();
+    const auto tCubaturePoints  = ElementType::Face::getCubPoints();
+    const auto tNumPoints = tCubatureWeights.size();
+
+    Kokkos::parallel_for("surface load integral", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal, const Plato::OrdinalType & aPointOrdinal)
     {
-      auto tElementOrdinal = tElementOrds(aSideOrdinal);
+      const auto tElementOrdinal = tElementOrds(aSideOrdinal);
 
       Plato::Array<ElementType::mNumNodesPerFace, Plato::OrdinalType> tLocalNodeOrds;
       for( Plato::OrdinalType tNodeOrd=0; tNodeOrd<ElementType::mNumNodesPerFace; tNodeOrd++)
@@ -120,10 +130,10 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
           tLocalNodeOrds(tNodeOrd) = tNodeOrds(aSideOrdinal*ElementType::mNumNodesPerFace+tNodeOrd);
       }
 
-      auto tCubatureWeight = tCubatureWeights(aPointOrdinal);
-      auto tCubaturePoint = tCubaturePoints(aPointOrdinal);
-      auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
-      auto tBasisGrads  = ElementType::Face::basisGrads(tCubaturePoint);
+      const auto tCubatureWeight = tCubatureWeights(aPointOrdinal);
+      const auto tCubaturePoint = tCubaturePoints(aPointOrdinal);
+      const auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
+      const auto tBasisGrads  = ElementType::Face::basisGrads(tCubaturePoint);
 
       ResultScalarType tSurfaceArea(0.0);
       surfaceArea(tElementOrdinal, tLocalNodeOrds, tBasisGrads, aConfig, tSurfaceArea);
@@ -133,14 +143,16 @@ void SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator
       // project into aResult workset
       for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerFace; tNode++)
       {
+          const auto tGlobalNodeOrdinal = tConnectivity(tElementOrdinal*ElementType::mNumNodesPerCell + tLocalNodeOrds(tNode));
+          const auto tFlux = vectorBoundaryDataAtIndex<NumDofs>(tBoundaryData, tGlobalNodeOrdinal);
           for( Plato::OrdinalType tDof=0; tDof<NumDofs; tDof++)
           {
-              auto tElementDofOrdinal = tLocalNodeOrds[tNode] * DofsPerNode + tDof + DofOffset;
-              ResultScalarType tResult = tBasisValues(tNode)*tFlux[tDof]*tSurfaceArea;
+              const auto tElementDofOrdinal = tLocalNodeOrds[tNode] * DofsPerNode + tDof + DofOffset;
+              const ResultScalarType tResult = tBasisValues(tNode)*tFlux(tDof)*tSurfaceArea;
               Kokkos::atomic_add(&aResult(tElementOrdinal,tElementDofOrdinal), tResult);
           }
       }
-    }, "surface load integral");
+    });
 }
 // class SurfaceLoadIntegral::operator()
 

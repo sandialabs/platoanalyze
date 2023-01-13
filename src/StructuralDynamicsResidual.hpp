@@ -302,7 +302,7 @@ public:
         auto tQuadratureWeight = mCubatureRule->getCubWeight();
         auto tBasisFunctions = mCubatureRule->getBasisFunctions();
         auto tOmegaTimesOmega = aAngularFrequency * aAngularFrequency;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("Structural Dynamics Residual Calculation", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             // Compute elastic forces
             tComputeGradientWorkset(aCellOrdinal, tCellGradient, aConfiguration, tCellVolume);
@@ -323,7 +323,7 @@ public:
             // Compute structural dynamics residual
             Plato::structural_dynamics_cell_residual<mNumDofsPerCell>
                 (aCellOrdinal, tOmegaTimesOmega, tElasticForces, tDampingForces, tInertialForces, aResidual);
-        }, "Structural Dynamics Residual Calculation");
+        });
 
         // add body loads contribution
         if(mBodyLoads != nullptr)

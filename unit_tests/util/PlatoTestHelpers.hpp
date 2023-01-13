@@ -27,6 +27,20 @@ typename ViewType::HostMirror get(ViewType aView) {
   return tView;
 }
 
+/******************************************************************************//**
+ * \brief create device view from std::vector
+ *
+ * \param[in] aVector 
+ * @returns Mirror on device
+**********************************************************************************/
+template <typename ScalarT>
+Plato::ScalarVectorT<ScalarT> 
+create_device_view(std::vector<ScalarT> & aVector)
+{
+    Kokkos::View<ScalarT*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tHostView(aVector.data(),aVector.size());
+    return Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), tHostView);
+}
+
 /******************************************************************************/
 /*! Return a box (cube) along with the spec used to generate it.
 /*! @sa get_box_mesh

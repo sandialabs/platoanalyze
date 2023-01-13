@@ -502,7 +502,7 @@ namespace Elliptic
         switch (mSolutionType)
         {
             case solution_type_t::DIFF_BETWEEN_SOLUTION_VECTOR_AND_TARGET_VECTOR:
-                Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
+                Kokkos::parallel_for("gradient_u", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
                 KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
                 {
                     auto tIndex = tNodeIds[aNodeOrdinal];
@@ -526,11 +526,11 @@ namespace Elliptic
                             tGradientU(tNumDofsPerNode*tIndex+iDof) = 0.0;
                         }
                     }
-                }, "gradient_u");
+                });
                 break; 
 
             case solution_type_t::DIFF_BETWEEN_SOLUTION_MAG_IN_DIRECTION_AND_TARGET:
-                Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
+                Kokkos::parallel_for("gradient_u", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
                 KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
                 {
                     auto tIndex = tNodeIds[aNodeOrdinal];
@@ -555,11 +555,11 @@ namespace Elliptic
                             tGradientU(tNumDofsPerNode*tIndex+iDof) = 0.0;
                         }
                     }
-                }, "gradient_u");
+                });
                 break;
 
             case solution_type_t::SOLUTION_MAG_IN_DIRECTION:
-                Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
+                Kokkos::parallel_for("gradient_u", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
                 KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
                 {
                     auto tIndex = tNodeIds[aNodeOrdinal];
@@ -583,11 +583,11 @@ namespace Elliptic
                             tGradientU(tNumDofsPerNode*tIndex+iDof) = 0.0;
                         }
                     }
-                }, "gradient_u");
+                });
                 break;
 
             case solution_type_t::SOLUTION_IN_DIRECTION:
-                Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
+                Kokkos::parallel_for("gradient_u", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
                 KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
                 {
                     auto tIndex = tNodeIds[aNodeOrdinal];
@@ -595,11 +595,11 @@ namespace Elliptic
                     {
                         tGradientU(tNumDofsPerNode*tIndex+iDof) = tNormal[iDof] / tNumNodes;
                     }
-                }, "gradient_u");
+                });
                 break; 
 
             case solution_type_t::DIFF_BETWEEN_SOLUTION_IN_DIRECTION_AND_TARGET_SOLUTION_IN_DIRECTION:
-                Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
+                Kokkos::parallel_for("gradient_u", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
                 KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
                 {
                     Plato::Scalar tLocalValue(0.0);
@@ -615,7 +615,7 @@ namespace Elliptic
                     {
                         tGradientU(tNumDofsPerNode*tIndex+iDof) = tSign * tNormal[iDof] / tNumNodes;
                     }
-                }, "gradient_u");
+                });
                 break; 
         }
 

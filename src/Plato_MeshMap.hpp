@@ -272,7 +272,7 @@ class MeshMap
         // determine rowmap
         auto tNumRows = aMatrix.mNumRows;
         OrdinalArrayT tRowMap("row map", tNumRows+1);
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
+        Kokkos::parallel_for("nonzeros", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             if( aParentElements(iRowOrdinal) == -2 ) // no parent element found
             {
@@ -287,7 +287,7 @@ class MeshMap
             {
                 tRowMap(iRowOrdinal) = ElementT::mNumNodesPerCell; // mapped
             }
-        }, "nonzeros");
+        });
 
         OrdinalT tNumEntries(0);
         Kokkos::parallel_scan (Kokkos::RangePolicy<OrdinalT>(0,tNumRows+1),
@@ -306,7 +306,7 @@ class MeshMap
         OrdinalArrayT tColMap("row map", tNumEntries);
         ScalarArrayT tEntries("entries", tNumEntries);
         GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
+        Kokkos::parallel_for("colmap and entries", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             auto iEntryOrdinal = tRowMap(iRowOrdinal);
             auto iElemOrdinal = aParentElements(iRowOrdinal);
@@ -321,7 +321,7 @@ class MeshMap
                 tGetBasis(aLocation, iRowOrdinal, iElemOrdinal, iEntryOrdinal, tColMap, tEntries);
             }
 
-        }, "colmap and entries");
+        });
         mMatrix.mColMap = tColMap;
         mMatrix.mEntries = tEntries;
     }
@@ -370,7 +370,7 @@ class MeshMap
 
         // determine rowmap
         auto tNumRows = aMatrix.mNumRows;
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
+        Kokkos::parallel_for("nonzeros", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             auto tRowStart = tRowMap(iRowOrdinal);
             auto tRowEnd = tRowMap(iRowOrdinal + 1);
@@ -379,7 +379,7 @@ class MeshMap
                 auto iColumnIndex = tColMap(tEntryIndex);
                 Kokkos::atomic_increment(&tRowMapT(iColumnIndex));
             }
-        }, "nonzeros");
+        });
 
         OrdinalT tNumEntries(0);
         Kokkos::parallel_scan (Kokkos::RangePolicy<OrdinalT>(0,tNumRows+1),
@@ -395,7 +395,7 @@ class MeshMap
 
         // determine column map and entries
         OrdinalArrayT tOffsetT("offsets", tNumRows);
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
+        Kokkos::parallel_for("colmap and entries", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             auto tRowStart = tRowMap(iRowOrdinal);
             auto tRowEnd = tRowMap(iRowOrdinal + 1);
@@ -407,7 +407,7 @@ class MeshMap
                 tColMapT(iEntryIndexT) = iRowOrdinal;
                 tEntriesT(iEntryIndexT) = tEntries(iEntryIndex);
             }
-        }, "colmap and entries");
+        });
 
         return tRetMatrix;
     }
@@ -423,7 +423,13 @@ class MeshMap
         //
         auto d_x = Kokkos::subview(aLocations, (size_t)Dim::X, Kokkos::ALL());
         auto d_y = Kokkos::subview(aLocations, (size_t)Dim::Y, Kokkos::ALL());
-        auto d_z = Kokkos::subview(aLocations, (size_t)Dim::Z, Kokkos::ALL());
+
+        decltype(d_x) d_z("z", d_x.layout());
+        if(aLocations.extent(0) > 2)
+        {
+          d_z = Kokkos::subview(aLocations, (size_t)Dim::Z, Kokkos::ALL());
+        }
+
         decltype(d_x) d_r("radii", d_x.layout());
         Kokkos::deep_copy(d_r, aRadius);
 
@@ -456,10 +462,10 @@ class MeshMap
         // determine rowmap
         auto tNumRows = aMatrix.mNumRows;
         OrdinalArrayT tRowMap("row map", tNumRows+1);
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
+        Kokkos::parallel_for("nonzeros", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             tRowMap(iRowOrdinal) = aOffset(iRowOrdinal+1) - aOffset(iRowOrdinal);
-        }, "nonzeros");
+        });
 
         OrdinalT tNumEntries(0);
         Kokkos::parallel_scan (Kokkos::RangePolicy<OrdinalT>(0,tNumRows+1),
@@ -474,25 +480,27 @@ class MeshMap
         }, tNumEntries);
         aMatrix.mRowMap = tRowMap;
 
+        auto tNumDims = aLocations.extent(0);
+
         // determine column map and entries
         auto tRadius = aRadius;
         OrdinalArrayT tColMap("row map", tNumEntries);
         ScalarArrayT tEntries("entries", tNumEntries);
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
+        Kokkos::parallel_for("colmap and entries", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT iRowOrdinal)
         {
             auto iMatrixEntryOrdinal = tRowMap(iRowOrdinal);
-            auto x = aLocations(Dim::X, iRowOrdinal);
-            auto y = aLocations(Dim::Y, iRowOrdinal);
-            auto z = aLocations(Dim::Z, iRowOrdinal);
-            decltype(x) tTotalWeight(0.0);
+            ScalarT tTotalWeight(0.0);
             for( int iOffset=aOffset(iRowOrdinal); iOffset<aOffset(iRowOrdinal+1); iOffset++ )
             {
                 auto iVertOrdinal = aIndices(iOffset);
                 tColMap(iMatrixEntryOrdinal) = iVertOrdinal;
-                auto dx = x - aLocations(Dim::X, iVertOrdinal);
-                auto dy = y - aLocations(Dim::Y, iVertOrdinal);
-                auto dz = z - aLocations(Dim::Z, iVertOrdinal);
-                auto d2 = dx*dx + dy*dy + dz*dz;
+
+                ScalarT d2(0.0);
+                for( int iDim=0; iDim<tNumDims; iDim++ )
+                {
+                  ScalarT dv = aLocations(iDim, iRowOrdinal) - aLocations(iDim, iVertOrdinal);
+                  d2 += dv*dv;
+                }
                 auto tDistance = (d2 > 0.0) ? sqrt(d2) : 0.0;
                 auto tEntry = tRadius - tDistance;
                 tTotalWeight += tEntry;
@@ -503,7 +511,7 @@ class MeshMap
             {
                 tEntries(iMatrixEntryOrdinal++) /= tTotalWeight;
             }
-        }, "colmap and entries");
+        });
         aMatrix.mColMap = tColMap;
         aMatrix.mEntries = tEntries;
     }
@@ -580,7 +588,7 @@ class MeshMap
         auto tEntries = aMatrix.mEntries;
         auto tNumRows = tRowMap.size() - 1;
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT aRowOrdinal)
+        Kokkos::parallel_for("Matrix * Vector", Kokkos::RangePolicy<OrdinalT>(0, tNumRows), KOKKOS_LAMBDA(OrdinalT aRowOrdinal)
         {
             auto tRowStart = tRowMap(aRowOrdinal);
             auto tRowEnd = tRowMap(aRowOrdinal + 1);
@@ -591,7 +599,7 @@ class MeshMap
                 tSum += tEntries(tEntryIndex) * aInput(tColumnIndex);
             }
             aOutput(aRowOrdinal) = tSum;
-        },"Matrix * Vector");
+        });
     }
 
     /***************************************************************************//**
@@ -683,14 +691,14 @@ class MeshMapDerived : public Plato::Geometry::MeshMap<typename MathMapT::Scalar
         auto tCoords = aMesh->Coordinates();
         auto tNVerts = aMesh->NumNodes();
         auto tMathMap = mMathMap;
-        Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalT>(0, tNVerts), KOKKOS_LAMBDA(OrdinalT iOrdinal)
+        Kokkos::parallel_for("get verts and apply map", Kokkos::RangePolicy<OrdinalT>(0, tNVerts), KOKKOS_LAMBDA(OrdinalT iOrdinal)
         {
             for(size_t iDim=0; iDim<ElementT::mNumSpatialDims; ++iDim)
             {
                 aLocations(iDim, iOrdinal) = tCoords(iOrdinal*ElementT::mNumSpatialDims+iDim);
             }
             tMathMap(iOrdinal, aLocations, aMappedLocations);
-        }, "get verts and apply map");
+        });
     }
 
     ~MeshMapDerived()

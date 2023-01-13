@@ -367,7 +367,7 @@ public:
           Plato::ScalarMultiVectorT<StressT>        tDeviatoricStress("deviatoric stress", tNumCells, mNumStressTerms);
 
           // First parallel_for loop.
-          Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+          Kokkos::parallel_for("Compute cell local residuals - part 1", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
           {
             tComputeGradient(aCellOrdinal, tGradient, aConfig, tCellVolume);
 
@@ -402,7 +402,7 @@ public:
             tPenalizedHardeningModulusIsotropic(aCellOrdinal) = tPlasticParamsPenalty * tHardeningModulusIsotropic;
             tPenalizedHardeningModulusKinematic(aCellOrdinal) = tPlasticParamsPenalty * tHardeningModulusKinematic;
 
-          }, "Compute cell local residuals - part 1");
+          });
         }
 
         // compute yield stress - separate loop in the functor.
@@ -412,7 +412,7 @@ public:
       }
 
       // Third parallel_for loop.
-      Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+      Kokkos::parallel_for("Compute cell local residuals - part 2", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
       {
         // ### ELASTIC STEP ###
         // Residual: Accumulated Plastic Strain, DOF: Accumulated Plastic Strain
@@ -451,7 +451,7 @@ public:
             (aCellOrdinal, tPenalizedHardeningModulusKinematic(aCellOrdinal),
              aLocalState, aPrevLocalState, tYieldSurfaceNormal, aResult);
         }
-      }, "Compute cell local residuals - part 2");
+      });
     }
 
     /**************************************************************************//**
@@ -537,7 +537,7 @@ public:
           Plato::ScalarMultiVector tElasticStrain("elastic strain", tNumCells, mNumStressTerms);
 
           // First parallel_for loop.
-          Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+          Kokkos::parallel_for("Update local state dofs - part 1", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
           {
             tComputeGradient(aCellOrdinal, tGradient, aConfig, tCellVolume);
 
@@ -579,7 +579,7 @@ public:
             tPenalizedInitialYieldStress(aCellOrdinal)        = tPlasticParamsPenalty * tInitialYieldStress;
             tPenalizedHardeningModulusIsotropic(aCellOrdinal) = tPlasticParamsPenalty * tHardeningModulusIsotropic;
             tPenalizedHardeningModulusKinematic(aCellOrdinal) = tPlasticParamsPenalty * tHardeningModulusKinematic;
-          }, "Update local state dofs - part 1");
+          });
         }  // first scoping brace
 
         // compute yield stress - separate loop in the functor.
@@ -589,7 +589,7 @@ public:
       }  // second scoping brace
 
       // Third parallel_for loop.
-      Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+      Kokkos::parallel_for("Update local state dofs - part 2", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
       {
         // compute the yield function at the trial state
         Plato::Scalar tTrialStateYieldFunction = tSqrt3Over2 * tDevStressMinusBackstressNorm(aCellOrdinal) - tYieldStress(aCellOrdinal, 0);
@@ -610,7 +610,7 @@ public:
             (aCellOrdinal, aPrevLocalState, tYieldSurfaceNormal,
              tPenalizedHardeningModulusKinematic(aCellOrdinal), aLocalState);
         }
-      }, "Update local state dofs - part 2");
+      });
     }
 
     /******************************************************************************//**

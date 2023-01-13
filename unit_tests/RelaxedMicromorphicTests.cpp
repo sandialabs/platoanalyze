@@ -639,14 +639,14 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementTests, ElementFunctors3D)
     int tNumDofs = tNumNodes*tNumDofsPerNode;
     Plato::ScalarVector tState("state", tNumDofs);
     Plato::ScalarVector tStateDotDot("state dot dot", tNumDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+    Kokkos::parallel_for("state", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
     {
       for (int tDofOrdinal=0; tDofOrdinal<tNumDofsPerNode; tDofOrdinal++)
       {
           tState(aNodeOrdinal*tNumDofsPerNode+tDofOrdinal) = (1e-7)*(tDofOrdinal + 1)*aNodeOrdinal;
           tStateDotDot(aNodeOrdinal*tNumDofsPerNode+tDofOrdinal) = (1e-5)*(tDofOrdinal + 1)*aNodeOrdinal;
       }
-    }, "state");
+    });
 
     // initialize data storage
     //
@@ -1527,7 +1527,7 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_NoInertia )
     Plato::ScalarVector tState("state", tNumDofs);
     Plato::ScalarVector tStateDot("state dot", tNumDofs);
     Plato::ScalarVector tStateDotDot("state dot dot", tNumDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+    Kokkos::parallel_for("state", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
     {
       for (int tDofOrdinal=0; tDofOrdinal<tNumDofsPerNode; tDofOrdinal++)
       {
@@ -1535,7 +1535,7 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_NoInertia )
           tStateDot(aNodeOrdinal*tNumDofsPerNode+tDofOrdinal) = (1e-6)*(tDofOrdinal + 1)*aNodeOrdinal;
           tStateDotDot(aNodeOrdinal*tNumDofsPerNode+tDofOrdinal) = (1e-5)*(tDofOrdinal + 1)*aNodeOrdinal;
       }
-    }, "state");
+    });
 
     // test residual
     //
@@ -1728,7 +1728,7 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
     Plato::ScalarVector tState("state", tNumDofs);
     Plato::ScalarVector tStateDot("state dot", tNumDofs);
     Plato::ScalarVector tStateDotDot("state dot dot", tNumDofs);
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
+    Kokkos::parallel_for("state", Kokkos::RangePolicy<int>(0,tNumNodes), KOKKOS_LAMBDA(const int & aNodeOrdinal)
     {
       for (int tDofOrdinal=0; tDofOrdinal<tNumDofsPerNode; tDofOrdinal++)
       {
@@ -1736,7 +1736,7 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
           tStateDot(aNodeOrdinal*tNumDofsPerNode+tDofOrdinal) = (1e-6)*(tDofOrdinal + 1)*aNodeOrdinal;
           tStateDotDot(aNodeOrdinal*tNumDofsPerNode+tDofOrdinal) = (1e-5)*(tDofOrdinal + 1)*aNodeOrdinal;
       }
-    }, "state");
+    });
 
     // test residual
     //

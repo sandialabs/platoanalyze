@@ -1,5 +1,4 @@
-#ifndef PLATO_IMPLICIT_FUNCTORS_HPP
-#define PLATO_IMPLICIT_FUNCTORS_HPP
+#pragma once
 
 #include "PlatoMesh.hpp"
 #include "PlatoMathTypes.hpp"
@@ -40,7 +39,6 @@ class NodeOrdinal
     }
 };
 /******************************************************************************/
-
 
 /******************************************************************************/
 template<Plato::OrdinalType SpaceDim, Plato::OrdinalType DofsPerNode, Plato::OrdinalType NodesPerCell=SpaceDim+1>
@@ -129,7 +127,8 @@ public:
 
 /******************************************************************************/
 template<Plato::OrdinalType NodesPerCell,
-         Plato::OrdinalType DofsPerNode>
+         Plato::OrdinalType DofsPerNode_I,
+         Plato::OrdinalType DofsPerNode_J=DofsPerNode_I>
 class BlockMatrixTransposeEntryOrdinal
 {
   private:
@@ -145,21 +144,53 @@ class BlockMatrixTransposeEntryOrdinal
 
     KOKKOS_INLINE_FUNCTION
     Plato::OrdinalType
-    operator()(Plato::OrdinalType cellOrdinal, Plato::OrdinalType icellDof, Plato::OrdinalType jcellDof) const
+    operator()
+    (Plato::OrdinalType cellOrdinal, 
+     Plato::OrdinalType icellDof, 
+     Plato::OrdinalType jcellDof) const
     {
-        auto iNode = icellDof / DofsPerNode;
-        auto iDof  = icellDof % DofsPerNode;
-        auto jNode = jcellDof / DofsPerNode;
-        auto jDof  = jcellDof % DofsPerNode;
+        auto iNode = icellDof / DofsPerNode_I;
+        auto iDof  = icellDof % DofsPerNode_I;
+        auto jNode = jcellDof / DofsPerNode_J;
+        auto jDof  = jcellDof % DofsPerNode_J;
         Plato::OrdinalType iLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + iNode);
         Plato::OrdinalType jLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + jNode);
+        return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Plato::OrdinalType
+    operator()
+    (Plato::OrdinalType icellOrdinal, 
+     Plato::OrdinalType jcellOrdinal, 
+     Plato::OrdinalType icellDof, 
+     Plato::OrdinalType jcellDof) const
+    {
+        auto iNode = icellDof / DofsPerNode_I;
+        auto iDof  = icellDof % DofsPerNode_I;
+        auto jNode = jcellDof / DofsPerNode_J;
+        auto jDof  = jcellDof % DofsPerNode_J;
+        Plato::OrdinalType iLocalOrdinal = mCells2nodes(icellOrdinal * NodesPerCell + iNode);
+        Plato::OrdinalType jLocalOrdinal = mCells2nodes(jcellOrdinal * NodesPerCell + jNode);
+        return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
+    }
+
+  private:
+    KOKKOS_INLINE_FUNCTION
+    Plato::OrdinalType
+    getEntryOrdinal
+    (Plato::OrdinalType iLocalOrdinal, 
+     Plato::OrdinalType jLocalOrdinal,
+     Plato::OrdinalType iDof,
+     Plato::OrdinalType jDof) const
+    {
         Plato::OrdinalType rowStart = mRowMap(jLocalOrdinal);
         Plato::OrdinalType rowEnd   = mRowMap(jLocalOrdinal+1);
         for (Plato::OrdinalType entryOrdinal=rowStart; entryOrdinal<rowEnd; entryOrdinal++)
         {
           if (mColumnIndices(entryOrdinal) == iLocalOrdinal)
           {
-            return entryOrdinal*DofsPerNode*DofsPerNode+jDof*DofsPerNode+iDof;
+            return entryOrdinal*DofsPerNode_I*DofsPerNode_J+jDof*DofsPerNode_I+iDof;
           }
         }
         return Plato::OrdinalType(-1);
@@ -267,7 +298,10 @@ class BlockMatrixEntryOrdinal
 
     KOKKOS_INLINE_FUNCTION
     Plato::OrdinalType
-    operator()(Plato::OrdinalType cellOrdinal, Plato::OrdinalType icellDof, Plato::OrdinalType jcellDof) const
+    operator()
+    (Plato::OrdinalType cellOrdinal, 
+     Plato::OrdinalType icellDof, 
+     Plato::OrdinalType jcellDof) const
     {
         auto iNode = icellDof / DofsPerNode_I;
         auto iDof  = icellDof % DofsPerNode_I;
@@ -275,6 +309,35 @@ class BlockMatrixEntryOrdinal
         auto jDof  = jcellDof % DofsPerNode_J;
         Plato::OrdinalType iLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + iNode);
         Plato::OrdinalType jLocalOrdinal = mCells2nodes(cellOrdinal * NodesPerCell + jNode);
+        return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    Plato::OrdinalType
+    operator()
+    (Plato::OrdinalType icellOrdinal, 
+     Plato::OrdinalType jcellOrdinal, 
+     Plato::OrdinalType icellDof, 
+     Plato::OrdinalType jcellDof) const
+    {
+        auto iNode = icellDof / DofsPerNode_I;
+        auto iDof  = icellDof % DofsPerNode_I;
+        auto jNode = jcellDof / DofsPerNode_J;
+        auto jDof  = jcellDof % DofsPerNode_J;
+        Plato::OrdinalType iLocalOrdinal = mCells2nodes(icellOrdinal * NodesPerCell + iNode);
+        Plato::OrdinalType jLocalOrdinal = mCells2nodes(jcellOrdinal * NodesPerCell + jNode);
+        return this->getEntryOrdinal(iLocalOrdinal, jLocalOrdinal, iDof, jDof);
+    }
+
+  private:
+    KOKKOS_INLINE_FUNCTION
+    Plato::OrdinalType
+    getEntryOrdinal
+    (Plato::OrdinalType iLocalOrdinal, 
+     Plato::OrdinalType jLocalOrdinal,
+     Plato::OrdinalType iDof,
+     Plato::OrdinalType jDof) const
+    {
         Plato::OrdinalType rowStart = mRowMap(iLocalOrdinal);
         Plato::OrdinalType rowEnd   = mRowMap(iLocalOrdinal+1);
         for (Plato::OrdinalType entryOrdinal=rowStart; entryOrdinal<rowEnd; entryOrdinal++)
@@ -289,300 +352,4 @@ class BlockMatrixEntryOrdinal
 };
 /******************************************************************************/
 
-/******************************************************************************/
-/*!
-  \brief Create a matrix of type MatrixType
-
-  @param aMesh Plato abstract mesh on which the matrix is based.
-
-  Create a block matrix from connectivity in mesh with block size
-  DofsPerNode_I X DofsPerElem_J.
-
-  This function creates a matrix that stores a transpose of the gradient of
-  local element states wrt nodal degrees of freedom.  Each column has the same
-  number of non-zero block entries (NNodesPerCell)
-*/
-template <typename MatrixType,
-          typename ElementType>
-Teuchos::RCP<MatrixType>
-CreateGlobalByLocalBlockMatrix( Plato::Mesh aMesh )
-/******************************************************************************/
-{
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tOffsetMap;
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tElementOrds;
-    aMesh->NodeElementGraph(tOffsetMap, tElementOrds);
-
-    auto tNumElems = aMesh->NumElements();
-    auto tNumNodes = aMesh->NumNodes();
-    auto tNumNonZeros = tNumElems*ElementType::mNumGaussPoints*ElementType::mNumNodesPerCell;
-
-    constexpr Plato::OrdinalType numBlockDofs = ElementType::mNumDofsPerNode*ElementType::mNumLocalStatesPerGP;
-
-    typename MatrixType::RowMapVectorT  rowMap        ("row map",        tNumNodes+1);
-    typename MatrixType::ScalarVectorT  entries       ("matrix entries", tNumNonZeros*numBlockDofs);
-    typename MatrixType::OrdinalVectorT columnIndices ("column indices", tNumNonZeros);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
-    {
-      auto tFrom = tOffsetMap(aNodeOrdinal);
-      auto tTo   = tOffsetMap(aNodeOrdinal+1);
-      rowMap(aNodeOrdinal)   = ElementType::mNumGaussPoints*tFrom;
-      rowMap(aNodeOrdinal+1) = ElementType::mNumGaussPoints*tTo;
-
-      for( decltype(tFrom) tOffset = tFrom; tOffset < tTo; tOffset++ )
-      {
-          for( decltype(tFrom) tGPOrd = 0; tGPOrd < ElementType::mNumGaussPoints; tGPOrd++ )
-          {
-              auto tColumnEntry = ElementType::mNumGaussPoints * tOffset + tGPOrd;
-              columnIndices(tColumnEntry) = ElementType::mNumGaussPoints*tElementOrds(tOffset) + tGPOrd;
-          }
-      }
-    });
-
-    auto retMatrix = Teuchos::rcp(
-     new MatrixType( rowMap, columnIndices, entries,
-                     tNumNodes*ElementType::mNumDofsPerNode,
-                     tNumElems*ElementType::mNumGaussPoints*ElementType::mNumLocalStatesPerGP,
-                     ElementType::mNumDofsPerNode,
-                     ElementType::mNumLocalStatesPerGP )
-    );
-    return retMatrix;
-}
-
-/******************************************************************************/
-/*!
-  \brief Create a matrix of type MatrixType
-
-  @param aMesh Plato abstract mesh on which the matrix is based.
-
-  Create a block matrix from connectivity in mesh with block size
-  DofsPerElem_I X DofsPerNode_J.
-
-  This function creates a matrix that stores a gradient of local element
-  states wrt nodal degrees of freedom.  Each row has the same number of
-  non-zero block entries (NNodesPerCell)
-*/
-template <typename MatrixType,
-          Plato::OrdinalType NodesPerElem,
-          Plato::OrdinalType DofsPerElem_I,
-          Plato::OrdinalType DofsPerNode_J>
-Teuchos::RCP<MatrixType>
-CreateLocalByGlobalBlockMatrix( Plato::Mesh aMesh )
-/******************************************************************************/
-{
-    const auto& mCells2nodes = aMesh->Connectivity();
-
-    auto tNumElems = aMesh->NumElements();
-    auto tNumNonZeros = tNumElems*NodesPerElem;
-
-    constexpr Plato::OrdinalType numBlockDofs = DofsPerElem_I*DofsPerNode_J;
-
-    typename MatrixType::RowMapVectorT  rowMap        ("row map",        tNumElems+1);
-    typename MatrixType::ScalarVectorT  entries       ("matrix entries", tNumNonZeros*numBlockDofs);
-    typename MatrixType::OrdinalVectorT columnIndices ("column indices", tNumNonZeros);
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumElems), KOKKOS_LAMBDA(Plato::OrdinalType aCellOrdinal)
-    {
-      auto tFrom = aCellOrdinal*NodesPerElem;
-      auto tTo   = (aCellOrdinal+1)*NodesPerElem;
-      rowMap(aCellOrdinal)   = tFrom;
-      rowMap(aCellOrdinal+1) = tTo;
-
-      decltype(aCellOrdinal) tLocalIndex = 0;
-      for( decltype(tFrom) tColumnEntry = tFrom; tColumnEntry < tTo; tColumnEntry++ )
-      {
-          columnIndices(tColumnEntry) = mCells2nodes(aCellOrdinal*NodesPerElem + tLocalIndex++);
-      }
-    });
-
-    auto tNumNodes = aMesh->NumNodes();
-    auto retMatrix = Teuchos::rcp(
-     new MatrixType( rowMap, columnIndices, entries,
-                     tNumElems*DofsPerElem_I, tNumNodes*DofsPerNode_J,
-                     DofsPerElem_I, DofsPerNode_J )
-    );
-    return retMatrix;
-}
-
-/******************************************************************************/
-/*!
-  \brief Create a matrix of type MatrixType
-
-  \param mesh Plato abstract mesh on which the matrix is based.  
-
-  Create a block matrix from connectivity in mesh with block size
-  DofsPerNode_I X DofsPerNode_J.
-*/
-template <typename MatrixType, Plato::OrdinalType DofsPerNode_I, Plato::OrdinalType DofsPerNode_J=DofsPerNode_I>
-Teuchos::RCP<MatrixType>
-CreateBlockMatrix( Plato::Mesh aMesh )
-/******************************************************************************/
-{
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tOffsetMap;
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tNodeOrds;
-    aMesh->NodeNodeGraph(tOffsetMap, tNodeOrds);
-
-    // TODO: this function is still omega_h specific because it assumes that the graph doesn't include diagonals.
-
-    auto numRows = tOffsetMap.size() - 1;
-    // omega_h does not include the diagonals: add numRows, and then
-    // add 1 to each rowMap entry after the first
-    auto nnz = tNodeOrds.size() + numRows;
-
-    // account for num dofs per node
-    constexpr Plato::OrdinalType numBlockDofs = DofsPerNode_I*DofsPerNode_J;
-
-    typename MatrixType::RowMapVectorT  rowMap("row map", numRows+1);
-    typename MatrixType::ScalarVectorT  entries("matrix entries", nnz*numBlockDofs);
-    typename MatrixType::OrdinalVectorT columnIndices("column indices", nnz);
-
-    // The compressed row storage format in omega_h doesn't include diagonals.  This
-    // function creates a CRSMatrix with diagonal entries included.
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,numRows), KOKKOS_LAMBDA(Plato::OrdinalType rowNumber)
-    {
-      auto entryOffset_oh = tOffsetMap(rowNumber);
-      auto R0 = tOffsetMap(rowNumber) + rowNumber;
-      auto R1 = tOffsetMap(rowNumber+1) + rowNumber+1;
-      auto numNodesThisRow = R1-R0;
-      rowMap(rowNumber) = R0;
-      rowMap(rowNumber+1) = R1;
-
-      Plato::OrdinalType i_oh = 0; // will track i until we insert the diagonal entry
-      for (Plato::OrdinalType i=0; i<numNodesThisRow; i_oh++, i++)
-      {
-        bool insertDiagonal = false;
-        if ((i_oh == i) && (i_oh + entryOffset_oh >= tOffsetMap(rowNumber+1)))
-        {
-          // i_oh == i                    --> have not inserted diagonal
-          // i_oh + entryOffset_oh > size --> at the end of the omega_h entries, should insert
-          insertDiagonal = true;
-        }
-        else if (i_oh == i)
-        {
-          // i_oh + entryOffset_oh in bounds
-          auto columnIndex = tNodeOrds(i_oh + entryOffset_oh);
-          if (columnIndex > rowNumber)
-          {
-            insertDiagonal = true;
-          }
-        }
-        if (insertDiagonal)
-        {
-          // store the diagonal entry
-          columnIndices(R0+i) = rowNumber;
-          i_oh--; // i_oh lags i by 1 after we hit the diagonal
-        }
-        else
-        {
-          columnIndices(R0+i) = tNodeOrds(i_oh + entryOffset_oh);
-        }
-      }
-    });
-
-    auto retMatrix = Teuchos::rcp(
-     new MatrixType( rowMap, columnIndices, entries,
-                     numRows*DofsPerNode_I, numRows*DofsPerNode_J,
-                     DofsPerNode_I, DofsPerNode_J )
-    );
-    return retMatrix;
-}
-
-/******************************************************************************/
-/*!
-  \brief Create a matrix of type MatrixType
-
-  \param aMesh Plato abstract mesh on which the matrix is based.  
-
-  Create a matrix from connectivity in mesh with DofsPerNode.
-*/
-template <typename MatrixType, Plato::OrdinalType DofsPerNode>
-Teuchos::RCP<MatrixType>
-CreateMatrix( Plato::Mesh aMesh )
-/******************************************************************************/
-{
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tOffsetMap;
-    Plato::OrdinalVectorT<const Plato::OrdinalType> tNodeOrds;
-    aMesh->NodeNodeGraph(tOffsetMap, tNodeOrds);
-
-    // TODO: this function is still omega_h specific because it assumes that the graph doesn't include diagonals.
-
-    auto numRows = tOffsetMap.size() - 1;
-    // omega_h does not include the diagonals: add numRows, and then
-    // add 1 to each rowMap entry after the first
-    auto nnz = tNodeOrds.size() + numRows;
-
-    // account for num dofs per node
-    constexpr Plato::OrdinalType numDofsSquared = DofsPerNode*DofsPerNode;
-
-    typename MatrixType::RowMapVectorT  rowMap("row map", numRows*DofsPerNode+1);
-    typename MatrixType::ScalarVectorT  entries("matrix entries", nnz*numDofsSquared);
-    typename MatrixType::OrdinalVectorT columnIndices("column indices", nnz*numDofsSquared);
-
-    // The compressed row storage format in omega_h doesn't include diagonals.  This
-    // function creates a CRSMatrix with diagonal entries included and expands the
-    // graph to DofsPerNode.
-
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,numRows), KOKKOS_LAMBDA(Plato::OrdinalType rowNumber)
-    {
-      auto entryOffset_oh = tOffsetMap(rowNumber);
-      auto R0 = tOffsetMap(rowNumber) + rowNumber;
-      auto R1 = tOffsetMap(rowNumber+1) + rowNumber+1;
-      auto numNodesThisRow = R1-R0;
-      auto numDofsThisRow = numNodesThisRow*DofsPerNode;
-      auto dofRowOffset = DofsPerNode*rowNumber;
-      auto dofColOffset = numDofsSquared*R0;
-      for (Plato::OrdinalType iDof=0; iDof<=DofsPerNode; iDof++){
-        rowMap(dofRowOffset+iDof) = dofColOffset+iDof*numDofsThisRow;
-      }
-
-      Plato::OrdinalType i_oh = 0; // will track i until we insert the diagonal entry
-      for (Plato::OrdinalType i=0; i<numNodesThisRow; i_oh++, i++)
-      {
-        bool insertDiagonal = false;
-        if ((i_oh == i) && (i_oh + entryOffset_oh >= tOffsetMap(rowNumber+1)))
-        {
-          // i_oh == i                    --> have not inserted diagonal
-          // i_oh + entryOffset_oh > size --> at the end of the omega_h entries, should insert
-          insertDiagonal = true;
-        }
-        else if (i_oh == i)
-        {
-          // i_oh + entryOffset_oh in bounds
-          auto columnIndex = tNodeOrds(i_oh + entryOffset_oh);
-          if (columnIndex > rowNumber)
-          {
-            insertDiagonal = true;
-          }
-        }
-        if (insertDiagonal)
-        {
-          // store the diagonal entry
-          for (Plato::OrdinalType iDof=0; iDof<DofsPerNode; iDof++){
-            columnIndices(numDofsSquared*R0+DofsPerNode*i+iDof) = DofsPerNode*rowNumber+iDof;
-          }
-          i_oh--; // i_oh lags i by 1 after we hit the diagonal
-        }
-        else
-        {
-          for (Plato::OrdinalType iDof=0; iDof<DofsPerNode; iDof++){
-            columnIndices(dofColOffset+DofsPerNode*i+iDof) = DofsPerNode*tNodeOrds(i_oh + entryOffset_oh)+iDof;
-          }
-        }
-      }
-      for (Plato::OrdinalType iDof=0; iDof<numDofsThisRow; iDof++)
-      {
-        for (Plato::OrdinalType jDof=1; jDof<DofsPerNode; jDof++){
-          columnIndices(dofColOffset+jDof*numDofsThisRow+iDof) = columnIndices(dofColOffset+iDof);
-        }
-      }
-    });
-
-    auto retMatrix = Teuchos::rcp(new MatrixType( rowMap, columnIndices, entries ));
-    return retMatrix;
-}
-
-
 } // end namespace Plato
-
-#endif

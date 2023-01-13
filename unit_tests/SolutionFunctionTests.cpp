@@ -34,11 +34,11 @@ TEUCHOS_UNIT_TEST( DerivativeTests, Solution2D )
   //
   auto tCoords = tMesh->Coordinates();
   Plato::ScalarMultiVector U("states", /*numSteps=*/1, tNumVerts*spaceDim);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVerts), KOKKOS_LAMBDA(int aNodeOrdinal)
+  Kokkos::parallel_for("set disp", Kokkos::RangePolicy<int>(0, tNumVerts), KOKKOS_LAMBDA(int aNodeOrdinal)
   {
     U(0, aNodeOrdinal*spaceDim + 0) = tCoords[aNodeOrdinal*spaceDim + 0];
     U(0, aNodeOrdinal*spaceDim + 1) = tCoords[aNodeOrdinal*spaceDim + 1];
-  }, "set disp");
+  });
 
 
   // setup the problem
@@ -165,11 +165,11 @@ TEUCHOS_UNIT_TEST( DerivativeTests, Solution2D_Mag )
   //
   auto tCoords = tMesh->Coordinates();
   Plato::ScalarMultiVector U("states", /*numSteps=*/1, tNumVerts*spaceDim);
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVerts), KOKKOS_LAMBDA(int aNodeOrdinal)
+  Kokkos::parallel_for("set disp", Kokkos::RangePolicy<int>(0, tNumVerts), KOKKOS_LAMBDA(int aNodeOrdinal)
   {
     U(0, aNodeOrdinal*spaceDim + 0) = tCoords[aNodeOrdinal*spaceDim + 0];
     U(0, aNodeOrdinal*spaceDim + 1) = tCoords[aNodeOrdinal*spaceDim + 1];
-  }, "set disp");
+  });
 
 
   // setup the problem

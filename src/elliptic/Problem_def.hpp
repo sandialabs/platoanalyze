@@ -15,6 +15,7 @@
 #include "elliptic/ScalarFunctionBaseFactory.hpp"
 #include "geometric/ScalarFunctionBaseFactory.hpp"
 
+#include "contact/ContactUtils.hpp"
 
 namespace Plato
 {
@@ -198,6 +199,7 @@ namespace Elliptic
         mDataMap.scalarNodeFields["Topology"] = aControl;
 
         // inner loop for non-linear models
+        bool tNewtonHasConverged = false;
         for(Plato::OrdinalType tNewtonIndex = 0; tNewtonIndex < mNumNewtonSteps; tNewtonIndex++)
         {
             mResidual = mPDE->value(tStatesSubView, aControl);
@@ -208,6 +210,7 @@ namespace Elliptic
                 std::cout << " Residual norm: " << tResidualNorm << std::endl;
                 if (tResidualNorm < mNewtonResTol) {
                     std::cout << " Residual norm tolerance satisfied." << std::endl;
+                    tNewtonHasConverged = true;
                     break;
                 }
             }
@@ -228,10 +231,14 @@ namespace Elliptic
                 std::cout << " Delta norm: " << tIncrementNorm << std::endl;
                 if (tIncrementNorm < mNewtonIncTol) {
                     std::cout << " Solution increment norm tolerance satisfied." << std::endl;
+                    tNewtonHasConverged = true;
                     break;
                 }
             }
         }
+
+        if (mNumNewtonSteps > 1 && tNewtonHasConverged == false )
+            ANALYZE_THROWERR("No convergence achieved in specified number of Newton iterations.")
 
         if ( mSaveState )
         {
@@ -479,7 +486,7 @@ namespace Elliptic
             Plato::blas1::scale(static_cast<Plato::Scalar>(-1), tPartialCriterionWRT_State);
 
             // compute dgdu: partial of PDE wrt state
-            mJacobian = mPDE->gradient_u(tStatesSubView, aControl);
+            mJacobian = mPDE->gradient_u_T(tStatesSubView, aControl);
             this->applyStateConstraints(mJacobian, tPartialCriterionWRT_State, 1.0);
 
             // adjoint problem uses transpose of global stiffness, but we're assuming the constrained
@@ -612,7 +619,6 @@ namespace Elliptic
     void Problem<PhysicsType>::initialize(Teuchos::ParameterList& aProblemParams)
     {
         auto tName = aProblemParams.get<std::string>("PDE Constraint");
-        mPDE = std::make_shared<Plato::Elliptic::VectorFunction<PhysicsType>>(mSpatialModel, mDataMap, aProblemParams, tName);
 
         if(aProblemParams.isSublist("Criteria"))
         {
@@ -658,6 +664,15 @@ namespace Elliptic
             auto & tMyParams = aProblemParams.sublist("Multipoint Constraints", false);
             mMPCs = std::make_shared<Plato::MultipointConstraints>(mSpatialModel, tNumDofsPerNode, tMyParams);
             mMPCs->setupTransform();
+        }
+
+        if(aProblemParams.isSublist("Contact") == true)
+        {
+            auto & tMyParams = aProblemParams.sublist("Contact", false);
+            auto tPairs = Plato::Contact::parse_contact(tMyParams, mSpatialModel.Mesh);
+            Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, mSpatialModel);
+
+            mSpatialModel.addContact(tPairs);
         }
 
         this->readEssentialBoundaryConditions(aProblemParams);

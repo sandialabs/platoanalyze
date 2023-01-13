@@ -92,7 +92,7 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -114,7 +114,7 @@ using MemSpace = typename ExecSpace::memory_space;
         {
             tBases(iVert, aOrdinal) = tElemBases(iVert);
         }
-    }, "compute");
+    });
 
     double tol_double = 1e-14;
     auto tBases_host = pth::get(tBases);
@@ -168,7 +168,7 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -190,7 +190,7 @@ using MemSpace = typename ExecSpace::memory_space;
         {
             tBases(iVert, aOrdinal) = tElemBases(iVert);
         }
-    }, "compute");
+    });
 
     auto oe = Plato::Scalar(1)/8;
     auto of = Plato::Scalar(1)/4;
@@ -249,7 +249,7 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -278,7 +278,7 @@ using MemSpace = typename ExecSpace::memory_space;
         {
             tBases(iVert, aOrdinal) = tElemBases(iVert);
         }
-    }, "compute");
+    });
 
     std::vector<Plato::Scalar> tBases_gold = {
         Plato::Scalar(27)/64, Plato::Scalar(9)/64, Plato::Scalar(3)/64, Plato::Scalar(9)/64,
@@ -338,7 +338,7 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -367,7 +367,7 @@ using MemSpace = typename ExecSpace::memory_space;
         {
             tBases(iVert, aOrdinal) = tElemBases(iVert);
         }
-    }, "compute");
+    });
 
     std::vector<Plato::Scalar> tBases_gold = {
         Plato::Scalar(9)/16, Plato::Scalar(3)/16, Plato::Scalar(1)/16, Plato::Scalar(3)/16
@@ -429,7 +429,7 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
     {
         Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
         Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
@@ -458,7 +458,7 @@ using MemSpace = typename ExecSpace::memory_space;
         {
             tBases(iVert, aOrdinal) = tElemBases(iVert);
         }
-    }, "compute");
+    });
 
     std::vector<Plato::Scalar> tBases_gold = {
       Plato::Scalar(27)/512, Plato::Scalar(-9)/512, Plato::Scalar( 3)/512,
@@ -540,10 +540,10 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
     {
         tMathMap(aOrdinal, tXin, tXout);
-    }, "compute");
+    });
 
     // test results
     //
@@ -610,10 +610,10 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
+    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
     {
         tMathMap(aOrdinal, tXin, tXout);
-    }, "compute");
+    });
 
     // test results
     //
@@ -692,10 +692,10 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
-    }, "compute field");
+    });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -791,10 +791,10 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
-    }, "compute field");
+    });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -891,10 +891,10 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
-    }, "compute field");
+    });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -989,10 +989,10 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
+    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
     {
         tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+1);
-    }, "compute field");
+    });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);

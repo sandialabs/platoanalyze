@@ -56,14 +56,13 @@ void set_dof_value_in_vector_on_boundary_2D(
 
   auto tNumBoundaryNodes = tBoundaryNodes.size();
 
-  Kokkos::parallel_for(
+  Kokkos::parallel_for("fill vector boundary dofs",
       Kokkos::RangePolicy<>(0, tNumBoundaryNodes),
       KOKKOS_LAMBDA(const Plato::OrdinalType &aIndex) {
         Plato::OrdinalType tIndex =
             aDofStride * tBoundaryNodes(aIndex) + aDofToSet;
         aDofValues(tIndex) += aSetValue;
-      },
-      "fill vector boundary dofs");
+      });
 }
 
 void set_dof_value_in_vector_on_boundary_3D(
@@ -73,14 +72,13 @@ void set_dof_value_in_vector_on_boundary_3D(
   auto tLocalOrdinals = aMesh->GetNodeSetNodes(aBoundaryID);
   auto tNumBoundaryNodes = tLocalOrdinals.size();
 
-  Kokkos::parallel_for(
+  Kokkos::parallel_for("fill vector boundary dofs",
       Kokkos::RangePolicy<>(0, tNumBoundaryNodes),
       KOKKOS_LAMBDA(const Plato::OrdinalType &aIndex) {
         Plato::OrdinalType tIndex =
             aDofStride * tLocalOrdinals(aIndex) + aDofToSet;
         aDofValues(tIndex) += aSetValue;
-      },
-      "fill vector boundary dofs");
+      });
 }
 
 Plato::OrdinalVector get_dirichlet_indices_on_boundary_2D(
@@ -91,14 +89,13 @@ Plato::OrdinalVector get_dirichlet_indices_on_boundary_2D(
   auto tNumBoundaryNodes = tBoundaryNodes.size();
   Kokkos::resize(tDofIndices, tNumBoundaryNodes);
 
-  Kokkos::parallel_for(
+  Kokkos::parallel_for("fill dirichlet dof indices on boundary 2-D",
       Kokkos::RangePolicy<>(0, tNumBoundaryNodes),
       KOKKOS_LAMBDA(const Plato::OrdinalType &aIndex) {
         Plato::OrdinalType tIndex =
             aDofStride * tBoundaryNodes[aIndex] + aDofToSet;
         tDofIndices(aIndex) = tIndex;
-      },
-      "fill dirichlet dof indices on boundary 2-D");
+      });
 
   return (tDofIndices);
 }
@@ -111,14 +108,13 @@ Plato::OrdinalVector get_dirichlet_indices_on_boundary_3D(
   auto tNumBoundaryNodes = tBoundaryNodes.size();
   Kokkos::resize(tDofIndices, tNumBoundaryNodes);
 
-  Kokkos::parallel_for(
+  Kokkos::parallel_for("fill dirichlet dof indices on boundary 3-D",
       Kokkos::RangePolicy<>(0, tNumBoundaryNodes),
       KOKKOS_LAMBDA(const Plato::OrdinalType &aIndex) {
         Plato::OrdinalType tIndex =
             aDofStride * tBoundaryNodes[aIndex] + aDofToSet;
         tDofIndices(aIndex) = tIndex;
-      },
-      "fill dirichlet dof indices on boundary 3-D");
+      });
 
   return (tDofIndices);
 }
@@ -130,13 +126,12 @@ void set_dof_value_in_vector(const Plato::ScalarVector &aDofValues,
   auto tVectorSize = aDofValues.extent(0);
   auto tRange = tVectorSize / aDofStride;
 
-  Kokkos::parallel_for(
+  Kokkos::parallel_for("fill specific vector entry globally",
       Kokkos::RangePolicy<>(0, tRange),
       KOKKOS_LAMBDA(const Plato::OrdinalType &aNodeIndex) {
         Plato::OrdinalType tIndex = aDofStride * aNodeIndex + aDofToSet;
         aDofValues(tIndex) += aSetValue;
-      },
-      "fill specific vector entry globally");
+      });
 }
 
 std::vector<std::vector<Plato::Scalar>>

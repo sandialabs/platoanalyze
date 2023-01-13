@@ -10,10 +10,9 @@ endif()
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unit_tests/BamG)
 
-set(BamG_UnitTester_LIBS BamGlib ${Trilinos_LIBRARIES} ${Trilinos_TPL_LIBRARIES} )
+set(BamG_UnitTester_LIBS BamGlib Trilinos::all_selected_libs )
 add_executable(BamG_UnitTester ${BamG_UnitTester_SRCS})
 target_link_libraries(BamG_UnitTester ${BamG_UnitTester_LIBS})
-target_include_directories(BamG_UnitTester PRIVATE ${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
 add_test(NAME BamG_UnitTester COMMAND ${CMAKE_BINARY_DIR}/unit_tests/BamG/unittest/BamG_UnitTester)
 
 if( CMAKE_INSTALL_PREFIX )
