@@ -2,7 +2,6 @@
 #include <map>
 #include <string>
 
-
 // add new element types here
 //
 #define BAMG_COMPUTE(function) {\
