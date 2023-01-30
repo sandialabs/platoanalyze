@@ -235,8 +235,8 @@ MPMD_App::MPMD_App(int aArgc, char **aArgv, MPI_Comm& aLocalComm) :
   // parse app file
   //
   const char* tInputChar = std::getenv("PLATO_APP_FILE");
-  Plato::Parser* parser = new Plato::PugiParser();
-  mInputData = parser->parseFile(tInputChar);
+  Plato::PugiParser parser;
+  mInputData = parser.parseFile(tInputChar);
 
   auto tInputParams = Plato::input_file_parsing(aArgc, aArgv, mMachine);
 
