@@ -646,7 +646,7 @@ findParentElements(
         }
         if( tMaxMin >= cEpsilon )
         {
-            aParentElements(iNodeOrdinal) = tDomainCellMap(iParent);
+            aParentElements(iNodeOrdinal) = iParent;
         }
         else
         {
@@ -658,7 +658,7 @@ findParentElements(
             }
             if( tBoundCheck < 1 )
             {
-                aParentElements(iNodeOrdinal) = tDomainCellMap(iParent);
+                aParentElements(iNodeOrdinal) = iParent;
             }
         }
     });
