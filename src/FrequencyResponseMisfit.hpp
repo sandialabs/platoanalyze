@@ -121,10 +121,10 @@ public:
         assert(tExpStatesWorkSet.size() == aStates.size());
 
         Plato::ComputeFrequencyResponseMisfit<EvaluationType::SpatialDim> tComputeMisfit;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("Objective::FrequencyResponseMisfit", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             tComputeMisfit(aCellOrdinal, tExpStatesWorkSet, aStates, aResults);
-        }, "Objective::FrequencyResponseMisfit");
+        });
     }
 
     /**************************************************************************/
@@ -218,11 +218,11 @@ public:
 
             auto tMyInputExpData = tReader->Read(tMyName, tMyTimeStep);
 
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+            Kokkos::parallel_for("FRF_Objective::readFields", Kokkos::RangePolicy<>(0, tNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
             {
                 Plato::OrdinalType tStride = tNumDofsPerNode * aOrdinal;
                 tMyExpStates(tStride + tMyDof) = tMyInputExpData(aOrdinal);
-            }, "FRF_Objective::readFields");
+            });
         }
     }
 

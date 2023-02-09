@@ -1,6 +1,6 @@
 #include <vector>
 #include <map>
-
+#include <string>
 
 // add new element types here
 //

@@ -35,7 +35,6 @@
 #include "KokkosBatched_Trsm_Serial_Impl.hpp"
 
 #include <Kokkos_Concepts.hpp>
-#include "KokkosKernels_SparseUtils.hpp"
 #include "KokkosSparse_spgemm.hpp"
 #include "KokkosSparse_spadd.hpp"
 #include "KokkosSparse_CrsMatrix.hpp"
@@ -426,32 +425,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ToFromFull)
   TEST_ASSERT(pth::is_equivalent(tMatrix->rowMap(),
                             tMatrix->columnIndices(), tMatrix->entries(),
                             tSparseMatrix->columnIndices(), tSparseMatrix->entries()));
-}
-
-/******************************************************************************/
-/*! 
-  \brief Create a square matrix, A, then compute A.A and compare.
-*/
-/******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2)
-{
-  auto tMatrixA = createSquareMatrix();
-  auto tMatrixB = createSquareMatrix();
-
-  auto tNumRows = tMatrixA->numRows();
-  auto tNumCols = tMatrixB->numCols();
-  auto tNumRowsPerBlock = tMatrixA->numRowsPerBlock();
-  auto tNumColsPerBlock = tMatrixB->numColsPerBlock();
-  auto tMatrixAB         = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock) );
-  auto tSlowDumbMatrixAB = Teuchos::rcp( new Plato::CrsMatrixType( tNumRows, tNumCols, tNumRowsPerBlock, tNumColsPerBlock) );
-
-  Plato::MatrixMatrixMultiply              ( tMatrixA, tMatrixB, tMatrixAB);
-  pth::slow_dumb_matrix_matrix_multiply ( tMatrixA, tMatrixB, tSlowDumbMatrixAB);
-
-  TEST_ASSERT(pth::is_same(tMatrixAB->rowMap(), tSlowDumbMatrixAB->rowMap()));
-  TEST_ASSERT(pth::is_equivalent(tMatrixAB->rowMap(),
-                            tMatrixAB->columnIndices(), tMatrixAB->entries(),
-                            tSlowDumbMatrixAB->columnIndices(), tSlowDumbMatrixAB->entries()));
 }
 
 /******************************************************************************/
@@ -1118,22 +1091,22 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, HyperbolicTangentProjection)
     Plato::ScalarVectorT<Plato::Scalar> tOutputVal("OutputVal", tNumCells);
     Plato::ScalarVectorT<Plato::Scalar> tOutputGrad("OutputGrad", tNumNodesPerCell);
     Plato::ScalarMultiVectorT<FadType> tControl("Control", tNumCells, tNumNodesPerCell);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("Set Controls", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tControl(aCellOrdinal, 0) = FadType(tNumNodesPerCell, 0, 1.0);
         tControl(aCellOrdinal, 1) = FadType(tNumNodesPerCell, 1, 1.0);
-    }, "Set Controls");
+    });
 
     // SET EVALUATION TYPES FOR UNIT TEST
     Plato::HyperbolicTangentProjection tProjection;
     Plato::ApplyProjection<Plato::HyperbolicTangentProjection> tApplyProjection(tProjection);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("UnitTest: HyperbolicTangentProjection_GradZ", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         FadType tValue = tApplyProjection(aCellOrdinal, tControl);
         tOutputVal(aCellOrdinal) = tValue.val();
         tOutputGrad(0) = tValue.dx(0);
         tOutputGrad(1) = tValue.dx(1);
-    }, "UnitTest: HyperbolicTangentProjection_GradZ");
+    });
 
     // TEST OUTPUT
     auto tHostVal = Kokkos::create_mirror(tOutputVal);
@@ -1153,7 +1126,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ConditionalExpression)
 {
     const Plato::OrdinalType tRange = 1;
     Plato::ScalarVector tOuput("Output", 2 /* number of outputs */);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tRange), KOKKOS_LAMBDA(Plato::OrdinalType tOrdinal)
+    Kokkos::parallel_for("Test inline conditional_expression function", Kokkos::RangePolicy<>(0, tRange), KOKKOS_LAMBDA(Plato::OrdinalType tOrdinal)
     {
         Plato::Scalar tConditionalValOne = 5;
         Plato::Scalar tConditionalValTwo = 4;
@@ -1163,7 +1136,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_ConditionalExpression)
 
         tConditionalValOne = 3;
         tOuput(tOrdinal + 1) = Plato::conditional_expression(tConditionalValOne, tConditionalValTwo, tConsequentValOne, tConsequentValTwo);
-    }, "Test inline conditional_expression function");
+    });
 
     auto tHostOuput = Kokkos::create_mirror(tOuput);
     Kokkos::deep_copy(tHostOuput, tOuput);
@@ -1493,7 +1466,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixTimesVectorPlusV
   \brief Check multiplication of block with non-block matrices.
 */
 /******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_3)
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_2)
 {
   auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(4, 4, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapA = { 0, 1, 2, 3, 4 };
@@ -1558,6 +1531,94 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_3
                             tMatrixBAbBlock->columnIndices(), tMatrixBAbBlock->entries(),
                             tGoldMatrixBlock->columnIndices(), tGoldMatrixBlock->entries()));
 
+}
+
+/******************************************************************************/
+/*! 
+  \brief Check multiplication row and column vectors expressed as matrices
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_InnerProduct)
+{
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapA = { 0, 1, 2, 3, 4 };
+  const std::vector<Plato::OrdinalType> tColMapA = { 0, 0, 0, 0 };
+  const std::vector<Plato::Scalar>      tValuesA = { 2, 1, 3, 4 };
+  pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
+
+  auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapB = { 0, 4 };
+  const std::vector<Plato::OrdinalType> tColMapB = { 0, 1, 2, 3 };
+  const std::vector<Plato::Scalar>      tValuesB = { 1, 3, 2, 0 };
+  pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+  auto tMatrixBA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+
+  Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
+
+  const Plato::Scalar tExpected = std::inner_product(tValuesA.cbegin(), tValuesA.cend(), tValuesB.cbegin(), 0.0);
+
+  auto tBAEntriesHost = Kokkos::create_mirror(tMatrixBA->entries());
+  Kokkos::deep_copy(tBAEntriesHost, tMatrixBA->entries());
+  TEST_EQUALITY(tBAEntriesHost[0], tExpected);
+}
+
+/******************************************************************************/
+/*! 
+  \brief Check multiplication of matrices with some dimension 1
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_Dim1)
+{
+  constexpr Plato::Scalar tScalarValue = 2.0;
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+  const std::vector<Plato::OrdinalType> tRowMapA = { 0, 1 };
+  const std::vector<Plato::OrdinalType> tColMapA = { 0, };
+  const std::vector<Plato::Scalar>      tValuesA = { tScalarValue };
+  pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
+
+  // 1x1 * 1x1
+  {
+    auto tMatrixAA = Teuchos::rcp( new Plato::CrsMatrixType(1, 1, 1, 1) );
+    Plato::MatrixMatrixMultiply( tMatrixA, tMatrixA, tMatrixAA);
+    auto tAAEntriesHost = Kokkos::create_mirror(tMatrixAA->entries());
+    Kokkos::deep_copy(tAAEntriesHost, tMatrixAA->entries());
+    TEST_EQUALITY(tAAEntriesHost[0], tValuesA.front() * tValuesA.front() );
+  }
+  // 1x1 * 1x4
+  {
+    auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+    const std::vector<Plato::OrdinalType> tRowMapB = { 0, 4 };
+    const std::vector<Plato::OrdinalType> tColMapB = { 0, 1, 2, 3 };
+    const std::vector<Plato::Scalar>      tValuesB = { 1, 3, 2, 0 };
+    pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+    auto tMatrixAB = Teuchos::rcp( new Plato::CrsMatrixType(1, 4, 1, 1) );
+    Plato::MatrixMatrixMultiply( tMatrixA, tMatrixB, tMatrixAB);
+    auto tABEntriesHost = Kokkos::create_mirror(tMatrixAB->entries());
+    Kokkos::deep_copy(tABEntriesHost, tMatrixAB->entries());
+    for(int i = 0; i < tValuesB.size(); ++i)
+    {
+      TEST_EQUALITY(tABEntriesHost[i], tScalarValue * tValuesB[i]);
+    }
+  }
+  // 4x1 * 1x1
+  {
+    auto tMatrixB = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+    const std::vector<Plato::OrdinalType> tRowMapB = { 0, 1, 2, 3, 4 };
+    const std::vector<Plato::OrdinalType> tColMapB = { 0, 0, 0, 0 };
+    const std::vector<Plato::Scalar>      tValuesB = { 2, 1, 3, 4 };
+    pth::set_matrix_data(tMatrixB, tRowMapB, tColMapB, tValuesB);
+
+    auto tMatrixBA = Teuchos::rcp( new Plato::CrsMatrixType(4, 1, 1, 1) );
+    Plato::MatrixMatrixMultiply( tMatrixB, tMatrixA, tMatrixBA);
+    auto tBAEntriesHost = Kokkos::create_mirror(tMatrixBA->entries());
+    Kokkos::deep_copy(tBAEntriesHost, tMatrixBA->entries());
+    for(int i = 0; i < tValuesB.size(); ++i)
+    {
+      TEST_EQUALITY(tBAEntriesHost[i], tScalarValue * tValuesB[i]);
+    }
+  }
 }
 
 /******************************************************************************/

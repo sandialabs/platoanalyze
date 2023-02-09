@@ -193,7 +193,7 @@ class HelmholtzResidual :
       auto tCubaturePoints  = ElementType::Face::getCubPoints();
       auto tNumPoints = tCubatureWeights.size();
 
-      Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+      Kokkos::parallel_for("add surface mass to left-hand-side", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
       KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal, const Plato::OrdinalType & aPointOrdinal)
       {
           auto tElementOrdinal = tElementOrds(aSideOrdinal);
@@ -228,7 +228,7 @@ class HelmholtzResidual :
             Kokkos::atomic_add(&aResult(tElementOrdinal, tLocalCellNode), tSurfaceLengthScale * tLengthScale * tFilteredDensity *
               tBasisValues(tNode) * tSurfaceArea);
           }
-      }, "add surface mass to left-hand-side");
+      });
     }
 };
 // class HelmholtzResidual

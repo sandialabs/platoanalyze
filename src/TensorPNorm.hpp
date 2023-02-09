@@ -346,12 +346,11 @@ public:
     {
         auto scale = pow(resultScalar, (1.0 - mExponent) / mExponent) / mExponent;
         auto numEntries = resultVector.size();
-        Kokkos::parallel_for(Kokkos::RangePolicy < Plato::OrdinalType > (0, numEntries),
+        Kokkos::parallel_for("scale vector", Kokkos::RangePolicy < Plato::OrdinalType > (0, numEntries),
                              KOKKOS_LAMBDA(Plato::OrdinalType entryOrdinal)
                              {
                                  resultVector(entryOrdinal) *= scale;
-                             },
-                             "scale vector");
+                             });
     }
 
     virtual void postEvaluate(Plato::Scalar& resultValue)
@@ -384,14 +383,14 @@ public:
         auto& tTensorPNorm = mTensorPNorm;
         Plato::OrdinalType numCells = result.extent(0);
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
+        Kokkos::parallel_for("Compute PNorm", Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
         KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
         {
             // compute tensor p-norm of tensor
             //
             tTensorPNorm(cellOrdinal, result, tensor, exponent, cellVolume);
 
-        }, "Compute PNorm");
+        });
     }
 };
 // class TensorPNorm
@@ -418,15 +417,14 @@ public:
         Plato::OrdinalType numCells = result.extent(0);
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
         auto barlatNorm = mBarlatNorm;
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
+        Kokkos::parallel_for("Compute Barlat Norm", Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
                              KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
                              {
                                  // compute tensor p-norm of tensor
                                  //
                                  barlatNorm(cellOrdinal, result, tensor, exponent, cellVolume);
 
-                             },
-                             "Compute Barlat Norm");
+                             });
     }
 };
 // class BarlatNorm
@@ -453,15 +451,14 @@ public:
         Plato::OrdinalType numCells = result.extent(0);
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
         auto weightedNorm = mWeightedNorm;
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
+        Kokkos::parallel_for("Compute Weighted Norm", Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
                              KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
                              {
                                  // compute tensor p-norm of tensor
                                  //
                                  weightedNorm(cellOrdinal, result, tensor, exponent, cellVolume);
 
-                             },
-                             "Compute Weighted Norm");
+                             });
     }
 };
 // class WeightedNorm
@@ -484,15 +481,14 @@ public:
         Plato::OrdinalType numCells = result.extent(0);
         auto exponent = TensorNormBase<VoigtLength, EvalT>::mExponent;
         auto vonMisesPNorm = mVonMisesPNorm;
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
+        Kokkos::parallel_for("Compute Von Mises PNorm", Kokkos::RangePolicy<Plato::OrdinalType>(0, numCells),
                              KOKKOS_LAMBDA(Plato::OrdinalType cellOrdinal)
                              {
                                  // compute von mises p-norm of tensor
                                  //
                                  vonMisesPNorm(cellOrdinal, result, tensor, exponent, cellVolume);
 
-                             },
-                             "Compute Von Mises PNorm");
+                             });
     }
 
 private:

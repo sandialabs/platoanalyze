@@ -259,12 +259,12 @@ class NewmarkIntegratorUForm : public NewmarkIntegrator
 
         auto tGamma = mGamma;
         auto tBeta = mBeta;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("Velocity residual value", Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             Plato::Scalar tPredV = aV_prev(aOrdinal) + (1.0-tGamma)*dt*aA_prev(aOrdinal);
             Plato::Scalar tPredU = aU_prev(aOrdinal) + dt*aV_prev(aOrdinal) + dt*dt/2.0*(1.0-2.0*tBeta)* aA_prev(aOrdinal);
             tReturnValue(aOrdinal) = aV(aOrdinal) - tPredV - tGamma/(tBeta*dt)*(aU(aOrdinal) - tPredU);
-        }, "Velocity residual value");
+        });
 
         return tReturnValue;
     }
@@ -282,11 +282,11 @@ class NewmarkIntegratorUForm : public NewmarkIntegrator
         Plato::ScalarVector tReturnValue("velocity residual", tNumData);
 
         auto tBeta = mBeta;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("Velocity residual value", Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             Plato::Scalar tPredU = aU_prev(aOrdinal) + dt*aV_prev(aOrdinal) + dt*dt/2.0*(1.0-2.0*tBeta)* aA_prev(aOrdinal);
             tReturnValue(aOrdinal) = aA(aOrdinal) - 1.0/(tBeta*dt*dt)*(aU(aOrdinal) - tPredU);
-        }, "Velocity residual value");
+        });
 
         return tReturnValue;
     }
@@ -346,12 +346,12 @@ class NewmarkIntegratorAForm : public NewmarkIntegrator
 
         auto tGamma = mGamma;
         auto tBeta = mBeta;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("Velocity residual value", Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             Plato::Scalar tPredV = aV_prev(aOrdinal) + (1.0-tGamma)*dt*aA_prev(aOrdinal);
             Plato::Scalar tPredU = aU_prev(aOrdinal) + dt*aV_prev(aOrdinal) + dt*dt/2.0*(1.0-2.0*tBeta)* aA_prev(aOrdinal);
             tReturnValue(aOrdinal) = aV(aOrdinal) - tPredV - tGamma*dt*aA(aOrdinal);
-        }, "Velocity residual value");
+        });
 
         return tReturnValue;
     }
@@ -369,11 +369,11 @@ class NewmarkIntegratorAForm : public NewmarkIntegrator
         Plato::ScalarVector tReturnValue("velocity residual", tNumData);
 
         auto tBeta = mBeta;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("Displacement residual value", Kokkos::RangePolicy<>(0, tNumData), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             Plato::Scalar tPredU = aU_prev(aOrdinal) + dt*aV_prev(aOrdinal) + dt*dt/2.0*(1.0-2.0*tBeta)* aA_prev(aOrdinal);
             tReturnValue(aOrdinal) = aU(aOrdinal) - tPredU - tBeta*dt*dt*aA(aOrdinal);
-        }, "Displacement residual value");
+        });
 
         return tReturnValue;
     }

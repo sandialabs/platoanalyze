@@ -1772,10 +1772,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateScalarFieldGradient)
     Kokkos::deep_copy(tPressure, tHostPressure);
 
     // call device function
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_scalar_field_gradient", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::calculate_scalar_field_gradient<tNumNodesPerCell,tSpaceDims>(aCellOrdinal, tGradient, tPressure, tResult);
-    }, "unit test calculate_scalar_field_gradient");
+    });
 
     // test values
     auto tTol = 1e-4;
@@ -1818,11 +1818,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, IntegrateDivergenceOperator)
     Plato::blas1::fill(0.33333333333333333333333, tBasisFunctions);
 
     // call device function
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test integrate_divergence_operator", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::integrate_divergence_operator<tNumNodesPerCell,tSpaceDims>
             (aCellOrdinal, tBasisFunctions, tGradient, tCellVolume, tPrevVel, tResult);
-    }, "unit test integrate_divergence_operator");
+    });
 
     // test values
     auto tTol = 1e-4;
@@ -1857,11 +1857,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PenalizeHeatSourceConstant)
     Kokkos::deep_copy(tControl, tHostControl);
 
     // call device function
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test penalize_heat_source_constant", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tResult(aCellOrdinal) =
             Plato::Fluids::penalize_heat_source_constant<tNumNodesPerCell>(aCellOrdinal, tHeatSourceConst, tPenaltyExp, tControl);
-    }, "unit test penalize_heat_source_constant");
+    });
 
     auto tTol = 1e-4;
     std::vector<Plato::Scalar> tGold = {0.5,4.0,0.0};
@@ -1891,11 +1891,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PenalizedEffectiveThermalProperty)
     constexpr auto tEffectiveThermalProperty  = 4.0;
 
     // call device function
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test penalized_effective_thermal_property", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tResult(aCellOrdinal) =
             Plato::Fluids::penalized_effective_thermal_property<tNumNodesPerCell>(aCellOrdinal, tEffectiveThermalProperty, tPenaltyExp, tControl);
-    }, "unit test penalized_effective_thermal_property");
+    });
 
     auto tTol = 1e-4;
     std::vector<Plato::Scalar> tGold = {1.375,4.0};
@@ -1932,10 +1932,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateFlux)
     Plato::ScalarMultiVector tFlux("flux", tNumCells, tSpaceDims);
 
     // call device function
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_flux", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::calculate_flux<tNumNodesPerCell,tSpaceDims>(aCellOrdinal, tGradient, tPrevTemp, tFlux);
-    }, "unit test calculate_flux");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{11.0,-9.0}, {-11.0,9.0}};
@@ -1978,11 +1978,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateFluxDivergence)
 
     // call device function
     Plato::workset_config_scalar<tSpaceDims, tNumNodesPerCell>(tMesh->NumElements(), tNodeCoordinate, tConfigWS);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_flux_divergence", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         Plato::Fluids::calculate_flux_divergence<tNumNodesPerCell,tSpaceDims>(aCellOrdinal, tGradient, tCellVolume, tFlux, tResult, 1.0);
-    }, "unit test calculate_flux_divergence");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{-1.0,-1.0,2.0}, {-4.0,3.0,1.0}};
@@ -2017,10 +2017,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, IntegrateScalarField)
     // call device kernel
     Plato::LinearTetCubRuleDegreeOne<tSpaceDims> tCubRule;
     auto tBasisFunctions = tCubRule.getBasisFunctions();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test integrate_scalar_field", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::integrate_scalar_field<tNumNodesPerCell>(aCellOrdinal, tBasisFunctions, tCellVolume, tSource, tResult, 1.0);
-    }, "unit test integrate_scalar_field");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold =
@@ -2069,11 +2069,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateConvectiveForces)
     Plato::NodeCoordinate<tSpaceDims> tNodeCoordinate(tMesh);
 
     Plato::workset_config_scalar<tSpaceDims, tNumNodesPerCell>(tMesh->NumElements(), tNodeCoordinate, tConfigWS);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_convective_forces", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         Plato::Fluids::calculate_convective_forces<tNumNodesPerCell, tSpaceDims>(aCellOrdinal, tGradient, tPrevVelGP, tPrevTemp, tForces);
-    }, "unit test calculate_convective_forces");
+    });
 
     auto tTol = 1e-4;
     std::vector<Plato::Scalar> tGold = {3.0,5.0};
@@ -2210,12 +2210,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculatePressureGradient)
     // call device kernel
     auto tTheta = 0.2;
     Plato::workset_config_scalar<tSpaceDims, tNumNodesPerCell>(tMesh->NumElements(), tNodeCoordinate, tConfigWS);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_pressure_gradient", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         Plato::Fluids::calculate_pressure_gradient<tNumNodesPerCell, tSpaceDims>
             (aCellOrdinal, tTheta, tGradient, tCurPress, tPrevPress, tPressGrad);
-    }, "unit test calculate_pressure_gradient");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{9.0,-7.0}, {7.0,2.0}};
@@ -2246,10 +2246,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateBrinkmanForces)
     Kokkos::deep_copy(tPrevVelGP, tHostPrevVelGP);
 
     // call device kernel
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_brinkman_forces", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::calculate_brinkman_forces<tSpaceDims>(aCellOrdinal, tBrinkmanCoeff, tPrevVelGP, tResult);
-    }, "unit test calculate_brinkman_forces");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{0.5,1.0},{1.5,2.0}};
@@ -2302,13 +2302,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, IntegrateStabilizingForces)
     auto tCubWeight = tCubRule.getCubWeight();
     auto tBasisFunctions = tCubRule.getBasisFunctions();
     Plato::workset_config_scalar<tSpaceDims, tNumNodesPerCell>(tMesh->NumElements(), tNodeCoordinate, tConfigWS);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test integrate_stabilizing_vector_force", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tCellVolume(aCellOrdinal) *= tCubWeight;
         Plato::Fluids::integrate_stabilizing_vector_force<tNumNodesPerCell, tSpaceDims>
             (aCellOrdinal, tCellVolume, tGradient, tPrevVelGP, tForce, tResult);
-    }, "unit test integrate_stabilizing_vector_force");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold =
@@ -2347,11 +2347,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Integrate)
     Plato::LinearTetCubRuleDegreeOne<tSpaceDims> tCubRule;
     auto tCubWeight = tCubRule.getCubWeight();
     auto tBasisFunctions = tCubRule.getBasisFunctions();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test integrate_vector_field", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::integrate_vector_field<tNumNodesPerCell, tSpaceDims>
             (aCellOrdinal, tBasisFunctions, tCellVolume, tInternalForces, tResult);
-    }, "unit test integrate_vector_field");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold =
@@ -2402,7 +2402,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateAdvectedInternalForces)
     auto tCubWeight = tCubRule.getCubWeight();
     auto tBasisFunctions = tCubRule.getBasisFunctions();
     Plato::workset_config_scalar<tSpaceDims, tNumNodesPerCell>(tMesh->NumElements(), tNodeCoordinate, tConfigWS);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_advected_momentum_forces", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tCellVolume(aCellOrdinal) *= tCubWeight;
@@ -2410,7 +2410,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateAdvectedInternalForces)
         tIntrplVectorField(aCellOrdinal, tBasisFunctions, tPrevVelWS, tPrevVelGP);
         Plato::Fluids::calculate_advected_momentum_forces<tNumNodesPerCell, tSpaceDims>
             (aCellOrdinal, tGradient, tPrevVelWS, tPrevVelGP, tInternalForces);
-    }, "unit test calculate_advected_momentum_forces");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{14.0,14.0},{22.0,22.0}};
@@ -2444,11 +2444,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CalculateNaturalConvectiveForces)
     Kokkos::deep_copy(tPenalizedGrNum, tHostPenalizedGrNum);
 
     // call device kernel
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test calculate_natural_convective_forces", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::Fluids::calculate_natural_convective_forces<tSpaceDims>
             (aCellOrdinal, tPenalizedPrNumTimesPrNum, tPenalizedGrNum, tPrevTempGP, tResultGP);
-    }, "unit test calculate_natural_convective_forces");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{0.0,0.25},{0.0,0.25}};
@@ -2496,7 +2496,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, IntegrateViscousForces)
     // call device kernel
     auto tCubWeight = tCubRule.getCubWeight();
     Plato::workset_config_scalar<tSpaceDims, tNumNodesPerCell>(tMesh->NumElements(), tNodeCoordinate, tConfigWS);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("unit test integrate_viscous_forces", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
         tCellVolume(aCellOrdinal) *= tCubWeight;
@@ -2505,7 +2505,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, IntegrateViscousForces)
             (aCellOrdinal, tPrevVelWS, tGradient, tStrainRate);
         Plato::Fluids::integrate_viscous_forces<tNumNodesPerCell, tSpaceDims>
             (aCellOrdinal, tPenalizedPrNum, tCellVolume, tGradient, tStrainRate, tResultWS);
-    }, "unit test integrate_viscous_forces");
+    });
 
     auto tTol = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = {{-1.0,-1.0,0.0,0.0,1.0,1.0},{-0.5,-2.0,-1.0,0.5,1.5,1.5}};
@@ -2532,11 +2532,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BLAS2_update)
     Plato::ScalarMultiVector tVec2("vector two", tNumCells, tNumDofsPerCell);
     Plato::blas2::fill(2.0, tVec2);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("device_blas2_update", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tConstant = static_cast<Plato::Scalar>(aCellOrdinal);
         Plato::blas2::update<tNumDofsPerCell>(aCellOrdinal, 2.0, tVec1, 3.0 + tConstant, tVec2);
-    },"device_blas2_update");
+    });
 
     auto tTol = 1e-4;
     auto tHostVec2 = Kokkos::create_mirror(tVec2);
@@ -2561,10 +2561,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, EntityFaceOrdinals)
     auto tMyNodeSetOrdinals = tMesh->GetNodeSetNodes("x+");
     auto tLength = tMyNodeSetOrdinals.size();
     Plato::OrdinalVector tNodeSetOrdinals("node set ordinals", tLength);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+    Kokkos::parallel_for("copy", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
     {
         tNodeSetOrdinals(aOrdinal) = tMyNodeSetOrdinals(aOrdinal);
-    }, "copy");
+    });
     auto tHostNodeSetOrdinals = Kokkos::create_mirror(tNodeSetOrdinals);
     Kokkos::deep_copy(tHostNodeSetOrdinals, tNodeSetOrdinals);
     TEST_EQUALITY(2, tHostNodeSetOrdinals(0));
@@ -2715,11 +2715,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, StrainRate)
     tHostVelocity(0, 5) = 0.43; tHostVelocity(1, 5) = 0.11;
     Kokkos::deep_copy(tVelocity, tHostVelocity);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("strain_rate unit test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfig, tVolume);
         Plato::Fluids::strain_rate<tNumNodesPerCell, tNumSpaceDims>(aCellOrdinal, tVelocity, tGradient, tStrainRate);
-    }, "strain_rate unit test");
+    });
 
     auto tTol = 1e-6;
     auto tHostStrainRate = Kokkos::create_mirror(tStrainRate);
@@ -2744,10 +2744,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BLAS2_DeviceScale)
     Plato::blas2::fill(1.0, tInput);
     Plato::ScalarMultiVector tOutput("output", tNumCells, tNumSpaceDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("device blas2::scale", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::blas2::scale<tNumSpaceDims>(aCellOrdinal, 4.0, tInput, tOutput);
-    }, "device blas2::scale");
+    });
 
     auto tTol = 1e-6;
     auto tHostOutput = Kokkos::create_mirror(tOutput);
@@ -2768,10 +2768,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BLAS1_DeviceScale_Version2)
     Plato::ScalarMultiVector tInput("input", tNumCells, tNumSpaceDims);
     Plato::blas2::fill(1.0, tInput);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("device blas2::scale", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::blas2::scale<tNumSpaceDims>(aCellOrdinal, 4.0, tInput);
-    }, "device blas2::scale");
+    });
 
     auto tTol = 1e-6;
     auto tHostInput = Kokkos::create_mirror(tInput);
@@ -2795,10 +2795,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BLAS1_Dot)
     Plato::blas2::fill(4.0, tInputB);
     Plato::ScalarVector tOutput("output", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("device blas2::dot", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::blas2::dot<tNumSpaceDims>(aCellOrdinal, tInputA, tInputB, tOutput);
-    }, "device blas2::dot");
+    });
 
     auto tTol = 1e-6;
     auto tHostOutput = Kokkos::create_mirror(tOutput);
@@ -2818,10 +2818,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BLAS3_DeviceScale)
     Plato::blas3::fill<tNumSpaceDims, tNumSpaceDims>(tNumCells, 1.0, tInput);
     Plato::ScalarArray3D tOutput("output", tNumCells, tNumSpaceDims, tNumSpaceDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("device blas3::scale", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::blas3::scale<tNumSpaceDims, tNumSpaceDims>(aCellOrdinal, 4.0, tInput, tOutput);
-    }, "device blas3::scale");
+    });
 
     auto tTol = 1e-6;
     auto tHostOutput = Kokkos::create_mirror(tOutput);
@@ -2848,10 +2848,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BLAS3_Dot)
     Plato::blas3::fill<tNumSpaceDims, tNumSpaceDims>(tNumCells, 4.0, tInputB);
     Plato::ScalarVector tOutput("output", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("device blas3::dot", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         Plato::blas3::dot<tNumSpaceDims, tNumSpaceDims>(aCellOrdinal, tInputA, tInputB, tOutput);
-    }, "device blas3::dot");
+    });
 
     auto tTol = 1e-6;
     auto tHostOutput = Kokkos::create_mirror(tOutput);
@@ -2872,11 +2872,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, BrinkmanPenalization)
     Plato::ScalarMultiVector tControlWS("control", tNumCells, tNumNodesPerCell);
     Plato::blas2::fill(0.5, tControlWS);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("brinkman_penalization unit test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tOutput(aCellOrdinal) =
             Plato::Fluids::brinkman_penalization<tNumNodesPerCell>(aCellOrdinal, tPhysicalNum, tConvexityParam, tControlWS);
-    }, "brinkman_penalization unit test");
+    });
 
     auto tTol = 1e-6;
     auto tHostOutput = Kokkos::create_mirror(tOutput);
@@ -3660,7 +3660,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, LocalOrdinalMaps)
     Plato::ScalarMultiVector tScalarFieldOrdinals("scalar field ordinals", tNumCells, PhysicsT::mNumNodesPerCell);
     Plato::ScalarArray3D tVectorFieldOrdinals("vector field ordinals", tNumCells, PhysicsT::mNumNodesPerCell, PhysicsT::mNumMomentumDofsPerNode);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNode = 0; tNode < PhysicsT::mNumNodesPerCell; tNode++)
         {
@@ -3680,7 +3680,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, LocalOrdinalMaps)
             }
         }
 
-    },"test");
+    });
 
     // TEST 3D ARRAYS
     Plato::ScalarArray3D tGoldCoords("coordinates", tNumCells, PhysicsT::mNumNodesPerCell, tNumSpaceDim);

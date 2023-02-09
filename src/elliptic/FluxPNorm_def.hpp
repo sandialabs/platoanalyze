@@ -112,10 +112,10 @@ namespace Elliptic
     {
       auto scale = pow(resultScalar,(1.0-mExponent)/mExponent)/mExponent;
       auto numEntries = resultVector.size();
-      Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,numEntries), KOKKOS_LAMBDA(int entryOrdinal)
+      Kokkos::parallel_for("scale vector", Kokkos::RangePolicy<int>(0,numEntries), KOKKOS_LAMBDA(int entryOrdinal)
       {
         resultVector(entryOrdinal) *= scale;
-      },"scale vector");
+      });
     }
 
     /**************************************************************************/

@@ -139,7 +139,7 @@ TEUCHOS_UNIT_TEST( Hex27, BasisFunctions )
     };
 
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         for(ordType I=0; I<Plato::Hex27::mNumNodesPerCell; I++)
         {
@@ -149,7 +149,7 @@ TEUCHOS_UNIT_TEST( Hex27, BasisFunctions )
                 tValuesView(I,i) = tValues(i);
             }
         }
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -176,7 +176,7 @@ TEUCHOS_UNIT_TEST( Hex27, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Hex27::mNumNodesPerCell, Plato::Hex27::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Hex27::mNumSpatialDims> tPoint;
 
@@ -189,7 +189,7 @@ TEUCHOS_UNIT_TEST( Hex27, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -304,7 +304,7 @@ TEUCHOS_UNIT_TEST( Hex8, BasisFunctions )
 { 
     Plato::ScalarMultiVector tValuesView("basis values", 8, Plato::Hex8::mNumNodesPerCell);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Hex8::mNumSpatialDims> tPoint;
 
@@ -340,7 +340,7 @@ TEUCHOS_UNIT_TEST( Hex8, BasisFunctions )
         tValues = Plato::Hex8::basisValues(tPoint);
         for(ordType i=0; i<Plato::Hex8::mNumNodesPerCell; i++) { tValuesView(7,i) = tValues(i); }
 
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -376,7 +376,7 @@ TEUCHOS_UNIT_TEST( Hex8, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Hex8::mNumNodesPerCell, Plato::Hex8::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Hex8::mNumSpatialDims> tPoint;
 
@@ -389,7 +389,7 @@ TEUCHOS_UNIT_TEST( Hex8, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -429,7 +429,7 @@ TEUCHOS_UNIT_TEST( Hex8, JacobianParentCoords )
     Plato::ScalarMultiVector tJacobianView("jacobian", Plato::Hex8::mNumSpatialDims, Plato::Hex8::mNumSpatialDims);
     Plato::ScalarArray3D tConfig("node locations", 1, Plato::Hex8::mNumNodesPerCell, Plato::Hex8::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("cell jacobian", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         tConfig(0,0,0) = -1.0; tConfig(0,0,1) = -1.0; tConfig(0,0,2) = -1.0;
         tConfig(0,1,0) =  1.0; tConfig(0,1,1) = -1.0; tConfig(0,1,2) = -1.0;
@@ -451,7 +451,7 @@ TEUCHOS_UNIT_TEST( Hex8, JacobianParentCoords )
                 tJacobianView(i,j) = tJacobian(i,j);
             }
         }
-    }, "cell jacobian");
+    });
 
     auto tJacobianHost = Kokkos::create_mirror_view( tJacobianView );
     Kokkos::deep_copy( tJacobianHost, tJacobianView );
@@ -531,7 +531,7 @@ TEUCHOS_UNIT_TEST( Quad9, BasisFunctions )
     };
 
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         for(ordType I=0; I<Plato::Quad9::mNumNodesPerCell; I++)
         {
@@ -541,7 +541,7 @@ TEUCHOS_UNIT_TEST( Quad9, BasisFunctions )
                 tValuesView(I,i) = tValues(i);
             }
         }
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -568,7 +568,7 @@ TEUCHOS_UNIT_TEST( Quad9, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Quad9::mNumNodesPerCell, Plato::Quad9::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Quad9::mNumSpatialDims> tPoint;
 
@@ -581,7 +581,7 @@ TEUCHOS_UNIT_TEST( Quad9, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -666,7 +666,7 @@ TEUCHOS_UNIT_TEST( Quad4, BasisFunctions )
     };
 
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         for(ordType I=0; I<Plato::Quad4::mNumNodesPerCell; I++)
         {
@@ -676,7 +676,7 @@ TEUCHOS_UNIT_TEST( Quad4, BasisFunctions )
                 tValuesView(I,i) = tValues(i);
             }
         }
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -703,7 +703,7 @@ TEUCHOS_UNIT_TEST( Quad4, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Quad4::mNumNodesPerCell, Plato::Quad4::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Quad4::mNumSpatialDims> tPoint;
 
@@ -716,7 +716,7 @@ TEUCHOS_UNIT_TEST( Quad4, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -791,7 +791,7 @@ TEUCHOS_UNIT_TEST( Bar2, BasisFunctions )
     Plato::Matrix<Plato::Bar2::mNumNodesPerCell, Plato::Bar2::mNumSpatialDims> tPoints = { -1.0, 1.0 };
 
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         for(ordType I=0; I<Plato::Bar2::mNumNodesPerCell; I++)
         {
@@ -801,7 +801,7 @@ TEUCHOS_UNIT_TEST( Bar2, BasisFunctions )
                 tValuesView(I,i) = tValues(i);
             }
         }
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -828,7 +828,7 @@ TEUCHOS_UNIT_TEST( Bar2, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Bar2::mNumNodesPerCell, Plato::Bar2::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Bar2::mNumSpatialDims> tPoint;
 
@@ -841,7 +841,7 @@ TEUCHOS_UNIT_TEST( Bar2, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -974,7 +974,7 @@ TEUCHOS_UNIT_TEST( Tri3, BasisFunctions )
     };
 
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         for(ordType I=0; I<Plato::Tri3::mNumNodesPerCell; I++)
         {
@@ -984,7 +984,7 @@ TEUCHOS_UNIT_TEST( Tri3, BasisFunctions )
                 tValuesView(I,i) = tValues(i);
             }
         }
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -1011,7 +1011,7 @@ TEUCHOS_UNIT_TEST( Tri3, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Tri3::mNumNodesPerCell, Plato::Tri3::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Tri3::mNumSpatialDims> tPoint;
 
@@ -1024,7 +1024,7 @@ TEUCHOS_UNIT_TEST( Tri3, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -1106,7 +1106,7 @@ TEUCHOS_UNIT_TEST( Tet10, BasisFunctions )
     };
 
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         for(ordType I=0; I<Plato::Tet10::mNumNodesPerCell; I++)
         {
@@ -1116,7 +1116,7 @@ TEUCHOS_UNIT_TEST( Tet10, BasisFunctions )
                 tValuesView(I,i) = tValues(i);
             }
         }
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -1145,7 +1145,7 @@ TEUCHOS_UNIT_TEST( Tri6, BasisFunctions )
 { 
     Plato::ScalarMultiVector tValuesView("basis values", 7, Plato::Tri6::mNumNodesPerCell);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis functions", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Tri6::mNumSpatialDims> tPoint;
 
@@ -1177,7 +1177,7 @@ TEUCHOS_UNIT_TEST( Tri6, BasisFunctions )
         tValues = Plato::Tri6::basisValues(tPoint);
         for(ordType i=0; i<Plato::Tri6::mNumNodesPerCell; i++) { tValuesView(6,i) = tValues(i); }
 
-    }, "basis functions");
+    });
 
     auto tValuesHost = Kokkos::create_mirror_view( tValuesView );
     Kokkos::deep_copy( tValuesHost, tValuesView );
@@ -1212,7 +1212,7 @@ TEUCHOS_UNIT_TEST( Tet10, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Tet10::mNumNodesPerCell, Plato::Tet10::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Tet10::mNumSpatialDims> tPoint;
 
@@ -1225,7 +1225,7 @@ TEUCHOS_UNIT_TEST( Tet10, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -1313,7 +1313,7 @@ TEUCHOS_UNIT_TEST( Tri6, BasisFunctionGradients )
 { 
     Plato::ScalarMultiVector tGradsView("basis grads", Plato::Tri6::mNumNodesPerCell, Plato::Tri6::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("basis function derivatives", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         Plato::Array<Plato::Tri6::mNumSpatialDims> tPoint;
 
@@ -1326,7 +1326,7 @@ TEUCHOS_UNIT_TEST( Tri6, BasisFunctionGradients )
                 tGradsView(i,j) = tGrads(i,j);
             }
         }
-    }, "basis function derivatives");
+    });
 
     auto tGradsHost = Kokkos::create_mirror_view( tGradsView );
     Kokkos::deep_copy( tGradsHost, tGradsView );
@@ -1364,7 +1364,7 @@ TEUCHOS_UNIT_TEST( Tet10, JacobianParentCoords )
     Plato::ScalarMultiVector tJacobianView("jacobian", Plato::Tet10::mNumSpatialDims, Plato::Tet10::mNumSpatialDims);
     Plato::ScalarArray3D tConfig("node locations", 1, Plato::Tet10::mNumNodesPerCell, Plato::Tet10::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("cell jacobian", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         tConfig(0,0,0) = 0.0; tConfig(0,0,1) = 0.0; tConfig(0,0,2) = 0.0;
         tConfig(0,1,0) = 1.0; tConfig(0,1,1) = 0.0; tConfig(0,1,2) = 0.0;
@@ -1388,7 +1388,7 @@ TEUCHOS_UNIT_TEST( Tet10, JacobianParentCoords )
                 tJacobianView(i,j) = tJacobian(i,j);
             }
         }
-    }, "cell jacobian");
+    });
 
     auto tJacobianHost = Kokkos::create_mirror_view( tJacobianView );
     Kokkos::deep_copy( tJacobianHost, tJacobianView );
@@ -1419,7 +1419,7 @@ TEUCHOS_UNIT_TEST( Tri6, JacobianParentCoords )
     Plato::ScalarMultiVector tJacobianView("jacobian", Plato::Tri6::mNumSpatialDims, Plato::Tri6::mNumSpatialDims);
     Plato::ScalarArray3D tConfig("node locations", 1, Plato::Tri6::mNumNodesPerCell, Plato::Tri6::mNumSpatialDims);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
+    Kokkos::parallel_for("cell jacobian", Kokkos::RangePolicy<int>(0,1), KOKKOS_LAMBDA(int ordinal)
     {
         tConfig(0,0,0) = 0.0; tConfig(0,0,1) = 0.0;
         tConfig(0,1,0) = 1.0; tConfig(0,1,1) = 0.0;
@@ -1439,7 +1439,7 @@ TEUCHOS_UNIT_TEST( Tri6, JacobianParentCoords )
                 tJacobianView(i,j) = tJacobian(i,j);
             }
         }
-    }, "cell jacobian");
+    });
 
     auto tJacobianHost = Kokkos::create_mirror_view( tJacobianView );
     Kokkos::deep_copy( tJacobianHost, tJacobianView );
@@ -1481,7 +1481,7 @@ TEUCHOS_UNIT_TEST( Tet10, SurfaceArea )
     Plato::ScalarArray3D tConfig("node locations", 1, Plato::Tet10::mNumNodesPerCell, Plato::Tet10::mNumSpatialDims);
 
     Plato::ScalarVector tSurfaceArea("area at GP", tNumPoints);
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{1, tNumPoints}),
+    Kokkos::parallel_for("face area", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{1, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal, const Plato::OrdinalType & aPointOrdinal)
 
     {
@@ -1515,7 +1515,7 @@ TEUCHOS_UNIT_TEST( Tet10, SurfaceArea )
 
         tSurfaceArea(aPointOrdinal) = tSurfaceAreaGP*tCubatureWeight;
 
-    }, "face area");
+    });
 
     auto tAreasHost = Kokkos::create_mirror_view( tSurfaceArea );
     Kokkos::deep_copy( tAreasHost, tSurfaceArea );

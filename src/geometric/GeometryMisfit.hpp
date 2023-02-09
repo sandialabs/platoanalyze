@@ -155,7 +155,7 @@ class GeometryMisfit :
 
         // for each point in the cloud, compute the square of the average normal distance to the nearest face
         auto tNumPoints = tOffsets.extent(0) - 1;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(const Plato::OrdinalType & aPointOrdinal)
+        Kokkos::parallel_for("compute misfit", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(const Plato::OrdinalType & aPointOrdinal)
         {
             // get face index
             auto tLocalFaceOrdinal = tIndices(tOffsets(aPointOrdinal));
@@ -225,14 +225,14 @@ class GeometryMisfit :
             Kokkos::atomic_add(&aResult(tElementOrdinal), tDistance);
             Kokkos::atomic_add(&tResultDenominator(tLocalFaceOrdinal), 1.0);
 
-        }, "compute misfit");
+        });
 
 
         auto tCubatureWeights = ElementType::Face::getCubWeights();
         auto tCubaturePoints  = ElementType::Face::getCubPoints();
         auto tNumCubPoints = tCubatureWeights.size();
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumFaces),
+        Kokkos::parallel_for("divide and apply weight", Kokkos::RangePolicy<>(0,tNumFaces),
         KOKKOS_LAMBDA(const Plato::OrdinalType & aFaceOrdinal)
         {
             auto tElementOrdinal = tElementOrds(aFaceOrdinal);
@@ -262,7 +262,7 @@ class GeometryMisfit :
             }
             aResult(tElementOrdinal) = tWeight * aResult(tElementOrdinal) * aResult(tElementOrdinal);
 
-        }, "divide and apply weight");
+        });
     }
 
   public:
@@ -281,7 +281,7 @@ class GeometryMisfit :
         const auto cNodesPerElement = aMesh->NumNodesPerElement();
 
         auto tNumFaces = tElementOrds.size();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumFaces), KOKKOS_LAMBDA(const Plato::OrdinalType & aFaceOrdinal)
+        Kokkos::parallel_for("compute centroids", Kokkos::RangePolicy<>(0,tNumFaces), KOKKOS_LAMBDA(const Plato::OrdinalType & aFaceOrdinal)
         {
             for (Plato::OrdinalType tNodeI=0; tNodeI<mNumNodesPerFace; tNodeI++)
             {
@@ -293,7 +293,7 @@ class GeometryMisfit :
                 }
             }
 
-        }, "compute centroids");
+        });
     }
 
     void
@@ -362,7 +362,7 @@ class GeometryMisfit :
         auto tNumDims = aPoints.extent(0);
         Plato::ScalarMultiVector tVectors("vectors", tNumDims, tNumPoints);
 
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(const Plato::OrdinalType & aPointOrdinal)
+        Kokkos::parallel_for("vectors", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(const Plato::OrdinalType & aPointOrdinal)
         {
             // TODO index directly into aIndices?
             auto tCentroidOrd = aIndices(aOffsets(aPointOrdinal));
@@ -370,7 +370,7 @@ class GeometryMisfit :
             {
                 tVectors(iDim, aPointOrdinal) = aCentroids(iDim, tCentroidOrd) - aPoints(iDim, aPointOrdinal);
             }
-        }, "vectors");
+        });
 
         // write vectors from points to nearest centroid
         toVTK(/*fileBaseName=*/ "geometryMisfitVectors", aPoints, tVectors);

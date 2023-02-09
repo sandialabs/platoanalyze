@@ -97,7 +97,7 @@ public:
         auto & tApplyProjection = mApplyProjection;
         auto & tPenaltyFunction = mPenaltyFunction;
         auto tQuadratureWeight = mCubatureRule->getCubWeight();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("Experimental Volume", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             ConfigScalarType tCellVolume;
             tComputeCellVolume(aCellOrdinal, aConfig, tCellVolume);
@@ -107,7 +107,7 @@ public:
             ControlScalarType tCellDensity = tApplyProjection(aCellOrdinal, aControl);
             ControlScalarType tPenaltyValue = tPenaltyFunction(tCellDensity);
             aResult(aCellOrdinal) *= tPenaltyValue;
-        },"Experimental Volume");
+        });
     }
 };
 // class ExpVolume

@@ -398,10 +398,10 @@ TEUCHOS_UNIT_TEST( SolverInterfaceTests, VectorConversionToEpetraVector )
 
   Plato::ScalarVector tTestVector("test vector", tNumDofs);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
+  Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
   {
     tTestVector(vectorIndex) = (double) vectorIndex;
-  }, "fill vector");
+  });
 
   auto tConvertedVector = tSystem.fromVector(tTestVector);
 
@@ -443,10 +443,10 @@ TEUCHOS_UNIT_TEST( SolverInterfaceTests, VectorConversionToEpetraVector_invalidI
 
   Plato::ScalarVector tTestVector("test vector", tNumDofs+1);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
+  Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
   {
     tTestVector(vectorIndex) = (double) vectorIndex;
-  }, "fill vector");
+  });
 
   TEST_THROW(tSystem.fromVector(tTestVector),std::domain_error);
 }
@@ -814,10 +814,10 @@ TEUCHOS_UNIT_TEST( SolverInterfaceTests, VectorConversionToTpetraVector )
 
   Plato::ScalarVector tTestVector("test vector", tNumDofs);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
+  Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
   {
     tTestVector(vectorIndex) = (double) vectorIndex;
-  }, "fill vector");
+  });
 
   auto tConvertedVector = tSystem.fromVector(tTestVector);
 
@@ -862,10 +862,10 @@ TEUCHOS_UNIT_TEST( SolverInterfaceTests, VectorConversionToTpetraVector_invalidI
 
   Plato::ScalarVector tTestVector("test vector", tNumDofs+1);
 
-  Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
+  Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<int>(0,tNumDofs), KOKKOS_LAMBDA(int vectorIndex)
   {
     tTestVector(vectorIndex) = (double) vectorIndex;
-  }, "fill vector");
+  });
 
   TEST_THROW(tSystem.fromVector(tTestVector),std::domain_error);
 }

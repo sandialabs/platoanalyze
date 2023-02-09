@@ -639,13 +639,13 @@ public:
 
         auto tNumNodes = mGlobalEquation->numNodes();
         auto tReactionForce = Kokkos::subview(mReactionForce, aStates.mCurrentStepIndex, Kokkos::ALL());
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType &aOrdinal)
+        Kokkos::parallel_for("reaction force", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType &aOrdinal)
         {
             for(Plato::OrdinalType tDim = 0; tDim < mSpaceDim; tDim++)
             {
                 tReactionForce(aOrdinal) += tInternalForce(aOrdinal*mNumGlobalDofsPerNode+tDim);
             }
-        }, "reaction force");
+        });
     }
 
     /***************************************************************************//**
@@ -666,12 +666,12 @@ public:
 
         if (tTemperatureDofOffset > static_cast<Plato::OrdinalType>(0))
         {
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumVerts),
+            Kokkos::parallel_for("set temperature to reference", Kokkos::RangePolicy<>(0, tNumVerts),
                                     KOKKOS_LAMBDA(const Plato::OrdinalType &aVertexOrdinal)
             {
                 Plato::OrdinalType tIndex = aVertexOrdinal * tNumGlobalDofsPerNode + tTemperatureDofOffset;
                 aPreviousGlobalState(tIndex) = tReferenceTemperature / tTemperatureScaling;
-            }, "set temperature to reference");
+            });
         }
     }
 

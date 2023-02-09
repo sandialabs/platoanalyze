@@ -36,6 +36,7 @@ if(EXPRESSION)
   )
 endif()
 
+## criterion sources
 set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     TensileEnergyDensityLocalMeasure.cpp
     Plato_AugLagStressCriterionQuadratic.cpp
@@ -54,11 +55,13 @@ set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     PlatoMask.cpp
     EngineMesh.cpp
     EngineMeshIO.cpp
+    SpatialModel.cpp
     PlatoMathHelpers.cpp
     mesh/ExodusIO.cpp
     alg/ParseInput.cpp
     alg/ParallelComm.cpp
     alg/AmgXConfigs.cpp
+    alg/CrsMatrixUtils.cpp
     alg/AmgXLinearSolver.cpp
     alg/PlatoSolverFactory.cpp
     alg/PlatoAbstractSolver.cpp
@@ -117,6 +120,9 @@ if(PLATOANALYZE_ENABLE_MESHMAP)
   ## Mesh constraint sources
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
       MultipointConstraints.cpp
+      contact/ContactPair.cpp
+      contact/ContactUtils.cpp
+      contact/UpdateGraphForContact.cpp
   )
 
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
@@ -261,7 +267,6 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/mesh)
-include_directories(${Trilinos_INCLUDE_DIRS} ${Trilinos_TPL_INCLUDE_DIRS})
 
 add_library( analyzelib ${ANALYZE_SOURCES})
 SET_TARGET_PROPERTIES(analyzelib PROPERTIES OUTPUT_NAME analyze)
@@ -274,8 +279,7 @@ target_include_directories(analyzelib PRIVATE "${PLATOENGINE_PREFIX}/include")
 
 set(LINK_LIBS
     ${PLATO_LIBS}
-    ${Trilinos_LIBRARIES}
-    ${Trilinos_TPL_LIBRARIES}
+    Trilinos::all_selected_libs
     ${Trilinos_EXTRA_LD_FLAGS}
     ${SOLVER_INTERFACE_LIBRARIES}
     )

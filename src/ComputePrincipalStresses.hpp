@@ -178,7 +178,7 @@ public:
 
         auto tQuadratureWeight = tCubatureRule.getCubWeight();
         auto tBasisFunctions = tCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
+        Kokkos::parallel_for("compute principal stresses", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType &aCellOrdinal)
         {
             // compute configuration gradients
             tComputeGradient(aCellOrdinal, tConfigGradient, aConfig, tCellVolume);
@@ -198,7 +198,7 @@ public:
 
             // compute principal stresses
             tComputePrincipalStresses(aCellOrdinal, tCauchyStress, aResult, false);
-        },"compute principal stresses");
+        });
     }
 };
 // class ComputePrincipalStresses

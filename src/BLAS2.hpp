@@ -163,10 +163,10 @@ inline void extract(const Plato::ScalarMultiVector& aFrom, Plato::ScalarMultiVec
         auto tFromSubView = Kokkos::subview(aFrom, tIndexI, Kokkos::ALL());
 
         auto tLength = tToSubView.extent(0);
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("blas2::extract", Kokkos::RangePolicy<>(0, tLength), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             tToSubView(aOrdinal) = tFromSubView(aOrdinal*NumStride + NumOffset);
-        }, "blas2::extract");
+        });
     }
 }
 // function extract
@@ -193,14 +193,14 @@ inline void extract(const Plato::OrdinalType& aNumOrdinal, const Plato::ScalarMu
     {
         auto tToSubView = Kokkos::subview(aTo, tIndexI, Kokkos::ALL());
         auto tFromSubView = Kokkos::subview(aFrom, tIndexI, Kokkos::ALL());
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, aNumOrdinal), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
+        Kokkos::parallel_for("blas2::extract", Kokkos::RangePolicy<>(0, aNumOrdinal), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
         {
             for(Plato::OrdinalType tDim = 0; tDim < NumDim; tDim++)
             {
                 tToSubView(aOrdinal*NumDim + tDim) = tFromSubView(aOrdinal*NumStride+tDim+NumOffset);
             }
 
-        }, "blas2::extract");
+        });
     }
 }
 // function extract
@@ -223,13 +223,13 @@ inline void fill(typename XViewType::const_value_type& aAlpha, XViewType& aXvec)
 
     const Plato::OrdinalType tNumEntriesDim0 = aXvec.extent(0);
     const Plato::OrdinalType tNumEntriesDim1 = aXvec.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumEntriesDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas2::fill", Kokkos::RangePolicy<>(0, tNumEntriesDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tIndex = 0; tIndex < tNumEntriesDim1; tIndex++)
         {
             aXvec(aCellOrdinal, tIndex) = aAlpha;
         }
-    }, "blas2::fill");
+    });
 }
 // function fill
 
@@ -252,13 +252,13 @@ inline void scale(typename XViewType::const_value_type& aAlpha, XViewType& aXvec
 
     const Plato::OrdinalType tNumEntriesDim0 = aXvec.extent(0);
     const Plato::OrdinalType tNumEntriesDim1 = aXvec.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumEntriesDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas2::scale", Kokkos::RangePolicy<>(0, tNumEntriesDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tIndex = 0; tIndex < tNumEntriesDim1; tIndex++)
         {
             aXvec(aCellOrdinal, tIndex) = aAlpha * aXvec(aCellOrdinal, tIndex);
         }
-    }, "blas2::scale");
+    });
 }
 // function scale
 
@@ -296,13 +296,13 @@ inline void update(typename XViewType::const_value_type& aAlpha,
 
     const auto tNumEntriesDim0 = aXvec.extent(0);
     const auto tNumEntriesDim1 = aXvec.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumEntriesDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas2::update", Kokkos::RangePolicy<>(0, tNumEntriesDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tIndex = 0; tIndex < tNumEntriesDim1; tIndex++)
         {
             aYvec(aCellOrdinal, tIndex) = aAlpha * aXvec(aCellOrdinal, tIndex) + aBeta * aYvec(aCellOrdinal, tIndex);
         }
-    }, "blas2::update");
+    });
 }
 // function update
 
@@ -337,14 +337,14 @@ inline void axpy(const Plato::Scalar & aAlpha, const Plato::ScalarMultiVector& a
 
     const auto tInputVecDim0 = aIn.extent(0);
     const auto tInputVecDim1 = aIn.extent(1);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tInputVecDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("blas2::axpy", Kokkos::RangePolicy<>(0, tInputVecDim0), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tInputVecIndex = 0; tInputVecIndex < tInputVecDim1; tInputVecIndex++)
         {
             const auto tOutputVecIndex = (NumDofsPerNode * tInputVecIndex) + DofOffset;
             aOut(aCellOrdinal, tOutputVecIndex) = aAlpha * aOut(aCellOrdinal, tOutputVecIndex) + aIn(aCellOrdinal, tInputVecIndex);
         }
-    }, "blas2::axpy");
+    });
 }
 // function axpy
 
@@ -414,7 +414,7 @@ inline void matrix_times_vector(const char aTransA[],
     auto tNumCols = aAmat.extent(2);
     if((aTransA[0] == 'N') || (aTransA[0] == 'n'))
     {
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("matrix vector multiplication - no transpose", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             for(Plato::OrdinalType tRowIndex = 0; tRowIndex < tNumRows; tRowIndex++)
             {
@@ -429,11 +429,11 @@ inline void matrix_times_vector(const char aTransA[],
                             aAlpha * aAmat(aCellOrdinal, tRowIndex, tColIndex) * aXvec(aCellOrdinal, tColIndex);
                 }
             }
-        }, "matrix vector multiplication - no transpose");
+        });
     }
     else
     {
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("matrix vector multiplication - transpose", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             for(Plato::OrdinalType tColIndex = 0; tColIndex < tNumCols; tColIndex++)
             {
@@ -448,7 +448,7 @@ inline void matrix_times_vector(const char aTransA[],
                             aAlpha * aAmat(aCellOrdinal, tRowIndex, tColIndex) * aXvec(aCellOrdinal, tRowIndex);
                 }
             }
-        }, "matrix vector multiplication - transpose");
+        });
     }
 }
 // function matrix_times_vector

@@ -353,6 +353,37 @@ public:
             }
         }
         else
+        if(mGradientXNameToCriterionName.count(aName))
+        {
+            auto tStrCriterion = mGradientXNameToCriterionName[aName];
+            if(mCriterionGradientsX.count(tStrCriterion))
+            {
+                auto tCriter = mCriterionGradientsX[tStrCriterion];
+                auto tLength = tCriter.size();
+                std::vector<Plato::Scalar> tHostData(tLength);
+                Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tDataHostView(tHostData.data(), tLength);
+                Kokkos::deep_copy(tDataHostView, tCriter);
+
+                aSharedField.setData(tHostData);
+/* don't know if we need this or not.  Ask Josh */
+/*
+                if(mMeshMap != nullptr && tCriter.extent(0) != 0)
+                {
+                    Plato::ScalarVector tCriterionGradientX("unmapped", tCriter.extent(0));
+                    applyT(mMeshMap, tCriter, tCriterionGradientX);
+                    Kokkos::deep_copy(tCriter, tCriterionGradientX);
+                }
+                this->copyFieldFromAnalyze(tCriter, aSharedField);
+*/
+            }
+            else
+            {
+                std::stringstream ss;
+                ss << "Attempted to export SharedData ('" << aName << "') that doesn't exist.";
+                throw Plato::ParsingException(ss.str());
+            }
+        }
+        else
         {
             auto tIterator = mValuesMap.find(aName);
             if(tIterator == mValuesMap.end())
@@ -597,10 +628,10 @@ public:
 
         int tNumData = aDeviceData.extent(0);
         Plato::ScalarVector tCopy("copy", tNumData);
-        Kokkos::parallel_for(Kokkos::RangePolicy<int>(0,tNumData), KOKKOS_LAMBDA(int datumOrdinal)
+        Kokkos::parallel_for("get subview", Kokkos::RangePolicy<int>(0,tNumData), KOKKOS_LAMBDA(int datumOrdinal)
         {
             tCopy(datumOrdinal) = aDeviceData(datumOrdinal,aIndex);
-        }, "get subview");
+        });
 
         copyFieldFromAnalyze(tCopy, aSharedField);
     }

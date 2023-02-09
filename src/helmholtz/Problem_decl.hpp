@@ -187,12 +187,6 @@ public:
     ) override;
 
 private:
-    /******************************************************************************//**
-     * \brief Initialize member data
-     * \param [in] aProblemParams input parameters database
-    **********************************************************************************/
-    void initialize(Plato::Mesh& aMesh, Teuchos::ParameterList& aProblemParams);
-
     /******************************************************************************/ /**
     * \brief Return solution database.
     * \return solution database

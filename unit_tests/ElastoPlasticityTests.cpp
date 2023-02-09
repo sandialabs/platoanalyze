@@ -54,12 +54,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputePrincipalStress
     decltype(tNumNodes) tNumState = 3;
     auto tNumDofsPerNode = PhysicsT::mNumDofsPerNode;
     Plato::ScalarVectorT<EvalType::StateScalarType> tGlobalState("state", tNumState * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVector tGlobalStateWS("current state", tNumCells, PhysicsT::mNumDofsPerCell);
     tWorksetBase.worksetState(tGlobalState, tGlobalStateWS);
 
@@ -109,13 +109,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputePrincipalStress
     decltype(tNumNodes) tNumState = 4;
     auto tNumDofsPerNode = PhysicsT::mNumDofsPerNode;
     Plato::ScalarVectorT<EvalType::StateScalarType> tGlobalState("state", tNumState * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // disp_z
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+3) = (4e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVector tGlobalStateWS("current state", tNumCells, PhysicsT::mNumDofsPerCell);
     tWorksetBase.worksetState(tGlobalState, tGlobalStateWS);
 
@@ -176,10 +176,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_DeviatoricStress1D)
 
     Plato::Scalar tShearModulus = 3.5;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tComputeDeviatoricStress(tCellOrdinal, tShearModulus, tElasticStrain, tDeviatoricStress);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {4.666666667};
@@ -214,10 +214,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_DeviatoricStress2D)
 
     Plato::Scalar tShearModulus = 3.5;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tComputeDeviatoricStress(tCellOrdinal, tShearModulus, tElasticStrain, tDeviatoricStress);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {-9.33333,-2.33333,10.5,11.6667};
@@ -252,10 +252,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_DeviatoricStress3D)
 
     Plato::Scalar tShearModulus = 3.5;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tComputeDeviatoricStress(tCellOrdinal, tShearModulus, tElasticStrain, tDeviatoricStress);
-    }, "Unit Test");
+    });
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {-7.0,0.0,7.0,14.0,17.5,21.0};
@@ -292,10 +292,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_computeCauchyStress3D)
     constexpr Plato::Scalar tShearModulus = 3;
     Plato::ComputeCauchyStress<tSpaceDim> tComputeCauchyStress;
     Plato::ScalarMultiVector tCauchyStress("cauchy stress", tNumCells, tNumStressTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tComputeCauchyStress(tCellOrdinal, tBulkModulus, tShearModulus, tElasticStrain, tCauchyStress);
-    }, "Unit Test");
+    });
 
     // 3. TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -337,10 +337,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_computeCauchyStress2D)
     constexpr Plato::Scalar tShearModulus = 3;
     Plato::ComputeCauchyStress<tSpaceDim> tComputeCauchyStress;
     Plato::ScalarMultiVector tCauchyStress("cauchy stress", tNumCells, tNumStressTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tComputeCauchyStress(tCellOrdinal, tBulkModulus, tShearModulus, tElasticStrain, tCauchyStress);
-    }, "Unit Test");
+    });
 
     // 3. TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -383,10 +383,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_computeCauchyStress1D)
     constexpr Plato::Scalar tShearModulus = 3;
     Plato::ComputeCauchyStress<tSpaceDim> tComputeCauchyStress;
     Plato::ScalarMultiVector tCauchyStress("cauchy stress", tNumCells, tNumStressTerms);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
+    Kokkos::parallel_for("Unit Test", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & tCellOrdinal)
     {
         tComputeCauchyStress(tCellOrdinal, tBulkModulus, tShearModulus, tElasticStrain, tCauchyStress);
-    }, "Unit Test");
+    });
 
     // 3. TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -420,10 +420,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeDeviatoricStrai
     Kokkos::deep_copy(tElasticStrain, tHostElasticStrain);
     Plato::ScalarMultiVector tDeviatoricStrain("elastic strain", tNumCells, tNumStrainTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute deviatoric strain functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeDeviatoricStrain(aCellIndex, tElasticStrain, tDeviatoricStrain);
-    }, "test compute deviatoric strain functor");
+    });
 
     const Plato::Scalar tTolerance = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = { {-1.0, 0.0, 1.0, 4.0, 5.0, 6.0}, {-1.0, 0.0, 1.0, 10.0, 11.0, 12.0} };
@@ -454,10 +454,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeDeviatoricStrai
     Kokkos::deep_copy(tElasticStrain, tHostElasticStrain);
     Plato::ScalarMultiVector tDeviatoricStrain("elastic strain", tNumCells, tNumStrainTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute deviatoric strain functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeDeviatoricStrain(aCellIndex, tElasticStrain, tDeviatoricStrain);
-    }, "test compute deviatoric strain functor");
+    });
 
     const Plato::Scalar tTolerance = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = { {-1.333333, -0.333333, 3.0, 1.666667}, {-1.333333, -0.333333, 7.0, 1.666667} };
@@ -488,10 +488,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeDeviatoricStrai
     Kokkos::deep_copy(tElasticStrain, tHostElasticStrain);
     Plato::ScalarMultiVector tDeviatoricStrain("elastic strain", tNumCells, tNumStrainTerms);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute deviatoric strain functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeDeviatoricStrain(aCellIndex, tElasticStrain, tDeviatoricStrain);
-    }, "test compute deviatoric strain functor");
+    });
 
     const Plato::Scalar tTolerance = 1e-4;
     std::vector<std::vector<Plato::Scalar>> tGold = { {0.666667}, {1.333333} };
@@ -529,11 +529,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeElasticWork_3D)
     constexpr Plato::Scalar tShearModulus = 0.5;
     Plato::ScalarVector tElasticWork("elastic work", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute deviatoric strain functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeDeviatoricStrain(aCellIndex, tElasticStrain, tDeviatoricStrain);
         tComputeElasticWork(aCellIndex, tShearModulus, tBulkModulus, tElasticStrain, tDeviatoricStrain, tElasticWork);
-    }, "test compute deviatoric strain functor");
+    });
 
     const Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {114, 942};
@@ -566,11 +566,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeElasticWork_2D)
     constexpr Plato::Scalar tShearModulus = 0.5;
     Plato::ScalarVector tElasticWork("elastic work", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute deviatoric strain functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeDeviatoricStrain(aCellIndex, tElasticStrain, tDeviatoricStrain);
         tComputeElasticWork(aCellIndex, tShearModulus, tBulkModulus, tElasticStrain, tDeviatoricStrain, tElasticWork);
-    }, "test compute deviatoric strain functor");
+    });
 
     const Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {60.333333, 412.333333};
@@ -603,11 +603,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeElasticWork_1D)
     constexpr Plato::Scalar tShearModulus = 0.5;
     Plato::ScalarVector tElasticWork("elastic work", tNumCells);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute deviatoric strain functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeDeviatoricStrain(aCellIndex, tElasticStrain, tDeviatoricStrain);
         tComputeElasticWork(aCellIndex, tShearModulus, tBulkModulus, tElasticStrain, tDeviatoricStrain, tElasticWork);
-    }, "test compute deviatoric strain functor");
+    });
 
     const Plato::Scalar tTolerance = 1e-4;
     std::vector<Plato::Scalar> tGold = {1.222222, 4.888889};
@@ -1390,10 +1390,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ApplyPenalty)
     Kokkos::deep_copy(tA, tHostA);
 
     // CALL FUNCTION
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRowIndex)
+    Kokkos::parallel_for("identity workset", Kokkos::RangePolicy<>(0, tNumRows), KOKKOS_LAMBDA(const Plato::OrdinalType & aRowIndex)
     {
         Plato::apply_penalty<tNumCols>(aRowIndex, 0.5, tA);
-    }, "identity workset");
+    });
 
     // TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-6;
@@ -1514,10 +1514,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_StrainDivergence3D)
 
     // CALL FUNCTION
     Plato::StrainDivergence<tSpaceDim> tComputeStrainDivergence;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test strain divergence functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeStrainDivergence(aCellIndex, tStrainTensor, tOutput);
-    }, "test strain divergence functor");
+    });
 
     // TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-6;
@@ -1549,10 +1549,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_StrainDivergence2D)
 
     // CALL FUNCTION
     Plato::StrainDivergence<tSpaceDim> tComputeStrainDivergence;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test strain divergence functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeStrainDivergence(aCellIndex, tStrainTensor, tOutput);
-    }, "test strain divergence functor");
+    });
 
     // TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-6;
@@ -1582,10 +1582,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_StrainDivergence1D)
 
     // CALL FUNCTION
     Plato::StrainDivergence<tSpaceDim> tComputeStrainDivergence;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test strain divergence functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeStrainDivergence(aCellIndex, tStrainTensor, tOutput);
-    }, "test strain divergence functor");
+    });
 
     // TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-6;
@@ -1637,10 +1637,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeStabilization3D
     constexpr Plato::Scalar tShearModulus = 2;
     Plato::ScalarMultiVector tStabilization("cell stabilization", tNumCells, tSpaceDim);
     Plato::ComputeStabilization<tSpaceDim> tComputeStabilization(tScaling, tShearModulus);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute stabilization functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeStabilization(aCellIndex, tCellVolume, tPressureGrad, tProjectedPressureGrad, tStabilization);
-    }, "test compute stabilization functor");
+    });
 
     // TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-6;
@@ -1695,10 +1695,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeStabilization2D
     constexpr Plato::Scalar tShearModulus = 2;
     Plato::ScalarMultiVector tStabilization("cell stabilization", tNumCells, tSpaceDim);
     Plato::ComputeStabilization<tSpaceDim> tComputeStabilization(tScaling, tShearModulus);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute stabilization functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeStabilization(aCellIndex, tCellVolume, tPressureGrad, tProjectedPressureGrad, tStabilization);
-    }, "test compute stabilization functor");
+    });
 
     // TEST RESULTS
     constexpr Plato::Scalar tTolerance = 1e-6;
@@ -1751,10 +1751,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeStabilization1D
     constexpr Plato::Scalar tShearModulus = 2;
     Plato::ScalarMultiVector tStabilization("cell stabilization", tNumCells, tSpaceDim);
     Plato::ComputeStabilization<tSpaceDim> tComputeStabilization(tScaling, tShearModulus);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
+    Kokkos::parallel_for("test compute stabilization functor", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellIndex)
     {
         tComputeStabilization(aCellIndex, tCellVolume, tPressureGrad, tProjectedPressureGrad, tStabilization);
-    }, "test compute stabilization functor");
+    });
 
     // TEST RESULTS
     std::vector<std::vector<Plato::Scalar>> tGold =
@@ -1795,13 +1795,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeElasticStrain3D
     decltype(tNumNodes) tNumState = 4;
     auto tNumDofsPerNode = PhysicsT::mNumDofsPerNode;
     Plato::ScalarVectorT<Plato::Scalar> tState("state", tNumState * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // disp_z
         tState(aNodeOrdinal*tNumDofsPerNode+3) = (4e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVector tStateWS("current state", tNumCells, PhysicsT::mNumDofsPerCell);
     tWorksetBase.worksetState(tState, tStateWS);
 
@@ -1818,13 +1818,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_ComputeElasticStrain3D
     Plato::ThermoPlasticityUtilities <tSpaceDim, PhysicsT> tThermoPlasticityUtils;
 
     auto tBasisFunctions = tCubatureRule.getBasisFunctions();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("compute elastic strain test", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tComputeGradient(aCellOrdinal, tGradient, tConfig, tCellVolume);
         tComputeTotalStrain(aCellOrdinal, tTotalStrain, tStateWS, tGradient);
         tThermoPlasticityUtils.computeElasticStrain(aCellOrdinal, tStateWS, tLocalState,
                                                     tBasisFunctions, tTotalStrain, tElasticStrains);
-    }, "compute elastic strain test");
+    });
 
     std::vector<std::vector<Plato::Scalar>> tGold =
         {
@@ -1910,12 +1910,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_Residual2D_Elastic)
     // 2.3 SET GLOBAL STATE
     auto tNumDofsPerNode = PhysicsT::mNumDofsPerNode;
     Plato::ScalarVector tGlobalState("global state", tNumDofsPerNode * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVectorT<EvalType::StateScalarType> tCurrentGlobalState("current global state", tNumCells, PhysicsT::mNumDofsPerCell);
     tWorksetBase.worksetState(tGlobalState, tCurrentGlobalState);
     Plato::ScalarMultiVectorT<EvalType::PrevStateScalarType> tPrevGlobalState("previous global state", tNumCells, PhysicsT::mNumDofsPerCell);
@@ -1923,7 +1923,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_Residual2D_Elastic)
     // 2.4 SET PROJECTED PRESSURE GRADIENT
     auto tNumNodesPerCell = PhysicsT::mNumNodesPerCell;
     Plato::ScalarMultiVectorT<EvalType::NodeStateScalarType> tProjectedPressureGrad("projected pressure grad", tNumCells, PhysicsT::mNumNodeStatePerCell);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("set projected pressure grad", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex< tNumNodesPerCell; tNodeIndex++)
         {
@@ -1932,7 +1932,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_Residual2D_Elastic)
                 tProjectedPressureGrad(aCellOrdinal, tNodeIndex*tSpaceDim+tDimIndex) = (4e-7)*(tNodeIndex+1)*(tDimIndex+1)*(aCellOrdinal+1);
             }
         }
-    }, "set projected pressure grad");
+    });
 
     // 2.5 SET LOCAL STATE
     Plato::ScalarMultiVectorT<EvalType::LocalStateScalarType> tCurrentLocalState("current local state", tNumCells, PhysicsT::mNumLocalDofsPerCell);
@@ -2028,13 +2028,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_Residual3D_Elastic)
     auto tNumDofsPerNode = PhysicsT::mNumDofsPerNode;
     decltype(tNumDofsPerNode) tNumState = 4;
     Plato::ScalarVector tGlobalState("global state", tNumState * tNumNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
+    Kokkos::parallel_for("set global state", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
     {
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+0) = (1e-7)*aNodeOrdinal; // disp_x
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+1) = (2e-7)*aNodeOrdinal; // disp_y
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+2) = (3e-7)*aNodeOrdinal; // disp_z
         tGlobalState(aNodeOrdinal*tNumDofsPerNode+3) = (4e-7)*aNodeOrdinal; // press
-    }, "set global state");
+    });
     Plato::ScalarMultiVectorT<EvalType::StateScalarType> tCurrentGlobalState("current global state", tNumCells, PhysicsT::mNumDofsPerCell);
     tWorksetBase.worksetState(tGlobalState, tCurrentGlobalState);
     Plato::ScalarMultiVectorT<EvalType::PrevStateScalarType> tPrevGlobalState("previous global state", tNumCells, PhysicsT::mNumDofsPerCell);
@@ -2042,7 +2042,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_Residual3D_Elastic)
     // 2.4 SET PROJECTED PRESSURE GRADIENT
     auto tNumNodesPerCell = PhysicsT::mNumNodesPerCell;
     Plato::ScalarMultiVectorT<EvalType::NodeStateScalarType> tProjectedPressureGrad("projected pressure grad", tNumCells, PhysicsT::mNumNodeStatePerCell);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("set projected pressure grad", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         for(Plato::OrdinalType tNodeIndex=0; tNodeIndex< tNumNodesPerCell; tNodeIndex++)
         {
@@ -2051,7 +2051,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_Residual3D_Elastic)
                 tProjectedPressureGrad(aCellOrdinal, tNodeIndex*tSpaceDim+tDimIndex) = (4e-7)*(tNodeIndex+1)*(tDimIndex+1)*(aCellOrdinal+1);
             }
         }
-    }, "set projected pressure grad");
+    });
 
     // 2.5 SET LOCAL STATE
     Plato::ScalarMultiVectorT<EvalType::LocalStateScalarType> tCurrentLocalState("current local state", tNumCells, PhysicsT::mNumLocalDofsPerCell);

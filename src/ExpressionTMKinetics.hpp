@@ -87,23 +87,23 @@ public:
         if(mControlValue != -1.0)
         {
             auto tControlValue = mControlValue;
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0,aControl.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType i)
+            Kokkos::parallel_for("Compute local control", Kokkos::RangePolicy<>(0,aControl.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType i)
             {
                 for(Plato::OrdinalType j=0; j<aControl.extent(1); j++)
                 {
                     aLocalControl(i,j) = tControlValue;
                 }
-            },"Compute local control");
+            });
         }
         else
         {
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0,aControl.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType i)
+            Kokkos::parallel_for("Compute local control", Kokkos::RangePolicy<>(0,aControl.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType i)
             {
                 for(Plato::OrdinalType j=0; j<aControl.extent(1); j++)
                 {
                     aLocalControl(i,j) = aControl(i,j);
                 }
-            },"Compute local control");
+            });
         }
     }
 

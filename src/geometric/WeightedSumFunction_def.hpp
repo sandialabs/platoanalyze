@@ -168,10 +168,10 @@ namespace Geometric
         {
             const Plato::Scalar tFunctionWeight = mFunctionWeights[tFunctionIndex];
             Plato::ScalarVector tFunctionGradX = mScalarFunctionBaseContainer[tFunctionIndex]->gradient_x(aControl);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
+            Kokkos::parallel_for("Weighted Sum Function Summation Grad X", Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
             {
                 tGradientX(tDof) += tFunctionWeight * tFunctionGradX(tDof);
-            },"Weighted Sum Function Summation Grad X");
+            });
         }
         return tGradientX;
     }
@@ -192,10 +192,10 @@ namespace Geometric
         {
             const Plato::Scalar tFunctionWeight = mFunctionWeights[tFunctionIndex];
             Plato::ScalarVector tFunctionGradZ = mScalarFunctionBaseContainer[tFunctionIndex]->gradient_z(aControl);
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
+            Kokkos::parallel_for("Weighted Sum Function Summation Grad Z", Kokkos::RangePolicy<>(0, tNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & tDof)
             {
                 tGradientZ(tDof) += tFunctionWeight * tFunctionGradZ(tDof);
-            },"Weighted Sum Function Summation Grad Z");
+            });
         }
         return tGradientZ;
     }

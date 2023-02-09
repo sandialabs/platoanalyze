@@ -33,7 +33,7 @@ namespace Solve {
 
             // a_x[i] 1.0/sum_j(a_A[i,j]) * a_b[i]
             auto tNumBlockRows = a_A->rowMap().extent(0) - 1;
-            Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumBlockRows), KOKKOS_LAMBDA(const Plato::OrdinalType& aBlockRowOrdinal)
+            Kokkos::parallel_for("row sum inverse", Kokkos::RangePolicy<>(0, tNumBlockRows), KOKKOS_LAMBDA(const Plato::OrdinalType& aBlockRowOrdinal)
             {
                 // compute row sum
                 tRowSumFunctor(aBlockRowOrdinal, tRowSum);
@@ -41,7 +41,7 @@ namespace Solve {
                 // apply inverse weight
                 tInverseWeight(aBlockRowOrdinal, tRowSum, a_b, a_x, /*scale=*/1.0);
                 
-            }, "row sum inverse");
+            });
         }
 
 } // namespace Solve
