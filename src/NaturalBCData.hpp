@@ -292,6 +292,59 @@ private:
     std::array<std::string, kNumComponents> mVariableNames; // nodal field containing load values
 };
 
+/// no-op for Stefan Boltzmann BC
+template<OrdinalType NumDofs, BCDataType DataType=BCDataType::kScalar>
+class StefanBoltzmannBCData : public NaturalBCData<NumDofs>
+{
+public:
+    explicit StefanBoltzmannBCData(Scalar aStefanBoltzmannConstant)
+    {
+      mStefanBoltzmannConstant = aStefanBoltzmannConstant;
+    }
+
+    /// @throw std::runtime_error
+    explicit StefanBoltzmannBCData(const Teuchos::ParameterList& aSublist)
+    {
+      constexpr static auto kStefanBoltzmannConstant = "Stefan Boltzmann Constant";
+      
+      if(aSublist.isType<Scalar>(kStefanBoltzmannConstant))
+      {
+        mStefanBoltzmannConstant = aSublist.get<Scalar>(kStefanBoltzmannConstant);
+      }
+      else
+      {
+        WARNING("'Stefan Boltzmann Constant' not provided.  Assuming MKS units.");
+        mStefanBoltzmannConstant = 5.670374419e-8;
+      }
+    }
+
+    std::unique_ptr<NaturalBCData<NumDofs>> clone() const override
+    {
+        return std::make_unique<StefanBoltzmannBCData<NumDofs, DataType>>(mStefanBoltzmannConstant);
+    }
+
+    NaturalBCVectorData<NumDofs> getVectorData(const Plato::Mesh& /*aMesh*/, Scalar /*aCurrentTime*/) const override
+    {
+      assert(DataType == BCDataType::kVector);
+      VectorDataView<NumDofs> tOutData("Natural BC data", 1);
+      return NaturalBCVectorData<NumDofs>{std::move(tOutData)};
+    }
+
+    NaturalBCScalarData getScalarData(const Plato::Mesh& /*aMesh*/, Scalar /*aCurrentTime*/) const override
+    {
+      ScalarVector tOutData("Natural BC data", 1);
+      return NaturalBCScalarData{tOutData};
+    }
+
+    BCDataType getDataType() const override
+    {
+        return DataType;
+    }
+
+private:
+    Scalar mStefanBoltzmannConstant;
+};
+
 template<OrdinalType NumDofs>
 std::unique_ptr<NaturalBCData<NumDofs>> makeNaturalBCData(const Teuchos::ParameterList& aSublist)
 {
@@ -345,6 +398,9 @@ std::unique_ptr<NaturalBCData<NumDofs>> makeNaturalBCData(const Teuchos::Paramet
             {
                 ANALYZE_THROWERR(R"(Expected "Variable" field of type string in variable pressure natural boundary condition.)");
             }
+            break;
+        case Neumann::STEFAN_BOLTZMANN:
+            return std::make_unique<StefanBoltzmannBCData<NumDofs>>(aSublist);
             break;
         default:
             ANALYZE_THROWERR("Unknown type encountered while constructing NaturalBCData.");

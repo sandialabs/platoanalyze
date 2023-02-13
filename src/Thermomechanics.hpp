@@ -7,6 +7,7 @@
 #include "parabolic/AbstractScalarFunction.hpp"
 #include "parabolic/TransientThermomechResidual.hpp"
 #include "parabolic/InternalThermoelasticEnergy.hpp"
+#include "parabolic/TMStressPNorm.hpp"
 #endif
 
 #include "elliptic/AbstractVectorFunction.hpp"
@@ -192,6 +193,12 @@ struct FunctionFactory
         if(tLowerFuncType == "internal thermoelastic energy")
         {
             return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::InternalThermoelasticEnergy>
+                (aSpatialDomain, aDataMap, aProblemParams, aFuncName);
+        }
+        else
+        if(tLowerFuncType == "stress p-norm")
+        {
+            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::TMStressPNorm>
                 (aSpatialDomain, aDataMap, aProblemParams, aFuncName);
         }
         else

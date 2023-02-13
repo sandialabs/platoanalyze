@@ -10,7 +10,8 @@ const EnumTable<Neumann> kNaturalBCTable({
     {Neumann::UNIFORM_LOAD, "uniform"},
     {Neumann::VARIABLE_LOAD, "variable load"},
     {Neumann::UNIFORM_PRESSURE, "uniform pressure"},
-    {Neumann::VARIABLE_PRESSURE, "variable pressure"}});
+    {Neumann::VARIABLE_PRESSURE, "variable pressure"},
+    {Neumann::STEFAN_BOLTZMANN, "stefan boltzmann"}});
 }
 
 Plato::Neumann naturalBoundaryCondition(const std::string& aTypeTag)

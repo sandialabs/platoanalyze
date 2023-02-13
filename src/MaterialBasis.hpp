@@ -54,7 +54,7 @@ namespace Plato {
      ******************************************************************************/
     template<typename T>
     void
-    VoigtTensorToMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor)
+    VoigtTensorToMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor, Plato::Scalar aShearFactor=1.0)
     {
       auto tNumCells = aVoigtTensor.extent(0);
       auto tNumPoints = aVoigtTensor.extent(1);
@@ -62,7 +62,7 @@ namespace Plato {
       Kokkos::parallel_for("to material basis", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
       KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
       {
-        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal, aShearFactor);
         Plato::Matrix<SpatialDim,SpatialDim,T> tToTensor(0.0);
         for(int i=0; i<SpatialDim; i++) {
           for(int j=0; j<SpatialDim; j++) {
@@ -73,12 +73,12 @@ namespace Plato {
             }
           }
         }
-        Plato::ToVoigt<SpatialDim,T>(tToTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::ToVoigt<SpatialDim,T>(tToTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal, 1.0/aShearFactor);
       });
     }
     template<typename T>
     void
-    VoigtTensorFromMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor)
+    VoigtTensorFromMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor, Plato::Scalar aShearFactor=1.0)
     {
       auto tNumCells = aVoigtTensor.extent(0);
       auto tNumPoints = aVoigtTensor.extent(1);
@@ -86,7 +86,7 @@ namespace Plato {
       Kokkos::parallel_for("from material basis", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
       KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
       {
-        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal, aShearFactor);
         Plato::Matrix<SpatialDim,SpatialDim,T> tFromTensor(0.0);
         for(int i=0; i<SpatialDim; i++) {
           for(int j=0; j<SpatialDim; j++) {
@@ -97,7 +97,7 @@ namespace Plato {
             }
           }
         }
-        Plato::ToVoigt<SpatialDim,T>(tFromTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::ToVoigt<SpatialDim,T>(tFromTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal, 1.0/aShearFactor);
       });
     }
 
@@ -218,7 +218,7 @@ namespace Plato {
      ******************************************************************************/
     template<typename T>
     void
-    VoigtTensorToMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor)
+    VoigtTensorToMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor, Plato::Scalar aShearFactor=1.0)
     {
       auto tNumCells = aVoigtTensor.extent(0);
       auto tNumPoints = aVoigtTensor.extent(1);
@@ -226,7 +226,7 @@ namespace Plato {
       Kokkos::parallel_for("to material basis", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
       KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
       {
-        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal, aShearFactor);
         Plato::Matrix<SpatialDim,SpatialDim,T> tToTensor(0.0);
         for(int i=0; i<SpatialDim; i++) {
           for(int j=0; j<SpatialDim; j++) {
@@ -237,12 +237,12 @@ namespace Plato {
             }
           }
         }
-        Plato::ToVoigt<SpatialDim,T>(tToTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::ToVoigt<SpatialDim,T>(tToTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal, 1.0/aShearFactor);
       });
     }
     template<typename T>
     void
-    VoigtTensorFromMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor)
+    VoigtTensorFromMaterialBasis(Plato::ScalarArray3DT<T> aVoigtTensor, Plato::Scalar aShearFactor=1.0)
     {
       auto tNumCells = aVoigtTensor.extent(0);
       auto tNumPoints = aVoigtTensor.extent(1);
@@ -250,7 +250,7 @@ namespace Plato {
       Kokkos::parallel_for("from material basis", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
       KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
       {
-        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::Matrix<SpatialDim,SpatialDim,T> tTensor = Plato::FromVoigt<SpatialDim,T>(aVoigtTensor, iCellOrdinal, iGpOrdinal, aShearFactor);
         Plato::Matrix<SpatialDim,SpatialDim,T> tFromTensor(0.0);
         for(int i=0; i<SpatialDim; i++) {
           for(int j=0; j<SpatialDim; j++) {
@@ -261,7 +261,7 @@ namespace Plato {
             }
           }
         }
-        Plato::ToVoigt<SpatialDim,T>(tFromTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal);
+        Plato::ToVoigt<SpatialDim,T>(tFromTensor, aVoigtTensor, iCellOrdinal, iGpOrdinal, 1.0/aShearFactor);
       });
     }
 

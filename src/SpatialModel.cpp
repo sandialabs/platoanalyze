@@ -124,14 +124,31 @@ SpatialDomain::parseVaryingCartesianBasis(const Teuchos::ParameterList& aParamLi
     if (aParamList.isType<std::string>("Basis Field"))
     {
         auto tBasisFieldName = aParamList.get<std::string>("Basis Field");
-        mVaryingCartesianBasis = mDataMap.scalarArray3Ds[tBasisFieldName];
+        auto tBasisField = mDataMap.scalarArray3Ds[tBasisFieldName];
         mHasVaryingBasis = true;
+
+        auto tBasisDim = tBasisField.extent(1);
+        auto tNumCells = this->numCells();
+        auto tCellOrds = this->cellOrdinals();
+        Kokkos::resize(mVaryingCartesianBasis, tNumCells, tBasisDim, tBasisDim);
+
+        auto& tVaryingCartesianBasis = mVaryingCartesianBasis;
+        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        {
+            auto iCellOrdinal = tCellOrds(aCellOrdinal);
+            for(decltype(tBasisDim) iDim=0; iDim<tBasisDim; iDim++)
+            {
+                for(decltype(tBasisDim) jDim=0; jDim<tBasisDim; jDim++)
+                {
+                    tVaryingCartesianBasis(aCellOrdinal, iDim, jDim) = tBasisField(iCellOrdinal, iDim, jDim);
+                }
+            }
+        }, "get basis");
     }
     else
     {
         mHasVaryingBasis = false;
     }
-  
 }
 
 SpatialModel::SpatialModel(Plato::Mesh aMesh) : 

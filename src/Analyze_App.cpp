@@ -1460,8 +1460,23 @@ MPMD_App::ApplyHelmholtz::
 ApplyHelmholtz(MPMD_App* aMyApp, Plato::InputData& aOpNode, Teuchos::RCP<ProblemDefinition> aOpDef) :
         LocalOp(aMyApp, aOpNode, aOpDef),
         mWriteNativeOutput(false),
-        mVizFilePath("")
+        mVizFilePath(""),
+        mApplyBounds(false),
+        mMin(0.0), mMax(1.0)
 {
+    auto tBoundsInputs = aOpNode.getByName<Plato::InputData>("Bounds");
+    if( tBoundsInputs.size() > 1 )
+    {
+        ANALYZE_THROWERR("Multiple Bounds blocks found.");
+    }
+    else
+    if( tBoundsInputs.size() == 1 )
+    {
+        mMin = Plato::Get::Double(tBoundsInputs[0], "Min");
+        mMax = Plato::Get::Double(tBoundsInputs[0], "Max");
+        mApplyBounds = true;
+    }
+
     auto tOutputNode = aOpNode.getByName<Plato::InputData>("WriteOutput");
     if ( tOutputNode.size() == 1 )
     {
@@ -1488,6 +1503,12 @@ void MPMD_App::ApplyHelmholtz::operator()()
     mMyApp->mGlobalSolution = mMyApp->mProblem->solution(mMyApp->mControl);
 
     Plato::ScalarVector tFilteredControl = Kokkos::subview(mMyApp->mGlobalSolution.get("State"), 0, Kokkos::ALL());
+    if(mApplyBounds)
+    {
+        REPORT("Analyze Application - Apply Helmholtz Operation - Applying requested bounds.\n");
+        applyBounds(tFilteredControl, mMin, mMax);
+    }
+
     Kokkos::deep_copy(mMyApp->mControl, tFilteredControl);
 
     if(mMyApp->mDebugAnalyzeApp == true)
@@ -1501,6 +1522,17 @@ void MPMD_App::ApplyHelmholtz::operator()()
     {
         mMyApp->mProblem->output(mVizFilePath);
     }
+}
+
+/******************************************************************************/
+void applyBounds(Plato::ScalarVector aVec, Plato::Scalar aMin, Plato::Scalar aMax)
+/******************************************************************************/
+{
+    auto tNumEntries = aVec.extent(0);
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tIndex){
+        if(aVec(tIndex) > aMax) aVec(tIndex) = aMax;
+        if(aVec(tIndex) < aMin) aVec(tIndex) = aMin;
+    }, "apply bounds");
 }
 
 /******************************************************************************/

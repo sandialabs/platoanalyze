@@ -268,6 +268,9 @@ namespace Parabolic
                   // R_{u,u^N} += R_{u,v^N} R_{v,u^N}
                   Plato::blas1::axpy(-tR_vu, mJacobianV->entries(), mJacobianU->entries());
 
+                  Plato::OrdinalType tScale = (tNewtonIndex == 0) ? 1.0 : 0.0;
+                  this->applyStateConstraints(mJacobianU, mResidual, tScale);
+
                   if (mNumNewtonSteps > 1) {
                       auto tResidualNorm = Plato::blas1::norm(mResidual);
                       std::cout << " Residual norm: " << tResidualNorm << std::endl;
@@ -276,9 +279,6 @@ namespace Parabolic
                           break;
                       }
                   }
-
-                  Plato::OrdinalType tScale = (tNewtonIndex == 0) ? 1.0 : 0.0;
-                  this->applyStateConstraints(mJacobianU, mResidual, tScale);
 
                   Plato::ScalarVector tDeltaD("increment", tState.extent(0));
                   Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tDeltaD);

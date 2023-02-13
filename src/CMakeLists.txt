@@ -187,6 +187,7 @@ if(PARABOLIC)
     parabolic/InternalThermalEnergy.cpp
     parabolic/InternalThermoelasticEnergy.cpp
     parabolic/TemperatureAverage.cpp
+    parabolic/TMStressPNorm.cpp
     parabolic/ScalarFunctionBaseFactory.cpp
     parabolic/PhysicsScalarFunction.cpp
     parabolic/HeatEquationResidual.cpp

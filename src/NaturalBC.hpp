@@ -16,6 +16,7 @@
 #include "NaturalBCData.hpp"
 #include "SurfaceLoadIntegral.hpp"
 #include "SurfacePressureIntegral.hpp"
+#include "StefanBoltzmann.hpp"
 
 namespace Plato
 {
@@ -165,6 +166,12 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
         {
             Plato::SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfacePress(mSidesetName, aCurrentTime, mData->clone());
             tSurfacePress(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
+            break;
+        }
+        case Plato::Neumann::STEFAN_BOLTZMANN:
+        {
+            Plato::StefanBoltzmann<ElementType, DofsPerNode, DofOffset> tStefanBoltzmann(mSidesetName);
+            tStefanBoltzmann(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
             break;
         }
         default:

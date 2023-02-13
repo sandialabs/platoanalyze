@@ -10,8 +10,9 @@ namespace Plato
 /******************************************************************************/
 /*! Thermomechanical kinematics functor.
 
- Given a gradient matrix and displacement array, compute the strain
- and temperature gradient.
+ Given a gradient matrix and displacement array, compute the voigt strain
+ and temperature gradient. The voigt strain is e11, 22, e33, 2*e23, 2*e13, 2*e12
+ where e** are the tensor strains.
  */
 /******************************************************************************/
 template<typename ElementType>
@@ -57,8 +58,8 @@ public:
                 {
                     Plato::OrdinalType tLocalOrdinalI = tNodeIndex * mNumDofsPerNode + tDofIndexI;
                     Plato::OrdinalType tLocalOrdinalJ = tNodeIndex * mNumDofsPerNode + tDofIndexJ;
-                    aStrain(tVoigtTerm) += (aState(aCellOrdinal, tLocalOrdinalJ)
-                            * aGradient(tNodeIndex, tDofIndexI)
+                    aStrain(tVoigtTerm) += (
+                              aState(aCellOrdinal, tLocalOrdinalJ) * aGradient(tNodeIndex, tDofIndexI)
                             + aState(aCellOrdinal, tLocalOrdinalI) * aGradient(tNodeIndex, tDofIndexJ));
                 }
                 tVoigtTerm++;

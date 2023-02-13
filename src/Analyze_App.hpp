@@ -44,6 +44,9 @@ typedef int ESPType;
 namespace Plato
 {
 
+void applyBounds(Plato::ScalarVector aVec, Plato::Scalar aMin, Plato::Scalar aMax);
+
+
 /******************************************************************************/
 class MPMD_App : public Plato::Application
 /******************************************************************************/
@@ -953,6 +956,9 @@ private:
     private:
         bool mWriteNativeOutput;
         std::string mVizFilePath;
+
+        bool mApplyBounds;
+        Plato::Scalar mMin, mMax;
     };
     friend class ApplyHelmholtz;
     /******************************************************************************/
