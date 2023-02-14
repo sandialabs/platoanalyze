@@ -123,7 +123,7 @@ public:
 
         Plato::InterpolateFromNodal<ElementType, ElementType::mNumDofsPerNode, /*offset=*/0, ElementType::mNumDofsPerNode> interpolateFromNodal;
 
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+        Kokkos::parallel_for("contact force", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tCellOrdinal = tElementOrds(iCellOrdinal);
@@ -146,7 +146,7 @@ public:
                 }
             }
 
-        }, "contact force");
+        });
     }
 
 };

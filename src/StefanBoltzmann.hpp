@@ -147,7 +147,7 @@ void StefanBoltzmann<ElementType, DofsPerNode, DofOffset>::operator()(
     Plato::ScalarMultiVectorT<StateScalarType> tFlux("fluxes", tNumFaces, tNumPoints);
     evaluateSurfaceFlux(tFlux, aState, tElementOrds, tNodeOrds);
 
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+    Kokkos::parallel_for("project to surface", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal, const Plato::OrdinalType & aPointOrdinal)
     {
       auto tElementOrdinal = tElementOrds(aSideOrdinal);
@@ -175,7 +175,7 @@ void StefanBoltzmann<ElementType, DofsPerNode, DofOffset>::operator()(
           ResultScalarType tResult = tBasisValues(tNode)*tFlux(aSideOrdinal, aPointOrdinal)*tSurfaceArea;
           Kokkos::atomic_add(&aResult(tElementOrdinal,tElementDofOrdinal), tResult);
       }
-    }, "project to surface");
+    });
 }
 // class StefanBoltzmann::operator()
 

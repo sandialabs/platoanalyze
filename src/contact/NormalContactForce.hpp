@@ -49,7 +49,7 @@ public:
         Plato::SurfaceArea<ElementType> surfaceArea;
 
         auto tPenaltyValue = mPenaltyValue;
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
+        Kokkos::parallel_for("apply contact penalization and projection", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tGlobalCellOrdinal = aElementOrds(iCellOrdinal);
@@ -76,7 +76,7 @@ public:
             for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
                 aResult(iCellOrdinal, iGPOrdinal, iDim) = tPenaltyValue * tProduct * tWeightedNormalVec(iDim) / tSurfaceArea;
 
-        }, "apply contact penalization and projection");
+        });
 
     }
 
