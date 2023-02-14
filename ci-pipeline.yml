@@ -1,0 +1,70 @@
+stages: [setup-spack, build-engine, build-dependencies, build-install, test, clean-up]
+
+variables:
+  SPACK_REPO: https://github.com/platoengine/spack.git
+  PLATOENGINE_REPO: https://gitlab-ci-token:${CI_JOB_TOKEN}@cee-gitlab.sandia.gov/plato/platoengine.git
+  PLATOENGINE_BRANCH: develop
+  SPACK_MIRROR_DIR: /home/gitlab-runner/spack-mirror
+  RUNNER_HOME: /home/gitlab-runner
+
+include:
+  local: ci-templates.yml
+
+setup-spack:
+  extends: .setup-local-spack-installation
+  tags:
+    - ${CONFIGURATION}
+  variables:
+    SPACK_DIR: ${RUNNER_HOME}/${TRIGGER_SPACK_DIR}
+    SPACK_RESOURCE: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
+
+build-engine:
+  extends: .build-and-cache-pe-dependencies
+  variables:
+    PLATO_ENGINE_OPTIONS: ${TRIGGER_PLATO_ENGINE_OPTIONS}
+    THIRD_PARTY_OPTIONS_COMMON: ${TRIGGER_THIRD_PARTY_OPTIONS_COMMON}
+    SPACK_DIR: ${RUNNER_HOME}/${TRIGGER_SPACK_DIR}
+    SPACK_RESOURCE: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
+  tags:
+    - ${CONFIGURATION}
+  needs: ["setup-spack"]
+
+build-dependencies:
+  extends: .build-and-cache-pa-dependencies
+  variables:
+    PLATO_ANALYZE_OPTIONS: ${TRIGGER_PLATO_ANALYZE_OPTIONS}
+    PLATO_ENGINE_OPTIONS: ${TRIGGER_PLATO_ENGINE_OPTIONS}
+    THIRD_PARTY_OPTIONS_COMMON: ${TRIGGER_THIRD_PARTY_OPTIONS_COMMON}
+    THIRD_PARTY_OPTIONS_FOR_PA: ${TRIGGER_THIRD_PARTY_OPTIONS_FOR_PA}
+    SPACK_DIR: ${RUNNER_HOME}/${TRIGGER_SPACK_DIR}
+    SPACK_RESOURCE: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
+  tags:
+    - ${CONFIGURATION}
+  needs: ["build-engine"]
+
+build-install-platoanalyze:
+  extends: .build-install-platoanalyze
+  variables:
+    SPACK_DIR: ${RUNNER_HOME}/${TRIGGER_SPACK_DIR}
+    SPACK_RESOURCE: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
+  tags:
+    - ${CONFIGURATION}
+  needs: ["build-dependencies"]
+
+test-platoanalyze:
+  extends: .test-platoanalyze
+  variables:
+    SPACK_DIR: ${RUNNER_HOME}/${TRIGGER_SPACK_DIR}
+    SPACK_RESOURCE: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
+  tags:
+    - ${CONFIGURATION}
+  needs: ["build-install-platoanalyze"]
+
+clean-build-cache:
+  stage: clean-up
+  extends: .clean-temporary-build-cache
+  variables:
+    SPACK_RESOURCE: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
+  tags:
+    - ${CONFIGURATION}
+  needs: ["test-platoanalyze"]
