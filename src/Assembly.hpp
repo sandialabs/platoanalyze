@@ -1484,7 +1484,7 @@ assemble_jacobian_fad(
           ReturnVal                                       & aReturnValue)
 {
     Plato::OrdinalType tNumCells = aLocalCells.size();
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("assemble jacobian fad", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         auto tLocalCell = aLocalCells(aCellOrdinal); 
         auto tMapOrdinal = aNonLocalCellMap(aCellOrdinal * aNumNodesPerFace + aContributingNode); 
@@ -1502,7 +1502,7 @@ assemble_jacobian_fad(
                 }
             }
         }
-    }, "assemble jacobian fad");
+    });
 }
 // function assemble_jacobian_fad
 

@@ -60,7 +60,7 @@ public:
         auto& tMappedLocations = mMappedLocations;
         auto& tGetBasis = mGetBasis;
 
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+        Kokkos::parallel_for("projected surface displacement", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tLocalChildNodeOrd = tChildNodeOrdMap(iCellOrdinal*ElementType::mNumNodesPerFace + tChildNode);
@@ -86,7 +86,7 @@ public:
                 aSurfaceDisp(iCellOrdinal, iGPOrdinal, tDofIndex) = tScale * tBasisValues(tChildNode) * tSurfaceDisp(tDofIndex);
             }
 
-        }, "projected surface displacement");
+        });
     }
 
     void setChildNode(Plato::OrdinalType aChildNode)

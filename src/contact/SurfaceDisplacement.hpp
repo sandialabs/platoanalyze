@@ -45,7 +45,7 @@ public:
         auto tScale = this->mScale;
         auto& tSideSetLocalNodes = mSideSetLocalNodes;
 
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+        Kokkos::parallel_for("surface displacement", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tGlobalCellOrdinal = aElementOrds(iCellOrdinal);
@@ -64,7 +64,7 @@ public:
                 }
             }
 
-        }, "surface displacement");
+        });
     }
 
 private:
