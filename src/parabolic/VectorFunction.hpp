@@ -142,6 +142,15 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
     }
 
     /**************************************************************************//**
+    * \brief Return number of degrees of freedom per node
+    * \return number of degrees of freedom per node
+    ******************************************************************************/
+    Plato::OrdinalType numDofsPerNode() const
+    {
+        return (mNumDofsPerNode);
+    }
+
+    /**************************************************************************//**
     *
     * \brief Return state names
     *

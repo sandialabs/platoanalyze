@@ -44,15 +44,10 @@ namespace Parabolic
             mJacobianU     (Teuchos::null),
             mJacobianV     (Teuchos::null),
             mPDE           (aProblemParams.get<std::string>("PDE Constraint")),
-            mPhysics       (aProblemParams.get<std::string>("Physics"))
+            mPhysics       (aProblemParams.get<std::string>("Physics")),
+            mMPCs          (nullptr)
         /******************************************************************************/
         {
-            // parse boundary constraints
-            //
-            Plato::EssentialBCs<ElementType>
-                tEssentialBoundaryConditions(aProblemParams.sublist("Essential Boundary Conditions",false), mSpatialModel.Mesh);
-            tEssentialBoundaryConditions.get(mStateBcDofs, mStateBcValues);
-
             // parse criteria
             //
             if(aProblemParams.isSublist("Criteria"))
@@ -92,6 +87,25 @@ namespace Parabolic
                     mAdjoints_U = Plato::ScalarMultiVector("MyAdjoint U", mNumSteps, tLength);
                     mAdjoints_V = Plato::ScalarMultiVector("MyAdjoint V", mNumSteps, tLength);
                 }
+            }
+
+            if(aProblemParams.isSublist("Multipoint Constraints") == true)
+            {
+                Plato::OrdinalType tNumDofsPerNode = mPDEConstraint.numDofsPerNode();
+                auto & tMyParams = aProblemParams.sublist("Multipoint Constraints", false);
+                mMPCs = std::make_shared<Plato::MultipointConstraints>(mSpatialModel, tNumDofsPerNode, tMyParams);
+                mMPCs->setupTransform();
+            }
+
+            // parse boundary constraints
+            //
+            Plato::EssentialBCs<ElementType>
+                tEssentialBoundaryConditions(aProblemParams.sublist("Essential Boundary Conditions",false), mSpatialModel.Mesh);
+            tEssentialBoundaryConditions.get(mStateBcDofs, mStateBcValues);
+
+            if(mMPCs)
+            {
+                mMPCs->checkEssentialBcsConflicts(mStateBcDofs);
             }
 
             // parse computed fields
@@ -145,7 +159,7 @@ namespace Parabolic
             }
 
             Plato::SolverFactory tSolverFactory(aProblemParams.sublist("Linear Solver"), LinearSystemType::SYMMETRIC_INDEFINITE);
-            mSolver = tSolverFactory.create(aMesh->NumNodes(), aMachine, ElementType::mNumDofsPerNode);
+            mSolver = tSolverFactory.create(aMesh->NumNodes(), aMachine, ElementType::mNumDofsPerNode, mMPCs);
 
         }
 
