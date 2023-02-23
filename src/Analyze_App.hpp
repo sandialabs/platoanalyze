@@ -365,16 +365,6 @@ public:
                 Kokkos::deep_copy(tDataHostView, tCriter);
 
                 aSharedField.setData(tHostData);
-/* don't know if we need this or not.  Ask Josh */
-/*
-                if(mMeshMap != nullptr && tCriter.extent(0) != 0)
-                {
-                    Plato::ScalarVector tCriterionGradientX("unmapped", tCriter.extent(0));
-                    applyT(mMeshMap, tCriter, tCriterionGradientX);
-                    Kokkos::deep_copy(tCriter, tCriterionGradientX);
-                }
-                this->copyFieldFromAnalyze(tCriter, aSharedField);
-*/
             }
             else
             {
