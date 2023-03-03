@@ -74,8 +74,6 @@
   resource_group: ${TRIGGER_SPACK_DIR}_${CONFIGURATION}
   before_script:
     - echo "Building platoanalyze for branch ${CI_COMMIT_BRANCH}"
-#    - git submodule init
-#    - git submodule update # Skip regression and verification tests for now
     - cd ${SPACK_DIR}
     - source spack/share/spack/setup-env.sh
   script: 
@@ -102,7 +100,7 @@
     - spack load platoanalyze
     - export PLATOANALYZE_BUILD_DIR=$(spack location -b platoanalyze)
     - cd ${PLATOANALYZE_BUILD_DIR}
-    - ctest --output-junit test_report.xml || FAILURE=true
+    - ctest -R run --output-junit test_report.xml || FAILURE=true
     - mkdir -p ${CI_PROJECT_DIR}/jobs_scratch_dir/
     - cp test_report.xml ${CI_PROJECT_DIR}/jobs_scratch_dir/
     - if [ ${FAILURE} == "true" ]; then (exit 1); fi # Fail if ctest failed

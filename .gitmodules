@@ -4,3 +4,6 @@
 [submodule "verification"]
 	path = tests/verification
 	url = https://github.com/platoengine/verification.git
+[submodule "integration_tests"]
+	path = integration_tests
+	url = https://github.com/platoengine/integration_tests.git

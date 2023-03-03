@@ -462,6 +462,14 @@ if(PLATOANALYZE_SMOKE_TESTS)
   add_subdirectory(tests)
 endif()
 
+if(PLATOANALYZE_INTEGRATION_TESTS)
+  add_subdirectory(integration_tests/analyze)
+endif()
+
+if(PLATOANALYZE_DAKOTA_TESTS)
+  add_subdirectory(integration_tests/dakota_analyze)
+endif()
+
 set(PLATOANALYZE_KEY_INTS
     PLATOANALYZE_VERSION_MAJOR
     PLATOANALYZE_VERSION_MINOR
