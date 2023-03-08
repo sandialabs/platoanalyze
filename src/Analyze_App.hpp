@@ -22,10 +22,6 @@
 #include "alg/ParseInput.hpp"
 
 
-#ifdef PLATO_GEOMETRY
-#include "Plato_MLS.hpp"
-#endif
-
 #ifdef PLATO_MESHMAP
   #include "Plato_MeshMap.hpp"
   typedef Plato::Geometry::MeshMap<Plato::Scalar> MeshMapType;
@@ -540,14 +536,6 @@ private:
     void createESPData();
 
     /******************************************************************************//**
-     * \fn createMLSData
-     * \brief parse and create MLS object.  This function should be called if the 
-     * underlying mesh changes.  Any existing MLS objects are freed.
-    **********************************************************************************/
-    void createMLSData();
-
-
-    /******************************************************************************//**
      * \fn resetProblemMetaData
      * \brief Reset Analyze problem metadata. Metadata includes state, control, and \n
      * respective gradients.
@@ -683,12 +671,6 @@ private:
         ANALYZE_THROWERR("Not compiled with MeshMap.");
 #endif
     }
-
-#ifdef PLATO_GEOMETRY
-    struct MLSstruct
-    {   Plato::any mls; int dimension;};
-    std::map<std::string,std::shared_ptr<MLSstruct>> mMLS;
-#endif
 
     std::map<std::string, std::vector<Plato::Scalar>> mValuesMap;
 
@@ -966,106 +948,6 @@ private:
         std::string mVizFilePath;
     };
     friend class ApplyHelmholtzGradient;
-#endif
-#ifdef PLATO_GEOMETRY
-    // MLS sub-class
-    //
-    /******************************************************************************/
-    template<int SpaceDim, typename ScalarType=Plato::Scalar>
-    class ComputeMLSField : public LocalOp
-    {
-    public:
-        ComputeMLSField( MPMD_App* aMyApp, Plato::InputData& aNode, Teuchos::RCP<ProblemDefinition> aOpDef) :
-        LocalOp(aMyApp, aNode, aOpDef), mStrMLSValues("MLS Values")
-        {
-            auto tName = Plato::Get::String(aNode,"MLSName");
-            auto& tMLS = mMyApp->mMLS;
-            if( tMLS.count(tName) == 0 )
-            {
-                throw Plato::ParsingException("Requested PointArray that doesn't exist.");
-            }
-            m_MLS = mMyApp->mMLS[tName];
-
-            mMyApp->mValuesMap[mStrMLSValues] = std::vector<Plato::Scalar>();
-        }
-
-        ~ComputeMLSField()
-        {}
-
-        void operator()()
-        {
-            // pull MLS point values into device
-            std::vector<Plato::Scalar>& tLocalData = mMyApp->mValuesMap["MLS Values"];
-            Kokkos::View<ScalarType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> t_pointsHost(tLocalData.data(),tLocalData.size());
-            Kokkos::View<ScalarType*, Kokkos::DefaultExecutionSpace::memory_space> t_pointValues("point values",tLocalData.size());
-            Kokkos::deep_copy(t_pointValues, t_pointsHost);
-
-            Plato::any_cast<MLS_Type>(m_MLS->mls).f(t_pointValues, mMyApp->mCoords, mMyApp->mControl);
-        }
-
-    private:
-        std::shared_ptr<MLSstruct> m_MLS;
-        typedef typename Plato::Geometry::MovingLeastSquares<SpaceDim, ScalarType> MLS_Type;
-        std::string mStrMLSValues;
-    };
-    template<int SpaceDim, typename ScalarType> friend class ComputeMLSField;
-
-    // MLS sub-class
-    //
-    /******************************************************************************/
-    template<int SpaceDim, typename ScalarType=Plato::Scalar>
-    class ComputePerturbedMLSField : public LocalOp
-    {
-    public:
-        ComputePerturbedMLSField( MPMD_App* aMyApp, Plato::InputData& aNode, Teuchos::RCP<ProblemDefinition> aOpDef) :
-        LocalOp(aMyApp, aNode, aOpDef), mStrMLSValues("MLS Values")
-        {
-            auto tName = Plato::Get::String(aNode,"MLSName");
-            auto& tMLS = mMyApp->mMLS;
-            if( tMLS.count(tName) == 0 )
-            {
-                throw Plato::ParsingException("Requested PointArray that doesn't exist.");
-            }
-            m_MLS = mMyApp->mMLS[tName];
-
-            mDelta = (ScalarType)(Plato::Get::Double(aNode,"Delta"));
-        }
-
-        ~ComputePerturbedMLSField()
-        {}
-
-        void operator()()
-        {
-
-            std::vector<Plato::Scalar>& tLocalData = mMyApp->mValuesMap["MLS Values"];
-
-            int tIndex=0;
-            ScalarType tDelta=0.0;
-            if( mParameters.count("Perturbed Index") )
-            {
-                tIndex = std::round(mParameters["Perturbed Index"]->mValue);
-                tDelta = mDelta;
-            }
-            tLocalData[tIndex] += tDelta;
-
-            // pull MLS point values into device
-            Kokkos::View<ScalarType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> t_pointsHost(tLocalData.data(),tLocalData.size());
-            Kokkos::View<ScalarType*, Kokkos::DefaultExecutionSpace::memory_space> t_pointValues("point values",tLocalData.size());
-            Kokkos::deep_copy(t_pointValues, t_pointsHost);
-
-            Plato::any_cast<MLS_Type>(m_MLS->mls).f(t_pointValues, mMyApp->mCoords, mMyApp->mControl);
-
-            tLocalData[tIndex] -= tDelta;
-        }
-
-    private:
-        std::shared_ptr<MLSstruct> m_MLS;
-        typedef typename Plato::Geometry::MovingLeastSquares<SpaceDim, ScalarType> MLS_Type;
-        std::string mStrMLSValues;
-        ScalarType mDelta;
-    };
-    template<int SpaceDim, typename ScalarType> friend class ComputeMLSField;
-
 #endif
 
     std::map<std::string, LocalOp*> mOperationMap;

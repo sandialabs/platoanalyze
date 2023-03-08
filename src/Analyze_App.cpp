@@ -125,7 +125,6 @@ void MPMD_App::createLocalData()
 {
     this->createMeshMapData();
     this->createESPData();
-    this->createMLSData();
 }
 
 /******************************************************************************/
@@ -185,44 +184,6 @@ void MPMD_App::createESPData()
   }
 
 }
-
-/******************************************************************************/
-void MPMD_App::createMLSData()
-/******************************************************************************/
-{
-#ifdef PLATO_GEOMETRY
-  mMLS.clear();
-#endif // PLATO_GEOMETRY
-
-  // parse/create the MLS PointArrays
-  auto tPointArrayInputs = mInputData.getByName<Plato::InputData>("PointArray");
-  for(auto tPointArrayInput=tPointArrayInputs.begin(); tPointArrayInput!=tPointArrayInputs.end(); ++tPointArrayInput)
-  {
-#ifdef PLATO_GEOMETRY
-      auto tPointArrayName = Plato::Get::String(*tPointArrayInput,"Name");
-      auto tPointArrayDims = Plato::Get::Int(*tPointArrayInput,"Dimensions");
-      if( mMLS.count(tPointArrayName) != 0 )
-      {
-          throw Plato::ParsingException("PointArray names must be unique.");
-      }
-      else
-      {
-          if( tPointArrayDims == 1 )
-              mMLS[tPointArrayName] = std::make_shared<MLSstruct>(MLSstruct({Plato::any(Plato::Geometry::MovingLeastSquares<1,Plato::Scalar>(*tPointArrayInput)),1}));
-          else
-          if( tPointArrayDims == 2 )
-              mMLS[tPointArrayName] = std::make_shared<MLSstruct>(MLSstruct({Plato::any(Plato::Geometry::MovingLeastSquares<2,Plato::Scalar>(*tPointArrayInput)),2}));
-          else
-          if( tPointArrayDims == 3 )
-              mMLS[tPointArrayName] = std::make_shared<MLSstruct>(MLSstruct({Plato::any(Plato::Geometry::MovingLeastSquares<3,Plato::Scalar>(*tPointArrayInput)),3}));
-      }
-#else
-      throw Plato::ParsingException("PlatoApp was not compiled with PointArray support.  Turn on 'PLATO_GEOMETRY' option and rebuild.");
-#endif // PLATO_GEOMETRY
-  }
-}
-
-
 
 /******************************************************************************/
 MPMD_App::MPMD_App(int aArgc, char **aArgv, MPI_Comm& aLocalComm) :
@@ -419,48 +380,6 @@ void MPMD_App::initialize()
   #else
       throw Plato::ParsingException("MPMD_App was not compiled with Helmholtz enabled.  Turn on 'PLATO_HELMHOLTZ' option and rebuild.");
   #endif // PLATO_HELMHOLTZ
-    } else
-    if(tStrFunction == "ComputeMLSField"){
-  #ifdef PLATO_GEOMETRY
-      auto tMLSName = Plato::Get::String(tOperationNode,"MLSName");
-      if( mMLS.count(tMLSName) == 0 )
-      { throw Plato::ParsingException("MPMD_App::ComputeMLSField: Requested a PointArray that isn't defined."); }
-
-      if( mCoords.extent(0) == 0 )
-      {
-        mCoords = getCoords();
-      }
-
-      auto tMLS = mMLS[tMLSName];
-      if( tMLS->dimension == 3 ) { mOperationMap[tStrName] = new ComputeMLSField<3>(this, tOperationNode, opDef); }
-      else
-      if( tMLS->dimension == 2 ) { mOperationMap[tStrName] = new ComputeMLSField<2>(this, tOperationNode, opDef); }
-      else
-      if( tMLS->dimension == 1 ) { mOperationMap[tStrName] = new ComputeMLSField<1>(this, tOperationNode, opDef); }
-  #else
-      throw Plato::ParsingException("MPMD_App was not compiled with ComputeMLSField enabled.  Turn on 'PLATO_GEOMETRY' option and rebuild.");
-  #endif // PLATO_GEOMETRY
-    } else
-    if(tStrFunction == "ComputePerturbedMLSField"){
-  #ifdef PLATO_GEOMETRY
-      auto tMLSName = Plato::Get::String(tOperationNode,"MLSName");
-      if( mMLS.count(tMLSName) == 0 )
-      { throw Plato::ParsingException("MPMD_App::ComputePerturbedMLSField: Requested a PointArray that isn't defined."); }
-
-      if( mCoords.extent(0) == 0 )
-      {
-        mCoords = getCoords();
-      }
-
-      auto tMLS = mMLS[tMLSName];
-      if( tMLS->dimension == 3 ) { mOperationMap[tStrName] = new ComputePerturbedMLSField<3>(this, tOperationNode, opDef); }
-      else
-      if( tMLS->dimension == 2 ) { mOperationMap[tStrName] = new ComputePerturbedMLSField<2>(this, tOperationNode, opDef); }
-      else
-      if( tMLS->dimension == 1 ) { mOperationMap[tStrName] = new ComputePerturbedMLSField<1>(this, tOperationNode, opDef); }
-  #else
-      throw Plato::ParsingException("MPMD_App was not compiled with ComputePerturbedMLSField enabled.  Turn on 'PLATO_GEOMETRY' option and rebuild.");
-  #endif // PLATO_GEOMETRY
     }
   }
 }
