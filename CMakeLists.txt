@@ -11,7 +11,6 @@ option(PLATOANALYZE_ENABLE_CUDA "Build for Nvidia GPUs using CUDA" OFF)
 option(PLATOANALYZE_ENABLE_MPMD "Enable the Plato interface MPMD executable" OFF)
 
 if(PLATOANALYZE_ENABLE_MPMD)
-  option(PLATOANALYZE_ENABLE_GEOMETRY "Enable Plato Geometry" OFF)
   option(PLATOANALYZE_ENABLE_ESP      "Enable ESP"            OFF)
 endif()
 
@@ -375,14 +374,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
   target_include_directories(analyze_MPMD PRIVATE "${PLATOENGINE_PREFIX}/include")
 
   target_include_directories(analyze PRIVATE "${PLATOENGINE_PREFIX}/include")
-
-  if (PLATOANALYZE_ENABLE_GEOMETRY)
-    add_definitions(-DPLATO_GEOMETRY)
-    find_library(PLATO_GEOMETRY_MLS_LIB NAMES PlatoGeometryMLS PATHS ${PLATOENGINE_PREFIX}/lib)
-    find_library(PLATO_GEOMETRY_COGENT_LIB NAMES PlatoGeometryCogent PATHS ${PLATOENGINE_PREFIX}/lib)
-    find_package(Pamgen REQUIRED)
-    set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_MLS_LIB} ${PLATO_GEOMETRY_COGENT_LIB} Pamgen::pamgen)
-  endif()
 
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
     message("Default mesh is EngineMesh")
