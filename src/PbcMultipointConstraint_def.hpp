@@ -71,10 +71,13 @@ PbcMultipointConstraint(const Plato::SpatialModel & aSpatialModel,
         ANALYZE_THROWERR(tMsg.str())
     }
     
+    // parse RHS value
+    auto tTolerance = aParam.get<Plato::Scalar>("Search Tolerance", 0.2);
+
     // find elements that contain mapped child node locations (in specified domain)
     Plato::OrdinalVector tParentElements("mapped elements", tNumberChildNodes);
     Plato::Geometry::findParentElements<ElementT, Plato::Scalar>
-      (aSpatialModel.Mesh, tDomainCellMap, tChildNodeLocations, tMappedChildNodeLocations, tParentElements);
+      (aSpatialModel.Mesh, tDomainCellMap, tChildNodeLocations, tMappedChildNodeLocations, tParentElements, tTolerance);
 
     // get global IDs of unique parent nodes
     Plato::OrdinalVector tParentGlobalLocalMap;

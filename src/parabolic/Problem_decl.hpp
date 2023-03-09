@@ -65,6 +65,8 @@ namespace Parabolic
         Plato::OrdinalVector mStateBcDofs;
         Plato::ScalarVector mStateBcValues;
 
+        std::shared_ptr<Plato::MultipointConstraints> mMPCs;
+
         rcp<Plato::AbstractSolver> mSolver;
 
         std::string mPDE; /*!< partial differential equation type */
