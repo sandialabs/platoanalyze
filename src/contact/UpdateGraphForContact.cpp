@@ -206,7 +206,8 @@ UpdateGraphForContact::updateNodeOrds()
     auto tChildOffsetMap = mChildOffsetMap;
     auto tAllGraphOrdinals = mAllGraphOrdinals;
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumTotalNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
+    Kokkos::parallel_for("node ordinals accounting for contact",
+                         Kokkos::RangePolicy<>(0, tNumTotalNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
     {
         auto tNewFrom = tFullOffsetMap(aNodeOrdinal);
 
@@ -232,7 +233,7 @@ UpdateGraphForContact::updateNodeOrds()
                 tFullNodeOrds(tIndex) = tAllGraphOrdinals(tFatGraphOffset++);
             }
         }
-    }, "node ordinals accounting for contact");
+    });
 }
 
 void 
@@ -244,7 +245,7 @@ UpdateGraphForContact::countNonzerosForTranspose
 
     Kokkos::resize(aOffsetMap, mFullOffsetMap.size());
     Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNumTotalNodes), KOKKOS_LAMBDA(OrdinalType iNodeOrdinal)
+    Kokkos::parallel_for("nonzeros", Kokkos::RangePolicy<OrdinalType>(0, tNumTotalNodes), KOKKOS_LAMBDA(OrdinalType iNodeOrdinal)
     {
         auto tFrom = tFullOffsetMap(iNodeOrdinal);
         auto tTo = tFullOffsetMap(iNodeOrdinal + 1);
@@ -253,7 +254,7 @@ UpdateGraphForContact::countNonzerosForTranspose
             auto iColumnIndex = tFullNodeOrds(tEntryIndex);
             Kokkos::atomic_increment(&aOffsetMap(iColumnIndex));
         }
-    }, "nonzeros");
+    });
 }
 
 Plato::OrdinalType 
@@ -286,7 +287,7 @@ UpdateGraphForContact::constructTransposeNodeOrds
 
     Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
     Plato::OrdinalVector tOffsetT("offsets", tNumTotalNodes);
-    Kokkos::parallel_for(Kokkos::RangePolicy<OrdinalType>(0, tNumTotalNodes), KOKKOS_LAMBDA(OrdinalType iNodeOrdinal)
+    Kokkos::parallel_for("node ords", Kokkos::RangePolicy<OrdinalType>(0, tNumTotalNodes), KOKKOS_LAMBDA(OrdinalType iNodeOrdinal)
     {
         auto tFrom = tFullOffsetMap(iNodeOrdinal);
         auto tTo = tFullOffsetMap(iNodeOrdinal + 1);
@@ -297,7 +298,7 @@ UpdateGraphForContact::constructTransposeNodeOrds
             auto iEntryIndexT = aOffsetMap(iRowIndexT) + tMyOffset;
             aNodeOrds(iEntryIndexT) = iNodeOrdinal;
         }
-    }, "node ords");
+    });
 }
 
 }
