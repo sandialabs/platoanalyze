@@ -49,7 +49,7 @@ public:
     Plato::OrdinalType 
     constructTransposeOffsetMap(Plato::OrdinalVector & aOffsetMap) const;
 
-    Plato::OrdinalType 
+    void
     constructTransposeNodeOrds
     (const Plato::OrdinalVector & aOffsetMap,
            Plato::OrdinalVector & aNodeOrds) const;
