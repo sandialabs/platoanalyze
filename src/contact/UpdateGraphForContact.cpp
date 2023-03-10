@@ -74,8 +74,8 @@ UpdateGraphForContact::extractChildNodeOffsets(const Plato::OrdinalVector & aChi
 {
     auto tNumChildNodes = aChildNodes.size();
 
-    auto& tOffsetMap = mOffsetMap;
-    auto& tChildOffsetMap = mChildOffsetMap;
+    auto tOffsetMap = mOffsetMap;
+    auto tChildOffsetMap = mChildOffsetMap;
 
     Plato::OrdinalType tTotalConnectedNodes(0);
     Kokkos::parallel_scan (Kokkos::RangePolicy<>(0,tNumChildNodes),
@@ -102,13 +102,13 @@ UpdateGraphForContact::storeUniqueParentNodeContributions
     auto tNumChildNodes = aChildNodes.size();
     
     auto tNumNodesPerElement = mNumNodesPerElement;
-    auto& tMarkedChildNodes = mMarkedChildNodes;
-    auto& tOffsetMap = mOffsetMap;
-    auto& tNodeOrds = mNodeOrds;
-    auto& tChildOffsetMap = mChildOffsetMap;
-    auto& tConnectivity = mConnectivity;
-    auto& tAllGraphOrdinals = mAllGraphOrdinals;
-    auto& tNumConnectedNodes = mNumConnectedNodes;
+    auto tMarkedChildNodes = mMarkedChildNodes;
+    auto tOffsetMap = mOffsetMap;
+    auto tNodeOrds = mNodeOrds;
+    auto tChildOffsetMap = mChildOffsetMap;
+    auto tConnectivity = mConnectivity;
+    auto tAllGraphOrdinals = mAllGraphOrdinals;
+    auto tNumConnectedNodes = mNumConnectedNodes;
 
     Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType iChildNode)
     {
@@ -167,10 +167,10 @@ Plato::OrdinalType
 UpdateGraphForContact::updateOffsetMap()
 {
     auto tNumTotalNodes = mFullOffsetMap.size() - 1;
-    auto& tOffsetMap = mOffsetMap;
-    auto& tFullOffsetMap = mFullOffsetMap;
-    auto& tMarkedChildNodes = mMarkedChildNodes;
-    auto& tNumConnectedNodes = mNumConnectedNodes;
+    auto tOffsetMap = mOffsetMap;
+    auto tFullOffsetMap = mFullOffsetMap;
+    auto tMarkedChildNodes = mMarkedChildNodes;
+    auto tNumConnectedNodes = mNumConnectedNodes;
 
     Plato::OrdinalType tNumOffsets(0);
     Kokkos::parallel_scan (Kokkos::RangePolicy<>(0,tNumTotalNodes),
@@ -197,14 +197,14 @@ UpdateGraphForContact::updateNodeOrds()
 {
     auto tNumTotalNodes = mFullOffsetMap.size() - 1;
     auto tNumNodesPerElement = mNumNodesPerElement;
-    auto& tOffsetMap = mOffsetMap;
-    auto& tNodeOrds = mNodeOrds;
-    auto& tFullOffsetMap = mFullOffsetMap;
-    auto& tFullNodeOrds = mFullNodeOrds;
-    auto& tMarkedChildNodes = mMarkedChildNodes;
-    auto& tNumConnectedNodes = mNumConnectedNodes;
-    auto& tChildOffsetMap = mChildOffsetMap;
-    auto& tAllGraphOrdinals = mAllGraphOrdinals;
+    auto tOffsetMap = mOffsetMap;
+    auto tNodeOrds = mNodeOrds;
+    auto tFullOffsetMap = mFullOffsetMap;
+    auto tFullNodeOrds = mFullNodeOrds;
+    auto tMarkedChildNodes = mMarkedChildNodes;
+    auto tNumConnectedNodes = mNumConnectedNodes;
+    auto tChildOffsetMap = mChildOffsetMap;
+    auto tAllGraphOrdinals = mAllGraphOrdinals;
 
     Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumTotalNodes), KOKKOS_LAMBDA(Plato::OrdinalType aNodeOrdinal)
     {
@@ -239,8 +239,8 @@ void
 UpdateGraphForContact::countNonzerosForTranspose
 (Plato::OrdinalVector & aOffsetMap) const
 {
-    auto& tFullOffsetMap = mFullOffsetMap;
-    auto& tFullNodeOrds = mFullNodeOrds;
+    auto tFullOffsetMap = mFullOffsetMap;
+    auto tFullNodeOrds = mFullNodeOrds;
 
     Kokkos::resize(aOffsetMap, mFullOffsetMap.size());
     Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
@@ -276,13 +276,13 @@ UpdateGraphForContact::constructTransposeOffsetMap
     return tNumEntries;
 }
 
-Plato::OrdinalType 
+void
 UpdateGraphForContact::constructTransposeNodeOrds
 (const Plato::OrdinalVector & aOffsetMap,
        Plato::OrdinalVector & aNodeOrds) const
 {
-    auto& tFullOffsetMap = mFullOffsetMap;
-    auto& tFullNodeOrds = mFullNodeOrds;
+    auto tFullOffsetMap = mFullOffsetMap;
+    auto tFullNodeOrds = mFullNodeOrds;
 
     Plato::OrdinalType tNumTotalNodes = aOffsetMap.size() - 1;
     Plato::OrdinalVector tOffsetT("offsets", tNumTotalNodes);
