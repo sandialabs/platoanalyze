@@ -1,9 +1,9 @@
 [submodule "tests/plato"]
 	path = tests/regression
-	url = git@cee-gitlab.sandia.gov:plato/platoanalyze-tests.git
+	url = ../platoanalyze-tests.git
 [submodule "verification"]
 	path = tests/verification
-	url = git@cee-gitlab.sandia.gov:plato/platoanalyze-verification.git
+	url = ../platoanalyze-verification.git
 [submodule "integration_tests"]
 	path = integration_tests
-	url = git@cee-gitlab.sandia.gov:plato/integration_tests.git
+	url = ../integration_tests.git
