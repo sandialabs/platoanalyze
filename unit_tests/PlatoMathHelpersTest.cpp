@@ -34,7 +34,6 @@
 #include "KokkosBatched_Trsm_Decl.hpp"
 #include "KokkosBatched_Trsm_Serial_Impl.hpp"
 
-#include <Kokkos_Concepts.hpp>
 #include "KokkosSparse_spgemm.hpp"
 #include "KokkosSparse_spadd.hpp"
 #include "KokkosSparse_CrsMatrix.hpp"

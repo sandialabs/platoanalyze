@@ -54,9 +54,9 @@ public:
         Plato::ScalarArray3DT<ResultScalarType> tContactForce("contact force at cubature points", tNumFaces, tNumPoints, NumDofsPerNode);
         (*mComputeContactForce)(mElementOrds, mLocalNodeOrds, tSurfaceDisplacement, aConfig, tContactForce);
 
-        auto& tElementOrds = mElementOrds;
-        auto& tLocalNodeOrds = mLocalNodeOrds;
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+        auto tElementOrds = mElementOrds;
+        auto tLocalNodeOrds = mLocalNodeOrds;
+        Kokkos::parallel_for("project contact force to nodes", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tCellOrdinal = tElementOrds(iCellOrdinal);
@@ -84,7 +84,7 @@ public:
                 }
             }
 
-        }, "project contact force to nodes");
+        });
 
     }
 

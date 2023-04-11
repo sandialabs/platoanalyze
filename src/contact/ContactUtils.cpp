@@ -122,12 +122,12 @@ Plato::ScalarMultiVector compute_node_locations
     Plato::ScalarMultiVector tLocations("node locations", tSpaceDim, tNumNodes);
 
     auto tCoords = aMesh->Coordinates();
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(int nodeOrdinal)
+    Kokkos::parallel_for("get coords", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(int nodeOrdinal)
     {
         auto tNodeOrdinal = aNodes(nodeOrdinal);
         for (Plato::OrdinalType iDim = 0; iDim < tSpaceDim; iDim++)
             tLocations(iDim, nodeOrdinal) = tCoords(tNodeOrdinal*tSpaceDim+iDim);
-    }, "get coords");
+    });
 
     return tLocations;
 }
@@ -147,12 +147,12 @@ Plato::ScalarMultiVector map_node_locations
     Plato::OrdinalType tNumNodes = aLocations.extent(1);
     Plato::ScalarMultiVector tMappedLocations("mapped node locations", tSpaceDim, tNumNodes);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(int nodeOrdinal)
+    Kokkos::parallel_for("map coords", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(int nodeOrdinal)
     {
         tMappedLocations(0, nodeOrdinal) = aLocations(0, nodeOrdinal) + tTranslationX;
         tMappedLocations(1, nodeOrdinal) = aLocations(1, nodeOrdinal) + tTranslationY;
         tMappedLocations(2, nodeOrdinal) = aLocations(2, nodeOrdinal) + tTranslationZ;
-    }, "map coords");
+    });
 
     return tMappedLocations;
 }
@@ -168,7 +168,7 @@ Plato::OrdinalVector global_local_child_node_ord_map
     {
         Plato::OrdinalType tOrdinal = aChildNodes(nodeOrdinal);
         tMap(tOrdinal) = nodeOrdinal;
-    }, "");
+    });
 
     return tMap;
 }
@@ -195,7 +195,7 @@ Plato::OrdinalVector convert_to_elementwise_map
             auto tGlobalNodeOrdinal = tConnectivity(tCellOrdinal*tNumNodesPerElement + tLocalNodeOrdinal);
             tElementWiseMap(cellOrdinal*aNumNodesPerFace + tNodeIndex) = aMap(tGlobalNodeOrdinal);
         }
-    }, "");
+    });
 
     return tElementWiseMap;
 }

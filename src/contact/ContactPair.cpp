@@ -109,22 +109,22 @@ void populate_full_contact_arrays
         auto tChildNodes = tPair.surfaceA.childNodes();
         auto tParentElements = tPair.surfaceA.parentElements();
         Plato::OrdinalType tNumNodes = tChildNodes.size();
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
+        Kokkos::parallel_for("store child nodes and parent elements", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
         {
             aChildNodes(tOffset + nodeOrdinal) = tChildNodes(nodeOrdinal);
             aParentElements(tOffset + nodeOrdinal) = tParentElements(nodeOrdinal);
-        }, "store child nodes and parent elements");
+        });
         tOffset += tNumNodes;
 
         tChildNodes = tPair.surfaceB.childNodes();
         tParentElements = tPair.surfaceB.parentElements();
         tNumNodes = tChildNodes.size();
         auto tScaledGap = scale_initial_gap(tPair.initialGap, -1.0);
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
+        Kokkos::parallel_for("store child nodes and parent elements", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
         {
             aChildNodes(tOffset + nodeOrdinal) = tChildNodes(nodeOrdinal);
             aParentElements(tOffset + nodeOrdinal) = tParentElements(nodeOrdinal);
-        }, "store child nodes and parent elements");
+        });
         tOffset += tNumNodes;
     }
 }
@@ -140,7 +140,7 @@ void check_for_repeated_child_nodes
     {
         auto tChildNode = aChildNodes(nodeOrdinal);
         Kokkos::atomic_increment(&tCheckChildNodes(tChildNode));
-    }, "");
+    });
 
     Plato::OrdinalType tNumRepeatedChild(0);
     Kokkos::parallel_reduce(Kokkos::RangePolicy<>(0, aNumMeshNodes),

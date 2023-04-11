@@ -12,7 +12,6 @@
 #include <KokkosSparse_spadd.hpp>
 #include <KokkosSparse_spgemm.hpp>
 #include <KokkosKernels_IOUtils.hpp>
-#include <Kokkos_Concepts.hpp>
 
 #include <assert.h>
 #include <vector>

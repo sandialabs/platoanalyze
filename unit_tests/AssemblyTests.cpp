@@ -48,7 +48,7 @@ public:
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
 
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
+        Kokkos::parallel_for("identity residual", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tCubPoint = tCubPoints(iGPOrdinal);
@@ -65,7 +65,7 @@ public:
                 }
             }
 
-        }, "identity residual");
+        });
     }
 
     void evaluateInterpolate
@@ -81,7 +81,7 @@ public:
 
         Plato::InterpolateFromNodal<ElementType, ElementType::mNumDofsPerNode, /*offset=*/0, ElementType::mNumDofsPerNode> interpolateFromNodal;
 
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
+        Kokkos::parallel_for("interpolate residual", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tCubPoint = tCubPoints(iGPOrdinal);
@@ -101,7 +101,7 @@ public:
                 }
             }
 
-        }, "interpolate residual");
+        });
     }
 
     void evaluateNonlocal
@@ -354,10 +354,10 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected)
     Plato::OrdinalVector tEntryOrds("store entry ordinals", tCells.size());
 
     // PARALLEL FOR
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tCells.size()), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    Kokkos::parallel_for("get entry ordinals", Kokkos::RangePolicy<Plato::OrdinalType>(0,tCells.size()), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
     {
         tEntryOrds(iOrd) = tJacobianMatEntryOrdinal(dCells(iOrd), dLocalDofsI(iOrd), dLocalDofsJ(iOrd));
-    }, "get entry ordinals");
+    });
 
     auto tEntryOrds_Host = Plato::TestHelpers::get( tEntryOrds );
     for(int iOrd=0; iOrd<tOrdinals_Gold.size(); iOrd++)
@@ -814,10 +814,10 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected_LocalOrdin
     Plato::OrdinalVector tEntryOrds("store entry ordinals", tCells.size());
 
     // PARALLEL FOR
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tCells.size()), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    Kokkos::parallel_for("get entry ordinals", Kokkos::RangePolicy<Plato::OrdinalType>(0,tCells.size()), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
     {
         tEntryOrds(iOrd) = tJacobianMatEntryOrdinal(dCells(iOrd), dLocalDofsI(iOrd), dLocalDofsJ(iOrd));
-    }, "get entry ordinals");
+    });
 
     auto tEntryOrds_Host = Plato::TestHelpers::get( tEntryOrds );
     for(int iOrd=0; iOrd<tOrdinals_Gold.size(); iOrd++)
@@ -862,7 +862,7 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected_NonLocalOr
     Plato::OrdinalVector tEntryOrds("store entry ordinals", tChildElements.size());
 
     // PARALLEL FOR
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,tChildElements.size()), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    Kokkos::parallel_for("get entry ordinals", Kokkos::RangePolicy<Plato::OrdinalType>(0,tChildElements.size()), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
     {
         auto tChildElement = tChildElements(iOrd);
         auto tLocalNodeOrd = tChildFaceLocalNodes(dLocalNodeOrdsI(iOrd));
@@ -870,7 +870,7 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected_NonLocalOr
         auto tParentElement = tParentElements(tParentOrd);
         auto tLocalDofI = tLocalNodeOrd * tNumDofsPerNode + dNodeDofsI(iOrd);
         tEntryOrds(iOrd) = tJacobianMatEntryOrdinal(tChildElement, tParentElement, tLocalDofI, dLocalDofsJ(iOrd));
-    }, "get entry ordinals");
+    });
 
     // Notes to decipher how gold values were computed:
     //  * Child elements: 2, 4

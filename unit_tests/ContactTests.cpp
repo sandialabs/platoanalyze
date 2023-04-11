@@ -60,7 +60,7 @@ public:
 
         auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
 
-        Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
+        Kokkos::parallel_for("contact force", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumFaces, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
         {
             auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
@@ -78,7 +78,7 @@ public:
                 }
             }
 
-        }, "contact force");
+        });
     }
 
 };
@@ -409,12 +409,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_CompliantContactForce)
     std::vector<Plato::Scalar> tProjectedDisp = {45.3, 66.54, 77.88};
     auto dProjectedDisp = Plato::TestHelpers::create_device_view(tProjectedDisp);
     Plato::ScalarArray3D tFullProjectedDisp("",tNumChildElements,tNumPoints,ElementType::mNumSpatialDims);
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumChildElements, tNumPoints}),
+    Kokkos::parallel_for("fill in for device", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumChildElements, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
     {
         for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
             tFullProjectedDisp(iCellOrdinal,iGPOrdinal,iDim) = dProjectedDisp(iDim);
-    }, "fill in for device");
+    });
 
     Plato::ScalarArray3D tPenalizedDisp("",tNumChildElements,tNumPoints,ElementType::mNumSpatialDims);
     Plato::ScalarArray3D tConfig("Dummy Config Workset", tMesh->NumElements(), ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims);
@@ -482,12 +482,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_NormalContactForce)
     std::vector<Plato::Scalar> tProjectedDisp = {45.3, 66.54, 77.88};
     auto dProjectedDisp = Plato::TestHelpers::create_device_view(tProjectedDisp);
     Plato::ScalarArray3D tFullProjectedDisp("",tNumChildElements,tNumPoints,ElementType::mNumSpatialDims);
-    Kokkos::parallel_for(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumChildElements, tNumPoints}),
+    Kokkos::parallel_for("fill in for device", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumChildElements, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
     {
         for(Plato::OrdinalType iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
             tFullProjectedDisp(iCellOrdinal,iGPOrdinal,iDim) = dProjectedDisp(iDim);
-    }, "fill in for device");
+    });
 
     Plato::ScalarArray3D tPenalizedDisp("",tNumChildElements,tNumPoints,ElementType::mNumSpatialDims);
     (*computeContactForce)(tChildElements, tChildFaceLocalNodes, tFullProjectedDisp, tConfigWS, tPenalizedDisp);
@@ -853,12 +853,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementJacobian)
     Plato::ScalarVector tADerivative1("", ElementType::mNumDofsPerCell);
     Plato::ScalarVector tADerivative2("", ElementType::mNumDofsPerCell);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    Kokkos::parallel_for("get derivatives for testing", Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
     {
         tADerivative0(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 0).dx(iOrd);
         tADerivative1(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 1).dx(iOrd);
         tADerivative2(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 2).dx(iOrd);
-    }, "get derivatives for testing");
+    });
 
     auto tADerivative0_Host = Plato::TestHelpers::get( tADerivative0 );
     auto tADerivative1_Host = Plato::TestHelpers::get( tADerivative1 );
@@ -880,12 +880,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementJacobian)
     Plato::ScalarVector tBDerivative1("", ElementType::mNumDofsPerCell);
     Plato::ScalarVector tBDerivative2("", ElementType::mNumDofsPerCell);
 
-    Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+    Kokkos::parallel_for("get derivatives for testing", Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
     {
         tBDerivative0(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 0).dx(iOrd);
         tBDerivative1(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 1).dx(iOrd);
         tBDerivative2(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 2).dx(iOrd);
-    }, "get derivatives for testing");
+    });
 
     auto tBDerivative0_Host = Plato::TestHelpers::get( tBDerivative0 );
     auto tBDerivative1_Host = Plato::TestHelpers::get( tBDerivative1 );
@@ -972,12 +972,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
         Plato::ScalarVector tADerivative0("", ElementType::mNumDofsPerCell);
         Plato::ScalarVector tADerivative1("", ElementType::mNumDofsPerCell);
         Plato::ScalarVector tADerivative2("", ElementType::mNumDofsPerCell);
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+        Kokkos::parallel_for("get derivatives for testing", Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
         {
             tADerivative0(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 0).dx(iOrd);
             tADerivative1(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 1).dx(iOrd);
             tADerivative2(iOrd) = tSurfaceDispA(tChildCellOrdinal, 0, 2).dx(iOrd);
-        }, "get derivatives for testing");
+        });
 
         auto tADerivative0_Host = Plato::TestHelpers::get( tADerivative0 );
         auto tADerivative1_Host = Plato::TestHelpers::get( tADerivative1 );
@@ -1018,12 +1018,12 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
         Plato::ScalarVector tBDerivative0("", ElementType::mNumDofsPerCell);
         Plato::ScalarVector tBDerivative1("", ElementType::mNumDofsPerCell);
         Plato::ScalarVector tBDerivative2("", ElementType::mNumDofsPerCell);
-        Kokkos::parallel_for(Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
+        Kokkos::parallel_for("get derivatives for testing", Kokkos::RangePolicy<Plato::OrdinalType>(0,ElementType::mNumDofsPerCell), KOKKOS_LAMBDA(Plato::OrdinalType iOrd)
         {
             tBDerivative0(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 0).dx(iOrd);
             tBDerivative1(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 1).dx(iOrd);
             tBDerivative2(iOrd) = tSurfaceDispB(tChildCellOrdinal, 0, 2).dx(iOrd);
-        }, "get derivatives for testing");
+        });
 
         auto tBDerivative0_Host = Plato::TestHelpers::get( tBDerivative0 );
         auto tBDerivative1_Host = Plato::TestHelpers::get( tBDerivative1 );

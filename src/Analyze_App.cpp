@@ -1448,10 +1448,10 @@ void applyBounds(Plato::ScalarVector aVec, Plato::Scalar aMin, Plato::Scalar aMa
 /******************************************************************************/
 {
     auto tNumEntries = aVec.extent(0);
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tIndex){
+    Kokkos::parallel_for("apply bounds", Kokkos::RangePolicy<>(0, tNumEntries), KOKKOS_LAMBDA(const Plato::OrdinalType & tIndex){
         if(aVec(tIndex) > aMax) aVec(tIndex) = aMax;
         if(aVec(tIndex) < aMin) aVec(tIndex) = aMin;
-    }, "apply bounds");
+    });
 }
 
 /******************************************************************************/
