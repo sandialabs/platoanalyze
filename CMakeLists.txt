@@ -103,6 +103,15 @@ if (PLATOANALYZE_ENABLE_CUDA)
 ENDIF ()
 
 MESSAGE("-- CXX Flags being used in this build are : ${CMAKE_CXX_FLAGS}")
+if( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+  # PA has several tests that are seg-faulting with O2, switch to O1
+  STRING(REPLACE "O2" "O1" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
+  MESSAGE(STATUS "CXX build specific flags : ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  # PA has several tests that are seg-faulting with O2, switch to O1
+  STRING(REPLACE "O3" "O1" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
+  MESSAGE(STATUS "CXX build specific flags : ${CMAKE_CXX_FLAGS_RELEASE}")
+endif()
 
 # disallow in-source builds
 
