@@ -7,6 +7,8 @@
 #pragma once
 
 #include <Kokkos_Macros.hpp>
+#include <KokkosBlas1_fill.hpp>
+#include <KokkosBlas1_scal.hpp>
 
 #include "AnalyzeMacros.hpp"
 #include "PlatoStaticsTypes.hpp"
@@ -120,12 +122,7 @@ inline void fill(const Plato::Scalar & aInput, const VectorT & aVector)
     {
         ANALYZE_THROWERR("BLAS 1 FILL: INPUT SCALAR IS NOT A FINITE NUMBER.\n")
     }
-
-    Plato::OrdinalType tNumLocalVals = aVector.size();
-    Kokkos::parallel_for("fill vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
-    {
-        aVector(aOrdinal) = aInput;
-    });
+    KokkosBlas::fill(aVector, aInput);
 }
 // function fill
 
@@ -221,12 +218,7 @@ inline void scale(const Plato::Scalar & aInput, const VecT & aVector)
         tMsg << "BLAS 1 SCALE: INPUT VECTOR WITH LABEL '" << aVector.label() << "' IS EMPTY.";
         ANALYZE_THROWERR(tMsg.str().c_str())
     }
-
-    Plato::OrdinalType tNumLocalVals = aVector.size();
-    Kokkos::parallel_for("scale vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
-    {
-        aVector(aOrdinal) *= aInput;
-    });
+    KokkosBlas::scal(aVector, aInput, aVector);
 }
 // function scale
 
