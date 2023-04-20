@@ -1724,6 +1724,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 /******************************************************************************/
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_Rect3)
 {
+  const bool transpose = false;
+
   auto tMatrixA1 = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapA1 = { 0, 4, 8 };
   std::vector<Plato::OrdinalType> tColMapA1 = { 0, 1, 2, 3, 0, 1, 2, 3 };
@@ -1788,8 +1790,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   OrdinalView tOutRowMapB1A1 ("output row map", tNumRowsOneB1A1 + 1);
   spgemm_symbolic ( &tKernel, tNumRowsOneB1A1, tNumRowsTwoB1A1, tNumColsTwoB1A1,
-      tMatOneRowMapB1A1, tMatOneColMapB1A1, /*transpose=*/false,
-      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, /*transpose=*/false,
+      tMatOneRowMapB1A1, tMatOneColMapB1A1, transpose,
+      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, transpose,
       tOutRowMapB1A1
   );
 
@@ -1801,8 +1803,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
     tOutValuesB1A1 = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValuesB1A1);
   }
   spgemm_numeric( &tKernel, tNumRowsOneB1A1, tNumRowsTwoB1A1, tNumColsTwoB1A1,
-      tMatOneRowMapB1A1, tMatOneColMapB1A1, tMatOneValuesB1A1, /*transpose=*/false,
-      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, tMatTwoValuesB1A1, /*transpose=*/false,
+      tMatOneRowMapB1A1, tMatOneColMapB1A1, tMatOneValuesB1A1, transpose,
+      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, tMatTwoValuesB1A1, transpose,
       tOutRowMapB1A1, tOutColMapB1A1, tOutValuesB1A1
   );
 
@@ -1828,8 +1830,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   OrdinalView tOutRowMapA1B3 ("output row map", tNumRowsOneA1B3 + 1);
   spgemm_symbolic ( &tKernel, tNumRowsOneA1B3, tNumRowsTwoA1B3, tNumColsTwoA1B3,
-      tMatOneRowMapA1B3, tMatOneColMapA1B3, /*transpose=*/false,
-      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, /*transpose=*/false,
+      tMatOneRowMapA1B3, tMatOneColMapA1B3, transpose,
+      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, transpose,
       tOutRowMapA1B3
   );
 
@@ -1841,8 +1843,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
     tOutValuesA1B3 = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValuesA1B3);
   }
   spgemm_numeric( &tKernel, tNumRowsOneA1B3, tNumRowsTwoA1B3, tNumColsTwoA1B3,
-      tMatOneRowMapA1B3, tMatOneColMapA1B3, tMatOneValuesA1B3, /*transpose=*/false,
-      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, tMatTwoValuesA1B3, /*transpose=*/false,
+      tMatOneRowMapA1B3, tMatOneColMapA1B3, tMatOneValuesA1B3, transpose,
+      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, tMatTwoValuesA1B3, transpose,
       tOutRowMapA1B3, tOutColMapA1B3, tOutValuesA1B3
   );
 
@@ -1868,8 +1870,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   OrdinalView tOutRowMapA2B3 ("output row map", tNumRowsOneA2B3 + 1);
   spgemm_symbolic ( &tKernel, tNumRowsOneA2B3, tNumRowsTwoA2B3, tNumColsTwoA2B3,
-      tMatOneRowMapA2B3, tMatOneColMapA2B3, /*transpose=*/false,
-      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, /*transpose=*/false,
+      tMatOneRowMapA2B3, tMatOneColMapA2B3, transpose,
+      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, transpose,
       tOutRowMapA2B3
   );
 
@@ -1881,8 +1883,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
     tOutValuesA2B3 = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValuesA2B3);
   }
   spgemm_numeric( &tKernel, tNumRowsOneA2B3, tNumRowsTwoA2B3, tNumColsTwoA2B3,
-      tMatOneRowMapA2B3, tMatOneColMapA2B3, tMatOneValuesA2B3, /*transpose=*/false,
-      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, tMatTwoValuesA2B3, /*transpose=*/false,
+      tMatOneRowMapA2B3, tMatOneColMapA2B3, tMatOneValuesA2B3, transpose,
+      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, tMatTwoValuesA2B3, transpose,
       tOutRowMapA2B3, tOutColMapA2B3, tOutValuesA2B3
   );
 
