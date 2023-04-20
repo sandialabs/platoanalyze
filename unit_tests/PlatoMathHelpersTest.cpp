@@ -1744,13 +1744,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   std::vector<Plato::Scalar>      tValuesB1 = { 1, 1, 1, 1 };
   pth::set_matrix_data(tMatrixB1, tRowMapB1, tColMapB1, tValuesB1);
 
-  /* auto tMatrixB2 = Teuchos::rcp( new Plato::CrsMatrixType(4, 4, 2, 2) ); */
-  /* std::vector<Plato::OrdinalType> tRowMapB2 = { 0, 2, 4 }; */
-  /* std::vector<Plato::OrdinalType> tColMapB2 = { 0, 1, 0, 1 }; */
-  /* std::vector<Plato::Scalar>      tValuesB2 = */ 
-  /*   { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; */
-  /* pth::set_matrix_data(tMatrixB2, tRowMapB2, tColMapB2, tValuesB2); */
-
   auto tMatrixB3 = Teuchos::rcp( new Plato::CrsMatrixType(4, 2, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapB3 = { 0, 2, 4, 6, 8 };
   std::vector<Plato::OrdinalType> tColMapB3 = { 0, 1, 0, 1, 0, 1, 0, 1 };
@@ -1758,7 +1751,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   pth::set_matrix_data(tMatrixB3, tRowMapB3, tColMapB3, tValuesB3);
 
   auto tMatrixB1A1      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 1, 1) );
-  /* auto tMatrixA1B2      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 2, 2) ); */
   auto tMatrixA1B3      = Teuchos::rcp( new Plato::CrsMatrixType(2, 2, 1, 1) );
   auto tMatrixA2B3      = Teuchos::rcp( new Plato::CrsMatrixType(4, 2, 1, 1) );
 
@@ -1902,12 +1894,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   // Slow Dumb MatrixMatrixMultiply
   auto tSlowDumbMatrixB1A1      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 1, 1) );
-  /* auto tSlowDumbMatrixA1B2      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 2, 2) ); */
   auto tSlowDumbMatrixA1B3      = Teuchos::rcp( new Plato::CrsMatrixType(2, 2, 1, 1) );
   auto tSlowDumbMatrixA2B3      = Teuchos::rcp( new Plato::CrsMatrixType(4, 2, 1, 1) );
 
   pth::slow_dumb_matrix_matrix_multiply( tMatrixB1, tMatrixA1, tSlowDumbMatrixB1A1);
-  /* pth::slow_dumb_matrix_matrix_multiply( tMatrixA1, tMatrixB2, tSlowDumbMatrixA1B2); */
   pth::slow_dumb_matrix_matrix_multiply( tMatrixA1, tMatrixB3, tSlowDumbMatrixA1B3);
   pth::slow_dumb_matrix_matrix_multiply( tMatrixA2, tMatrixB3, tSlowDumbMatrixA2B3);
 
@@ -1915,11 +1905,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   TEST_ASSERT(pth::is_equivalent(tMatrixB1A1->rowMap(),
                             tMatrixB1A1->columnIndices(), tMatrixB1A1->entries(),
                             tSlowDumbMatrixB1A1->columnIndices(), tSlowDumbMatrixB1A1->entries()));
-
-  /* TEST_ASSERT(pth::is_same(tMatrixA1B2->rowMap(), tSlowDumbMatrixA1B2->rowMap())); */
-  /* TEST_ASSERT(pth::is_equivalent(tMatrixA1B2->rowMap(), */
-  /*                           tMatrixA1B2->columnIndices(), tMatrixA1B2->entries(), */
-  /*                           tSlowDumbMatrixA1B2->columnIndices(), tSlowDumbMatrixA1B2->entries())); */
 
   TEST_ASSERT(pth::is_same(tMatrixA1B3->rowMap(), tSlowDumbMatrixA1B3->rowMap()));
   TEST_ASSERT(pth::is_equivalent(tMatrixA1B3->rowMap(),
