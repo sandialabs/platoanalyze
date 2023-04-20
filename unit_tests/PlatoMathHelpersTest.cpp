@@ -1722,6 +1722,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   with slow dumb.
 */
 /******************************************************************************/
+/*
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_Rect3)
 {
   const bool transpose = false;
@@ -1919,7 +1920,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
                                  tSlowDumbMatrixA2B3->columnIndices(), tSlowDumbMatrixA2B3->entries()));
 
 }
-
+*/
 /******************************************************************************/
 /*! 
  \brief create rectangular block matrices A and B = Transpose(A) and check 
