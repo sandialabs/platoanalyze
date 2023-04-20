@@ -65,7 +65,7 @@ Plato::Array<2,ScalarType> schurSym(
     Plato::Array<2,ScalarType> tRetVal;
     tRetVal(0) = 1.0;
     tRetVal(1) = 0.0;
-    if(std::fabs(g) > std::numeric_limits<ScalarType>::epsilon())
+    if(Kokkos::fabs(g) > DBL_EPSILON)
     {
         ScalarType t = (h-f)/(2.0*g);
         if(t >= 0.0)

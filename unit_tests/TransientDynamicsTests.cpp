@@ -1842,7 +1842,6 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  constexpr int cSpaceDim=3;
   auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
   // create input for u-form problem
@@ -2075,7 +2074,6 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  constexpr int cSpaceDim=3;
   auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
   // create input for u-form problem
@@ -2324,7 +2322,6 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
   // create test mesh
   //
   constexpr int cMeshWidth=2;
-  constexpr int cSpaceDim=3;
   auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
   // create input for u-form problem
