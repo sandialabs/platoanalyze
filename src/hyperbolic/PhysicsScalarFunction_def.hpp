@@ -119,7 +119,9 @@ namespace Hyperbolic
         auto tStatesDot = aSolution.get("StateDot");
         auto tStatesDotDot = aSolution.get("StateDotDot");
 
-        ResultScalar tReturnVal(0.0);
+        auto tNumSteps = tStates.extent(0);
+
+        std::vector<ResultScalar> tValues(tNumSteps, 0.0);
         for(const auto& tDomain : mSpatialModel.Domains)
         {
             auto tNumCells = tDomain.numCells();
@@ -144,10 +146,8 @@ namespace Hyperbolic
             Plato::ScalarMultiVectorT<StateDotScalar>    tStateDotWS    ("state dot workset",     tNumCells, mNumDofsPerCell);
             Plato::ScalarMultiVectorT<StateDotDotScalar> tStateDotDotWS ("state dot dot workset", tNumCells, mNumDofsPerCell);
 
-            auto tNumSteps = tStates.extent(0);
-            auto tLastStepIndex = tNumSteps - 1;
-            for( decltype(tNumSteps) tStepIndex = tLastStepIndex; tStepIndex > 0; --tStepIndex ){
-
+            for( decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex )
+            {
                 // workset state
                 //
                 auto tState = Kokkos::subview(tStates, tStepIndex, Kokkos::ALL());
@@ -170,11 +170,16 @@ namespace Hyperbolic
 
                 // sum across elements
                 //
-                tReturnVal += Plato::local_result_sum<Plato::Scalar>( tNumCells, tResult);
+                tValues[tStepIndex] += Plato::local_result_sum<Plato::Scalar>( tNumCells, tResult);
             }
         }
-        auto tName = mSpatialModel.Domains.front().getDomainName();
-        mValueFunctions.at(tName)->postEvaluate( tReturnVal );
+        ResultScalar tReturnVal(0.0);
+        for( decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex )
+        {
+          auto tName = mSpatialModel.Domains.front().getDomainName();
+          mValueFunctions.at(tName)->postEvaluate( tValues[tStepIndex] );
+          tReturnVal += tValues[tStepIndex];
+        }
 
         return tReturnVal;
     }
@@ -555,11 +560,13 @@ namespace Hyperbolic
         auto tStatesDot = aSolution.get("StateDot");
         auto tStatesDotDot = aSolution.get("StateDotDot");
 
+        auto tNumSteps = tStates.extent(0);
+
         // create return vector
         //
-        Plato::ScalarVector tObjGradientZ("objective gradient control", mNumNodes);
+        Plato::ScalarMultiVector tObjGradientZSteps("objective gradient wrt control", tNumSteps, mNumNodes);
 
-        Plato::Scalar tValue(0.0);
+        std::vector<Plato::Scalar> tValues(tNumSteps, 0.0);
         for(const auto& tDomain : mSpatialModel.Domains)
         {
             auto tNumCells = tDomain.numCells();
@@ -583,10 +590,8 @@ namespace Hyperbolic
             //
             Plato::ScalarVectorT<ResultScalar> tResult("result", tNumCells);
 
-            auto tNumSteps = tStates.extent(0);
-            auto tLastStepIndex = tNumSteps - 1;
-            for( decltype(tNumSteps) tStepIndex = tLastStepIndex; tStepIndex > 0; --tStepIndex ){
-
+            for( decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex )
+            {
                 // workset state
                 //
                 auto tState = Kokkos::subview(tStates, tStepIndex, Kokkos::ALL());
@@ -607,14 +612,21 @@ namespace Hyperbolic
                 Kokkos::deep_copy(tResult, 0.0);
                 mGradientZFunctions.at(tName)->evaluate( tStateWS, tStateDotWS, tStateDotDotWS, tControlWS, tConfigWS, tResult, aTimeStep );
 
+                Plato::ScalarVector tObjGradientZStep = Kokkos::subview(tObjGradientZSteps, tStepIndex, Kokkos::ALL());
                 Plato::assemble_scalar_gradient_fad<mNumNodesPerCell>
-                    (tDomain, mControlEntryOrdinal, tResult, tObjGradientZ);
+                    (tDomain, mControlEntryOrdinal, tResult, tObjGradientZStep);
 
-                tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
+                tValues[tStepIndex] += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
             }
         }
-        auto tName = mSpatialModel.Domains.front().getDomainName();
-        mGradientZFunctions.at(tName)->postEvaluate( tObjGradientZ, tValue );
+        Plato::ScalarVector tObjGradientZ("objective gradient wrt control", mNumNodes);
+        for( decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex )
+        {
+          Plato::ScalarVector tObjGradientZStep = Kokkos::subview(tObjGradientZSteps, tStepIndex, Kokkos::ALL());
+          auto tName = mSpatialModel.Domains.front().getDomainName();
+          mGradientZFunctions.at(tName)->postEvaluate( tObjGradientZStep, tValues[tStepIndex] );
+          Plato::blas1::axpy(1.0, tObjGradientZStep, tObjGradientZ);
+        }
 
         return tObjGradientZ;
     }
