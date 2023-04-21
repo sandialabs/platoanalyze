@@ -620,7 +620,7 @@ MatrixMinusMatrix(      Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOne,
     KokkosSparse::Experimental::spadd_symbolic< KernelHandle,
       OrdinalView, OrdinalView,
       OrdinalView, OrdinalView,
-      OrdinalView, OrdinalView
+      OrdinalView
     >
     ( &tKernel,
       tMatOneRowMap, tMatOneColMap,

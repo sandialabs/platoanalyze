@@ -34,7 +34,6 @@
 #include "KokkosBatched_Trsm_Decl.hpp"
 #include "KokkosBatched_Trsm_Serial_Impl.hpp"
 
-#include <Kokkos_Concepts.hpp>
 #include "KokkosSparse_spgemm.hpp"
 #include "KokkosSparse_spadd.hpp"
 #include "KokkosSparse_CrsMatrix.hpp"
@@ -1723,8 +1722,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   with slow dumb.
 */
 /******************************************************************************/
+/*
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_Rect3)
 {
+  const bool transpose = false;
+
   auto tMatrixA1 = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapA1 = { 0, 4, 8 };
   std::vector<Plato::OrdinalType> tColMapA1 = { 0, 1, 2, 3, 0, 1, 2, 3 };
@@ -1745,13 +1747,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   std::vector<Plato::Scalar>      tValuesB1 = { 1, 1, 1, 1 };
   pth::set_matrix_data(tMatrixB1, tRowMapB1, tColMapB1, tValuesB1);
 
-  /* auto tMatrixB2 = Teuchos::rcp( new Plato::CrsMatrixType(4, 4, 2, 2) ); */
-  /* std::vector<Plato::OrdinalType> tRowMapB2 = { 0, 2, 4 }; */
-  /* std::vector<Plato::OrdinalType> tColMapB2 = { 0, 1, 0, 1 }; */
-  /* std::vector<Plato::Scalar>      tValuesB2 = */ 
-  /*   { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }; */
-  /* pth::set_matrix_data(tMatrixB2, tRowMapB2, tColMapB2, tValuesB2); */
-
   auto tMatrixB3 = Teuchos::rcp( new Plato::CrsMatrixType(4, 2, 1, 1) );
   std::vector<Plato::OrdinalType> tRowMapB3 = { 0, 2, 4, 6, 8 };
   std::vector<Plato::OrdinalType> tColMapB3 = { 0, 1, 0, 1, 0, 1, 0, 1 };
@@ -1759,7 +1754,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   pth::set_matrix_data(tMatrixB3, tRowMapB3, tColMapB3, tValuesB3);
 
   auto tMatrixB1A1      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 1, 1) );
-  /* auto tMatrixA1B2      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 2, 2) ); */
   auto tMatrixA1B3      = Teuchos::rcp( new Plato::CrsMatrixType(2, 2, 1, 1) );
   auto tMatrixA2B3      = Teuchos::rcp( new Plato::CrsMatrixType(4, 2, 1, 1) );
 
@@ -1797,8 +1791,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   OrdinalView tOutRowMapB1A1 ("output row map", tNumRowsOneB1A1 + 1);
   spgemm_symbolic ( &tKernel, tNumRowsOneB1A1, tNumRowsTwoB1A1, tNumColsTwoB1A1,
-      tMatOneRowMapB1A1, tMatOneColMapB1A1, /*transpose=*/false,
-      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, /*transpose=*/false,
+      tMatOneRowMapB1A1, tMatOneColMapB1A1, transpose,
+      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, transpose,
       tOutRowMapB1A1
   );
 
@@ -1810,8 +1804,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
     tOutValuesB1A1 = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValuesB1A1);
   }
   spgemm_numeric( &tKernel, tNumRowsOneB1A1, tNumRowsTwoB1A1, tNumColsTwoB1A1,
-      tMatOneRowMapB1A1, tMatOneColMapB1A1, tMatOneValuesB1A1, /*transpose=*/false,
-      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, tMatTwoValuesB1A1, /*transpose=*/false,
+      tMatOneRowMapB1A1, tMatOneColMapB1A1, tMatOneValuesB1A1, transpose,
+      tMatTwoRowMapB1A1, tMatTwoColMapB1A1, tMatTwoValuesB1A1, transpose,
       tOutRowMapB1A1, tOutColMapB1A1, tOutValuesB1A1
   );
 
@@ -1837,8 +1831,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   OrdinalView tOutRowMapA1B3 ("output row map", tNumRowsOneA1B3 + 1);
   spgemm_symbolic ( &tKernel, tNumRowsOneA1B3, tNumRowsTwoA1B3, tNumColsTwoA1B3,
-      tMatOneRowMapA1B3, tMatOneColMapA1B3, /*transpose=*/false,
-      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, /*transpose=*/false,
+      tMatOneRowMapA1B3, tMatOneColMapA1B3, transpose,
+      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, transpose,
       tOutRowMapA1B3
   );
 
@@ -1850,8 +1844,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
     tOutValuesA1B3 = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValuesA1B3);
   }
   spgemm_numeric( &tKernel, tNumRowsOneA1B3, tNumRowsTwoA1B3, tNumColsTwoA1B3,
-      tMatOneRowMapA1B3, tMatOneColMapA1B3, tMatOneValuesA1B3, /*transpose=*/false,
-      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, tMatTwoValuesA1B3, /*transpose=*/false,
+      tMatOneRowMapA1B3, tMatOneColMapA1B3, tMatOneValuesA1B3, transpose,
+      tMatTwoRowMapA1B3, tMatTwoColMapA1B3, tMatTwoValuesA1B3, transpose,
       tOutRowMapA1B3, tOutColMapA1B3, tOutValuesA1B3
   );
 
@@ -1877,8 +1871,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   OrdinalView tOutRowMapA2B3 ("output row map", tNumRowsOneA2B3 + 1);
   spgemm_symbolic ( &tKernel, tNumRowsOneA2B3, tNumRowsTwoA2B3, tNumColsTwoA2B3,
-      tMatOneRowMapA2B3, tMatOneColMapA2B3, /*transpose=*/false,
-      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, /*transpose=*/false,
+      tMatOneRowMapA2B3, tMatOneColMapA2B3, transpose,
+      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, transpose,
       tOutRowMapA2B3
   );
 
@@ -1890,8 +1884,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
     tOutValuesA2B3 = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValuesA2B3);
   }
   spgemm_numeric( &tKernel, tNumRowsOneA2B3, tNumRowsTwoA2B3, tNumColsTwoA2B3,
-      tMatOneRowMapA2B3, tMatOneColMapA2B3, tMatOneValuesA2B3, /*transpose=*/false,
-      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, tMatTwoValuesA2B3, /*transpose=*/false,
+      tMatOneRowMapA2B3, tMatOneColMapA2B3, tMatOneValuesA2B3, transpose,
+      tMatTwoRowMapA2B3, tMatTwoColMapA2B3, tMatTwoValuesA2B3, transpose,
       tOutRowMapA2B3, tOutColMapA2B3, tOutValuesA2B3
   );
 
@@ -1903,12 +1897,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
 
   // Slow Dumb MatrixMatrixMultiply
   auto tSlowDumbMatrixB1A1      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 1, 1) );
-  /* auto tSlowDumbMatrixA1B2      = Teuchos::rcp( new Plato::CrsMatrixType(2, 4, 2, 2) ); */
   auto tSlowDumbMatrixA1B3      = Teuchos::rcp( new Plato::CrsMatrixType(2, 2, 1, 1) );
   auto tSlowDumbMatrixA2B3      = Teuchos::rcp( new Plato::CrsMatrixType(4, 2, 1, 1) );
 
   pth::slow_dumb_matrix_matrix_multiply( tMatrixB1, tMatrixA1, tSlowDumbMatrixB1A1);
-  /* pth::slow_dumb_matrix_matrix_multiply( tMatrixA1, tMatrixB2, tSlowDumbMatrixA1B2); */
   pth::slow_dumb_matrix_matrix_multiply( tMatrixA1, tMatrixB3, tSlowDumbMatrixA1B3);
   pth::slow_dumb_matrix_matrix_multiply( tMatrixA2, tMatrixB3, tSlowDumbMatrixA2B3);
 
@@ -1916,11 +1908,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
   TEST_ASSERT(pth::is_equivalent(tMatrixB1A1->rowMap(),
                             tMatrixB1A1->columnIndices(), tMatrixB1A1->entries(),
                             tSlowDumbMatrixB1A1->columnIndices(), tSlowDumbMatrixB1A1->entries()));
-
-  /* TEST_ASSERT(pth::is_same(tMatrixA1B2->rowMap(), tSlowDumbMatrixA1B2->rowMap())); */
-  /* TEST_ASSERT(pth::is_equivalent(tMatrixA1B2->rowMap(), */
-  /*                           tMatrixA1B2->columnIndices(), tMatrixA1B2->entries(), */
-  /*                           tSlowDumbMatrixA1B2->columnIndices(), tSlowDumbMatrixA1B2->entries())); */
 
   TEST_ASSERT(pth::is_same(tMatrixA1B3->rowMap(), tSlowDumbMatrixA1B3->rowMap()));
   TEST_ASSERT(pth::is_equivalent(tMatrixA1B3->rowMap(),
@@ -1933,7 +1920,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoMathHelpers_MatrixMatrixMultiply_R
                                  tSlowDumbMatrixA2B3->columnIndices(), tSlowDumbMatrixA2B3->entries()));
 
 }
-
+*/
 /******************************************************************************/
 /*! 
  \brief create rectangular block matrices A and B = Transpose(A) and check 

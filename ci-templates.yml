@@ -10,7 +10,10 @@
     - |
       if [ -d "./spack" ] 
       then
-        git -C ./spack pull
+        pushd ./spack
+        git remote set-url origin ${SPACK_REPO} # Update token
+        git pull
+        popd
         source spack/share/spack/setup-env.sh
         spack env activate --without-view .
         spack remove -af

@@ -47,10 +47,10 @@ SpatialDomain::setMaskLocalElemIDs
     mMaskedElemLids = Plato::OrdinalVector("masked element list", tNumElems);
 
     auto tTotalElemLids = mTotalElemLids;
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+    Kokkos::parallel_for("get element ids", Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
     {
         tTotalElemLids(aCellOrdinal) = tElemLids[aCellOrdinal];
-    }, "get element ids");
+    });
     Kokkos::deep_copy(mMaskedElemLids, mTotalElemLids);
 }
 
@@ -133,7 +133,7 @@ SpatialDomain::parseVaryingCartesianBasis(const Teuchos::ParameterList& aParamLi
         Kokkos::resize(mVaryingCartesianBasis, tNumCells, tBasisDim, tBasisDim);
 
         auto& tVaryingCartesianBasis = mVaryingCartesianBasis;
-        Kokkos::parallel_for(Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
+        Kokkos::parallel_for("get basis", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
         {
             auto iCellOrdinal = tCellOrds(aCellOrdinal);
             for(decltype(tBasisDim) iDim=0; iDim<tBasisDim; iDim++)
@@ -143,7 +143,7 @@ SpatialDomain::parseVaryingCartesianBasis(const Teuchos::ParameterList& aParamLi
                     tVaryingCartesianBasis(aCellOrdinal, iDim, jDim) = tBasisField(iCellOrdinal, iDim, jDim);
                 }
             }
-        }, "get basis");
+        });
     }
     else
     {
