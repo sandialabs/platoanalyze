@@ -274,7 +274,10 @@ Analyze_dealloc(Analyze* self)
     self->mNumInstances--;
     if(self->mNumInstances == 0)
     {
-        Kokkos::finalize();
+        if(Kokkos::is_initialized())
+        {
+            Kokkos::finalize();
+        }
         Plato::MeshFactory::finalize();
         int isFinalized;
         MPI_Finalized(&isFinalized);
