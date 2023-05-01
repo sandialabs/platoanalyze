@@ -402,7 +402,7 @@ if (PLATOANALYZE_ENABLE_MPMD)
     message("adding define: -DPLATO_ESP")
     add_definitions(-DPLATO_ESP)
     include_directories( ${ESP_INC_DIR} )
-    set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_ESP_LIB} ${OCSM_LIB} ${ESP_LIB} ${OCSM_LIB})
+    set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_ESP_LIB} ${ESP_LIB} ${OCSM_LIB})
   endif()
 
   option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
@@ -413,8 +413,8 @@ if (PLATOANALYZE_ENABLE_MPMD)
     set(PLATO_LIBS ${PLATO_LIBS} ${ShyLU_NodeTacho_LIBRARIES})
   endif()
 
-  target_link_libraries(Analyze_App ${PLATO_LIBS} ${PLATO_LIBS} analyzelib)
-  target_link_libraries(analyze_MPMD Analyze_App ${PLATO_LIBS} ${PLATO_LIBS} analyzelib Boost::serialization)
+  target_link_libraries(Analyze_App ${PLATO_LIBS} analyzelib)
+  target_link_libraries(analyze_MPMD Analyze_App ${PLATO_LIBS} analyzelib Boost::serialization)
   target_compile_definitions(analyze_MPMD PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
 
   if (PLATOANALYZE_ENABLE_PYTHON)
