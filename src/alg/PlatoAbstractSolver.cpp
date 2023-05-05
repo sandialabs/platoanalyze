@@ -5,32 +5,44 @@
 #include "PlatoMathHelpers.hpp"
 #include "BLAS1.hpp"
 
+#include <string_view>
+
 namespace Plato {
 
-AbstractSolver::AbstractSolver() : mSystemMPCs(nullptr), mAlpha(0.0) {}
-AbstractSolver::AbstractSolver(const Teuchos::ParameterList & aSolverParams) : mSystemMPCs(nullptr) {parse(aSolverParams);}
-
-AbstractSolver::AbstractSolver(
-  const Teuchos::ParameterList & aSolverParams,
-  std::shared_ptr<Plato::MultipointConstraints> aMPCs
-) : mSystemMPCs(aMPCs) {parse(aSolverParams);}
-
-void AbstractSolver::parse(const Teuchos::ParameterList & aSolverParams)
+namespace
 {
-  if( aSolverParams.isType<Plato::Scalar>("Relative Diagonal Offset") )
+constexpr std::string_view kRelativeDiagonalOffsetName = "Relative Diagonal Offset";
+constexpr Plato::Scalar kDefaultDiagonalOffset = 0.0;
+
+Plato::Scalar parseDiagonalOffset(const Teuchos::ParameterList & aSolverParams)
+{
+  if(aSolverParams.isType<Plato::Scalar>(kRelativeDiagonalOffsetName.data()))
   {
-    auto tOffset = aSolverParams.get<Plato::Scalar>("Relative Diagonal Offset");
-    if(mAlpha < 0.0)
+    const auto tOffset = aSolverParams.get<Plato::Scalar>(kRelativeDiagonalOffsetName.data());
+    if(tOffset < 0.0)
     {
       ANALYZE_THROWERR("Linear solver settings: Relative Diagonal Offset cannot be less than 0.0.");
     }
-    mAlpha = tOffset;
+    return tOffset;
   }
   else
   {
-    mAlpha = 0.0;
+    return kDefaultDiagonalOffset;
   }
 }
+}
+
+AbstractSolver::AbstractSolver(const Teuchos::ParameterList & aSolverParams) :
+  mAlpha(parseDiagonalOffset(aSolverParams))
+{
+}
+
+AbstractSolver::AbstractSolver(
+  const Teuchos::ParameterList & aSolverParams,
+  std::shared_ptr<Plato::MultipointConstraints> aMPCs) :
+  mSystemMPCs(aMPCs),
+  mAlpha(parseDiagonalOffset(aSolverParams))
+{}
 
 void AbstractSolver::solve(Plato::CrsMatrix<int> aAf, Plato::ScalarVector aX,
                            Plato::ScalarVector aB, bool aAdjointFlag) {
