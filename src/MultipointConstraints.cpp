@@ -129,14 +129,15 @@ assembleTransformMatrix(
     const auto& tMpcColumnIndices = aMpcMatrix->columnIndices();
     const auto& tMpcEntries = aMpcMatrix->entries();
 
-    OrdinalType tNumChildNodes = tMpcRowMap.size() - 1;
-    OrdinalType tNumParentNodes = mParentNodes.size();
-    OrdinalType tMpcNnz = tMpcEntries.size();
-    OrdinalType tOutNnz = tBlockSize*((mNumNodes - tNumChildNodes) + tMpcNnz);
+    const OrdinalType tNumChildNodes = tMpcRowMap.size() - 1;
+    const OrdinalType tNumParentNodes = mParentNodes.size();
+    const OrdinalType tMpcNnz = tMpcEntries.size();
+    const OrdinalType tOutNumColumnIndices = ((mNumNodes - tNumChildNodes) + tMpcNnz);
+    const OrdinalType tOutNnz = tBlockSize*tOutNumColumnIndices;
 
-    Plato::CrsMatrixType::RowMapVectorT outRowMap("transform matrix row map", mNumNodes+1);
-    Plato::CrsMatrixType::OrdinalVectorT outColumnIndices("transform matrix column indices", tOutNnz);
-    Plato::CrsMatrixType::ScalarVectorT outEntries("transform matrix entries", tOutNnz);
+    const Plato::CrsMatrixType::RowMapVectorT outRowMap("transform matrix row map", mNumNodes+1);
+    const Plato::CrsMatrixType::OrdinalVectorT outColumnIndices("transform matrix column indices", tOutNumColumnIndices);
+    const Plato::CrsMatrixType::ScalarVectorT outEntries("transform matrix entries", tOutNnz);
 
     // build row map
     Kokkos::parallel_for("row map", Kokkos::RangePolicy<Plato::OrdinalType>(0, mNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType iRowOrdinal)

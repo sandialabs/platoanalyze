@@ -2,6 +2,8 @@
 #include "BLAS1.hpp"
 #include "alg/CrsMatrixUtils.hpp"
 
+#include <KokkosSparse_SortCrs.hpp>
+
 namespace Plato
 {
 
@@ -43,7 +45,7 @@ UpdateGraphForContact::createNodeNodeGraph
 
     this->updateNodeOrds();
 
-    Plato::sort_matrix_column_ordinals(mFullOffsetMap, mFullNodeOrds);
+    KokkosSparse::sort_crs_graph<Plato::ExecSpace>(mFullOffsetMap, mFullNodeOrds);
 }
 
 void
@@ -66,7 +68,7 @@ UpdateGraphForContact::NodeNodeGraphTranspose
     Kokkos::resize(aNodeOrds, tNumEntries);
     this->constructTransposeNodeOrds(aOffsetMap, aNodeOrds);
 
-    Plato::sort_matrix_column_ordinals(aOffsetMap, aNodeOrds);
+    KokkosSparse::sort_crs_graph<Plato::ExecSpace>(aOffsetMap, aNodeOrds);
  }
 
 Plato::OrdinalType 

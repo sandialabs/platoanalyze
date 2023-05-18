@@ -341,10 +341,6 @@ bool has_symmetric_sparsity_pattern(CrsMatrix<Ordinal>& aMatrix)
     return has_symmetric_sparsity_pattern<Ordinal>(tRowBegin, tColumns);
 }
 
-void sort_matrix_column_ordinals
-(Plato::OrdinalVector & tOffs,
- Plato::OrdinalVector & tOrds);
-
 }
 
 #endif

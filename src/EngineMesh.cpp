@@ -4,6 +4,8 @@
 #include "EngineMesh.hpp"
 #include "alg/CrsMatrixUtils.hpp"
 
+#include <KokkosSparse_SortCrs.hpp>
+
 namespace Plato
 {
     EngineMesh::EngineMesh(
@@ -193,7 +195,7 @@ namespace Plato
         });
 
         // sort list of connected elements (otherwise cpu and gpu builds produce different graphs)
-        Plato::sort_matrix_column_ordinals(tNodeElementGraph_offsets, tNodeElementGraph_ordinals);
+        KokkosSparse::sort_crs_graph<Plato::ExecSpace>(tNodeElementGraph_offsets, tNodeElementGraph_ordinals);
     }
 
     void
@@ -275,7 +277,7 @@ namespace Plato
         });
 
         // sort list of connected nodes (otherwise cpu and gpu builds produce different graphs)
-        Plato::sort_matrix_column_ordinals(tNodeNodeGraph_offsets, tNodeNodeGraph_ordinals);
+        KokkosSparse::sort_crs_graph<Plato::ExecSpace>(tNodeNodeGraph_offsets, tNodeNodeGraph_ordinals);
     }
 
     void
