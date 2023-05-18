@@ -9,6 +9,7 @@
 #include <KokkosSparse_spgemm.hpp>
 #include <KokkosSparse_spadd.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
+#include <KokkosSparse_SortCrs.hpp>
 
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoMathFunctors.hpp"
@@ -541,10 +542,14 @@ MatrixMatrixMultiply( const Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOne,
       tMatTwoColMap = tMatTwo.columnIndices();
     }
 
+    KokkosSparse::sort_crs_matrix<Plato::ExecSpace>(tMatOneRowMap, tMatOneColMap, tMatOneValues);
+    KokkosSparse::sort_crs_matrix<Plato::ExecSpace>(tMatTwoRowMap, tMatTwoColMap, tMatTwoValues);
+
+    constexpr bool transpose = false;
     OrdinalView tOutRowMap ("output row map", tNumRowsOne + 1);
     spgemm_symbolic ( &tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo,
-        tMatOneRowMap, tMatOneColMap, /*transpose=*/false,
-        tMatTwoRowMap, tMatTwoColMap, /*transpose=*/false,
+        tMatOneRowMap, tMatOneColMap, transpose,
+        tMatTwoRowMap, tMatTwoColMap, transpose,
         tOutRowMap
     );
 
