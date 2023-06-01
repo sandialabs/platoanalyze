@@ -25,14 +25,11 @@ enum class LinearSystemType {
 class AbstractSolver
 {
   protected:
-    std::shared_ptr<Plato::MultipointConstraints>   mSystemMPCs;
+    std::shared_ptr<Plato::MultipointConstraints> mSystemMPCs = nullptr;
+    Plato::Scalar mAlpha = 0.0;
 
-    Plato::Scalar mAlpha;
-
-    AbstractSolver();
+    AbstractSolver() = default;
     AbstractSolver(const Teuchos::ParameterList & aSolverParams);
-
-    void parse(const Teuchos::ParameterList & aSolverParams);
 
     virtual void innerSolve(
         Plato::CrsMatrix<Plato::OrdinalType> aA,
