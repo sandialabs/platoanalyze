@@ -22,9 +22,88 @@
 #include <string>
 #include <vector>
 
+// Using std functions so to get the correct overload for scalars and FADs.
+using std::exp;
+using std::log;
+using std::pow;
+using std::sqrt;
+using std::abs;
+using std::sin;
+using std::cos;
+using std::tan;
+
+// For unknown reason the KOKKOS_CLASS_LAMBDA is not being defined. It
+// shold be as part of Kokkos via Trilinos. As it is needed define it
+// locally here using the same logic.
+#if !defined(KOKKOS_CLASS_LAMBDA)
+  #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+    #define KOKKOS_CLASS_LAMBDA [ =, *this ] __host__ __device__
+  #else
+    #define KOKKOS_CLASS_LAMBDA [ =, *this ]
+  #endif
+#endif
+
 namespace Plato
 {
 
+// Using std classes as member variables within the class but not
+// within any Kokkos functions is allowed but can cause an erroneous
+// warning with some compilers (There is no warning with NVHPC but
+// there is with nvcc). Such warning are unknown with HIP/SYCL.
+
+// Using std classes allows for dynamic thus more efficent memory
+// allocation. Conversely not using std classes forces one to use
+// memory inefficently via static length arrays which places artifical
+// limits on the expressions.
+
+//#define USE_STD_CLASSES
+
+#if defined(USE_STD_CLASSES)
+  #pragma nv_diag_suppress 20011
+#else
+  #define MAX_NUM_NODES 256  // Maximum number of nodes in an expression
+#endif
+
+// To add flexibility to the expressions it is possible to assign
+// variables on a per thread basis (aka hetrogenous variable
+// assignment). To do this assignment requires using a Kokkos view of
+// views. Typically such usage is discouraged. However, in a code
+// review with the Kokkos team, Christian Trott noted that this
+// assignment was a legitiment usage in order to achieve dynamic
+// allocation. The code was originally developed to support such
+// assignments.
+
+// The assignment of variables on a per thread basis can be done
+// outside and inside of a Kokkos parallel_for.
+
+// Conversely, using a Plato::Array/Plato::Martix to store the views
+// works does not allow for hetrogenous variable assignments because:
+//
+//   The Plato::Array/Plato::Marix can not be dynamically allocated
+//   and forces one to use memory inefficently via static length
+//   arrays which places artifical limits on the expressions.
+//
+//   Array/Marix assignments are not const and thus cannot be called
+//   within a parallel_for.
+
+//#define USE_KOKKOS_VIEW_OF_VIEWS
+
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
+  #define EXPRESSION_EVALUATOR_USE_PER_THREAD_VAR_ASSIGNMENT
+  #define EE_KOKKOS_INLINE_FUNCTION KOKKOS_INLINE_FUNCTION
+  #define EE_CONST const
+#else
+  #define EE_KOKKOS_INLINE_FUNCTION
+  #define EE_CONST
+
+#if !defined(MAX_NUM_NODES)
+    #define MAX_NUM_NODES 256  // Maximum number of nodes in an expression
+  #endif
+#endif
+
+// Defines used for how the expression is evaluated. Currently,
+// recursion is not possible on GPUs so post order is used. But on
+// CPUs recursion is possible and is good for debugging issues.
 #define USE_POST_ORDER true
 #define USE_RECURSION false
 
@@ -38,7 +117,10 @@ class ExpressionEvaluator
 {
 public:
   ExpressionEvaluator();
-  ~ExpressionEvaluator();
+
+  // The desctructor is comment out because it can cause an erroneous
+  // warning with some nVidia compilers (There is no warning with NVHPC).
+  // virtual ~ExpressionEvaluator();
 
   void initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
                    const Teuchos::ParameterList & aInputParams,
@@ -48,6 +130,11 @@ public:
 
   void    parse_expression( const char* expression );
   bool    valid_expression( const bool checkVariables = false ) const;
+
+  // Built in parallel_for
+  void evaluate_expression( ResultType const & result ) const;
+
+  // Can be called within a parallel_for for direct thread control.
   KOKKOS_INLINE_FUNCTION
   void evaluate_expression( const Plato::OrdinalType thread,
                                   ResultType const & result ) const;
@@ -55,26 +142,35 @@ public:
   void    print_expression(       std::ostream &os,
                             const bool print_val = false ) const;
 
+  // Use std classes for dynamic memory allocation but may cause an
+  // erroneous compiler warning.
+#if defined(USE_STD_CLASSES)
   const std::vector< std::string > & get_variables() const;
+#else
+  const char **                      get_variables() const;
+#endif
 
   void     setup_storage( const Plato::OrdinalType nThreads,
                           const Plato::OrdinalType nValues );
 
   void     clear_storage() const;
 
-  KOKKOS_INLINE_FUNCTION
+  // When using a Kokkos view of views EE_* are defined otherwise they
+  // are blank. Only const methods can be called from within a Kokkos
+  // parallel_for.
+  EE_KOKKOS_INLINE_FUNCTION
   void     set_variable ( const char *, const ScalarType & value,
-                          const Plato::OrdinalType thread = -1) const;
-  KOKKOS_INLINE_FUNCTION
+                          const Plato::OrdinalType thread = -1) EE_CONST;
+  EE_KOKKOS_INLINE_FUNCTION
   void     set_variable ( const char *, const VectorType & values,
-                          const Plato::OrdinalType thread = -1) const;
-  KOKKOS_INLINE_FUNCTION
-  void     set_variable ( const char *, const StateType  & values ) const;
+                          const Plato::OrdinalType thread = -1) EE_CONST;
+  EE_KOKKOS_INLINE_FUNCTION
+  void     set_variable ( const char *, const StateType  & values) EE_CONST;
 
   void   print_variables( std::ostream & os ) const;
 
-  // Normally protect but using Kokkos so must be public.
-  //protected:
+  // Normally protected but must be public for Kokkos
+//protected:
 
 // ************************************************************************* //
   enum struct NodeID  // Node arithmetic operation - note these are
@@ -125,7 +221,7 @@ public:
     NoInfo,
     SkipClimbUp,
     RightAssociative,
-    LeftAssociative
+    LeftAssociative,
   };
 
 // ************************************************************************* //
@@ -174,6 +270,7 @@ public:
 
   } Node;
 
+protected:
 // ************************************************************************* //
   // All theses methods are support methods.
   void commute_expression();
@@ -191,12 +288,13 @@ public:
 
   void   traverseNode( const Plato::OrdinalType i_node,
                        const Plato::OrdinalType depth );
-
+public:
   KOKKOS_INLINE_FUNCTION
-  bool   evaluateNode( const Plato::OrdinalType thread,
+  void   evaluateNode( const Plato::OrdinalType thread,
                        const Plato::OrdinalType i_node,
                              ResultType const & result ) const;
 
+protected:
   void      clearNode( const Plato::OrdinalType i_node );
   void     deleteNode( const Plato::OrdinalType i_node );
 
@@ -220,9 +318,14 @@ public:
   // The index to the top level root node in the tree.
   Plato::OrdinalType mTreeRootNode{ (Plato::OrdinalType) -1 };
 
-  // The total number of variable names in the equation.
+  // The total number of variable names in the expression.
   Plato::OrdinalType mNumVariables{ 0 };
+
+#if defined(USE_STD_CLASSES)
   std::vector< std::string > mVariableList;
+#else
+  char mVariableList[MAX_DATA_SOURCE][MAX_ARRAY_LENGTH];
+#endif
 
   // Number of threads to parallize over
   Plato::OrdinalType mNumThreads{ 0 };
@@ -246,11 +349,20 @@ public:
   Plato::OrdinalType mNumMemoryChunks{ (Plato::OrdinalType) 0 };
 
   // A queue to hold indexes to the chunks of temporary memory.
+#if defined(USE_STD_CLASSES)
   std::deque<Plato::OrdinalType> mMemQueue;
+#else
+  Plato::OrdinalType mMemQueueSize{ 0 };
+  Plato::OrdinalType mMemQueue[MAX_NUM_NODES];
+#endif
 
   // Array holding the results for the nodes. The space is reused
   // based on the on post order evaluation.
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
   Kokkos::View< ResultType *, Plato::UVMSpace > mResults;
+#else
+  Plato::Array< MAX_NUM_NODES, ResultType > mResults;
+#endif
 
   // A mapping of the variable names to their coresponding data in the
   // variable arrays - per thread, per variable.
@@ -262,12 +374,36 @@ public:
   // (mNumDataSources).
   Kokkos::View< Plato::OrdinalType **, Plato::UVMSpace > mMapCounts;
 
-  // Storage for variable data, there are three types, scalars are
-  // constant and not indexed, vectors are indexed, and state values
-  // are indexed by the thread and an index.
+  // There are three types of variable, scalars are constant and not
+  // indexed, vectors are indexed, and state values are indexed by the
+  // thread and an index.
+
+  // Note: if the mNumValues is one, vectors are index based on the
+  // mNumThreads. mNumValues is greater than one, vectors are index
+  // based on the mNumValues. See evaluateNode for the VARIABLE case
+  // when the type is VECTOR_DATA_SOURCE.
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
+  // Storage for variable data, scalar and vector types are stored on
+  // a per thread, per variable basis. Whereas state data is just on
+  // per variable basis (as that data is indexed on thread).
   Kokkos::View< ScalarType **, Plato::UVMSpace > mVariableScalarValues;
   Kokkos::View< VectorType **, Plato::UVMSpace > mVariableVectorValues;
   Kokkos::View< StateType   *, Plato::UVMSpace > mVariableStateValues;
+#else
+  // Storage for variable data, scalar, vector, and state data is just
+  // on per variable basis.
+  Plato::Array< MAX_DATA_SOURCE, ScalarType > mVariableScalarValues;
+  Plato::Array< MAX_DATA_SOURCE, VectorType > mVariableVectorValues;
+  Plato::Array< MAX_DATA_SOURCE, StateType  > mVariableStateValues;
+#endif
+
+  // Because there are views of views which are reference counted and
+  // deleting the parent view DOES NOT de-reference the child views a
+  // dummy view with no memory needs to be sent to replace the child
+  // so it is de-referenced.
+  static ResultType sDummyResult;
+  static StateType  sDummyState ;
+  static VectorType sDummyVector;
 
   // Local definition for Kokkos
   KOKKOS_INLINE_FUNCTION int STRCMP (const char *p1, const char *p2) const
@@ -288,6 +424,9 @@ public:
     return c1 - c2;
   }
 
+public:
+// ************************************************************************* //
+  // Debuging hlper methods.
   // KOKKOS_INLINE_FUNCTION
   // void localPrintf( Plato::Scalar val ) const
   // {
@@ -341,19 +480,19 @@ ExpressionEvaluator()
 /******************************************************************************//**
  * \brief Destructor
  **********************************************************************************/
-template< typename ResultType, typename StateType,
-          typename VectorType, typename ScalarType >
-ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
-~ExpressionEvaluator()
-{
-  // Do not call anything as the mNodes are in a Kokkos view and
-  // reference counted. Further Kokkos reserves the right to make
-  // multiple copies of the lambda which would when calling
-  // delete_expression would clear the tree.
+// template< typename ResultType, typename StateType,
+//           typename VectorType, typename ScalarType >
+// ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
+// ~ExpressionEvaluator()
+// {
+//   // Do not call anything as the mNodes are in a Kokkos view and
+//   // reference counted. Further Kokkos reserves the right to make
+//   // multiple copies of the lambda which would when calling
+//   // delete_expression would clear the tree.
 
-  // if( mTreeRootNode )
-  //   delete_expression();
-}
+//   // if( mTreeRootNode )
+//   //   delete_expression();
+// }
 
 /******************************************************************************//**
  * \brief getVariableMapping - Parses the expression, gets the
@@ -391,10 +530,15 @@ initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
 
   // For all of the variables found in the expression optionally
   // get their values from the parameter list.
-  const std::vector< std::string > tVarNames = this->get_variables();
 
-  for( auto const & tVarName : tVarNames )
+#if defined(USE_STD_CLASSES)
+  for( auto const & tVarName : mVariableList )
   {
+#else
+  for( Plato::OrdinalType i=0; i<mNumVariables; ++i )
+  {
+    std::string tVarName(mVariableList[i]);
+#endif
     // Here the expression variable is found as a Plato::Scalar
     // so the value comes from the XML and is set directly.
     if( aInputParams.isType<Plato::Scalar>(tVarName) )
@@ -412,7 +556,7 @@ initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
       std::string tVal = aInputParams.get<std::string>(tVarName);
 
       // These are the names of the parameters passed into the
-      // evaluation operator below. If the equation variable
+      // evaluation operator below. If the expression variable
       // "value" matches then the parameter value will be used.
       bool tFound = false;
 
@@ -442,7 +586,7 @@ initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
 
         errorMsg << ".";
 
-        ANALYZE_THROWERR(  errorMsg.str() );
+        ANALYZE_THROWERR( errorMsg.str() );
       }
     }
     // Here the expression variable should come from the
@@ -450,7 +594,7 @@ initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
     else
     {
       // These are the names of the parameters passed into the
-      // evaluation operator below. If the equation variable
+      // evaluation operator below. If the expression variable
       // name matches then the parameter value will be used.
       bool tFound = false;
 
@@ -509,8 +653,10 @@ setup_storage( const Plato::OrdinalType nThreads,
   mNumValues  = nValues;
 
   // Reference to the results storage.
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
   mResults = Kokkos::View<ResultType *,
                           Plato::UVMSpace>("ExpEval Results", mNumMemoryChunks);
+#endif
 
   // Allocate the actual results storage.
   for( Plato::OrdinalType i=0; i<mNumMemoryChunks; ++i )
@@ -524,8 +670,6 @@ setup_storage( const Plato::OrdinalType nThreads,
   // Create the variable map array, which maps the variable names to
   // the storage for each thread. It is needed on a thread basis
   // becuase threads operate independently.
-  mNumVariables = mVariableList.size();
-
   mVariableMap =
     Kokkos::View< Map< char[MAX_ARRAY_LENGTH], Plato::OrdinalType > **,
                   Plato::UVMSpace >("ExpEval VariableMap", mNumThreads, mNumVariables );
@@ -535,7 +679,11 @@ setup_storage( const Plato::OrdinalType nThreads,
   {
     for( Plato::OrdinalType j=0; j<mNumVariables; ++j )
     {
+#if defined(USE_STD_CLASSES)
       strcpy( mVariableMap(i,j).key, mVariableList[j].c_str() );
+#else
+      strcpy( mVariableMap(i,j).key, mVariableList[j] );
+#endif
       mVariableMap(i,j).value = (Plato::OrdinalType) -1;
     }
   }
@@ -557,6 +705,7 @@ setup_storage( const Plato::OrdinalType nThreads,
   // Storage of the variable data on a thread basis. The scalars are
   // assumed to be a single value, vectors are a 1D vector, while
   // state variables are assumed to be 2D arrays.
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
   mVariableScalarValues =
     Kokkos::View< ScalarType **,
                   Plato::UVMSpace >("ExpEval Scalar Values", mNumThreads, mNumVariables);
@@ -566,14 +715,13 @@ setup_storage( const Plato::OrdinalType nThreads,
   mVariableStateValues =
     Kokkos::View<  StateType *,
                   Plato::UVMSpace >("ExpEval State Values", mNumVariables);
+#endif
 
   Kokkos::Profiling::popRegion();
 }
 
 /******************************************************************************//**
  * \brief clear_storage - clear the storage for evaluating the expression
- * \param [in] dummyVector - number of threads being executed
- * \param [in] nValues  - number of values being evaluated
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
@@ -587,42 +735,29 @@ clear_storage() const
   // kernel is done first.
   Kokkos::fence();
 
-  // Because there are views of views which are reference counted and
-  // deleting the parent view DOES NOT de-reference the child views a
-  // dummy view with no memory needs to be sent to replace the child
-  // so it is de-referenced. There is still a slight memory leak
-  // because the creation of the dummy views.
-
-  // Note: It is assumed that the ResultType, StateType, and
-  // VectorType are of type Kokkos::View.
-  ResultType tDummyResult( "ExpEval Dummy Result", 0, 0 );
-  StateType  tDummyState ( "ExpEval Dummy State",  0, 0 );
-  VectorType tDummyVector( "ExpEval Dummy Vector", 0 );
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
+  // Because views of views are used and views are reference counted,
+  // deleting the parent view DOES NOT de-reference the child views. A
+  // such a dummy view with no memory is used to replace the child so
+  // it is de-referenced.
 
   // Clear the results storage.
   for( Plato::OrdinalType i=0; i<mNumMemoryChunks; ++i )
   {
-    mResults[i] = tDummyResult;
+    mResults[i] = sDummyResult;
   }
 
   // Clear the state view and the vector which could be any type.
   for( Plato::OrdinalType j=0; j<mNumVariables; ++j )
   {
-    mVariableStateValues(j) = tDummyState;
+    mVariableStateValues(j) = sDummyState;
 
     for( Plato::OrdinalType i=0; i<mNumThreads; ++i )
     {
-      mVariableVectorValues(i,j) = tDummyVector;
+      mVariableVectorValues(i,j) = sDummyVector;
     }
   }
-
-  // Destroy inner Views, again on host, outside of a parallel region.
-  // for (int k = 0; k < 5; ++k) {
-  //   outer[k].~inner_view_type ();
-  // }
-
-  // You're better off disposing of outer immediately.
-  // outer = outer_view_type ();
+#endif
 
   Kokkos::Profiling::popRegion();
 }
@@ -633,7 +768,11 @@ clear_storage() const
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
+#if defined(USE_STD_CLASSES)
 const std::vector< std::string > &
+#else
+const char **
+#endif
 ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
 get_variables() const
 {
@@ -649,19 +788,22 @@ get_variables() const
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
-KOKKOS_INLINE_FUNCTION
+EE_KOKKOS_INLINE_FUNCTION
 void
 ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
 set_variable( const char * varName,
               const ScalarType & value,
-              const Plato::OrdinalType thread ) const
+              const Plato::OrdinalType thread ) EE_CONST
 {
   Plato::OrdinalType start, end;
 
   if( mNumThreads == 0 )
-    GPU_WARNING( "Invalid call to set_variable - "
-                 "setup_storage has not been called.",
-                 "The number of threads has not been set." );
+  {
+    GPU_WARNING("Invalid call to set_variable - "
+                "setup_storage has not been called. "
+                "The number of threads has not been set.\n\n");
+  }
+
 
   // If the default set the value for all threads.
   if( thread == (Plato::OrdinalType) -1 )
@@ -669,12 +811,21 @@ set_variable( const char * varName,
     start = 0;
     end = mNumThreads;
   }
-  // Otherwise set just for this thread.
   else
   {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
+  // Otherwise set just for this thread.
     start = thread;
     end = thread + 1;
+#else
+    GPU_WARNING("Invalid call to set_variable - "
+                "Can not set the variable on a per thread basis. "
+                "Must be recompiled with "
+                "'#define USE_KOKKOS_VIEW_OF_VIEWS`.\n\n");
+#endif
   }
+
+  bool found = false;
 
   for( Plato::OrdinalType t=start; t<end; ++t)
   {
@@ -700,11 +851,23 @@ set_variable( const char * varName,
           // used. The later makes for easy lookup when evaluating.
           mVariableMap(t, i).value = SCALAR_DATA_SOURCE * MAX_DATA_SOURCE + index;
         }
+
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
         mVariableScalarValues(t, index) = value;
+#else
+        mVariableScalarValues(index) = value;
+#endif
+        found = true;
 
         break;
       }
     }
+  }
+
+  if(!found)
+  {
+    GPU_WARNING("Invalid call to set_variable - ");
+    printf("The variable '%s' is not part of the expression.\n\n", varName );
   }
 }
 
@@ -717,19 +880,21 @@ set_variable( const char * varName,
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
-KOKKOS_INLINE_FUNCTION
+EE_KOKKOS_INLINE_FUNCTION
 void
 ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
 set_variable( const char * varName,
               const VectorType & values,
-              const Plato::OrdinalType thread ) const
+              const Plato::OrdinalType thread ) EE_CONST
 {
   Plato::OrdinalType start, end;
 
   if( mNumThreads == 0 )
-    GPU_WARNING( "Invalid call to set_variable - "
-                 "setup_storage has not been called.",
-                 "The number of threads has not been set." );
+  {
+    GPU_WARNING("Invalid call to set_variable - "
+                "setup_storage has not been called. "
+                "The number of threads has not been set.\n\n" );
+  }
 
   // If the default set the value for all threads.
   if( thread == (Plato::OrdinalType) -1 )
@@ -740,52 +905,51 @@ set_variable( const char * varName,
   // Otherwise set just for this thread.
   else
   {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
     if( mNumValues == 1 )
     {
-      std::stringstream errorMsg;
-
-      errorMsg << "Invalid call to set_variable - "
-               << "The vector, '" << varName << "' "
-               << "will be indexed over all threads but "
-               << "requesting the vector be used on a per thread basis.";
-
-      GPU_WARNING( errorMsg.str().c_str(), "");
+      GPU_WARNING("Invalid call to set_variable - ");
+      printf("The vector, '%s' "
+             "will be parallelized over all threads but "
+             "requesting the vector be used on a per thread basis. "
+             "To remove this warning do not pass a thread index.\n\n",
+             varName);
     }
-
-    start = thread;
-    end = thread + 1;
+    else
+    {
+      start = thread;
+      end = thread + 1;
+    }
+#else
+    GPU_WARNING("Invalid call to set_variable - "
+                "Can not set the variable on a per thread basis. "
+                "Must be recompiled with "
+                "'#define USE_KOKKOS_VIEW_OF_VIEWS`.\n\n");
+#endif
   }
 
   // When the number of values is one the vector will be indexed
   // based on the thread.
   if( mNumValues == 1 && values.extent(0) != mNumThreads )
   {
-    std::stringstream errorMsg;
-
-    errorMsg << "Invalid call to set_variable - "
-             << "Indexing over the threads and "
-             << "the vector, '" << varName << "' "
-             << "has " << values.extent(0) << " values. "
-             << "The number of expected values is "
-             << mNumThreads << ".";
-
-    GPU_WARNING( errorMsg.str().c_str(), "");
+    GPU_WARNING("Invalid call to set_variable - ");
+    printf("Parallelizing over the threads but "
+           "the vector, '%s' has %d values. "
+           "The number of expected values is %d.\n\n",
+           varName, (int) values.extent(0), (int) mNumThreads);
   }
   // When the number of values is greater than one the vector
   // will be indexed over the number values.
   else if( mNumValues > 1 && values.extent(0) != mNumValues )
   {
-    std::stringstream errorMsg;
-
-    errorMsg << "Invalid call to set_variable - "
-             << "Indexing over the number of values and "
-             << "the vector, '" << varName << "' "
-             << "has " << values.extent(0) << " values. "
-             << "The number of expected values is "
-             << mNumValues << ".";
-
-    GPU_WARNING( errorMsg.str().c_str(), "");
+    GPU_WARNING("Invalid call to set_variable - ");
+    printf("Indexing over the number of values but "
+           "the vector, '%s' has %d values. "
+           "The number of expected values is %d.\n\n",
+           varName, (int) values.extent(0), (int) mNumValues);
   }
+
+  bool found = false;
 
   for( Plato::OrdinalType t=start; t<end; ++t)
   {
@@ -812,11 +976,22 @@ set_variable( const char * varName,
           mVariableMap(t, i).value = VECTOR_DATA_SOURCE * MAX_DATA_SOURCE + index;
         }
 
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
         mVariableVectorValues(t, index) = values;
+#else
+        mVariableVectorValues(index) = values;
+#endif
+        found = true;
 
         break;
       }
     }
+  }
+
+  if(!found)
+  {
+    GPU_WARNING("Invalid call to set_variable - ");
+    printf("The variable '%s' is not part of the expression.\n\n", varName );
   }
 }
 
@@ -828,43 +1003,36 @@ set_variable( const char * varName,
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
-KOKKOS_INLINE_FUNCTION
+EE_KOKKOS_INLINE_FUNCTION
 void
 ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
 set_variable( const char * varName,
-              const StateType & values ) const
+              const StateType & values ) EE_CONST
 {
   if( mNumThreads == 0 )
-      GPU_WARNING( "Invalid call to set_variable - "
-                   "setup_storage has not been called.",
-                   "The number of threads has not been set." );
+  {
+    GPU_WARNING("Invalid call to set_variable - "
+                "setup_storage has not been called."
+                "The number of threads has not been set.\n\n");
+  }
 
   if( values.extent(0) != mNumThreads ||
       values.extent(1) != mNumValues )
   {
-    std::stringstream errorMsg1, errorMsg2;
-
-    errorMsg1 << "Invalid call to set_variable - ";
+    GPU_WARNING("Invalid call to set_variable - ");
 
     if( values.extent(0) != mNumThreads )
-      errorMsg1 << "The vector, '" << varName << "' "
-                << "has " << values.extent(0) << " threads. "
-                << "The number of expected threads is "
-                << mNumValues << ".";
+      printf("The vector, '%s' first extent has %d values. "
+             "The number of expected threads is %d.\n\n",
+             varName, (int) values.extent(0), mNumThreads);
 
     if( values.extent(1) != mNumValues )
-      errorMsg1 << "The vector, '" << varName << "' "
-                << "has " << values.extent(0) << " values. "
-                << "The number of expected values is "
-                << mNumThreads << ".";
-
-    if( mNumValues == 1 )
-      errorMsg2 << "When the number of values expected is one. "
-                << "Set each value as a scalar constant "
-                << "on a per thread basis.";
-
-    GPU_WARNING( errorMsg1.str().c_str(), errorMsg2.str().c_str());
+      printf("The vector, '%s' second extent has %d values. "
+             "The number of expected values is %d.\n\n",
+             varName, (int) values.extent(1), mNumValues);
   }
+
+  bool found = false;
 
   // Even though there is only a single input across all threads set
   // up the map for each thread so that the map can be used regardless
@@ -898,9 +1066,17 @@ set_variable( const char * varName,
 
         mVariableStateValues(index) = values;
 
+        found = true;
+
         break;
       }
     }
+  }
+
+  if(!found)
+  {
+    GPU_WARNING("Invalid call to set_variable - ");
+    printf("The variable '%s' is not part of the expression.\n\n", varName );
   }
 }
 
@@ -945,14 +1121,20 @@ print_variables( std::ostream &os ) const
     // Get the data from the storage container.
     if( type == SCALAR_DATA_SOURCE )
     {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
       const ScalarType & value = mVariableScalarValues(thread, index);
-
+#else
+      const ScalarType & value = mVariableScalarValues(index);
+#endif
       os << value << "  ";
     }
     else if( type == VECTOR_DATA_SOURCE )
     {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
       const VectorType & values = mVariableVectorValues(thread, index);
-
+#else
+      const VectorType & values = mVariableVectorValues(index);
+#endif
       os << values[0] << "  ";
 
       if( mNumValues > 1 )
@@ -992,6 +1174,23 @@ valid_expression( const bool checkVariables ) const
   // Return false if a non empty node is found.
   return (validateNode( mTreeRootNode, checkVariables ) ==
           ExpressionEvaluator::NodeID::EMPTY_NODE);
+}
+
+/******************************************************************************//**
+ * \brief evaluate_expression - Evaluate the expression tree - public function.
+ * \param [out] result - resulting data.
+ **********************************************************************************/
+template< typename ResultType, typename StateType,
+          typename VectorType, typename ScalarType >
+void
+ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
+evaluate_expression( ResultType const & result ) const
+{
+    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, mNumThreads),
+      KOKKOS_CLASS_LAMBDA(Plato::OrdinalType aCellOrdinal)
+      {
+        this->evaluate_expression( aCellOrdinal, result );
+      },"ExpressionEvaluator");
 }
 
 /******************************************************************************//**
@@ -1108,8 +1307,13 @@ traverse_expression()
   //     (B2)        (F3)
   //  (A0)  (C1)  (E0)  (G1)
 
+#if defined(USE_STD_CLASSES)
   mMemQueue.clear();
   mMemQueue.push_back(0);
+#else
+  mMemQueue[0] = 0;
+  mMemQueueSize = 1;
+#endif
   traverseNode( mTreeRootNode, 1 );
 
   // Take a subview so to reduce the memory footprint of the node order.
@@ -1135,6 +1339,18 @@ traverse_expression()
       mNumMemoryChunks = mNodes[mNodeOrder[i]].i_memory+1;
   }
 
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
+#else
+  if(mNumMemoryChunks >= MAX_NUM_NODES)
+  {
+    std::stringstream errorMsg;
+    errorMsg << "The expression tree hs too many nodes. "
+             << "A maximum number of nodes " << MAX_NUM_NODES << " is allowed."
+             << "Increase MAX_NUM_NODES to allow for a deeper expression tree.";
+    ANALYZE_THROWERR( errorMsg.str() );
+  }
+#endif
+
   Kokkos::Profiling::popRegion();
 }
 
@@ -1153,7 +1369,11 @@ parse_expression( const char* expression )
   if( mTreeRootNode != (Plato::OrdinalType) -1 )
   {
     delete_expression();
+
+#if defined(USE_STD_CLASSES)
     mVariableList.clear();
+#endif
+    mNumVariables = 0;
   }
 
   if( expression == nullptr )
@@ -1566,9 +1786,16 @@ parse_expression( const char* expression )
 
       // Record variable the name so have a unique list.
       bool found = false;
-      for( Plato::OrdinalType i=0; i<mVariableList.size(); ++i )
+
+#if defined(USE_STD_CLASSES)
+      for( auto const & tVarName : mVariableList )
       {
-        if( mVariableList[ i ] == std::string(variable) )
+#else
+      for( Plato::OrdinalType i=0; i<mNumVariables; ++i )
+      {
+        std::string tVarName(mVariableList[i]);
+#endif
+        if( tVarName == std::string(variable) )
         {
           found = true;
           break;
@@ -1577,7 +1804,7 @@ parse_expression( const char* expression )
 
       if( !found )
       {
-        if(mVariableList.size() > MAX_DATA_SOURCE )
+        if(mNumVariables == MAX_DATA_SOURCE )
         {
           errorMsg << "Too many variables found in the expression. "
                    << "A maximum of " << MAX_DATA_SOURCE << " are allowed."
@@ -1587,7 +1814,12 @@ parse_expression( const char* expression )
         }
         else
         {
+#if defined(USE_STD_CLASSES)
           mVariableList.push_back( variable );
+          mNumVariables = mVariableList.size();
+#else
+          strcpy(mVariableList[mNumVariables++], variable);
+#endif
         }
       }
     }
@@ -2346,9 +2578,22 @@ traverseNode( const Plato::OrdinalType i_node,
   }
 
   // Add additional index(s) to the queue based on the depth of the node.
+#if defined(USE_STD_CLASSES)
   while( mMemQueue.back() < depth )
     mMemQueue.push_back( mMemQueue.back()+1 );
+#else
+  while( mMemQueue[mMemQueueSize-1] < depth )
+    mMemQueue[mMemQueueSize++] = mMemQueue[mMemQueueSize-1]+1;
 
+  if(mMemQueueSize == MAX_NUM_NODES)
+  {
+    std::stringstream errorMsg;
+    errorMsg << "The expression tree depth is too deep. "
+             << "A maximum depth of " << MAX_NUM_NODES << " is allowed."
+             << "Increase MAX_NUM_NODES to allow for a deeper expression tree.";
+    ANALYZE_THROWERR( errorMsg.str() );
+  }
+#endif
   // Index to the chunk of temporary used by the left node.
   Plato::OrdinalType left_mem = -1;
 
@@ -2369,20 +2614,48 @@ traverseNode( const Plato::OrdinalType i_node,
 
   // Set the index of where the results will go using the first unused
   // index.
+#if defined(USE_STD_CLASSES)
   node.i_memory = mMemQueue.front();
   mMemQueue.pop_front();
+#else
+  node.i_memory = mMemQueue[0];
+
+  mMemQueueSize -= 1;
+  for(Plato::OrdinalType i=0; i<mMemQueueSize; ++i)
+    mMemQueue[i] = mMemQueue[i+1];
+#endif
 
   // If data from the right node was used is can be now reused so push
   // the index to the front of the queue. Push right first as it was
   // last used.
   if( right_mem != (Plato::OrdinalType) -1 )
+  {
+#if defined(USE_STD_CLASSES)
     mMemQueue.push_front( right_mem );
+#else
+    mMemQueueSize += 1;
+    for(Plato::OrdinalType i=1; i<mMemQueueSize; ++i)
+      mMemQueue[i] = mMemQueue[i-1];
+
+    mMemQueue[0] = right_mem;
+#endif
+  }
 
   // If data from the left node was used is can be now reused so push
   // the index to the front of the queue. Push left last as it was
   // first used.
   if( left_mem != (Plato::OrdinalType) -1 )
+  {
+#if defined(USE_STD_CLASSES)
     mMemQueue.push_front( left_mem );
+#else
+    mMemQueueSize += 1;
+    for(Plato::OrdinalType i=1; i<mMemQueueSize; ++i)
+      mMemQueue[i] = mMemQueue[i-1];
+
+    mMemQueue[0] = left_mem;
+#endif
+  }
 
   // Add the node index to the post order evaluation order.
   mNodeOrder[mNodeCount++] = i_node;
@@ -2423,7 +2696,7 @@ factorial( ResultType n ) const
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
 KOKKOS_INLINE_FUNCTION
-bool
+void
 ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
 evaluateNode( const Plato::OrdinalType thread,
               const Plato::OrdinalType i_node,
@@ -2439,10 +2712,10 @@ evaluateNode( const Plato::OrdinalType thread,
   // throws an error. Thus commented out.
   // if( i_node == (Plato::OrdinalType) -1 )
   // {
-  //   GPU_WARNING( "Invalid call to evaluateNode - "
-  //                  "node index is -1", "" );
+  //   GPU_WARNING("Invalid call to evaluateNode - ");
+  //   prinf("node index is -1\n\n");
 
-  //   return false;
+  //   return;
   // }
   const Node & node = mNodes[i_node];
 
@@ -2451,10 +2724,10 @@ evaluateNode( const Plato::OrdinalType thread,
   // which throws an error. Thus commented out.
   // if( node.ID == NodeID::EMPTY_NODE )
   // {
-  //   GPU_WARNING( "Invalid call to evaluateNode - "
-  //                  "node index is -1", itoa(i_ode) );
+  //   GPU_WARNING("Invalid call to evaluateNode - ");
+  //   printf("node index is %d\n\n", i_node );
 
-  //   return false;
+  //   return;
   // }
 
   // Get the left side of the tree.
@@ -2530,23 +2803,23 @@ evaluateNode( const Plato::OrdinalType thread,
 
     case NodeID::EXPONENTIAL:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::exp(right(thread,i));
+        result(thread,i) = exp(right(thread,i));
       break;
     case NodeID::LOG:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::log(right(thread,i));
+        result(thread,i) = log(right(thread,i));
       break;
     case NodeID::POWER:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::pow(left(thread,i), right(thread,i));
+        result(thread,i) = pow(left(thread,i), right(thread,i));
       break;
     case NodeID::SQRT:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::sqrt(right(thread,i));
+        result(thread,i) = sqrt(right(thread,i));
       break;
     case NodeID::ABS:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::abs(right(thread,i));
+        result(thread,i) = abs(right(thread,i));
       break;
     // case NodeID::FACTORIAL:
       // for( Plato::OrdinalType i=0; i<mNumValues; ++i )
@@ -2554,15 +2827,15 @@ evaluateNode( const Plato::OrdinalType thread,
       // break;
     case NodeID::SIN:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::sin(right(thread,i));
+        result(thread,i) = sin(right(thread,i));
       break;
     case NodeID::COS:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::cos(right(thread,i));
+        result(thread,i) = cos(right(thread,i));
       break;
     case NodeID::TAN:
       for( Plato::OrdinalType i=0; i<mNumValues; ++i )
-        result(thread,i) = std::tan(right(thread,i));
+        result(thread,i) = tan(right(thread,i));
       break;
 
     case NodeID::NUMBER:
@@ -2599,9 +2872,9 @@ evaluateNode( const Plato::OrdinalType thread,
             //       << "can not find values for variable: " << node.variable;
             // ANALYZE_THROWERR( errorMsg.str() );
 
-            GPU_WARNING( "Invalid call to evaluateNode - "
-                         "can not find values for variable: ",
-                         node.variable );
+            GPU_WARNING("Invalid call to evaluateNode - ");
+            printf("can not find values for variable: %s.\n\n",
+                   node.variable );
           }
         }
       }
@@ -2609,15 +2882,22 @@ evaluateNode( const Plato::OrdinalType thread,
       // Get the data from the storage container.
       if( type == SCALAR_DATA_SOURCE )
       {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
         const ScalarType & value = mVariableScalarValues(thread, index);
+#else
+        const ScalarType & value = mVariableScalarValues(index);
+#endif
 
         for( Plato::OrdinalType i=0; i<mNumValues; ++i )
           result(thread,i) = value;
       }
       else if( type == VECTOR_DATA_SOURCE )
       {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
         const VectorType & values = mVariableVectorValues(thread, index);
-
+#else
+        const VectorType & values = mVariableVectorValues(index);
+#endif
         // When the number of values is one index based on the thread
         if( mNumValues == 1 )
         {
@@ -2645,9 +2925,9 @@ evaluateNode( const Plato::OrdinalType thread,
         //       << "can not find storage container for variable: " << variable;
         // ANALYZE_THROWERR( errorMsg.str() );
 
-        GPU_WARNING( "Invalid call to evaluateNode - "
-                     "can not find storage container for variable:",
-                     node.variable );
+        GPU_WARNING("Invalid call to evaluateNode - ");
+        printf("can not find storage container for variable: %s.\n\n",
+               node.variable );
       }
 
       break;
@@ -2658,8 +2938,6 @@ evaluateNode( const Plato::OrdinalType thread,
         result(thread,i) = 0;
       break;
   }
-
-  return true;
 }
 
 /******************************************************************************//**
@@ -2812,14 +3090,20 @@ printNodeID( const Plato::OrdinalType i_node,
       // Get the data from the storage container.
       if( type == SCALAR_DATA_SOURCE )
       {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
         const ScalarType & value = mVariableScalarValues(thread, index);
-
+#else
+        const ScalarType & value = mVariableScalarValues(index);
+#endif
         os << " = " << value << "  ";
       }
       else if( type == VECTOR_DATA_SOURCE )
       {
+#if defined(USE_KOKKOS_VIEW_OF_VIEWS)
         const VectorType & values = mVariableVectorValues(thread, index);
-
+#else
+        const VectorType & values = mVariableVectorValues(index);
+#endif
         os << " = " << values[0] << "  ";
 
         if( mNumThreads > 1 || mNumValues > 1 )
@@ -2946,6 +3230,22 @@ printNode( const Plato::OrdinalType i_node,
 
   return os.str();
 }
+
+
+template< typename ResultType, typename StateType,
+          typename VectorType, typename ScalarType >
+ResultType ExpressionEvaluator< ResultType, StateType,
+                                VectorType, ScalarType >::sDummyResult;
+
+template< typename ResultType, typename StateType,
+          typename VectorType, typename ScalarType >
+StateType ExpressionEvaluator< ResultType, StateType,
+                               VectorType, ScalarType >::sDummyState;
+
+template< typename ResultType, typename StateType,
+          typename VectorType, typename ScalarType >
+VectorType ExpressionEvaluator< ResultType, StateType,
+                                VectorType, ScalarType >::sDummyVector;
 
 } // namespace Plato
 
