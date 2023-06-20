@@ -49,6 +49,14 @@ option( PLATOANALYZE_CHECK_FPE "Flag to enable Plato Analyze checks for floating
 
 MESSAGE("\n\nConfiguring Plato Analyze Version ${PLATOANALYZE_VERSION_MAJOR}.${PLATOANALYZE_VERSION_MINOR}.${PLATOANALYZE_VERSION_PATCH}")
 
+find_program(CCACHE_FOUND ccache)
+if( CCACHE_FOUND )
+  # Spack is able to use ccache, however, using ccache with nvcc_wrapper does not seem to work 
+  # properly through spack.
+  message( STATUS "Found ccache" )
+  set( CMAKE_CXX_COMPILER_LAUNCHER ccache )
+endif()
+
 IF (DEFINED Trilinos_PREFIX)
   SET(CMAKE_PREFIX_PATH ${Trilinos_PREFIX} ${CMAKE_PREFIX_PATH})
 ENDIF()
