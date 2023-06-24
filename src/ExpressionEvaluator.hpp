@@ -35,13 +35,13 @@ using std::tan;
 // For unknown reason the KOKKOS_CLASS_LAMBDA is not being defined. It
 // shold be as part of Kokkos via Trilinos. As it is needed define it
 // locally here using the same logic.
-#if !defined(KOKKOS_CLASS_LAMBDA)
-  #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-    #define KOKKOS_CLASS_LAMBDA [ =, *this ] __host__ __device__
-  #else
-    #define KOKKOS_CLASS_LAMBDA [ =, *this ]
-  #endif
-#endif
+//#if !defined(KOKKOS_CLASS_LAMBDA)
+//  #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
+//    #define KOKKOS_CLASS_LAMBDA [ =, *this ] __host__ __device__
+//  #else
+//    #define KOKKOS_CLASS_LAMBDA [ =, *this ]
+//  #endif
+//#endif
 
 namespace Plato
 {
@@ -1186,11 +1186,12 @@ void
 ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
 evaluate_expression( ResultType const & result ) const
 {
-    Kokkos::parallel_for(Kokkos::RangePolicy<>(0, mNumThreads),
+    Kokkos::parallel_for("ExpressionEvaluator",
+    Kokkos::RangePolicy<>(0, mNumThreads),
       KOKKOS_CLASS_LAMBDA(Plato::OrdinalType aCellOrdinal)
       {
         this->evaluate_expression( aCellOrdinal, result );
-      },"ExpressionEvaluator");
+      });
 }
 
 /******************************************************************************//**
