@@ -32,17 +32,6 @@ using std::sin;
 using std::cos;
 using std::tan;
 
-// For unknown reason the KOKKOS_CLASS_LAMBDA is not being defined. It
-// shold be as part of Kokkos via Trilinos. As it is needed define it
-// locally here using the same logic.
-//#if !defined(KOKKOS_CLASS_LAMBDA)
-//  #if defined(KOKKOS_ENABLE_CUDA) || defined(KOKKOS_ENABLE_HIP)
-//    #define KOKKOS_CLASS_LAMBDA [ =, *this ] __host__ __device__
-//  #else
-//    #define KOKKOS_CLASS_LAMBDA [ =, *this ]
-//  #endif
-//#endif
-
 namespace Plato
 {
 
