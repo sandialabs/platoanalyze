@@ -22,16 +22,6 @@
 #include <string>
 #include <vector>
 
-// Using std functions so to get the correct overload for scalars and FADs.
-using std::exp;
-using std::log;
-using std::pow;
-using std::sqrt;
-using std::abs;
-using std::sin;
-using std::cos;
-using std::tan;
-
 namespace Plato
 {
 
@@ -58,7 +48,7 @@ namespace Plato
 // assignment). To do this assignment requires using a Kokkos view of
 // views. Typically such usage is discouraged. However, in a code
 // review with the Kokkos team, Christian Trott noted that this
-// assignment was a legitiment usage in order to achieve dynamic
+// assignment was a legitimate usage in order to achieve dynamic
 // allocation. The code was originally developed to support such
 // assignments.
 
@@ -85,7 +75,7 @@ namespace Plato
   #define EE_KOKKOS_INLINE_FUNCTION
   #define EE_CONST
 
-#if !defined(MAX_NUM_NODES)
+  #if !defined(MAX_NUM_NODES)
     #define MAX_NUM_NODES 256  // Maximum number of nodes in an expression
   #endif
 #endif
@@ -106,10 +96,6 @@ class ExpressionEvaluator
 {
 public:
   ExpressionEvaluator();
-
-  // The desctructor is comment out because it can cause an erroneous
-  // warning with some nVidia compilers (There is no warning with NVHPC).
-  // virtual ~ExpressionEvaluator();
 
   void initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
                    const Teuchos::ParameterList & aInputParams,
@@ -157,9 +143,6 @@ public:
   void     set_variable ( const char *, const StateType  & values) EE_CONST;
 
   void   print_variables( std::ostream & os ) const;
-
-  // Normally protected but must be public for Kokkos
-//protected:
 
 // ************************************************************************* //
   enum struct NodeID  // Node arithmetic operation - note these are
@@ -259,7 +242,7 @@ public:
 
   } Node;
 
-protected:
+private:
 // ************************************************************************* //
   // All theses methods are support methods.
   void commute_expression();
@@ -283,7 +266,7 @@ public:
                        const Plato::OrdinalType i_node,
                              ResultType const & result ) const;
 
-protected:
+private:
   void      clearNode( const Plato::OrdinalType i_node );
   void     deleteNode( const Plato::OrdinalType i_node );
 
@@ -467,23 +450,6 @@ ExpressionEvaluator()
 }
 
 /******************************************************************************//**
- * \brief Destructor
- **********************************************************************************/
-// template< typename ResultType, typename StateType,
-//           typename VectorType, typename ScalarType >
-// ExpressionEvaluator<ResultType, StateType, VectorType, ScalarType>::
-// ~ExpressionEvaluator()
-// {
-//   // Do not call anything as the mNodes are in a Kokkos view and
-//   // reference counted. Further Kokkos reserves the right to make
-//   // multiple copies of the lambda which would when calling
-//   // delete_expression would clear the tree.
-
-//   // if( mTreeRootNode )
-//   //   delete_expression();
-// }
-
-/******************************************************************************//**
  * \brief getVariableMapping - Parses the expression, gets the
  * expression variables, sets up the variable mapping between the
  * expression and the data, and sets up the storage needed.
@@ -526,7 +492,7 @@ initialize( Kokkos::View< VariableMap *, Plato::UVMSpace > & aVarMaps,
 #else
   for( Plato::OrdinalType i=0; i<mNumVariables; ++i )
   {
-    std::string tVarName(mVariableList[i]);
+    const std::string tVarName(mVariableList[i]);
 #endif
     // Here the expression variable is found as a Plato::Scalar
     // so the value comes from the XML and is set directly.
@@ -1151,7 +1117,7 @@ print_variables( std::ostream &os ) const
 }
 
 /******************************************************************************//**
- * \brief valid_expression - Validate the nodes in the tree - public function.
+ * \brief valid_expression - Validate the nodes in the tree.
  * \param [in] checkVariables - check whether values have assigned to variables.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
@@ -1166,7 +1132,7 @@ valid_expression( const bool checkVariables ) const
 }
 
 /******************************************************************************//**
- * \brief evaluate_expression - Evaluate the expression tree - public function.
+ * \brief evaluate_expression - Evaluate the expression tree.
  * \param [out] result - resulting data.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
@@ -1184,7 +1150,7 @@ evaluate_expression( ResultType const & result ) const
 }
 
 /******************************************************************************//**
- * \brief evaluate_expression - Evaluate the expression tree - public function.
+ * \brief evaluate_expression - Evaluate the expression tree.
  * \param [in]  thread - thread being evaluated.
  * \param [out] result - resulting data.
  **********************************************************************************/
@@ -1212,7 +1178,7 @@ evaluate_expression( const Plato::OrdinalType thread,
 }
 
 /******************************************************************************//**
- * \brief delete_expression - Delete the expression tree - public function.
+ * \brief delete_expression - Delete the expression tree.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
@@ -1226,7 +1192,7 @@ delete_expression()
 }
 
 /******************************************************************************//**
- * \brief print_expression - print the expression tree - public function.
+ * \brief print_expression - print the expression tree.
  * \param [in] os - the output stream
  * \param [in] print_val - print variable value(s)
  **********************************************************************************/
@@ -1243,7 +1209,7 @@ print_expression(       std::ostream &os,
 /******************************************************************************//**
  * \brief commute_expression - traverse the expression and commute
  * nodes so to have a left weighted tree which requires less memory
- * when evaluated without recursion - private function.
+ * when evaluated without recursion.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
@@ -1257,7 +1223,7 @@ commute_expression()
 /******************************************************************************//**
  * \brief traverse_expression - traverse the expression to get the
  * total node count and the post order evaluation and the number of
- * chunks of temporary memory required - private function.
+ * chunks of temporary memory required.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
           typename VectorType, typename ScalarType >
@@ -1345,7 +1311,7 @@ traverse_expression()
 }
 
 /******************************************************************************//**
- * \brief parse_expression - parse the expression - public function.
+ * \brief parse_expression - parse the expression.
  * \param [in] expression - the expression for parsing.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
@@ -2055,7 +2021,7 @@ parse_expression( const char* expression )
  }
 
 /******************************************************************************//**
- * \brief insertNode - Insert the node into the tree - protected function.
+ * \brief insertNode - Insert the node into the tree.
  * \param [in] i_current - index of the current node.
  * \param [in] i_new     - index of the new node.
  * \param [in] info      - associative information about the new node.
@@ -2175,8 +2141,7 @@ insertNode(       Plato::OrdinalType i_current,
 }
 
 /******************************************************************************//**
- * \brief commuteNode - Commute nodes so to make a left weighted tree -
-                        protected function.
+ * \brief commuteNode - Commute nodes so to make a left weighted tree.
  * \param [in] i_nore - index of the node.
  * \param [in] checkVariables - check for variable values.
  * \return NodeID - id of the bad node - EMPTY_NODE if okay.
@@ -2282,8 +2247,7 @@ commuteNode( const Plato::OrdinalType i_node )
 }
 
 /******************************************************************************//**
- * \brief validateNode - Validate the current node and its children -
-                         protected function.
+ * \brief validateNode - Validate the current node and its children.
  * \param [in] i_nore - index of the node.
  * \param [in] checkVariables - check for variable values.
  * \return NodeID - id of the bad node - EMPTY_NODE if okay.
@@ -2535,7 +2499,7 @@ validateNode( const Plato::OrdinalType i_node,
 }
 
 /******************************************************************************//**
- * \brief traverseNode - Post order traversal of the nodes - protected function.
+ * \brief traverseNode - Post order traversal of the nodes.
  * \param [in] i_node - index of the node.
  * \param [in] depth  - depth of the node being evaluated.
  **********************************************************************************/
@@ -2652,7 +2616,7 @@ traverseNode( const Plato::OrdinalType i_node,
 }
 
 /******************************************************************************//**
- * \brief factorial - Computes the factorial - protected function.
+ * \brief factorial - Computes the factorial.
  * \param [in] n - number for factorial.
  * \return number - the factorial.
  **********************************************************************************/
@@ -2677,7 +2641,7 @@ factorial( ResultType n ) const
 */
 
 /******************************************************************************//**
- * \brief evaluateNode - Evaluate the current node - protected function.
+ * \brief evaluateNode - Evaluate the current node.
  * \param [in] thread - thread being evaluated.
  * \param [in] i_node - index of the node.
  * \param [out] result - the expresion result.
@@ -2931,7 +2895,7 @@ evaluateNode( const Plato::OrdinalType thread,
 }
 
 /******************************************************************************//**
- * \brief deleteNode - Delete the current node - protected function.
+ * \brief deleteNode - Delete the current node.
  * \param [in] i_node - index of the node.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
@@ -2955,7 +2919,7 @@ deleteNode( const Plato::OrdinalType i_node )
 }
 
 /******************************************************************************//**
- * \brief clearNode - clear the current node - protected function.
+ * \brief clearNode - clear the current node.
  * \param [in] i_node - index of the node.
  **********************************************************************************/
 template< typename ResultType, typename StateType,
@@ -2979,8 +2943,7 @@ clearNode( const Plato::OrdinalType i_node )
 }
 
 /******************************************************************************//**
- * \brief printNodeID - Print the current node's ID or its value/variable -
-                        protected function.
+ * \brief printNodeID - Print the current node's ID or its value/variable.
  * \param [in] i_node - index of the node.
  * \param [in] descriptor - in addition to the id print a descriptor
  * \return std::string - node id as a string
@@ -3142,7 +3105,7 @@ printNodeID( const Plato::OrdinalType i_node,
 }
 
 /******************************************************************************//**
- * \brief printNode - Print the current node - protected function.
+ * \brief printNode - Print the current node.
  * \param [in] os - the output stream
  * \param [in] i_node - index of the node.
  * \param [in] indent - number of spacs for indenting.
@@ -3186,7 +3149,7 @@ printNode(       std::ostream &os,
 }
 
 /******************************************************************************//**
- * \brief printNode - Print the current node - protected function.
+ * \brief printNode - Print the current node.
  * \param [in] i_node - index of the node.
  * \param [in] print_val - print value(s) associated with variables
  * \return std::string - node information as a string

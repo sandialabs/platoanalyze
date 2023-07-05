@@ -7,7 +7,9 @@
 
 #include "ExpressionEvaluator.hpp"
 
-#define SPEED_OF_LIGHT 299792458.0
+namespace {
+  constexpr double SPEED_OF_LIGHT = 299792458.0;
+}
 
 namespace PlatoUnitTests
 {
@@ -21,8 +23,8 @@ namespace PlatoUnitTests
 /******************************************************************************/
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_1D_index)
 {
-    Plato::OrdinalType tNumCells = 10;
-    Plato::OrdinalType tNumPoints = 1;
+    constexpr Plato::OrdinalType tNumCells = 10;
+    constexpr Plato::OrdinalType tNumPoints = 1;
 
     Plato::ScalarMultiVectorT<Plato::Scalar> tEnergy("energy", tNumCells, tNumPoints);
     Plato::ScalarVectorT<Plato::Scalar> tMass("mass", tNumCells);
@@ -62,8 +64,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_1D_index)
     {
       for(int j=0; j<tNumPoints; ++j)
       {
-        TEST_ASSERT(tEnergy_Host(i,j) ==
-                    (double) (i) * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+        TEST_ASSERT(tEnergy_Host(i,j) == i * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
       }
     }
 
@@ -80,8 +81,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_1D_index)
 /******************************************************************************/
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_1D_const)
 {
-    Plato::OrdinalType tNumCells = 10;
-    Plato::OrdinalType tNumPoints = 1;
+    constexpr Plato::OrdinalType tNumCells = 10;
+    constexpr Plato::OrdinalType tNumPoints = 1;
 
     Plato::ScalarMultiVectorT<Plato::Scalar> tEnergy("energy", tNumCells, tNumPoints);
     Plato::ScalarVectorT<Plato::Scalar> tMass("mass", tNumCells);
@@ -138,8 +139,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_1D_const)
     {
       for(int j=0; j<tNumPoints; ++j)
       {
-        TEST_ASSERT(tEnergy_Host(i,j) ==
-                    (double) (i) * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+        TEST_ASSERT(tEnergy_Host(i,j) == i * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
       }
     }
 
@@ -156,8 +156,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_1D_const)
 /******************************************************************************/
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_index)
 {
-    Plato::OrdinalType tNumCells  = 10;
-    Plato::OrdinalType tNumPoints =  5;
+    constexpr Plato::OrdinalType tNumCells  = 10;
+    constexpr Plato::OrdinalType tNumPoints =  5;
     Plato::ScalarMultiVectorT<Plato::Scalar> tEnergy("energy", tNumCells, tNumPoints);
     Plato::ScalarMultiVectorT<Plato::Scalar> tMass("mass", tNumCells, tNumPoints);
     Kokkos::parallel_for("Set the mass for each Element",
@@ -196,8 +196,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_index)
     {
       for(int j=0; j<tNumPoints; ++j)
       {
-        TEST_ASSERT(tEnergy_Host(i,j) ==
-                    (double) (i*j) * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+        TEST_ASSERT(tEnergy_Host(i,j) == i*j * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
       }
     }
 
@@ -215,8 +214,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_index)
 /******************************************************************************/
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_const)
 {
-    Plato::OrdinalType tNumCells  = 10;
-    Plato::OrdinalType tNumPoints =  5;
+    constexpr Plato::OrdinalType tNumCells  = 10;
+    constexpr Plato::OrdinalType tNumPoints =  5;
     Plato::ScalarMultiVectorT<Plato::Scalar> tEnergy("energy", tNumCells, tNumPoints);
     Plato::ScalarMultiVectorT<Plato::Scalar> tMass("mass", tNumCells, tNumPoints);
     Kokkos::parallel_for("Set the mass for each Element",
@@ -281,8 +280,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_const)
     {
       for(int j=0; j<tNumPoints; ++j)
       {
-        TEST_ASSERT(tEnergy_Host(i,j) ==
-                    (double) (i*j) * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
+        TEST_ASSERT(tEnergy_Host(i,j) == i*j * SPEED_OF_LIGHT * SPEED_OF_LIGHT);
       }
     }
 
@@ -303,8 +301,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_index_memory)
   // Do 100 loops with 1000 x 1000 cells to test the memory.
   for( size_t t=0; t<100; ++t)
   {
-    Plato::OrdinalType tNumCells  = 1000;
-    Plato::OrdinalType tNumPoints = 1000;
+    constexpr Plato::OrdinalType tNumCells  = 1000;
+    constexpr Plato::OrdinalType tNumPoints = 1000;
     Plato::ScalarMultiVectorT<Plato::Scalar> tEnergy("energy", tNumCells, tNumPoints);
     Plato::ScalarMultiVectorT<Plato::Scalar> tMass("mass", tNumCells, tNumPoints);
     Kokkos::parallel_for("Set the mass for each Element",
@@ -341,7 +339,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_index_memory)
     {
       for(int j=0; j<tNumPoints; ++j)
       {
-        TEST_ASSERT(tEnergy_Host(i,j) ==  (double) (i*j));
+        TEST_ASSERT(tEnergy_Host(i,j) == static_cast<double>(i*j) );
       }
     }
 
@@ -362,8 +360,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_const_memory)
   // Do 100 loops with 1000 x 1000 cells to test the memory.
   for( size_t t=0; t<100; ++t)
   {
-    Plato::OrdinalType tNumCells  = 1000;
-    Plato::OrdinalType tNumPoints = 1000;
+    constexpr Plato::OrdinalType tNumCells  = 1000;
+    constexpr Plato::OrdinalType tNumPoints = 1000;
     Plato::ScalarMultiVectorT<Plato::Scalar> tEnergy("energy", tNumCells, tNumPoints);
     Plato::ScalarMultiVectorT<Plato::Scalar> tMass("mass", tNumCells, tNumPoints);
     Kokkos::parallel_for("Set the mass for each Element",
@@ -426,7 +424,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionEvaluator_2D_const_memory)
     {
       for(int j=0; j<tNumPoints; ++j)
       {
-        TEST_ASSERT(tEnergy_Host(i,j) == (double) (i*j));
+        TEST_ASSERT(tEnergy_Host(i,j) == static_cast<double>(i*j) );
       }
     }
 
