@@ -66,19 +66,21 @@ class ComputedField
 
     // The coords are indexed by threads so set the values outside the
     // parallel for loop.
-//    tExpEval.set_variable("x", tXcoords);
-//    tExpEval.set_variable("y", tYcoords);
-//    tExpEval.set_variable("z", tZcoords);
+   tExpEval.set_variable("x", tXcoords);
+   tExpEval.set_variable("y", tYcoords);
+   tExpEval.set_variable("z", tZcoords);
 
     Kokkos::parallel_for("evaluate", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
     {
+        // Examples when hetrogenous varaible assignment is possible.
+
         // Set the coords as a constant on a per thread basis. This
         // call works but is not needed as the coords are indexed by
         // threads so set the values outside the parallel for loop.
 
-        tExpEval.set_variable("x", tXcoords(aPointOrdinal), aPointOrdinal);
-        tExpEval.set_variable("y", tYcoords(aPointOrdinal), aPointOrdinal);
-        tExpEval.set_variable("z", tZcoords(aPointOrdinal), aPointOrdinal);
+        // tExpEval.set_variable("x", tXcoords(aPointOrdinal), aPointOrdinal);
+        // tExpEval.set_variable("y", tYcoords(aPointOrdinal), aPointOrdinal);
+        // tExpEval.set_variable("z", tZcoords(aPointOrdinal), aPointOrdinal);
 
         // This call works but is not needed as values are used across
         // all threads so set the values outside the parallel for loop.
