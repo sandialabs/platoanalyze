@@ -562,7 +562,7 @@ ESP_Op(MPMD_App* aMyApp, Plato::InputData& aNode)
 /******************************************************************************/
 void
 MPMD_App::LocalOp::
-updateParameters(std::string aName, Plato::Scalar aValue)
+updateParameters(const std::string& aName, const Plato::Scalar aValue)
 /******************************************************************************/
 {
     if(mMyApp->mDebugAnalyzeApp == true)
@@ -570,16 +570,9 @@ updateParameters(std::string aName, Plato::Scalar aValue)
         REPORT("Analyze Application: Update Parameter Operation.\n");
     }
 
-    if(mParameters.count(aName) == 0)
+    auto tIterator = mParameters.find(aName);
+    if(tIterator != mParameters.end())
     {
-        std::stringstream tSS;
-        tSS << "Attempted to update a parameter ('" << aName << "') that wasn't defined for this operation";
-        Plato::ParsingException tParsingException(tSS.str());
-        throw tParsingException;
-    }
-    else
-    {
-        auto tIterator = mParameters.find(aName);
         auto tParam = tIterator->second;
         tParam->mValue = aValue;
 
@@ -589,6 +582,10 @@ updateParameters(std::string aName, Plato::Scalar aValue)
             parse_inline(mDef->params, tParam->mTarget, tParam->mValue);
             mDef->modified = true;
         }
+    }
+    else
+    {
+        std::cout << "Attempted to update a parameter ('" << aName << "') that wasn't defined for this operation\n";
     }
 }
 
@@ -646,7 +643,7 @@ void MPMD_App::ComputeCriterion::operator()()
         REPORT("Analyze Application - Compute Criterion Operation - Print Controls.\n");
         Plato::print(mMyApp->mControl, "controls");
         REPORT("Analyze Application - Compute Criterion Operation - Print Global State.\n");
-	mMyApp->mGlobalSolution.print();
+        mMyApp->mGlobalSolution.print();
         REPORT("Analyze Application - Compute Criterion Operation - Print Criterion GradientZ.\n");
         Plato::print(tGradZ, "criterion gradient Z");
         std::ostringstream tMsg;
@@ -899,7 +896,7 @@ void MPMD_App::ComputeCriterionGradient::operator()()
         REPORT("Analyze Application - Compute Criterion Gradient Operation - Print Controls.\n");
         Plato::print(mMyApp->mControl, "controls");
         REPORT("Analyze Application - Compute Criterion Gradient Operation - Print Global State.\n");
-	mMyApp->mGlobalSolution.print();
+        mMyApp->mGlobalSolution.print();
         REPORT("Analyze Application - Compute Criterion Gradient Operation - Print Criterion GradientZ.\n");
         Plato::print(tGradZ, "criterion gradient Z");
     }
@@ -940,7 +937,7 @@ void MPMD_App::ComputeCriterionGradientX::operator()()
         REPORT("Analyze Application - Compute Criterion Gradient X Operation - Print Controls.\n");
         Plato::print(mMyApp->mControl, "controls");
         REPORT("Analyze Application - Compute Criterion Gradient X Operation - Print Global State.\n");
-	mMyApp->mGlobalSolution.print();
+        mMyApp->mGlobalSolution.print();
         REPORT("Analyze Application - Compute Criterion Gradient X Operation - Print Criterion GradientX.\n");
         Plato::print(tGradX, "criterion gradient X");
     }
