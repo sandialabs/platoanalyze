@@ -343,11 +343,7 @@ endif()
 if (PLATOANALYZE_ENABLE_MPMD)
   FIND_PACKAGE(Epetra REQUIRED)
   set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
-  find_library(PLATO_DATA_LAYER_LIB NAMES PlatoDataLayer PATHS ${PLATOENGINE_PREFIX}/lib)
-  find_library(PLATO_INTERFACE_LIB NAMES PlatoInterface PATHS ${PLATOENGINE_PREFIX}/lib)
-  find_library(PLATO_PARSER_LIB NAMES PlatoParser PATHS ${PLATOENGINE_PREFIX}/lib)
-  find_library(PLATO_EXCEPTIONS_LIB NAMES PlatoExceptions PATHS ${PLATOENGINE_PREFIX}/lib)
-  find_library(PLATO_CONSOLE_LIB NAMES PlatoConsole PATHS ${PLATOENGINE_PREFIX}/lib)
+  find_package(PlatoEngine REQUIRED HINTS ${PLATOENGINE_PREFIX})
   find_package(Epetra REQUIRED)
   find_package(AztecOO REQUIRED)
   find_package(SEACASExodus REQUIRED)
@@ -357,11 +353,9 @@ if (PLATOANALYZE_ENABLE_MPMD)
   find_package(TeuchosCore REQUIRED)
 
   set(PLATO_LIBS
-      ${PLATO_DATA_LAYER_LIB}
-      ${PLATO_INTERFACE_LIB}
-      ${PLATO_PARSER_LIB}
-      ${PLATO_EXCEPTIONS_LIB}
-      ${PLATO_CONSOLE_LIB}
+      PlatoEngine::PlatoDataLayer
+      PlatoEngine::PlatoInterface
+      PlatoEngine::PlatoParser
       AztecOO::aztecoo
       Epetra::epetra
       Intrepid::intrepid
@@ -374,7 +368,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
 
   add_library( Analyze_App src/Analyze_App.cpp )
   target_include_directories(Analyze_App PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-  target_include_directories(Analyze_App PRIVATE "${PLATOENGINE_PREFIX}/include")
   if( CMAKE_INSTALL_PREFIX )
     install( TARGETS Analyze_App DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
   endif()
@@ -388,9 +381,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
     install( TARGETS analyze_MPMD DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
   endif()
   target_include_directories(analyze_MPMD PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-  target_include_directories(analyze_MPMD PRIVATE "${PLATOENGINE_PREFIX}/include")
-
-  target_include_directories(analyze PRIVATE "${PLATOENGINE_PREFIX}/include")
 
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
     message("Default mesh is EngineMesh")
@@ -410,7 +400,7 @@ if (PLATOANALYZE_ENABLE_MPMD)
     message("adding define: -DPLATO_ESP")
     add_definitions(-DPLATO_ESP)
     include_directories( ${ESP_INC_DIR} )
-    set(PLATO_LIBS ${PLATO_LIBS} ${PLATO_GEOMETRY_ESP_LIB} ${ESP_LIB} ${OCSM_LIB})
+    set(PLATO_LIBS ${PLATO_LIBS} PlatoEngine::PlatoGeometryESP ${ESP_LIB} ${OCSM_LIB})
   endif()
 
   option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
