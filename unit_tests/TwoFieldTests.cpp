@@ -198,9 +198,9 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     kinetics(tVolume, tProjectedPGrad, tDGrad, tPGrad, tTGrad, tTemperature,
              tPressure, tDevStress, tVolStrain, tTFlux, tGPStab);
 
-    tCellVolume(iCellOrdinal) = tVolume;
-    tCellTemperature(iCellOrdinal) = tTemperature;
-    tCellVolStrain(iCellOrdinal) = tVolStrain;
+    Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tVolume);
+    Kokkos::atomic_add(&tCellTemperature(iCellOrdinal), tTemperature/tNumPoints);
+    Kokkos::atomic_add(&tCellVolStrain(iCellOrdinal), tVolStrain/tNumPoints);
     for(Plato::OrdinalType iVoigt=0; iVoigt<numVoigtTerms; iVoigt++)
     {
       tCellDevStress(iCellOrdinal, iVoigt) = tDevStress(iVoigt);

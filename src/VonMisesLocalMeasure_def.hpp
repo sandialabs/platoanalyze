@@ -82,7 +82,7 @@ namespace Plato
         Kokkos::parallel_for("compute stress", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
-            ConfigT tVolume(0.0);
+            ConfigT tDetJ(0.0);
 
             Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, ConfigT> tGradient;
 
@@ -90,15 +90,16 @@ namespace Plato
             Plato::Array<ElementType::mNumVoigtTerms, ResultT> tStress(0.0);
 
             auto tCubPoint = tCubPoints(iGpOrdinal);
+            auto tCubWeight = tCubWeights(iGpOrdinal);
 
-            tComputeGradientMatrix(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tVolume);
+            tComputeGradientMatrix(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tDetJ);
             tComputeCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
             tComputeCauchyStress(tStress, tStrain);
 
             ResultT tResult(0);
             tComputeVonMises(iCellOrdinal, tStress, tResult);
-            Kokkos::atomic_add(&aResultWS(iCellOrdinal), tResult*tVolume);
-            Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tVolume);
+            Kokkos::atomic_add(&aResultWS(iCellOrdinal), tCubWeight*tResult*tDetJ);
+            Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tCubWeight*tDetJ);
         });
 
         Kokkos::parallel_for("compute cell quantities", Kokkos::RangePolicy<>(0, tNumCells),
