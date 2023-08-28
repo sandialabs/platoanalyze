@@ -153,7 +153,8 @@ namespace Plato
             tComputeGradientMatrix(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tDetJ);
             tComputeCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
             tComputeEigenvalues(tStrain, tPrincipalStrain, true);
-            tComputeTensileEnergyDensity(iCellOrdinal, tPrincipalStrain, tLameLambda, tLameMu, tCubWeight, aResultWS);
+            ResultT tWeightTimesDet = tCubWeight*tDetJ;
+            tComputeTensileEnergyDensity(iCellOrdinal, tPrincipalStrain, tLameLambda, tLameMu, tWeightTimesDet, aResultWS);
             Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tCubWeight*tDetJ);
         });
 
