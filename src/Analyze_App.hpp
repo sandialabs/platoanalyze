@@ -92,7 +92,7 @@ public:
         {
             return mDef;
         }
-        void updateParameters(std::string name, Plato::Scalar value);
+        void updateParameters(const std::string& name, Plato::Scalar value);
     };
     LocalOp* getOperation(const std::string & opName);
 

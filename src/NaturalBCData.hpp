@@ -6,7 +6,7 @@
 #include "PlatoMesh.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "AbstractPlatoMesh.hpp"
-#include "Plato_Utils.hpp"
+#include "Plato_NamedType.hpp"
 
 #include <Teuchos_ParameterList.hpp>
 
