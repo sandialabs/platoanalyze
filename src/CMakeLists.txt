@@ -14,9 +14,11 @@ set(ANALYZE_SOURCES
     IsotropicLinearElasticMaterial.cpp
     OrthotropicLinearElasticMaterial.cpp
     LinearThermoelasticMaterial.cpp
-    MaterialModel.cpp
-    Rank4Voigt.cpp
-    IsotropicStiffness.cpp
+    material/TensorConstant.cpp
+    material/ScalarFunctor.cpp
+    material/TensorFunctor.cpp
+    material/Rank4VoigtFunctor.cpp
+    material/IsotropicStiffnessFunctor.cpp
     AbstractTMKinetics.cpp
     LinearTMKinetics.cpp
     NonLinearTMKinetics.cpp
@@ -239,10 +241,6 @@ if(HYPERBOLIC)
 
   if(MICROMORPHIC)
     set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
-      hyperbolic/micromorphic/MicromorphicLinearElasticMaterial.cpp
-      hyperbolic/micromorphic/CubicMicromorphicLinearElasticMaterial.cpp
-      hyperbolic/micromorphic/MicromorphicInertiaMaterial.cpp
-      hyperbolic/micromorphic/CubicMicromorphicInertiaMaterial.cpp
       hyperbolic/micromorphic/RelaxedMicromorphicResidual.cpp
     )
   endif()

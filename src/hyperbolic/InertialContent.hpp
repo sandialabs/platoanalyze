@@ -1,11 +1,9 @@
 #pragma once
 
-#include "PlatoStaticsTypes.hpp"
 #include "LinearElasticMaterial.hpp"
+#include "material/MaterialModel.hpp"
 
-#ifdef PLATO_MICROMORPHIC
-#include "hyperbolic/micromorphic/MicromorphicInertiaMaterial.hpp"
-#endif
+#include "PlatoStaticsTypes.hpp"
 
 namespace Plato
 {
@@ -30,11 +28,9 @@ class InertialContent : public ElementType
             mCellDensity (aMaterialModel->getMassDensity()),
             mRayleighA   (aMaterialModel->getRayleighA()) {}
 
-    #ifdef PLATO_MICROMORPHIC
-    InertialContent(const Teuchos::RCP<Plato::MicromorphicInertiaMaterial<mNumSpatialDims>> aMaterialModel ) :
-            mCellDensity (aMaterialModel->getMacroscopicMassDensity()),
-            mRayleighA   (aMaterialModel->getRayleighA()) {}
-    #endif
+    InertialContent(const Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> aMaterialModel ) :
+            mCellDensity (aMaterialModel->getScalarConstant("Mass Density")),
+            mRayleighA   (0.0) {}
 
     template<typename TScalarType, typename TContentScalarType>
     KOKKOS_INLINE_FUNCTION void

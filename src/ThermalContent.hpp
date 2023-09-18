@@ -3,6 +3,7 @@
 
 #include "PlatoStaticsTypes.hpp"
 #include "ThermalMassMaterial.hpp"
+#include "material/ScalarFunctor.hpp"
 
 namespace Plato
 {

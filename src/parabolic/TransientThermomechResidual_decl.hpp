@@ -1,7 +1,7 @@
 #pragma once
 
 #include "NaturalBCs.hpp"
-#include "MaterialModel.hpp"
+#include "material/MaterialModel.hpp"
 #include "ApplyWeighting.hpp"
 #include "parabolic/AbstractVectorFunction.hpp"
 

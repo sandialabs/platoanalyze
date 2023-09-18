@@ -3,8 +3,8 @@
 
 #include "VoigtMap.hpp"
 #include "FadTypes.hpp"
-#include "MaterialModel.hpp"
-#include "MaterialBasis.hpp"
+#include "material/MaterialModel.hpp"
+#include "material/MaterialBasis.hpp"
 
 namespace Plato
 {

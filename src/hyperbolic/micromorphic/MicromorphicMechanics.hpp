@@ -25,7 +25,7 @@ struct MicromorphicFunctionFactory
         auto tLowerPDE = Plato::tolower(aPDE);
         if(tLowerPDE == "hyperbolic")
         {
-            return Plato::makeVectorFunction<EvaluationType, Plato::Hyperbolic::RelaxedMicromorphicResidual>
+            return Plato::makeVectorFunction<EvaluationType, Plato::Hyperbolic::Micromorphic::RelaxedMicromorphicResidual>
                      (aSpatialDomain, aDataMap, aProblemParams, aPDE);
         }
         else

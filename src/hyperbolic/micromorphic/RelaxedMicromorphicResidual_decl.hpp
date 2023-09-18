@@ -7,13 +7,9 @@
 #include "hyperbolic/VectorFunction.hpp"
 #include "hyperbolic/EvaluationTypes.hpp"
 
-#include "hyperbolic/micromorphic/MicromorphicElasticModelFactory.hpp"
-#include "hyperbolic/micromorphic/MicromorphicInertiaModelFactory.hpp"
+#include "material/MaterialModel.hpp"
 
-namespace Plato
-{
-
-namespace Hyperbolic
+namespace Plato::Hyperbolic::Micromorphic
 {
 
 template<typename EvaluationType, typename IndicatorFunctionType>
@@ -53,8 +49,8 @@ class RelaxedMicromorphicResidual :
 
     bool mRayleighDamping;
 
-    Teuchos::RCP<Plato::MicromorphicLinearElasticMaterial<mNumSpatialDims>> mMaterialModel;
-    Teuchos::RCP<Plato::MicromorphicInertiaMaterial<mNumSpatialDims>>       mInertiaModel;
+    Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> mMaterialModel;
+    Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> mInertiaModel;
 
     std::vector<std::string> mPlotTable;
 
@@ -125,6 +121,3 @@ class RelaxedMicromorphicResidual :
 };
 
 }
-
-}
-
