@@ -3,7 +3,10 @@
 
 #include "LinearThermoelasticMaterial.hpp"
 #include "VoigtMap.hpp"
-#include "MaterialModel.hpp"
+#include "material/MaterialModel.hpp"
+#include "material/TensorFunctor.hpp"
+#include "material/TensorConstant.hpp"
+#include "material/Rank4VoigtFunctor.hpp"
 
 namespace Plato
 {

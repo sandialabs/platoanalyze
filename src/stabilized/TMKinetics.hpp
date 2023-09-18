@@ -2,7 +2,7 @@
 
 #include "LinearThermoelasticMaterial.hpp"
 #include "VoigtMap.hpp"
-#include "MaterialModel.hpp"
+#include "material/MaterialModel.hpp"
 
 namespace Plato
 {

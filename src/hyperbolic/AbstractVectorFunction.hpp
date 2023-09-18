@@ -38,9 +38,28 @@ public:
         mDofDotDotNames (aStateDotDotNames)
     {
     }
-    virtual ~AbstractVectorFunction()
+
+    explicit 
+    AbstractVectorFunction(
+        const Plato::SpatialDomain     & aSpatialDomain,
+              Plato::DataMap           & aDataMap
+    ) :
+        mSpatialDomain  (aSpatialDomain),
+        mDataMap        (aDataMap)
     {
     }
+
+    virtual ~AbstractVectorFunction() = default;
+
+    AbstractVectorFunction(const AbstractVectorFunction& aFunction) = delete;
+
+    AbstractVectorFunction(AbstractVectorFunction&& aFunction) = delete;
+
+    AbstractVectorFunction&
+    operator=(const AbstractVectorFunction& aFunction) = delete;
+
+    AbstractVectorFunction&
+    operator=(AbstractVectorFunction&& aFunction) = delete;
 
     decltype(mSpatialDomain.Mesh) getMesh() const
     {

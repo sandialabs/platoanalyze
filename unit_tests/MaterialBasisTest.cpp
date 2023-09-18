@@ -3,7 +3,7 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
 #include "ParseTools.hpp"
-#include "MaterialBasis.hpp"
+#include "material/MaterialBasis.hpp"
 #include "PlatoMathTypes.hpp"
 
 namespace PlatoUnitTests

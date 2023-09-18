@@ -42,6 +42,14 @@ create_device_view(std::vector<ScalarT> & aVector)
 }
 
 /******************************************************************************/
+/*! Return a 2D view with specified control values.
+*/
+void
+setControlWS
+(std::vector<std::vector<Plato::Scalar>>& aValues,
+ Plato::ScalarMultiVectorT<Plato::Scalar>& aControl);
+
+/******************************************************************************/
 /*! Return a box (cube) along with the spec used to generate it.
 /*! @sa get_box_mesh
 */

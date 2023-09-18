@@ -3,6 +3,8 @@
 
 #include "AbstractTMKinetics.hpp"
 
+#include "material/TensorConstant.hpp"
+
 namespace Plato
 {
 

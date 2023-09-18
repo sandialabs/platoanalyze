@@ -4,7 +4,8 @@
 #include "PlatoTypes.hpp"
 #include "AnalyzeMacros.hpp"
 #include "PlatoMathTypes.hpp"
-#include "Teuchos_ParameterList.hpp"
+
+#include <Teuchos_ParameterList.hpp>
 
 #include <sstream>
 #include <string>
@@ -25,8 +26,8 @@ namespace ParseTools {
 template < typename T >
 T getSubParam(
     Teuchos::ParameterList& aInputParams,
-    const std::string aSubListName,
-    const std::string aParamName,
+    const std::string& aSubListName,
+    const std::string& aParamName,
     T aDefaultValue )
 {
     if( aInputParams.isSublist(aSubListName) == true )
@@ -51,7 +52,7 @@ T getSubParam(
 template < typename T >
 T getParam(
     Teuchos::ParameterList& aInputParams,
-    const std::string aParamName,
+    const std::string& aParamName,
     T aDefaultValue )
 {
     if (aInputParams.isType<T>(aParamName))
@@ -75,7 +76,7 @@ T getParam(
 template < typename T >
 T getParam(
     const Teuchos::ParameterList& aInputParams,
-    const std::string aParamName )
+    const std::string& aParamName )
 {
     if (aInputParams.isType<T>(aParamName))
     {
@@ -98,7 +99,7 @@ T getParam(
  *****************************************************************************/
 template < typename T >
 void
-verifyVectorLength(Teuchos::Array<T> aVector, int aLength, std::string aContext="")
+verifyVectorLength(Teuchos::Array<T> aVector, int aLength, const std::string& aContext="")
 {
   if( aVector.size() != aLength )
   {
@@ -116,7 +117,7 @@ verifyVectorLength(Teuchos::Array<T> aVector, int aLength, std::string aContext=
  *****************************************************************************/
 template < typename T >
 void
-normalizeVector(Teuchos::Array<T> & aVector, bool aQuiet=false, std::string aContext="")
+normalizeVector(Teuchos::Array<T> & aVector, bool aQuiet=false, const std::string& aContext="")
 {
   T tMag(0.0);
   for(auto tVal : aVector)

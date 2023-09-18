@@ -1,8 +1,13 @@
 #pragma once
 
-#include <Teuchos_ParameterList.hpp>
 #include "PlatoStaticsTypes.hpp"
-#include "MaterialModel.hpp"
+#include "material/MaterialModel.hpp"
+
+#include "material/MaterialModelFactory.hpp"
+#include "material/IsotropicStiffnessConstant.hpp"
+#include "material/IsotropicStiffnessFunctor.hpp"
+
+#include <Teuchos_ParameterList.hpp>
 
 namespace Plato {
 
@@ -62,56 +67,30 @@ namespace Plato {
       else
       if(aParamList.isSublist("Elastic Stiffness Expression"))
       {
-          this->parseRank4VoigtField("Elastic Stiffness Expression", aParamList);
+          this->parseRank4Field("Elastic Stiffness Expression", aParamList);
       }
   }
 
-  /******************************************************************************/
-  /*!
-    \brief Factory for creating material models
-  */
-    template<int SpatialDim>
-    class ThermoelasticModelFactory
-  /******************************************************************************/
-  {
-    public:
-      ThermoelasticModelFactory(const Teuchos::ParameterList& paramList) : mParamList(paramList) {}
-      Teuchos::RCP<Plato::MaterialModel<SpatialDim>> create(std::string aModelName);
-    private:
-      const Teuchos::ParameterList& mParamList;
-  };
-
-  /******************************************************************************/
   template<int SpatialDim>
-  Teuchos::RCP<MaterialModel<SpatialDim>>
-  ThermoelasticModelFactory<SpatialDim>::create(std::string aModelName)
-  /******************************************************************************/
+  class ThermoelasticModelFactory : public MaterialModelFactory<SpatialDim>
   {
-      if (!mParamList.isSublist("Material Models"))
+  public:
+    ThermoelasticModelFactory(const Teuchos::ParameterList& aParamList) :
+    MaterialModelFactory<SpatialDim>(aParamList)
+    {}
+
+  protected:
+    Teuchos::RCP<Plato::MaterialModel<SpatialDim>>
+    constructFromSublist(const Teuchos::ParameterList& aParamList) override
+    {
+      if( aParamList.isSublist("Thermoelastic") )
       {
-          REPORT("'Material Models' list not found! Returning 'nullptr'");
-          return Teuchos::RCP<Plato::MaterialModel<SpatialDim>>(nullptr);
+        return Teuchos::rcp(new Plato::ThermoelasticMaterial<SpatialDim>(aParamList.sublist("Thermoelastic")));
       }
       else
-      {
-          auto tModelsParamList = mParamList.get<Teuchos::ParameterList>("Material Models");
+        ANALYZE_THROWERR("Expected 'Thermoelastic' ParameterList");
+    }
 
-          if (!tModelsParamList.isSublist(aModelName))
-          {
-              std::stringstream ss;
-              ss << "Requested a material model ('" << aModelName << "') that isn't defined";
-              ANALYZE_THROWERR(ss.str());
-          }
+  };
 
-          auto tModelParamList = tModelsParamList.sublist(aModelName);
-
-          if( tModelParamList.isSublist("Thermoelastic") )
-          {
-            return Teuchos::rcp(new Plato::ThermoelasticMaterial<SpatialDim>(tModelParamList.sublist("Thermoelastic")));
-          }
-          else
-          ANALYZE_THROWERR("Expected 'Thermoelastic' ParameterList");
-      }
-
-  }
 } // namespace Plato

@@ -19,7 +19,17 @@ public:
     AbstractSurfaceDisplacement(Plato::Scalar aScale = 1.0) : mScale(aScale) 
     {}
 
-    virtual ~AbstractSurfaceDisplacement(){}
+    virtual ~AbstractSurfaceDisplacement() = default;
+
+    AbstractSurfaceDisplacement(const AbstractSurfaceDisplacement& aDisp) = delete;
+
+    AbstractSurfaceDisplacement(AbstractSurfaceDisplacement&& aDisp) = delete;
+
+    AbstractSurfaceDisplacement&
+    operator=(const AbstractSurfaceDisplacement& aDisp) = delete;
+
+    AbstractSurfaceDisplacement&
+    operator=(AbstractSurfaceDisplacement&& aDisp) = delete;
 
     virtual void
     operator()
