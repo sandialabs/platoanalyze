@@ -69,6 +69,8 @@ ENDIF()
 #http://stackoverflow.com/questions/12264299/cmake-on-linux-target-platform-does-not-support-dynamic-linking
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
 
+FIND_PACKAGE(MPI REQUIRED)
+
 # Get Trilinos as one entity
 FIND_PACKAGE(Trilinos REQUIRED)
 
@@ -102,8 +104,6 @@ MESSAGE("-- BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 
 SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS} )
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Trilinos_CXX_COMPILER_FLAGS} ${CUSTOM_CXX_FLAGS}")
-
-#FIND_PACKAGE(MPI REQUIRED)
 
 ## this has to be conditional, or building without cuda fails
 if (PLATOANALYZE_ENABLE_CUDA)
@@ -140,11 +140,6 @@ if(${srcdir} STREQUAL ${bindir})
     message(FATAL_ERROR "In-source builds are forbidden!")
 
 endif()
-
-FIND_PACKAGE(KokkosCore REQUIRED)
-FIND_PACKAGE(KokkosContainers REQUIRED)
-FIND_PACKAGE(KokkosKernels REQUIRED)
-FIND_PACKAGE(Teuchos REQUIRED)
 
 SET(OMEGA_H_PREFIX "" CACHE PATH "Omega_h install location")
 IF(OMEGA_H_PREFIX)
