@@ -8,6 +8,13 @@
 
 TEUCHOS_UNIT_TEST(UMFPACKSolver, Symmetric)
 {
+/*
+     2    -1     0     0
+    -1     2    -1     0
+     0    -1     2    -1
+     0     0    -1     2
+*/
+
   namespace pu = Plato::UMFPACK;
   const pu::CSRMatrix Acsr = {/* .rowBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 8, 10},
                               /* .columns = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
@@ -20,8 +27,14 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, Symmetric)
   TEST_ASSERT(Acsc.values == Acsr.values);
 }
 
-TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetric)
+TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricEntries)
 {
+/*
+     2     1     0     0
+    -1     2     1     0
+     0    -1     2     1
+     0     0    -1     2
+*/
   namespace pu = Plato::UMFPACK;
   const pu::CSRMatrix Acsr = {/* .rowBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 8, 10},
                               /* .columns = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
@@ -32,6 +45,31 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetric)
   const pu::CSCMatrix Acsc_gold = {/* .colBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 8, 10},
                                    /* .rows = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
                                    /* .values = */ std::vector<double>{2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0, -1.0, 1.0, 2.0}};
+
+  TEST_ASSERT(Acsc.colBegin == Acsc_gold.colBegin);
+  TEST_ASSERT(Acsc.rows == Acsc_gold.rows);
+  TEST_ASSERT(Acsc.values == Acsc_gold.values);
+}
+
+TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricSparsity)
+{
+/*
+     1     3     2     0
+     0     1     1     2
+     0     4     3     2
+     4     0     3     3
+*/
+
+  namespace pu = Plato::UMFPACK;
+  const pu::CSRMatrix Acsr = {/* .rowBegin = */ std::vector<SuiteSparse_long>{0, 3, 6, 9, 12},
+                              /* .columns = */ std::vector<SuiteSparse_long>{0, 1, 2, 1, 2, 3, 1, 2, 3, 0, 2, 3},
+                              /* .values = */ std::vector<double>{1, 3, 2, 1, 1, 2, 4, 3, 2, 4, 3, 3}};
+
+  const pu::CSCMatrix Acsc = convertCSRtoCSC(Acsr);
+
+  const pu::CSCMatrix Acsc_gold = {/* .colBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 9, 12},
+                                   /* .rows = */ std::vector<SuiteSparse_long>{0, 3, 0, 1, 2, 0, 1, 2, 3, 1, 2, 3},
+                                   /* .values = */ std::vector<double>{1, 4, 3, 1, 4, 2, 1, 3, 3, 2, 2, 3}};
 
   TEST_ASSERT(Acsc.colBegin == Acsc_gold.colBegin);
   TEST_ASSERT(Acsc.rows == Acsc_gold.rows);
