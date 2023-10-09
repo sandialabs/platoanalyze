@@ -262,6 +262,10 @@ if (PLATOANALYZE_ENABLE_TACHO)
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES} alg/TachoLinearSolver.cpp)
 endif()
 
+if (PLATOANALYZE_ENABLE_UMFPACK)
+  set(ANALYZE_SOURCES ${ANALYZE_SOURCES} alg/UMFPACKLinearSolver.cpp)
+endif()
+
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/src/mesh)
 
