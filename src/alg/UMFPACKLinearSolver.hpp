@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef PLATO_UMFPACK
+
 #include <vector>
 
 #include "PlatoAbstractSolver.hpp"
@@ -13,15 +15,18 @@ struct CSRMatrix {
     std::vector<SuiteSparse_long> rowBegin;
     std::vector<SuiteSparse_long> columns;
     std::vector<double> values;
+    SuiteSparse_long nRows() const { return rowBegin.size()-1; }
 };
 
 struct CSCMatrix {
     std::vector<SuiteSparse_long> colBegin;
     std::vector<SuiteSparse_long> rows;
     std::vector<double> values;
+    SuiteSparse_long nCols() const { return colBegin.size()-1; }
 };
 
 CSCMatrix convertCSRtoCSC(const CSRMatrix &A);
+CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int> &aA);
 
 class UMFPACKLinearSolver : public Plato::AbstractSolver
 {
@@ -39,10 +44,11 @@ public:
 private:
     void check_umfpack(const char *msg);
     uint64_t ne;
-    std::vector<SuiteSparse_long> Ap, Ai;
-    std::vector<double> Ax;
+    CSCMatrix mMatrix;
     std::array<double,UMFPACK_INFO> Info;
     void *Symbolic = nullptr, *Numeric = nullptr;
 };
 
 } // namespace UMFPACK
+
+#endif

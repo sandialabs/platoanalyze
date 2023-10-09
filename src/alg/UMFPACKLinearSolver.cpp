@@ -7,7 +7,7 @@ CSCMatrix convertCSRtoCSC(const CSRMatrix &A)
 {
     assert(A.rowBegin.size() > 0);
     assert(A.columns.size() == A.values.size());
-    const SuiteSparse_long nRows = A.rowBegin.size() - 1;
+    const SuiteSparse_long nRows = A.nRows();
     const SuiteSparse_long nEntries = A.columns.size();
 
     std::vector<SuiteSparse_long> rows(nEntries);
@@ -31,6 +31,27 @@ CSCMatrix convertCSRtoCSC(const CSRMatrix &A)
     return B;
 }
 
+namespace {
+template <typename ReturnType,typename ViewType>
+std::vector<ReturnType> kokkosViewToStdVector(ViewType v) {
+    std::vector<ReturnType> vec;
+
+    static_assert(ViewType::rank() == 1, "invalid usage of kokkosViewToStdVector: requires one dimension");
+
+    vec.reserve(v.size());
+    std::copy(v.data(), v.data() + v.size(), std::back_inserter(vec));
+
+    return vec;
+}
+}
+
+CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int> &aA)
+{
+    return CSRMatrix{kokkosViewToStdVector<SuiteSparse_long>(aA.rowMap()),
+                     kokkosViewToStdVector<SuiteSparse_long>(aA.columnIndices()),
+                     kokkosViewToStdVector<double>(aA.entries())};
+}
+
 UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs) :
                                          Plato::AbstractSolver(aSolverParams, aMPCs)
@@ -48,27 +69,22 @@ UMFPACKLinearSolver::~UMFPACKLinearSolver() {
 
 void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
 {
-    // set ne, Ap, Ai, Ax
+    const CSRMatrix A = constructCSRMatrix(aA);
 
-    /*
-    double *tmp = new double [ncols()]; // x -> A\x (tmp) -> x
+    mMatrix = convertCSRtoCSC(A);
+    const SuiteSparse_long nRows = mMatrix.nCols();
 
     if (Symbolic == nullptr) {
-        umfpack_dl_symbolic((SuiteSparse_long)ncols(), (SuiteSparse_long)ncols(), Ap.data(), Ai.data(), Ax.data(), &Symbolic, nullptr, Info.data());
+        umfpack_dl_symbolic(nRows, nRows, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), &Symbolic, nullptr, Info.data());
         check_umfpack("symbolic factorization");
     }
     if (Numeric == nullptr) {
-        umfpack_dl_numeric(Ap, Ai, Ax, Symbolic, &Numeric, nullptr, Info.data());
+        umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), Symbolic, &Numeric, nullptr, Info.data());
         check_umfpack("numeric factorization");
     }
 
-    umfpack_dl_solve(UMFPACK_A, Ap, Ai, Ax, tmp, x, Numeric, nullptr, Info.data());
+    umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(), aB.data(), Numeric, nullptr, Info.data());
     check_umfpack("matrix solve");
-
-    blas::copy((unsigned)ncols(), tmp, x);
-
-    delete [] tmp;
-    */
 }
 
 void UMFPACKLinearSolver::report_memory_usage() {

@@ -4,6 +4,9 @@
 
 #include "alg/UMFPACKLinearSolver.hpp"
 
+#include "util/PlatoTestHelpers.hpp"
+#include "util/PlatoMathTestHelpers.hpp"
+
 #include "Teuchos_UnitTestHarness.hpp"
 
 TEUCHOS_UNIT_TEST(UMFPACKSolver, Symmetric)
@@ -74,4 +77,34 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricSparsity)
   TEST_ASSERT(Acsc.colBegin == Acsc_gold.colBegin);
   TEST_ASSERT(Acsc.rows == Acsc_gold.rows);
   TEST_ASSERT(Acsc.values == Acsc_gold.values);
+}
+
+TEUCHOS_UNIT_TEST(UMFPACKSolver, constructCSRMatrix)
+{
+/*
+     2    -1     0     0
+    -1     2    -1     0
+     0    -1     2    -1
+     0     0    -1     2
+*/
+
+  namespace pth = Plato::TestHelpers;
+
+  const unsigned numRows = 4;
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(numRows, numRows, 1, 1) );
+  std::vector<Plato::OrdinalType> tRowMapA = {0, 2, 5, 8, 10};
+  std::vector<Plato::OrdinalType> tColMapA = {0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
+  std::vector<Plato::Scalar>      tValuesA = {2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0};
+  pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
+
+  namespace pu = Plato::UMFPACK;
+  const pu::CSRMatrix A = pu::constructCSRMatrix(*tMatrixA);
+
+  const pu::CSRMatrix Acsr_gold = {/* .rowBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 8, 10},
+                                   /* .columns = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
+                                   /* .values = */ std::vector<double>{2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0}};
+
+  TEST_ASSERT(A.rowBegin == Acsr_gold.rowBegin);
+  TEST_ASSERT(A.columns == Acsr_gold.columns);
+  TEST_ASSERT(A.values == Acsr_gold.values);
 }

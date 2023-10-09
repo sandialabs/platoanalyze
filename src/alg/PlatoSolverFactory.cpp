@@ -9,9 +9,7 @@
 #ifdef PLATO_TACHO
 #include "alg/TachoLinearSolver.hpp"
 #endif
-#ifdef PLATO_UMFPACK
 #include "alg/UMFPACKLinearSolver.hpp"
-#endif
 
 namespace Plato {
 
