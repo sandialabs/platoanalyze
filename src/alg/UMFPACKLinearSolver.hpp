@@ -3,6 +3,7 @@
 #ifdef PLATO_UMFPACK
 
 #include <vector>
+#include <string>
 
 #include "PlatoAbstractSolver.hpp"
 #include "PlatoStaticsTypes.hpp"
@@ -42,11 +43,11 @@ public:
     ) override;
     void report_memory_usage();
 private:
-    void check_umfpack(const char *msg);
-    uint64_t ne;
+    void check_umfpack(const std::string &msg);
     CSCMatrix mMatrix;
-    std::array<double,UMFPACK_INFO> Info;
-    void *Symbolic = nullptr, *Numeric = nullptr;
+    std::array<double,UMFPACK_INFO> mInfo;
+    void *mSymbolic = nullptr;
+    void *mNumeric = nullptr;
 };
 
 } // namespace UMFPACK

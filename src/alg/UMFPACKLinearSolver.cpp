@@ -1,5 +1,6 @@
 #include <iostream>
 #include "UMFPACKLinearSolver.hpp"
+#include "CrsMatrixUtils.hpp"
 
 namespace Plato::UMFPACK {
 
@@ -47,9 +48,15 @@ std::vector<ReturnType> kokkosViewToStdVector(ViewType v) {
 
 CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int> &aA)
 {
-    return CSRMatrix{kokkosViewToStdVector<SuiteSparse_long>(aA.rowMap()),
-                     kokkosViewToStdVector<SuiteSparse_long>(aA.columnIndices()),
-                     kokkosViewToStdVector<double>(aA.entries())};
+    using CrsOrdinal = int;
+    Plato::CrsMatrix<CrsOrdinal>::RowMapVectorT tRowBegin;
+    Plato::CrsMatrix<CrsOrdinal>::OrdinalVectorT tColumns;
+    Plato::CrsMatrix<CrsOrdinal>::ScalarVectorT tValues;
+    std::tie(tRowBegin, tColumns, tValues) = Plato::crs_matrix_non_block_form<CrsOrdinal>(aA);
+
+    return CSRMatrix{kokkosViewToStdVector<SuiteSparse_long>(tRowBegin),
+                     kokkosViewToStdVector<SuiteSparse_long>(tColumns),
+                     kokkosViewToStdVector<double>(tValues)};
 }
 
 UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
@@ -59,11 +66,11 @@ UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverPa
 }
 
 UMFPACKLinearSolver::~UMFPACKLinearSolver() {
-    if (Symbolic != nullptr) {
-        umfpack_dl_free_symbolic(&Symbolic);
+    if (mSymbolic != nullptr) {
+        umfpack_dl_free_symbolic(&mSymbolic);
     }
-    if (Numeric != nullptr) {
-        umfpack_dl_free_numeric(&Numeric);
+    if (mNumeric != nullptr) {
+        umfpack_dl_free_numeric(&mNumeric);
     }
 }
 
@@ -74,26 +81,23 @@ void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVect
     mMatrix = convertCSRtoCSC(A);
     const SuiteSparse_long nRows = mMatrix.nCols();
 
-    if (Symbolic == nullptr) {
-        umfpack_dl_symbolic(nRows, nRows, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), &Symbolic, nullptr, Info.data());
-        check_umfpack("symbolic factorization");
-    }
-    if (Numeric == nullptr) {
-        umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), Symbolic, &Numeric, nullptr, Info.data());
-        check_umfpack("numeric factorization");
-    }
+    umfpack_dl_symbolic(nRows, nRows, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), &mSymbolic, nullptr, mInfo.data());
+    check_umfpack("Symbolic factorization");
 
-    umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(), aB.data(), Numeric, nullptr, Info.data());
+    umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), mSymbolic, &mNumeric, nullptr, mInfo.data());
+    check_umfpack("Numeric factorization");
+
+    umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(), aB.data(), mNumeric, nullptr, mInfo.data());
     check_umfpack("matrix solve");
 }
 
 void UMFPACKLinearSolver::report_memory_usage() {
-    std::cout << "UMFPACK peak memory usage: " << Info[UMFPACK_SIZE_OF_UNIT]*Info[UMFPACK_PEAK_MEMORY]/(1024.0*1024.0) << " MB." << std::endl;
+    std::cout << "UMFPACK peak memory usage: " << mInfo[UMFPACK_SIZE_OF_UNIT]*mInfo[UMFPACK_PEAK_MEMORY]/(1024.0*1024.0) << " MB." << std::endl;
 }
 
-void UMFPACKLinearSolver::check_umfpack(const char *msg) {
-    if (Info[UMFPACK_STATUS] != UMFPACK_OK) {
-        std::cerr << "UMFPACK: error in " << msg << ": status = " << Info[UMFPACK_STATUS] << std::endl;
+void UMFPACKLinearSolver::check_umfpack(const std::string &msg) {
+    if (mInfo[UMFPACK_STATUS] != UMFPACK_OK) {
+        ANALYZE_THROWERR("UMFPACK: error in " + msg + ": status = " + std::to_string(static_cast<int>(mInfo[UMFPACK_STATUS])));
     }
 }
 
