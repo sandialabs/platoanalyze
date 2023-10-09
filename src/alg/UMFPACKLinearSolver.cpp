@@ -65,13 +65,16 @@ UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverPa
 {
 }
 
-UMFPACKLinearSolver::~UMFPACKLinearSolver() {
+void UMFPACKLinearSolver::clear() {
     if (mSymbolic != nullptr) {
         umfpack_dl_free_symbolic(&mSymbolic);
+        mSymbolic = nullptr;
     }
     if (mNumeric != nullptr) {
         umfpack_dl_free_numeric(&mNumeric);
+        mNumeric = nullptr;
     }
+
 }
 
 void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
@@ -89,6 +92,10 @@ void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVect
 
     umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(), aB.data(), mNumeric, nullptr, mInfo.data());
     check_umfpack("matrix solve");
+
+    report_memory_usage();
+
+    clear();
 }
 
 void UMFPACKLinearSolver::report_memory_usage() {
