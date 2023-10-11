@@ -3,10 +3,7 @@
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoMathTypes.hpp"
 
-namespace Plato
-{
-
-namespace Hyperbolic
+namespace Plato::Hyperbolic::Micromorphic
 {
 
 /***************************************************************************//**
@@ -44,17 +41,18 @@ public:
              typename GradientScalarType,
              typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    operator()(
-              Plato::OrdinalType                                                     aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ForcingScalarType>                         & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType>                       & aSymmetricStress,
-        const Plato::Array<mNumVoigtTerms, StressScalarType>                       & aSkewStress,
-        const Plato::Matrix<mNumNodesPerCell, mNumSpatialDims, GradientScalarType> & aGradient,
-        const VolumeScalarType                                                     & aCellVolume,
-              Plato::Scalar                                                          aScale = 1.0) const
+    operator()
+    (      Plato::OrdinalType                             aCellOrdinal,
+           Plato::OrdinalType                             aGpOrdinal,
+           Plato::ScalarMultiVectorT<ForcingScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>      & aSymmetricStress,
+     const Plato::ScalarArray3DT<StressScalarType>      & aSkewStress,
+     const Plato::ScalarArray4DT<GradientScalarType>    & aGradient,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>  & aVolume,
+           Plato::Scalar                                  aScale = 1.0) const
     {
-        this->addSymmetricStressDivergence(aCellOrdinal,aOutput,aSymmetricStress,aGradient,aCellVolume,aScale);
-        this->addSkewStressDivergence(aCellOrdinal,aOutput,aSkewStress,aGradient,aCellVolume,aScale);
+        this->addSymmetricStressDivergence(aCellOrdinal,aGpOrdinal,aOutput,aSymmetricStress,aGradient,aVolume,aScale);
+        this->addSkewStressDivergence(aCellOrdinal,aGpOrdinal,aOutput,aSkewStress,aGradient,aVolume,aScale);
     }
 
 private:
@@ -99,13 +97,14 @@ private:
              typename GradientScalarType,
              typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    addSymmetricStressDivergence(
-              Plato::OrdinalType                                                     aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ForcingScalarType>                         & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType>                       & aStress,
-        const Plato::Matrix<mNumNodesPerCell, mNumSpatialDims, GradientScalarType> & aGradient,
-        const VolumeScalarType                                                     & aCellVolume,
-              Plato::Scalar                                                          aScale) const
+    addSymmetricStressDivergence
+    (      Plato::OrdinalType                             aCellOrdinal,
+           Plato::OrdinalType                             aGpOrdinal,
+           Plato::ScalarMultiVectorT<ForcingScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>      & aStress,
+     const Plato::ScalarArray4DT<GradientScalarType>    & aGradient,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>  & aVolume,
+           Plato::Scalar                                  aScale) const
     {
         for(Plato::OrdinalType tDimIndexI = 0; tDimIndexI < mNumSpatialDims; tDimIndexI++)
         {
@@ -114,8 +113,10 @@ private:
                 Plato::OrdinalType tLocalOrdinal = tNodeIndex * mNumDofsPerNode + tDimIndexI + DofOffset;
                 for(Plato::OrdinalType tDimIndexJ = 0; tDimIndexJ < mNumSpatialDims; tDimIndexJ++)
                 {
-                    Kokkos::atomic_add(&aOutput(aCellOrdinal, tLocalOrdinal),
-                        aScale * aCellVolume * aStress(mVoigtMap[tDimIndexI][tDimIndexJ]) * aGradient(tNodeIndex, tDimIndexJ));
+                    Kokkos::atomic_add(&aOutput(aCellOrdinal,tLocalOrdinal),
+                        aScale * aVolume(aCellOrdinal,aGpOrdinal) * 
+                        aStress(aCellOrdinal,aGpOrdinal,mVoigtMap[tDimIndexI][tDimIndexJ]) * 
+                        aGradient(aCellOrdinal,aGpOrdinal,tNodeIndex,tDimIndexJ));
                 }
             }
         }
@@ -126,13 +127,14 @@ private:
              typename GradientScalarType,
              typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    addSkewStressDivergence(
-              Plato::OrdinalType                                                     aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ForcingScalarType>                         & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType>                       & aStress,
-        const Plato::Matrix<mNumNodesPerCell, mNumSpatialDims, GradientScalarType> & aGradient,
-        const VolumeScalarType                                                     & aCellVolume,
-              Plato::Scalar                                                          aScale) const
+    addSkewStressDivergence
+    (      Plato::OrdinalType                             aCellOrdinal,
+           Plato::OrdinalType                             aGpOrdinal,
+           Plato::ScalarMultiVectorT<ForcingScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>      & aStress,
+     const Plato::ScalarArray4DT<GradientScalarType>    & aGradient,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>  & aVolume,
+           Plato::Scalar                                  aScale) const
     {
         for(Plato::OrdinalType tDimIndexI = 0; tDimIndexI < mNumSpatialDims; tDimIndexI++)
         {
@@ -141,15 +143,16 @@ private:
                 Plato::OrdinalType tLocalOrdinal = tNodeIndex * mNumDofsPerNode + tDimIndexI + DofOffset;
                 for(Plato::OrdinalType tDimIndexJ = 0; tDimIndexJ < mNumSpatialDims; tDimIndexJ++)
                 {
-                    Kokkos::atomic_add(&aOutput(aCellOrdinal, tLocalOrdinal),
-                        aScale * mSkewScale[tDimIndexI][tDimIndexJ] * aCellVolume * aStress(mVoigtMap[tDimIndexI][tDimIndexJ]) * aGradient(tNodeIndex, tDimIndexJ));
+                    Kokkos::atomic_add(&aOutput(aCellOrdinal,tLocalOrdinal),
+                        aScale * mSkewScale[tDimIndexI][tDimIndexJ] * 
+                        aVolume(aCellOrdinal,aGpOrdinal) * 
+                        aStress(aCellOrdinal,aGpOrdinal,mVoigtMap[tDimIndexI][tDimIndexJ]) * 
+                        aGradient(aCellOrdinal,aGpOrdinal,tNodeIndex,tDimIndexJ));
                 }
             }
         }
     }
 
 };
-
-}
 
 }

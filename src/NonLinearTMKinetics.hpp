@@ -2,6 +2,8 @@
 #define PLATO_NONLINEAR_TMKINETICS_HPP
 
 #include "AbstractTMKinetics.hpp"
+#include "material/TensorFunctor.hpp"
+#include "material/Rank4VoigtFunctor.hpp"
 
 namespace Plato
 {

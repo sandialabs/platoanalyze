@@ -6,6 +6,31 @@
 namespace Plato {
 namespace TestHelpers {
 
+void
+setControlWS
+(std::vector<std::vector<Plato::Scalar>>& aValues,
+ Plato::ScalarMultiVectorT<Plato::Scalar>& aControl)
+{
+    const auto tNumCells = aValues.size();
+    assert(tNumCells <= aControl.extent(0));
+    const auto tNumNodesPerCell = aControl.extent(1);
+    assert(tNumNodesPerCell == aValues[0].size());
+
+    std::vector<Plato::Scalar> tAllValues(tNumCells*tNumNodesPerCell);
+    for(int iCell=0; iCell<tNumCells; iCell++)
+        for(int iNode=0; iNode<tNumNodesPerCell; iNode++)
+            tAllValues[iCell*tNumNodesPerCell+iNode] = aValues[iCell][iNode];
+
+    auto tControlVals = Plato::TestHelpers::create_device_view(tAllValues);
+
+    Kokkos::parallel_for("fill control", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), 
+    KOKKOS_LAMBDA(Plato::OrdinalType iCell)
+    {
+        for(int iNode=0; iNode<tNumNodesPerCell; iNode++)
+          aControl(iCell,iNode) = tControlVals(iCell*tNumNodesPerCell+iNode);
+    });
+}
+
 auto get_box_mesh_with_spec(
     const std::string& aMeshType, 
     Plato::OrdinalType aMeshIntervals,

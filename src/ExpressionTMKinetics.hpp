@@ -5,6 +5,8 @@
 #include "ExpressionEvaluator.hpp"
 #include "InterpolateFromNodal.hpp"
 
+#include "material/TensorConstant.hpp"
+
 namespace Plato
 {
 
@@ -37,10 +39,7 @@ protected:
     const Plato::Scalar mScaling2;
     Plato::VoigtMap<mNumSpatialDims> cVoigtMap;
 
-    std::shared_ptr<Plato::Rank4VoigtField<EvaluationType>> mElasticStiffnessField;
-    std::string mExpression;
-    Plato::Scalar mE0;
-    KineticsScalarType mPoissonsRatio;
+    std::shared_ptr<Plato::Rank4Field<EvaluationType>> mElasticStiffnessField;
     ControlScalarType mControlValue;
 
 public:
@@ -61,13 +60,7 @@ public:
         mThermalExpansivityConstant = aMaterialModel->getTensorConstant("Thermal Expansivity");
         mThermalConductivityConstant = aMaterialModel->getTensorConstant("Thermal Conductivity");
 
-        mElasticStiffnessField = aMaterialModel->template getRank4VoigtField<EvaluationType>("Elastic Stiffness Expression");
-//        mElasticStiffnessField = std::make_shared<Plato::Rank4VoigtField<EvaluationType>>
-//                (aMaterialModel->template getRank4VoigtField<EvaluationType>("Elastic Stiffness Expression"));
-
-//        mE0 = aMaterialModel->getScalarConstant("E0");
-//        mExpression = aMaterialModel->expression();
-//        mPoissonsRatio = aMaterialModel->getScalarConstant("Poissons Ratio");
+        mElasticStiffnessField = aMaterialModel->template getRank4Field<EvaluationType>("Elastic Stiffness Expression");
 
         mControlValue = -1.0;
         if(aMaterialModel->scalarConstantExists("Density"))
@@ -108,52 +101,6 @@ public:
     }
 
     void
-    calculateYoungsModulusValues(
-        Plato::OrdinalType                            const & aNumCells,
-        Plato::ScalarMultiVectorT<ControlScalarType>  const & aLocalControl,
-        Plato::ScalarMultiVectorT<KineticsScalarType>       & aElementYoungsModulusValues
-    ) const
-    {
-        auto tCubPoints = ElementType::getCubPoints();
-        auto tCubWeights = ElementType::getCubWeights();
-        auto tNumPoints = tCubWeights.size();
-
-        Plato::InterpolateFromNodal<ElementType, 1, 0> tInterpolateFromNodal;
-        Plato::ScalarVectorT<ControlScalarType> tElementDensity("Gauss point density", aNumCells*tNumPoints);
-
-        ExpressionEvaluator<Plato::ScalarMultiVectorT<KineticsScalarType>,
-                            Plato::ScalarMultiVectorT<KinematicsScalarType>,
-                            Plato::ScalarVectorT<ControlScalarType>,
-                            Plato::Scalar > tExpEval;
-        
-        tExpEval.parse_expression(mExpression.c_str());
-        tExpEval.setup_storage(aNumCells*tNumPoints, 1);
-        tExpEval.set_variable("E0", mE0);
-
-        Kokkos::parallel_for("compute element density", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {aNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
-        {
-            auto tCubPoint = tCubPoints(iGpOrdinal);
-            auto tBasisValues = ElementType::basisValues(tCubPoint);
-
-            // Calculate the node-averaged density for the element/cell
-            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            tElementDensity(tEntryOrdinal) = tInterpolateFromNodal(iCellOrdinal, tBasisValues, aLocalControl);
-        });
-
-        tExpEval.set_variable("tElementDensity", tElementDensity);
-        Kokkos::parallel_for("compute youngs modulus", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {aNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
-        {
-            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-
-            tExpEval.evaluate_expression( tEntryOrdinal, aElementYoungsModulusValues );
-        });
-        Kokkos::fence();
-        tExpEval.clear_storage();
-    }
-
-    void
     computeThermalStrainStressAndFlux(
         Plato::OrdinalType                            const & aNumCells,
         Plato::ScalarMultiVectorT<StateT>             const & aTemperature,
@@ -170,7 +117,6 @@ public:
         auto& tThermalExpansivityConstant = mThermalExpansivityConstant;
         auto& tThermalConductivityConstant = mThermalConductivityConstant;
         auto& tVoigtMap = cVoigtMap;
-        auto tPoissonsRatio = mPoissonsRatio;
 
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();

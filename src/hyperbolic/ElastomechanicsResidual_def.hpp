@@ -30,16 +30,32 @@ namespace Hyperbolic
               Teuchos::ParameterList & aProblemParams,
               Teuchos::ParameterList & aPenaltyParams
     ) :
-        FunctionBaseType      (aSpatialDomain, aDataMap,
-                               {"displacement X", "displacement Y", "displacement Z"},
-                               {"velocity X",     "velocity Y",     "velocity Z"    },
-                               {"acceleration X", "acceleration Y", "acceleration Z"}),
+        FunctionBaseType      (aSpatialDomain, aDataMap),
         mIndicatorFunction    (aPenaltyParams),
         mApplyStressWeighting (mIndicatorFunction),
         mApplyMassWeighting   (mIndicatorFunction),
         mBodyLoads            (nullptr),
         mBoundaryLoads        (nullptr)
     {
+        if(mNumSpatialDims == 1)
+        {
+           this->mDofNames = std::vector<std::string>({"displacement X"});
+           this->mDofDotNames = std::vector<std::string>({"velocity X"});
+           this->mDofDotDotNames = std::vector<std::string>({"acceleration X"});
+        }
+        if(mNumSpatialDims == 2)
+        {
+           this->mDofNames = std::vector<std::string>({"displacement X", "displacement Y"});
+           this->mDofDotNames = std::vector<std::string>({"velocity X", "velocity Y"});
+           this->mDofDotDotNames = std::vector<std::string>({"acceleration X", "acceleration Y"});
+        }
+        if(mNumSpatialDims == 3)
+        {
+           this->mDofNames = std::vector<std::string>({"displacement X", "displacement Y", "displacement Z"});
+           this->mDofDotNames = std::vector<std::string>({"velocity X", "velocity Y", "velocity Z"});
+           this->mDofDotDotNames = std::vector<std::string>({"acceleration X", "acceleration Y", "acceleration Z"});
+        }
+
         Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aProblemParams);
         mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
 

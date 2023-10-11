@@ -3,10 +3,7 @@
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoMathTypes.hpp"
 
-namespace Plato
-{
-
-namespace Hyperbolic
+namespace Plato::Hyperbolic::Micromorphic
 {
 
 /***************************************************************************//**
@@ -41,33 +38,35 @@ public:
     // overloaded for cauchy and micro stresses
     template<typename ProjectedScalarType, typename StressScalarType, typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    operator()(
-              Plato::OrdinalType                               aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ProjectedScalarType> & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aSymmetricMesoStress,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aSkewMesoStress,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aSymmetricMicroStress,
-        const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
-        const VolumeScalarType                               & aVolume) const
+    operator()
+    (      Plato::OrdinalType                               aCellOrdinal,
+           Plato::OrdinalType                               aGpOrdinal,
+           Plato::ScalarMultiVectorT<ProjectedScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>        & aSymmetricMesoStress,
+     const Plato::ScalarArray3DT<StressScalarType>        & aSkewMesoStress,
+     const Plato::ScalarArray3DT<StressScalarType>        & aSymmetricMicroStress,
+     const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>    & aVolume) const
     {
-        this->addSymmetricStressAtNodes(aCellOrdinal,aOutput,aSymmetricMicroStress,aBasisFunctions,aVolume,1.0);
-        this->addSymmetricStressAtNodes(aCellOrdinal,aOutput,aSymmetricMesoStress,aBasisFunctions,aVolume,-1.0);
-        this->addSkewStressAtNodes(aCellOrdinal,aOutput,aSkewMesoStress,aBasisFunctions,aVolume,-1.0);
+        this->addSymmetricStressAtNodes(aCellOrdinal,aGpOrdinal,aOutput,aSymmetricMicroStress,aBasisFunctions,aVolume,1.0);
+        this->addSymmetricStressAtNodes(aCellOrdinal,aGpOrdinal,aOutput,aSymmetricMesoStress,aBasisFunctions,aVolume,-1.0);
+        this->addSkewStressAtNodes(aCellOrdinal,aGpOrdinal,aOutput,aSkewMesoStress,aBasisFunctions,aVolume,-1.0);
     }
 
     // overloaded for inertia stresses
     template<typename ProjectedScalarType, typename StressScalarType, typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    operator()(
-              Plato::OrdinalType                               aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ProjectedScalarType> & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aSymmetricMicroStress,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aSkewMicroStress,
-        const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
-        const VolumeScalarType                               & aVolume) const
+    operator()
+    (      Plato::OrdinalType                               aCellOrdinal,
+           Plato::OrdinalType                               aGpOrdinal,
+           Plato::ScalarMultiVectorT<ProjectedScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>        & aSymmetricMicroStress,
+     const Plato::ScalarArray3DT<StressScalarType>        & aSkewMicroStress,
+     const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>    & aVolume) const
     {
-        this->addSymmetricStressAtNodes(aCellOrdinal,aOutput,aSymmetricMicroStress,aBasisFunctions,aVolume,1.0);
-        this->addSkewStressAtNodes(aCellOrdinal,aOutput,aSkewMicroStress,aBasisFunctions,aVolume,1.0);
+        this->addSymmetricStressAtNodes(aCellOrdinal,aGpOrdinal,aOutput,aSymmetricMicroStress,aBasisFunctions,aVolume,1.0);
+        this->addSkewStressAtNodes(aCellOrdinal,aGpOrdinal,aOutput,aSkewMicroStress,aBasisFunctions,aVolume,1.0);
     }
 
 private:
@@ -106,42 +105,50 @@ private:
 
     template<typename ProjectedScalarType, typename StressScalarType, typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    addSymmetricStressAtNodes(
-              Plato::OrdinalType                               aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ProjectedScalarType> & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aStress,
-        const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
-        const VolumeScalarType                               & aVolume,
-              Plato::Scalar                                    aScale) const
+    addSymmetricStressAtNodes
+    (      Plato::OrdinalType                               aCellOrdinal,
+           Plato::OrdinalType                               aGpOrdinal,
+           Plato::ScalarMultiVectorT<ProjectedScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>        & aStress,
+     const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>    & aVolume,
+           Plato::Scalar                                    aScale) const
     {
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
         {
             for(Plato::OrdinalType tDofIndex = 0; tDofIndex < mNumFullTerms; tDofIndex++)
             {
                 Plato::OrdinalType tLocalOrdinal = tNodeIndex * mNumDofsPerNode + tDofIndex + DofOffset;
-                ProjectedScalarType tResult = aScale * aVolume * aStress(mVoigtMap[tDofIndex]) * aBasisFunctions(tNodeIndex);
-                Kokkos::atomic_add(&aOutput(aCellOrdinal, tLocalOrdinal), tResult);
+                ProjectedScalarType tResult =
+                    aScale * aVolume(aCellOrdinal,aGpOrdinal) * 
+                    aStress(aCellOrdinal,aGpOrdinal,mVoigtMap[tDofIndex]) * 
+                    aBasisFunctions(tNodeIndex);
+                Kokkos::atomic_add(&aOutput(aCellOrdinal,tLocalOrdinal), tResult);
             }
         }
     }
 
     template<typename ProjectedScalarType, typename StressScalarType, typename VolumeScalarType>
     KOKKOS_INLINE_FUNCTION void 
-    addSkewStressAtNodes(
-              Plato::OrdinalType                               aCellOrdinal,
-        const Plato::ScalarMultiVectorT<ProjectedScalarType> & aOutput,
-        const Plato::Array<mNumVoigtTerms, StressScalarType> & aStress,
-        const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
-        const VolumeScalarType                               & aVolume,
-              Plato::Scalar                                    aScale) const
+    addSkewStressAtNodes
+    (      Plato::OrdinalType                               aCellOrdinal,
+           Plato::OrdinalType                               aGpOrdinal,
+           Plato::ScalarMultiVectorT<ProjectedScalarType>   aOutput,
+     const Plato::ScalarArray3DT<StressScalarType>        & aStress,
+     const Plato::Array<mNumNodesPerCell, Plato::Scalar>  & aBasisFunctions,
+     const Plato::ScalarMultiVectorT<VolumeScalarType>    & aVolume,
+           Plato::Scalar                                    aScale) const
     {
         for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
         {
             for(Plato::OrdinalType tDofIndex = 0; tDofIndex < mNumFullTerms; tDofIndex++)
             {
                 Plato::OrdinalType tLocalOrdinal = tNodeIndex * mNumDofsPerNode + tDofIndex + DofOffset;
-                ProjectedScalarType tResult = aScale * mSkewScale[tDofIndex] * aVolume * aStress(mVoigtMap[tDofIndex]) * aBasisFunctions(tNodeIndex);
-                Kokkos::atomic_add(&aOutput(aCellOrdinal, tLocalOrdinal), tResult);
+                ProjectedScalarType tResult = 
+                    aScale * mSkewScale[tDofIndex] * aVolume(aCellOrdinal,aGpOrdinal) * 
+                    aStress(aCellOrdinal,aGpOrdinal,mVoigtMap[tDofIndex]) * 
+                    aBasisFunctions(tNodeIndex);
+                Kokkos::atomic_add(&aOutput(aCellOrdinal,tLocalOrdinal), tResult);
             }
         }
     }
@@ -149,6 +156,3 @@ private:
 };
 
 } 
-
-} 
-

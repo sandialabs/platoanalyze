@@ -2,7 +2,9 @@
 #define THERMAL_FLUX_HPP
 
 #include "PlatoStaticsTypes.hpp"
-#include "MaterialModel.hpp"
+#include "material/MaterialModel.hpp"
+#include "material/TensorFunctor.hpp"
+#include "material/TensorConstant.hpp"
 
 namespace Plato
 {

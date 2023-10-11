@@ -2,7 +2,7 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include "PlatoStaticsTypes.hpp"
-#include "MaterialModel.hpp"
+#include "material/MaterialModel.hpp"
 
 namespace Plato {
 

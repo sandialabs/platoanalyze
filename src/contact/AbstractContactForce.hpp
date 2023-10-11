@@ -19,7 +19,17 @@ protected:
 public:
     AbstractContactForce() = default;
 
-    virtual ~AbstractContactForce(){}
+    virtual ~AbstractContactForce() = default;
+
+    AbstractContactForce(const AbstractContactForce& aForce) = delete;
+
+    AbstractContactForce(AbstractContactForce&& aForce) = delete;
+
+    AbstractContactForce&
+    operator=(const AbstractContactForce& aForce) = delete;
+
+    AbstractContactForce&
+    operator=(AbstractContactForce&& aForce) = delete;
 
     virtual void
     operator()
