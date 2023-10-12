@@ -77,7 +77,9 @@ void UMFPACKLinearSolver::clear() {
 
 }
 
-void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
+void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA,
+                                     Plato::ScalarVector aX,
+                                     Plato::ScalarVector aB)
 {
     const CSRMatrix A = constructCSRMatrix(aA);
 
