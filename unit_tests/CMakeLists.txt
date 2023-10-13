@@ -91,6 +91,10 @@ if(PLATOANALYZE_ENABLE_TACHO)
   Plato_add_test(TachoSolver TachoSolverTests.cpp)
 endif()
 
+if(PLATOANALYZE_ENABLE_UMFPACK)
+  Plato_add_test(UMFPACKSolver UMFPACKSolverTests.cpp)
+endif()
+
 if(PLATOANALYZE_ENABLE_MPMD)
   set(AnalyzeApp_SOURCES
     AnalyzeAppIntxTests.cpp

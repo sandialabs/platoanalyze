@@ -16,6 +16,8 @@
 #include "alg/TpetraLinearSolver.hpp"
 #endif
 
+#include "alg/UMFPACKLinearSolver.hpp"
+
 #ifdef HAVE_AMGX
 #include <alg/AmgXSparseLinearProblem.hpp>
 #endif
@@ -1305,9 +1307,7 @@ TEUCHOS_UNIT_TEST( SolverInterfaceTests, TpetraSolver_invalid_solver_stack )
 }
 #endif // PLATO_TPETRA
 
-#ifdef PLATO_TACHO
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_NonBlockMatrix)
-{
+void nonBlockMatrixTest(const std::string &aSolverStack, Teuchos::FancyOStream &aOut, bool &aSuccess) {
   namespace pth = Plato::TestHelpers;
 
   const unsigned numRows = 4;
@@ -1322,7 +1322,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_NonBlockMatrix)
   pth::set_view_from_vector(b, rhs);
   
   const std::string tSolverParams = "<ParameterList name='Linear Solver'>\n"
-                                    "  <Parameter name='Solver Stack' type='string' value='Tacho'/>\n"
+                                    "  <Parameter name='Solver Stack' type='string' value='" + aSolverStack + "'/>\n"
                                     "</ParameterList>\n";
 
   auto tSolver = solver(tSolverParams, numRows);
@@ -1337,37 +1337,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_NonBlockMatrix)
 
   for(unsigned i=0; i<numRows; i++)
   {
-    TEST_FLOATING_EQUALITY(x_host(i), x_gold[i], 1.0e-12);
+    TEUCHOS_TEST_FLOATING_EQUALITY(x_host(i), x_gold[i], 1.0e-12, aOut, aSuccess);
+    if (!aSuccess) return;
   }
 }
 
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_AsymmetricSparsityPatternThrows)
-{
-  namespace pth = Plato::TestHelpers;
-
-  constexpr int tNumRows = 4;
-  constexpr int tNumValues = 11;
-  const std::vector<int> tRowBegin = {0, 3, 5, 8, tNumValues}; 
-  const std::vector<int> tColumns = {0, 1, 2, 0, 1, 2, 1, 2, 3, 2, 3};
-  const std::vector<double> tValues = {2.0, -1.0, 1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0};
-  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(tNumRows, tNumRows, 1, 1) );
-  pth::set_matrix_data(tMatrixA, tRowBegin, tColumns, tValues);
-
-  std::vector<Plato::Scalar> tRhs = {1.0, -1.0, 1.0, -1.0};
-  Plato::ScalarVector tB("b", tNumRows);
-  pth::set_view_from_vector(tB, tRhs);
-
-  const std::string tSolverParams = "<ParameterList name='Linear Solver'>\n"
-                                    "  <Parameter name='Solver Stack' type='string' value='Tacho'/>\n"
-                                    "</ParameterList>\n";
-  auto tSolver = solver(tSolverParams, tNumRows);
-
-  Plato::ScalarVector tX("x", tNumRows);
-  TEST_THROW(tSolver->solve(*tMatrixA, tX, tB), std::runtime_error);
-}
-
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_BlockMatrix)
-{
+void blockMatrixTest(const std::string &aSolverStack, Teuchos::FancyOStream &aOut, bool &aSuccess) {
   /*
     2    -1    0    0
     -1    2   -1    0
@@ -1393,9 +1368,9 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_BlockMatrix)
   
   Teuchos::RCP<Teuchos::ParameterList> tSolverParams =
       Teuchos::getParametersFromXmlString(
-      "<ParameterList name='Linear Solver'>                                       \n"
-      "  <Parameter name='Solver Stack' type='string' value='Tacho'/>            \n"
-      "</ParameterList>                                                           \n"
+      "<ParameterList name='Linear Solver'>\n"
+      "  <Parameter name='Solver Stack' type='string' value='" + aSolverStack + "'/>\n"
+      "</ParameterList>\n"
   );
   
   Plato::SolverFactory tSolverFactory(*tSolverParams);
@@ -1415,8 +1390,57 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_BlockMatrix)
 
   for(unsigned i=0; i<numRows; i++)
   {
-    TEST_FLOATING_EQUALITY(x_host(i), x_gold[i], 1.0e-12);
+    TEUCHOS_TEST_FLOATING_EQUALITY(x_host(i), x_gold[i], 1.0e-12, aOut, aSuccess);
+    if (!aSuccess) return;
   }
+}
+
+#ifdef PLATO_UMFPACK
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, UMFPACKSolver_NonBlockMatrix)
+{
+  nonBlockMatrixTest("UMFPACK", out, success);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, UMFPACKSolver_BlockMatrix)
+{
+  blockMatrixTest("UMFPACK", out, success);
+}
+#endif
+
+#ifdef PLATO_TACHO
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_NonBlockMatrix)
+{
+  nonBlockMatrixTest("Tacho", out, success);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_BlockMatrix)
+{
+  blockMatrixTest("Tacho", out, success);
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, TachoSolver_AsymmetricSparsityPatternThrows)
+{
+  namespace pth = Plato::TestHelpers;
+
+  constexpr int tNumRows = 4;
+  constexpr int tNumValues = 11;
+  const std::vector<int> tRowBegin = {0, 3, 5, 8, tNumValues}; 
+  const std::vector<int> tColumns = {0, 1, 2, 0, 1, 2, 1, 2, 3, 2, 3};
+  const std::vector<double> tValues = {2.0, -1.0, 1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0};
+  auto tMatrixA = Teuchos::rcp( new Plato::CrsMatrixType(tNumRows, tNumRows, 1, 1) );
+  pth::set_matrix_data(tMatrixA, tRowBegin, tColumns, tValues);
+
+  std::vector<Plato::Scalar> tRhs = {1.0, -1.0, 1.0, -1.0};
+  Plato::ScalarVector tB("b", tNumRows);
+  pth::set_view_from_vector(tB, tRhs);
+
+  const std::string tSolverParams = "<ParameterList name='Linear Solver'>\n"
+                                    "  <Parameter name='Solver Stack' type='string' value='Tacho'/>\n"
+                                    "</ParameterList>\n";
+  auto tSolver = solver(tSolverParams, tNumRows);
+
+  Plato::ScalarVector tX("x", tNumRows);
+  TEST_THROW(tSolver->solve(*tMatrixA, tX, tB), std::runtime_error);
 }
 
 /******************************************************************************/
