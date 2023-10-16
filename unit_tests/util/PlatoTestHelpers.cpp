@@ -223,10 +223,9 @@ const Teuchos::RCP<Teuchos::ParameterList> getParameterListForHelmholtzTest() {
 }
 
 const Teuchos::RCP<Teuchos::ParameterList> getSolverParametersForHelmholtzTest() {
-  return
+  return 
     Teuchos::getParametersFromXmlString(
     "<ParameterList name='Linear Solver'>"
-    "  <Parameter name='Solver Stack' type='string' value='Tacho'/>"
     "</ParameterList>"
   );
 }
