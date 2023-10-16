@@ -235,7 +235,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3D)
     auto tObjFuncVal = tMassProperties.value(tControl);
 
     Plato::Scalar tGoldValue = 2.0*pow((0.4-0.2)/0.2, 2) + 0.1*pow((0.5-0.05),2)
-                             + 2.0*pow((0.5-0.55),2) + 3.0*pow((0.5-0.75),2)
+                             + 2.0*pow((0.5-0.55)/0.55,2) + 3.0*pow((0.5-0.75)/0.75,2)
                              + 4.0*pow((0.2666666-0.5)/0.5,2)
                              + 5.0*pow((0.2666666-0.5)/0.5,2)
                              + 6.0*pow((0.2666666-0.5)/0.5,2)
@@ -296,7 +296,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3DNormalized)
     auto tObjFuncVal = tMassProperties.value(tControl);
 
     Plato::Scalar tGoldValue = 2.0*pow((0.4-0.2)/0.2, 2) + 0.1*pow((0.5-0.05),2)
-                             + 2.0*pow((0.5-0.55),2) + 3.0*pow((0.5-0.75),2)
+                             + 2.0*pow((0.5-0.55)/0.55,2) + 3.0*pow((0.5-0.75)/0.75,2)
                              + 4.0*pow((-1.0589e-01-5.1241) /  5.1241,2)
                              + 5.0*pow((2.6130e-02-5.4403)  /  5.4403,2)
                              + 6.0*pow((1.8531e-01-5.3886)  /  5.3886,2)
