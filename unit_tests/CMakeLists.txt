@@ -85,6 +85,7 @@ endif()
 
 if(HELMHOLTZ)
   Plato_add_test(HelmholtzFilter PlatoHelmholtzFilterTests.cpp)
+  Plato_add_test(HelmholtzMatrix PlatoHelmholtzMatrixTests.cpp)
 endif()
 
 if(PLATOANALYZE_ENABLE_TACHO)
