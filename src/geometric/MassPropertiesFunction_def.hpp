@@ -197,20 +197,17 @@ namespace Geometric
         // CGx
         mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
         mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGx")]);
-        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGx")], false);
-        mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentX);
+        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGx")], true);
 
         // CGy
         mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
         mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGy")]);
-        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGy")], false);
-        mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentY);
+        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGy")], true);
 
         // CGz
         mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
         mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGz")]);
-        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGz")], false);
-        mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentZ);
+        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGz")], true);
 
         // Ixx
         mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XX"));
@@ -326,22 +323,19 @@ namespace Geometric
             {
                 mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
                 mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, false);
-                mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentX);
+                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
             }
             else if (tPropertyName == "CGy")
             {
                 mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
                 mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, false);
-                mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentY);
+                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
             }
             else if (tPropertyName == "CGz")
             {
                 mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
                 mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, false);
-                mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentZ);
+                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
             }
             else if (tPropertyName == "Ixx")
             {
