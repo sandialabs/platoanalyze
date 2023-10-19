@@ -82,8 +82,6 @@ namespace Geometric
 
         const bool tAllPropertiesSpecifiedByUser = allPropertiesSpecified(tPropertyNames);
 
-        computeMeshExtent(aSpatialModel.Mesh);
-
         if (tAllPropertiesSpecifiedByUser)
             createAllMassPropertiesLeastSquaresFunction(
                 aSpatialModel, tPropertyNames, tPropertyWeights, tPropertyGoldValues);
@@ -197,20 +195,17 @@ namespace Geometric
         // CGx
         mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
         mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGx")]);
-        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGx")], false);
-        mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentX);
+        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGx")], true);
 
         // CGy
         mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
         mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGy")]);
-        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGy")], false);
-        mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentY);
+        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGy")], true);
 
         // CGz
         mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
         mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGz")]);
-        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGz")], false);
-        mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentZ);
+        mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGz")], true);
 
         // Ixx
         mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XX"));
@@ -326,22 +321,19 @@ namespace Geometric
             {
                 mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
                 mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, false);
-                mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentX);
+                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
             }
             else if (tPropertyName == "CGy")
             {
                 mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
                 mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, false);
-                mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentY);
+                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
             }
             else if (tPropertyName == "CGz")
             {
                 mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
                 mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, false);
-                mLeastSquaresFunction->appendFunctionNormalization(mMeshExtentZ);
+                mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
             }
             else if (tPropertyName == "Ixx")
             {
@@ -767,56 +759,6 @@ namespace Geometric
         mFunctionName    (aName)
     {
         initialize(aProblemParams);
-    }
-
-    /******************************************************************************//**
-     * \brief Compute the X, Y, and Z extents of the mesh (e.g. (X_max - X_min))
-     * \param [in] aMesh mesh database
-    **********************************************************************************/
-    template<typename PhysicsType>
-    void
-    MassPropertiesFunction<PhysicsType>::
-    computeMeshExtent(Plato::Mesh aMesh)
-    {
-        auto tNodeCoordinates = aMesh->Coordinates();
-        auto tSpaceDim        = aMesh->NumDimensions();
-        auto tNumVertices     = aMesh->NumNodes();
-
-        assert(tSpaceDim == 3);
-
-        Plato::ScalarVector tXCoordinates("X-Coordinates", tNumVertices);
-        Plato::ScalarVector tYCoordinates("Y-Coordinates", tNumVertices);
-        Plato::ScalarVector tZCoordinates("Z-Coordinates", tNumVertices);
-
-        Kokkos::parallel_for("Fill vertex coordinate views", Kokkos::RangePolicy<>(0, tNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & tVertexIndex)
-        {
-            const Plato::Scalar x_coordinate = tNodeCoordinates[tVertexIndex * tSpaceDim + 0];
-            const Plato::Scalar y_coordinate = tNodeCoordinates[tVertexIndex * tSpaceDim + 1];
-            const Plato::Scalar z_coordinate = tNodeCoordinates[tVertexIndex * tSpaceDim + 2];
-
-            tXCoordinates(tVertexIndex) = x_coordinate;
-            tYCoordinates(tVertexIndex) = y_coordinate;
-            tZCoordinates(tVertexIndex) = z_coordinate;
-        });
-
-        Plato::Scalar tXmin;
-        Plato::Scalar tXmax;
-        Plato::blas1::min(tXCoordinates, tXmin);
-        Plato::blas1::max(tXCoordinates, tXmax);
-
-        Plato::Scalar tYmin;
-        Plato::Scalar tYmax;
-        Plato::blas1::min(tYCoordinates, tYmin);
-        Plato::blas1::max(tYCoordinates, tYmax);
-
-        Plato::Scalar tZmin;
-        Plato::Scalar tZmax;
-        Plato::blas1::min(tZCoordinates, tZmin);
-        Plato::blas1::max(tZCoordinates, tZmax);
-
-        mMeshExtentX = std::abs(tXmax - tXmin);
-        mMeshExtentY = std::abs(tYmax - tYmin);
-        mMeshExtentZ = std::abs(tZmax - tZmin);
     }
 
     /******************************************************************************//**

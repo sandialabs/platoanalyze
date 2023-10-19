@@ -41,10 +41,6 @@ private:
     Plato::Array<3>    mInertiaPrincipalValues;
     Plato::Matrix<3,3> mMinusRotatedParallelAxisTheoremMatrix;
 
-    Plato::Scalar mMeshExtentX;
-    Plato::Scalar mMeshExtentY;
-    Plato::Scalar mMeshExtentZ;
-
     /******************************************************************************//**
      * \brief Initialization of Mass Properties Function
      * \param [in] aMesh mesh database
