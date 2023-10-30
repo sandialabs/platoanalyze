@@ -1391,7 +1391,7 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
     const int tNumCells = tMesh->NumElements();
     const auto tNumPoints = ElementType::getCubWeights().size();
     TEST_EQUALITY(tNumCells, 6);
-    TEST_EQUALITY(tNumPoints, 1);
+    TEST_EQUALITY(tNumPoints, 4);
 
     constexpr int tNumVoigtTerms = ElementType::mNumVoigtTerms;
     constexpr int tNumSkwTerms = ElementType::mNumSkwTerms;
@@ -1566,7 +1566,7 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
     const int tNumCells = tMesh->NumElements();
     const auto tNumPoints = ElementType::getCubWeights().size();
     TEST_EQUALITY(tNumCells, 6);
-    TEST_EQUALITY(tNumPoints, 1);
+    TEST_EQUALITY(tNumPoints, 4);
 
     constexpr int tNumVoigtTerms = ElementType::mNumVoigtTerms;
     constexpr int tNumSkwTerms = ElementType::mNumSkwTerms;

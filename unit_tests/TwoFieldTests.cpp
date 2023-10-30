@@ -89,16 +89,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   Plato::ScalarMultiVector tMassResult        ("mass",               tNumCells, dofsPerCell);
   Plato::ScalarMultiVector tStateWS           ("state workset",      tNumCells, dofsPerCell);
 
-  Plato::ScalarMultiVector tCellTGrad             ("Temperature grad",   tNumCells, spaceDim);
-  Plato::ScalarMultiVector tCellPressureGrad      ("pressure grad",      tNumCells, spaceDim);
-  Plato::ScalarMultiVector tCellProjectedPGrad    ("projected p grad",   tNumCells, spaceDim);
-  Plato::ScalarVector      tCellTemperature       ("GP temperature",     tNumCells);
   Plato::ScalarVector      tCellVolume            ("cell volume",        tNumCells);
-  Plato::ScalarVector      tCellVolStrain         ("volume strain",      tNumCells);
-  Plato::ScalarVector      tCellThermalContent    ("GP heat at step k",  tNumCells);
-  Plato::ScalarMultiVector tCellDevStress         ("deviatoric stress",  tNumCells, numVoigtTerms);
-  Plato::ScalarMultiVector tCellStab              ("cell stabilization", tNumCells, spaceDim);
-  Plato::ScalarMultiVector tCellTFlux             ("thermal flux",       tNumCells, spaceDim);
 
   worksetBase.worksetConfig(configWS);
 
@@ -159,6 +150,17 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   auto tCubWeights = ElementType::getCubWeights();
   auto tNumPoints = tCubWeights.size();
 
+  Plato::ScalarArray3D tCellStab           ("cell,gp stabilization",     tNumCells, tNumPoints, spaceDim);
+  Plato::ScalarArray3D tCellTFlux          ("cell,gp thermal flux",      tNumCells, tNumPoints, spaceDim);
+  Plato::ScalarArray3D tCellProjectedPGrad ("cell,gp projected p grad",  tNumCells, tNumPoints, spaceDim);
+  Plato::ScalarArray3D tCellPressureGrad   ("cell,gp pressure grad",     tNumCells, tNumPoints, spaceDim);
+  Plato::ScalarArray3D tCellTGrad          ("cell,gp Temperature grad",  tNumCells, tNumPoints, spaceDim);
+  Plato::ScalarArray3D tCellDevStress      ("cell,gp deviatoric stress", tNumCells, tNumPoints, numVoigtTerms);
+  
+  Plato::ScalarMultiVector tCellThermalContent ("cell,gp heat at step k", tNumCells, tNumPoints);
+  Plato::ScalarMultiVector tCellTemperature    ("cell,gp temperature",    tNumCells, tNumPoints);
+  Plato::ScalarMultiVector tCellVolStrain      ("cell,gp volume strain",  tNumCells, tNumPoints);
+
   Kokkos::parallel_for("compute residual", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
   KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
   {
@@ -198,20 +200,21 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     kinetics(tVolume, tProjectedPGrad, tDGrad, tPGrad, tTGrad, tTemperature,
              tPressure, tDevStress, tVolStrain, tTFlux, tGPStab);
 
+    tCellTemperature(iCellOrdinal, iGpOrdinal) = tTemperature;
+    tCellVolStrain(iCellOrdinal, iGpOrdinal) = tVolStrain;
+
     Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tVolume);
-    Kokkos::atomic_add(&tCellTemperature(iCellOrdinal), tTemperature/tNumPoints);
-    Kokkos::atomic_add(&tCellVolStrain(iCellOrdinal), tVolStrain/tNumPoints);
     for(Plato::OrdinalType iVoigt=0; iVoigt<numVoigtTerms; iVoigt++)
     {
-      tCellDevStress(iCellOrdinal, iVoigt) = tDevStress(iVoigt);
+      tCellDevStress(iCellOrdinal, iGpOrdinal, iVoigt) = tDevStress(iVoigt);
     }
     for(Plato::OrdinalType iDim=0; iDim<spaceDim; iDim++)
     {
-      tCellStab(iCellOrdinal, iDim) = tGPStab(iDim);
-      tCellTFlux(iCellOrdinal, iDim) = tTFlux(iDim);
-      tCellProjectedPGrad(iCellOrdinal, iDim) = tProjectedPGrad(iDim);
-      tCellPressureGrad(iCellOrdinal, iDim) = tPGrad(iDim);
-      tCellTGrad(iCellOrdinal, iDim) = tTGrad(iDim);
+      tCellStab(iCellOrdinal, iGpOrdinal, iDim) = tGPStab(iDim);
+      tCellTFlux(iCellOrdinal, iGpOrdinal, iDim) = tTFlux(iDim);
+      tCellProjectedPGrad(iCellOrdinal, iGpOrdinal, iDim) = tProjectedPGrad(iDim);
+      tCellPressureGrad(iCellOrdinal, iGpOrdinal, iDim) = tPGrad(iDim);
+      tCellTGrad(iCellOrdinal, iGpOrdinal, iDim) = tTGrad(iDim);
     }
 
     stressDivergence   (iCellOrdinal, tStressDivResult,   tDevStress, tGradient, tVolume, tTimeStep/2.0);
@@ -221,7 +224,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
 
     Plato::Scalar tThermalContent(0.0);
     computeThermalContent(tThermalContent, tTemperature);
-    tCellThermalContent(iCellOrdinal) = tThermalContent;
+    tCellThermalContent(iCellOrdinal,iGpOrdinal) = tThermalContent;
 
     projectVolumeStrain  (iCellOrdinal, tVolume, tBasisValues, tVolStrain, tVolResult);
     projectThermalContent(iCellOrdinal, tVolume, tBasisValues, tThermalContent, tMassResult);
@@ -229,19 +232,50 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
   });
 
   {
+    // test gp temperatures
+    //
+    auto tTemperature_Host = Kokkos::create_mirror_view( tCellTemperature );
+    Kokkos::deep_copy( tTemperature_Host, tCellTemperature );
+
+    std::vector<std::vector<Plato::Scalar>> tGold = {
+      {3.69442719099992102e-6, 2.08445824720007253e-6, 3.87331262919990465e-6, 1.54780193260012310e-6},
+      {1.64222912360003772e-6, 1.82111456180002072e-6, 3.43108350559986942e-6, 1.10557280900008808e-6}
+    };
+
+    int tNumCells=tGold.size();
+    int tNumGPs=tGold[0].size();
+    for(int iCell=0; iCell<tNumCells; iCell++){
+      for(int iGP=0; iGP<tNumGPs; iGP++){
+        if(tGold[iCell][iGP] == 0.0){
+          TEST_ASSERT(fabs(tTemperature_Host(iCell,iGP)) < 1e-12);
+        } else {
+          TEST_FLOATING_EQUALITY(tTemperature_Host(iCell,iGP), tGold[iCell][iGP], 1e-13);
+        }
+      }
+    }
+  }
+
+  {
     // test deviatoric stress
     //
     auto tDevStress_Host = Kokkos::create_mirror_view( tCellDevStress );
     Kokkos::deep_copy( tDevStress_Host, tCellDevStress );
 
-    std::vector<std::vector<double>> gold = {
+    std::vector<std::vector<std::vector<double>>> tGold = {{
       { 40026.6844563111663, 0.00000000000000000,-40026.6844562962651,73382.2548365577095,186791.194129419659,140093.395597064722}
-    };
+    }};
 
-    int tNumCells=gold.size(), numVoigt=6;
+    int tNumCells=tGold.size();
+    int tNumGp=tGold[0].size();
     for(int iCell=0; iCell<tNumCells; iCell++){
-      for(int iVoigt=0; iVoigt<numVoigt; iVoigt++){
-        TEST_FLOATING_EQUALITY(tDevStress_Host(iCell, iVoigt), gold[iCell][iVoigt], 1e-12);
+      for(int iGp=0; iGp<tNumGp; iGp++){
+        for(int iVoigt=0; iVoigt<numVoigtTerms; iVoigt++){
+          if(tGold[iCell][iGp][iVoigt] == 0.0){
+            TEST_ASSERT(fabs(tDevStress_Host(iCell,iGp,iVoigt)) < 1e-8);
+          } else {
+            TEST_FLOATING_EQUALITY(tDevStress_Host(iCell, iGp, iVoigt), tGold[iCell][iGp][iVoigt], 1e-12);
+          }
+        }
       }
     }
   }
@@ -252,11 +286,17 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     auto tVolStrain_Host = Kokkos::create_mirror_view( tCellVolStrain );
     Kokkos::deep_copy( tVolStrain_Host, tCellVolStrain );
 
-    std::vector<Plato::Scalar> gold = { 3.59991600000000048e-6 };
+    std::vector<std::vector<Plato::Scalar>> tGold = {
+      {3.59988916718423414e-6, 3.59993746625254817e-6, 3.59988380062097228e-6, 3.59995356594198646e-6},
+      {3.59995073312625635e-6, 3.59994536656311011e-6, 3.59989706749468004e-6, 3.59996683281569422e-6}
+    };
 
-    int tNumCells=gold.size();
+    int tNumCells=tGold.size();
+    int tNumGPs=tGold[0].size();
     for(int iCell=0; iCell<tNumCells; iCell++){
-      TEST_FLOATING_EQUALITY(tVolStrain_Host(iCell), gold[iCell], 1e-13);
+      for(int iGP=0; iGP<tNumGPs; iGP++){
+        TEST_FLOATING_EQUALITY(tVolStrain_Host(iCell,iGP), tGold[iCell][iGP], 1e-13);
+      }
     }
   }
 
@@ -266,12 +306,23 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     auto tCellStab_Host = Kokkos::create_mirror_view( tCellStab );
     Kokkos::deep_copy( tCellStab_Host, tCellStab );
 
-    std::vector<std::vector<Plato::Scalar>> gold = { {9.07954589551792534e-18, 1.13494323693974086e-18, -2.26988647387948287e-18} };
+    std::vector<std::vector<std::vector<Plato::Scalar>>> tGold = 
+    {{{3.64350540274726886e-18,  5.30972974585768664e-19, -7.79949365333393180e-19},
+      {3.56293495022208300e-18,  3.69832069535398151e-19, -1.02166072290894902e-18},
+      {3.48236449769689791e-18,  2.08691164485027808e-19, -1.26337208048450467e-18},
+      {3.72407585527245394e-18,  6.92113879636139224e-19, -5.38238007757837339e-19}},
+     {{3.23338810694927503e-18, -2.89261617010216049e-19, -2.01030125272737003e-18},
+      {3.07224720189890486e-18, -6.11543427110957218e-19, -2.49372396787848133e-18},
+      {2.91110629684853391e-18, -9.33825237211697857e-19, -2.97714668302959301e-18},
+      {3.39452901199964598e-18,  3.30201930905249090e-20, -1.52687853757625835e-18}}};
 
-    int tNumCells=gold.size();
+    int tNumCells=tGold.size();
+    int tNumGP=tGold[0].size();
     for(int iCell=0; iCell<tNumCells; iCell++){
-      for(int iDim=0; iDim<spaceDim; iDim++){
-        TEST_FLOATING_EQUALITY(tCellStab_Host(iCell, iDim), gold[iCell][iDim], 1e-13);
+      for(int iGp=0; iGp<tNumGP; iGp++){
+        for(int iDim=0; iDim<spaceDim; iDim++){
+          TEST_FLOATING_EQUALITY(tCellStab_Host(iCell, iGp, iDim), tGold[iCell][iGp][iDim], 1e-13);
+        }
       }
     }
   }
@@ -282,14 +333,18 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     auto tflux_Host = Kokkos::create_mirror_view( tCellTFlux );
     Kokkos::deep_copy( tflux_Host, tCellTFlux );
 
-    std::vector<std::vector<Plato::Scalar>> tflux_gold = { {0.0072000000,0.0024000000,0.00080000000} };
+    std::vector<std::vector<std::vector<Plato::Scalar>>> tflux_gold = {{{0.0072000000,0.0024000000,0.00080000000}}};
 
-    for(int iCell=0; iCell<int(tflux_gold.size()); iCell++){
-      for(int iDim=0; iDim<spaceDim; iDim++){
-        if(tflux_gold[iCell][iDim] == 0.0){
-          TEST_ASSERT(fabs(tflux_Host(iCell,iDim)) < 1e-12);
-        } else {
-          TEST_FLOATING_EQUALITY(tflux_Host(iCell,iDim), tflux_gold[iCell][iDim], 1e-13);
+    int tNumCells=tflux_gold.size();
+    int tNumGp=tflux_gold[0].size();
+    for(int iCell=0; iCell<tNumCells; iCell++){
+      for(int iGp=0; iGp<tNumGp; iGp++){
+        for(int iDim=0; iDim<spaceDim; iDim++){
+          if(tflux_gold[iCell][iGp][iDim] == 0.0){
+            TEST_ASSERT(fabs(tflux_Host(iCell,iGp,iDim)) < 1e-12);
+          } else {
+            TEST_FLOATING_EQUALITY(tflux_Host(iCell,iGp,iDim), tflux_gold[iCell][iGp][iDim], 1e-13);
+          }
         }
       }
     }
@@ -316,42 +371,34 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     }
   }
 
-  // test state values
-  //
-  auto tTemperature_Host = Kokkos::create_mirror_view( tCellTemperature );
-  Kokkos::deep_copy( tTemperature_Host, tCellTemperature );
 
-  std::vector<Plato::Scalar> tTemperature_gold = { 
-   2.800000000000000e-6, 2.000000000000000e-6, 1.800000000000000e-6,
-   2.400000000000000e-6, 3.200000000000000e-6, 3.400000000000000e-6,
-   3.200000000000000e-6, 2.400000000000000e-6, 2.200000000000000e-6,
-   2.800000000000000e-6, 3.600000000000000e-6, 3.800000000000000e-6
-  };
+  {
+    // test thermal content
+    //
+    auto tThermalContent_Host = Kokkos::create_mirror_view( tCellThermalContent );
+    Kokkos::deep_copy( tThermalContent_Host, tCellThermalContent );
 
-  numGoldCells=tTemperature_gold.size();
-  for(int iCell=0; iCell<numGoldCells; iCell++){
-    if(tTemperature_gold[iCell] == 0.0){
-      TEST_ASSERT(fabs(tTemperature_Host(iCell)) < 1e-12);
-    } else {
-      TEST_FLOATING_EQUALITY(tTemperature_Host(iCell), tTemperature_gold[iCell], 1e-13);
-    }
-  }
+    std::vector<std::vector<Plato::Scalar>> tThermalContent_gold = {
+      {1.10832815730,  0.625337474160, 1.16199378876,  0.464340579780},
+      {0.492668737080, 0.546334368540, 1.02932505168,  0.331671842700},
+      {0.513167184270, 0.352170289890, 0.996157867410, 0.298504658430},
+      {0.451671842700, 0.934662525840, 1.09565942022,  0.398006211240},
+      {1.06733126292,  1.01366563146,  1.22832815730,  0.530674948320},
+      {1.04683281573,  1.20782971011,  1.26149534157,  0.563842132590},
+      {1.22832815730,  0.745337474160, 1.28199378876,  0.584340579780},
+      {0.612668737080, 0.666334368540, 1.14932505168,  0.451671842700}
+    };
 
-  // test thermal content
-  //
-  auto tThermalContent_Host = Kokkos::create_mirror_view( tCellThermalContent );
-  Kokkos::deep_copy( tThermalContent_Host, tCellThermalContent );
-
-  std::vector<Plato::Scalar> tThermalContent_gold = { 
-    0.840,0.600,0.540,0.720,0.960,1.02,0.960,0.720,0.660,0.840,1.08,1.14
-  };
-
-  numGoldCells=tThermalContent_gold.size();
-  for(int iCell=0; iCell<numGoldCells; iCell++){
-    if(tThermalContent_gold[iCell] == 0.0){
-      TEST_ASSERT(fabs(tThermalContent_Host(iCell)) < 1e-12);
-    } else {
-      TEST_FLOATING_EQUALITY(tThermalContent_Host(iCell), tThermalContent_gold[iCell], 1e-13);
+    int numGoldCells=tThermalContent_gold.size();
+    int numGoldGps=tThermalContent_gold[0].size();
+    for(int iCell=0; iCell<numGoldCells; iCell++){
+      for(int iGp=0; iGp<numGoldGps; iGp++){
+        if(tThermalContent_gold[iCell][iGp] == 0.0){
+          TEST_ASSERT(fabs(tThermalContent_Host(iCell,iGp)) < 1e-9);
+        } else {
+          TEST_FLOATING_EQUALITY(tThermalContent_Host(iCell,iGp), tThermalContent_gold[iCell][iGp], 1e-9);
+        }
+      }
     }
   }
 
@@ -361,15 +408,19 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     auto tProjectedPGrad_Host = Kokkos::create_mirror_view( tCellProjectedPGrad );
     Kokkos::deep_copy( tProjectedPGrad_Host, tCellProjectedPGrad );
 
-    std::vector<std::vector<Plato::Scalar>> gold = { 
-      {1.00000000000000000e-6, 2.00000000000000000e-6, 3.00000000000000000e-6},
-      {2.00000000000000000e-6, 4.00000000000000000e-6, 6.00000000000000000e-6},
-      {3.00000000000000000e-6, 6.00000000000000000e-6, 9.00000000000000000e-6}
-    };
+    std::vector<std::vector<std::vector<Plato::Scalar>>> gold = {{ 
+      {9.10557280900009619e-7, 1.82111456180001924e-6, 2.73167184270002843e-6},
+      {1.08944271909999283e-6, 2.17888543819998566e-6, 3.26832815729997849e-6},
+      {1.26832815729997583e-6, 2.53665631459995166e-6, 3.80498447189992771e-6}
+    }};
 
-    for(int iCell=0; iCell<int(gold.size()); iCell++){
-      for(int iDim=0; iDim<spaceDim; iDim++){
-        TEST_FLOATING_EQUALITY(tProjectedPGrad_Host(iCell,iDim), gold[iCell][iDim], 1e-13);
+    int tNumCells = gold.size();
+    int tNumGps = gold[0].size();
+    for(int iCell=0; iCell<tNumCells; iCell++){
+      for(int iGp=0; iGp<tNumGps; iGp++){
+        for(int iDim=0; iDim<spaceDim; iDim++){
+          TEST_FLOATING_EQUALITY(tProjectedPGrad_Host(iCell,iGp,iDim), gold[iCell][iGp][iDim], 1e-13);
+        }
       }
     }
   }
@@ -380,37 +431,47 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     auto tPressureGrad_Host = Kokkos::create_mirror_view( tCellPressureGrad );
     Kokkos::deep_copy( tPressureGrad_Host, tCellPressureGrad );
 
-    std::vector<std::vector<Plato::Scalar>> gold = { 
+    std::vector<std::vector<std::vector<Plato::Scalar>>> gold = {{ 
       {9.0000000000000002e-06, 3.0000000000000001e-06, 9.999999999999989e-07},
       {8.9999999999999985e-06, 3.0000000000000001e-06, 9.9999999999999974e-07},
       {8.9999999999999985e-06, 3.0000000000000001e-06, 9.9999999999999995e-07}
-    };
+    }};
 
-    for(int iCell=0; iCell<int(gold.size()); iCell++){
-      for(int iDim=0; iDim<spaceDim; iDim++){
-        TEST_FLOATING_EQUALITY(tPressureGrad_Host(iCell,iDim), gold[iCell][iDim], 1e-13);
+    int tNumCells = gold.size();
+    int tNumGps = gold[0].size();
+    for(int iCell=0; iCell<tNumCells; iCell++){
+      for(int iGp=0; iGp<tNumGps; iGp++){
+        for(int iDim=0; iDim<spaceDim; iDim++){
+          TEST_FLOATING_EQUALITY(tPressureGrad_Host(iCell,iGp,iDim), gold[iCell][iGp][iDim], 1e-13);
+        }
       }
     }
   }
 
-  // test temperature gradient
-  //
-  auto tgrad_Host = Kokkos::create_mirror_view( tCellTGrad );
-  Kokkos::deep_copy( tgrad_Host, tCellTGrad );
+  {
+    // test temperature gradient
+    //
+    auto tgrad_Host = Kokkos::create_mirror_view( tCellTGrad );
+    Kokkos::deep_copy( tgrad_Host, tCellTGrad );
 
-  std::vector<std::vector<Plato::Scalar>> tgrad_gold = { 
-    {7.2e-06, 2.4e-06, 8.0e-07},
-    {7.2e-06, 2.4e-06, 8.0e-07},
-    {7.2e-06, 2.4e-06, 8.0e-07},
-    {7.2e-06, 2.4e-06, 8.0e-07}
-  };
+    std::vector<std::vector<std::vector<Plato::Scalar>>> gold = {{
+      {7.2e-06, 2.4e-06, 8.0e-07},
+      {7.2e-06, 2.4e-06, 8.0e-07},
+      {7.2e-06, 2.4e-06, 8.0e-07},
+      {7.2e-06, 2.4e-06, 8.0e-07}
+    }};
 
-  for(int iCell=0; iCell<int(tgrad_gold.size()); iCell++){
-    for(int iDim=0; iDim<spaceDim; iDim++){
-      if(tgrad_gold[iCell][iDim] == 0.0){
-        TEST_ASSERT(fabs(tgrad_Host(iCell,iDim)) < 1e-12);
-      } else {
-        TEST_FLOATING_EQUALITY(tgrad_Host(iCell,iDim), tgrad_gold[iCell][iDim], 1e-13);
+    int tNumCells = gold.size();
+    int tNumGps = gold[0].size();
+    for(int iCell=0; iCell<tNumCells; iCell++){
+      for(int iGp=0; iGp<tNumGps; iGp++){
+        for(int iDim=0; iDim<spaceDim; iDim++){
+          if(gold[iCell][iGp][iDim] == 0.0){
+            TEST_ASSERT(fabs(tgrad_Host(iCell,iGp,iDim)) < 1e-12);
+          } else {
+            TEST_FLOATING_EQUALITY(tgrad_Host(iCell,iGp,iDim), gold[iCell][iGp][iDim], 1e-13);
+          }
+        }
       }
     }
   }
@@ -862,12 +923,12 @@ TEUCHOS_UNIT_TEST( PlatoMathFunctors, RowSumSolve )
     Kokkos::deep_copy( tJacobian_Host, tJacobian->entries() );
 
     std::vector<Plato::Scalar> tGold = {
-0.00781249999999999913, 0, 0, 0, 0.00781249999999999913, 0, 0, 0,
-0.00781249999999999913, 0.00260416666666666652, 0, 0, 0,
-0.00260416666666666652, 0, 0, 0, 0.00260416666666666652,
-0.00260416666666666652, 0, 0, 0, 0.00260416666666666652, 0, 0, 0,
-0.00260416666666666652, 0.00260416666666666652, 0, 0, 0,
-0.00260416666666666652, 0, 0, 0, 0.00260416666666666652
+      0.0124999999999999053, 0, 0, 0, 0.0124999999999999053, 0, 0, 0,
+      0.0124999999999999053, 0.00208333333333332333, 0, 0, 0,
+      0.00208333333333332333, 0, 0, 0, 0.00208333333333332333,
+      0.00208333333333332333, 0, 0, 0, 0.00208333333333332333, 0, 0, 0,
+      0.00208333333333332333, 0.00208333333333332333, 0, 0, 0,
+      0.00208333333333332333, 0, 0, 0, 0.00208333333333332333
     };
 
     int tNumGold = tGold.size();
