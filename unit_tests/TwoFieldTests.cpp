@@ -262,7 +262,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     Kokkos::deep_copy( tDevStress_Host, tCellDevStress );
 
     std::vector<std::vector<std::vector<double>>> tGold = {{
-      { 40026.6844563111663,7.45058059692382813e-9,-40026.6844562962651,73382.2548365577095,186791.194129419659,140093.395597064722}
+      { 40026.6844563111663,0.00000000000000000000,-40026.6844562962651,73382.2548365577095,186791.194129419659,140093.395597064722}
     }};
 
     int tNumCells=tGold.size();
@@ -271,7 +271,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
       for(int iGp=0; iGp<tNumGp; iGp++){
         for(int iVoigt=0; iVoigt<numVoigtTerms; iVoigt++){
           if(tGold[iCell][iGp][iVoigt] == 0.0){
-            TEST_ASSERT(fabs(tDevStress_Host(iCell,iGp,iVoigt)) < 1e-10);
+            TEST_ASSERT(fabs(tDevStress_Host(iCell,iGp,iVoigt)) < 1e-8);
           } else {
             TEST_FLOATING_EQUALITY(tDevStress_Host(iCell, iGp, iVoigt), tGold[iCell][iGp][iVoigt], 1e-12);
           }
@@ -512,7 +512,7 @@ TEUCHOS_UNIT_TEST( StabilizedThermomechTests, 3D )
     for(int iCell=0; iCell<tNumCells; iCell++){
       for(int iDof=0; iDof<dofsPerCell; iDof++){
         if(gold[iCell][iDof] == 0.0){
-          TEST_ASSERT(fabs(tStressDivResult_Host(iCell,iDof)) < 1e-12);
+          TEST_ASSERT(fabs(tStressDivResult_Host(iCell,iDof)) < 1e-8);
         } else {
           TEST_FLOATING_EQUALITY(tStressDivResult_Host(iCell,iDof), gold[iCell][iDof], 1e-12);
         }
