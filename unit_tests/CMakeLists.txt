@@ -85,6 +85,8 @@ endif()
 
 if(HELMHOLTZ)
   Plato_add_test(HelmholtzFilter PlatoHelmholtzFilterTests.cpp)
+  Plato_add_test(HelmholtzMatrix PlatoHelmholtzMatrixTests.cpp)
+  set_tests_properties(runHelmholtzMatrixUnitTests PROPERTIES WILL_FAIL true) # until quadrature rules for tet4, tri3 are fixed
 endif()
 
 if(PLATOANALYZE_ENABLE_TACHO)

@@ -298,3 +298,7 @@ IF( AMGX_FOUND )
   target_include_directories(analyzelib PUBLIC ${AMGX_INCLUDE_DIRS})
   target_include_directories(analyzelib PUBLIC ${PROJECT_SOURCE_DIR}/src/solverInterfaces/AmgX/)
 ENDIF()
+
+IF( PLATOANALYZE_STK_ENABLED )
+  add_subdirectory("./functional")
+ENDIF()

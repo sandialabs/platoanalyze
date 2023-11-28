@@ -257,7 +257,6 @@ tachoSolver<Plato::Scalar> constructSolverFromParameterList(const Teuchos::Param
 
   std::vector<int> tachoParams;
   tacho::getTachoParams(tachoParams, solutionMethod);
-  tachoParams[tacho::VERBOSITY] = 1;
 
   return tacho::tachoSolver<Plato::Scalar>(tachoParams.data());
 }
