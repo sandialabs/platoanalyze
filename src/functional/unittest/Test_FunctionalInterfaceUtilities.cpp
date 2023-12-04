@@ -1,5 +1,9 @@
 #include "FunctionalInterfaceUtilities.hpp"
 #include "FilterInterface.hpp"
+#include "PlatoStaticsTypes.hpp"
+
+#include "BLAS1.hpp"
+#include "PlatoTestHelpers.hpp"
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -70,4 +74,50 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ToScalarVector)
   {
     TEST_EQUALITY(tResultOnHost[tIndex], tVector[tIndex]);
   }
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, HashCurrentDesign_MeshChanges)
+{
+  namespace pf = Plato::Functional;
+
+  constexpr int tMeshWidth=1;
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
+
+  constexpr unsigned int tSize = 10;
+  const auto tControl = Plato::ScalarVector("test", tSize);
+  Plato::blas1::fill(1.0, tControl);
+  auto tOriginalHash = pf::hash_current_design(tControl, tMesh);
+
+  auto tNewHash = pf::hash_current_design(tControl, tMesh);
+  TEST_EQUALITY(tNewHash, tOriginalHash);
+
+  constexpr int tNewMeshWidth=2;
+  tMesh = Plato::TestHelpers::get_box_mesh("TET4", tNewMeshWidth);
+  tNewHash = pf::hash_current_design(tControl, tMesh);
+  TEST_INEQUALITY(tNewHash, tOriginalHash);
+
+  // regenerate the original mesh and ensure that the hash matches original
+  tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
+  tNewHash = pf::hash_current_design(tControl, tMesh);
+  TEST_EQUALITY(tNewHash, tOriginalHash);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, HashCurrentDesign_ControlChanges)
+{
+  namespace pf = Plato::Functional;
+
+  constexpr int tMeshWidth=1;
+  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
+
+  constexpr unsigned int tSize = 10;
+  const auto tControl = Plato::ScalarVector("test", tSize);
+  Plato::blas1::fill(1.0, tControl);
+  auto tOriginalHash = pf::hash_current_design(tControl, tMesh);
+
+  auto tNewHash = pf::hash_current_design(tControl, tMesh);
+  TEST_EQUALITY(tNewHash, tOriginalHash);
+
+  Plato::blas1::fill(0.5, tControl);
+  tNewHash = pf::hash_current_design(tControl, tMesh);
+  TEST_INEQUALITY(tNewHash, tOriginalHash);
 }

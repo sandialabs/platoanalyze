@@ -8,6 +8,7 @@
 
 #include "alg/ParallelComm.hpp"
 #include "PlatoMesh.hpp"
+#include "SolutionCache.hpp"
 
 namespace Plato
 {
@@ -40,6 +41,7 @@ private:
   Plato::Comm::Machine mMachine;
   Plato::Mesh mMesh;
   std::shared_ptr<Plato::AbstractProblem> mProblem;
+  SolutionCache mSolutionCache;
   Teuchos::ParameterList mParameterList;
 };
 }
