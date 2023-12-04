@@ -4,6 +4,9 @@
 #include "FilterInterface.hpp"
 #include "MeshProxy.hpp"
 
+#include "CrsMatrixUtils.hpp"
+
+#include <boost/functional/hash.hpp>
 #include <Teuchos_ParameterList.hpp>
 
 namespace Plato::Functional
@@ -70,6 +73,15 @@ Plato::ScalarVector create_control(const MeshProxy& aMeshProxy, const Plato::Mes
   {
     return to_scalar_vector(aMeshProxy.mNodalDensities);
   }
+}
+
+std::size_t hash_current_design(
+  const Plato::ScalarVector& aControl, 
+  const Plato::Mesh& aMesh)
+{
+  std::size_t tSeed = Plato::detail::hash_vector(aMesh->Coordinates());
+  boost::hash_combine(tSeed, Plato::detail::hash_vector(aControl));
+  return tSeed;
 }
 
 std::vector<double> to_std_vector(const Plato::ScalarVector aScalarVector)
