@@ -6,6 +6,7 @@
 #include "PlatoStaticsTypes.hpp"
 
 #include <memory>
+#include <vector>
 #include <string_view>
 
 namespace Teuchos
@@ -35,6 +36,11 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// @brief Copies the nodal density field contained in @a aMeshProxy to a ScalarVector
 [[nodiscard]]
 Plato::ScalarVector create_control(const MeshProxy& aMeshProxy, const Plato::Mesh& aMesh);
+
+[[nodiscard]]
+std::size_t hash_current_design(
+  const Plato::ScalarVector& aControl, 
+  const Plato::Mesh& aMesh);
 
 std::vector<double> to_std_vector(const Plato::ScalarVector aScalarVector);
 Plato::ScalarVector to_scalar_vector(const std::vector<double>& aVector);

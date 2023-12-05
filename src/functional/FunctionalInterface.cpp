@@ -93,7 +93,9 @@ template<typename T>
 
 FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList) :
   mMachine(create_machine()),
-  mParameterList(std::move(aParameterList))
+  mParameterList(std::move(aParameterList)),
+  mSolutionCache{[this](const Plato::ScalarVector& aArg){return mProblem->solution(aArg);},
+                 [this](const Plato::ScalarVector& aArg){return hash_current_design(aArg, mMesh);}}
 {
   start_up();
 }
@@ -105,8 +107,9 @@ auto FunctionalInterface::solveProblem(const MeshProxy& aMeshProxy)
   update_mesh_file_name(tParameterList, aMeshProxy.mFileName.string());
   mMesh = update_mesh(aMeshProxy, std::move(mMesh));
   mProblem = update_problem(mMachine, aMeshProxy, mMesh, tParameterList, std::move(mProblem));
+
   Plato::ScalarVector tControl = create_control(aMeshProxy, mMesh);
-  return {mProblem->solution(tControl), tControl};
+  return {mSolutionCache.compute(tControl), tControl};
 }
 
 Plato::AbstractProblem& FunctionalInterface::problem()
