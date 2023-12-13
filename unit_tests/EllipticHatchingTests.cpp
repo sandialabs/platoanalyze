@@ -1267,23 +1267,7 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
   auto t_dHdx_entriesHost = Kokkos::create_mirror_view( t_dHdx_entries );
   Kokkos::deep_copy(t_dHdx_entriesHost, t_dHdx_entries);
 
-  std::vector<Plato::Scalar> gold_t_dHdx_entries;
-  if (cNumGP == 1) {
-    gold_t_dHdx_entries = {
-      0, 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-     -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-     -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 2,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-     -2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
-  }
-  else
-  if (cNumGP == 4) {
+  std::vector<Plato::Scalar>
     gold_t_dHdx_entries = {
       0, 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1296,7 +1280,6 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
       0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0,-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
-  }
 
 
   int t_dHdx_entriesSize = gold_t_dHdx_entries.size();
@@ -1311,23 +1294,7 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
   auto t_dHdu_entriesHost = Kokkos::create_mirror_view( t_dHdu_entries );
   Kokkos::deep_copy(t_dHdu_entriesHost, t_dHdu_entries);
 
-  std::vector<Plato::Scalar> gold_t_dHdu_entries;
-  if (cNumGP == 1) {
-    gold_t_dHdu_entries = {
-      0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
-      0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
-      0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0,
-      0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0,
-      2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0,
-      2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0,
-      0, 0, 0, 0,-2, 2, 0, 2, 0,-2, 0, 0, 0, 0,-2, 2, 0, 0,
-      2, 0, 0, 0,-2, 0, 0, 0, 0,-2, 0, 2, 0, 0,-2, 0, 2, 0,
-      0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
-      0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0
-    };
-  }
-  else
-  if (cNumGP == 4) {
+  std::vector<Plato::Scalar>
     gold_t_dHdu_entries = {
       0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
       0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
@@ -1340,7 +1307,6 @@ TEUCHOS_UNIT_TEST( EllipticHatchingProblemTests, 3D_StateUpdate )
       0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0,
       0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 0
     };
-  }
 
   int t_dHdu_entriesSize = gold_t_dHdu_entries.size();
   for(int i=0; i<t_dHdu_entriesSize; i++){

@@ -230,27 +230,13 @@ TEUCHOS_UNIT_TEST( TransientThermomechTests, 3D )
   auto tTemperature_Host = Kokkos::create_mirror_view( tTemperature );
   Kokkos::deep_copy( tTemperature_Host, tTemperature );
 
-  std::vector<Plato::Scalar> tTemperature_gold;
-
-  if ( numPoints == 1 )
-  {
-    tTemperature_gold = std::vector<Plato::Scalar>({ 
-    2.800000000000000e-6, 2.000000000000000e-6, 1.800000000000000e-6,
-    2.400000000000000e-6, 3.200000000000000e-6, 3.400000000000000e-6,
-    3.200000000000000e-6, 2.400000000000000e-6, 2.200000000000000e-6,
-    2.800000000000000e-6, 3.600000000000000e-6, 3.800000000000000e-6
-    });
-  }
-  else
-  if ( numPoints == 4 )
-  {
+  std::vector<Plato::Scalar>
     tTemperature_gold = std::vector<Plato::Scalar>({ 
     3.694427190999921e-6, 1.642229123600038e-6, 1.710557280900012e-6,
     1.505572809000089e-6, 3.557770876399973e-6, 3.489442719099998e-6,
     4.094427190999921e-6, 2.042229123600037e-6, 2.110557280900012e-6,
     1.905572809000089e-6, 3.957770876399973e-6, 3.889442719099998e-6
     });
-  }
 
   const int iGP = 0; // only one gauss point in this test
   numGoldCells=tTemperature_gold.size();

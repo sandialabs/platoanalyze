@@ -1638,13 +1638,9 @@ TEUCHOS_UNIT_TEST(MaterialModelTests, CubicVoigtField_LameRepresentation_NonUnif
     auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
     Kokkos::deep_copy(tStiffness_host, tStiffness);
 
-    std::vector<Plato::Scalar> tGP;
-    if (ElementType::mNumGaussPoints == 1) {
-        tGP = {1.0/4.0, 1.0/4.0, 1.0/4.0};
-    } else
-    if (ElementType::mNumGaussPoints == 4) {
+    std::vector<Plato::Scalar>
         tGP = {0.585410196624969, 0.138196601125011, 0.138196601125011};
-    }
+
     std::vector<Plato::Scalar> tN = {1.0-tGP[0]-tGP[1]-tGP[2], tGP[0], tGP[1], tGP[2]};
     auto tC = tKnownControl[0];
     Plato::Scalar tGPControl = tN[0]*tC[0] + tN[1]*tC[1] + tN[2]*tC[2] + tN[3]*tC[3];
@@ -1761,13 +1757,9 @@ TEUCHOS_UNIT_TEST(MaterialModelTests, TetragonalSkewField_NonUniformDensity)
     auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
     Kokkos::deep_copy(tStiffness_host, tStiffness);
 
-    std::vector<Plato::Scalar> tGP;
-    if (ElementType::mNumGaussPoints == 1) {
-        tGP = {1.0/4.0, 1.0/4.0, 1.0/4.0};
-    } else
-    if (ElementType::mNumGaussPoints == 4) {
+    std::vector<Plato::Scalar>
         tGP = {0.585410196624969, 0.138196601125011, 0.138196601125011};
-    }
+
     std::vector<Plato::Scalar> tN = {1.0-tGP[0]-tGP[1]-tGP[2], tGP[0], tGP[1], tGP[2]};
     auto tC = tKnownControl[0];
     Plato::Scalar tGPControl = tN[0]*tC[0] + tN[1]*tC[1] + tN[2]*tC[2] + tN[3]*tC[3];
