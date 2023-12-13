@@ -245,7 +245,6 @@ public:
     ) const
     {
       Plato::workset_local_state_scalar_scalar<mNumLocalStatesPerGP>(
-      //Plato::workset_local_state_scalar_scalar<mNumLocalDofsPerCell>(
               mNumCells, aLocalState, aLocalStateWS);
     }
 
@@ -262,7 +261,6 @@ public:
     ) const
     {
       Plato::workset_local_state_scalar_scalar<mNumLocalStatesPerGP>(
-      //Plato::workset_local_state_scalar_scalar<mNumLocalDofsPerCell>(
               aDomain, aLocalState, aLocalStateWS);
     }
 
