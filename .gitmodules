@@ -4,6 +4,3 @@
 [submodule "verification"]
 	path = tests/verification
 	url = ../platoanalyze-verification.git
-[submodule "integration_tests"]
-	path = integration_tests
-	url = ../integration_tests.git
