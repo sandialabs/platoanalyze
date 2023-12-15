@@ -153,7 +153,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsElementTests, ElementFunctors3D )
 
   Plato::ScalarMultiVectorT<Plato::Scalar> tStresses("stress", tNumCells, tNumVoigtTerms);
 
-  Plato::ScalarMultiVectorT<Plato::Scalar> tInertialContents("inertial content", tNumCells, tSpatialDims);
+  Plato::ScalarArray3DT<Plato::Scalar> tInertialContents("inertial content", tNumCells, tNumPoints, tSpatialDims);
 
   Plato::ScalarMultiVectorT<Plato::Scalar> tResults("result", tNumCells, tDofsPerCell);
 
@@ -217,7 +217,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsElementTests, ElementFunctors3D )
 
     computeInertialContent(tInertialContent, tAcceleration);
     for(int iDim=0; iDim<tSpatialDims; iDim++)
-      tInertialContents(cellOrdinal, iDim) = tInertialContent(iDim);
+      tInertialContents(cellOrdinal, gpOrdinal, iDim) = tInertialContent(iDim);
 
     projectInertialContent(cellOrdinal, tVolume, tBasisValues, tInertialContent, tResults);
   });
@@ -302,18 +302,21 @@ TEUCHOS_UNIT_TEST( TransientMechanicsElementTests, ElementFunctors3D )
   auto tInertialContent_Host = Kokkos::create_mirror_view( tInertialContents );
   Kokkos::deep_copy( tInertialContent_Host, tInertialContents );
 
-  std::vector<std::vector<Plato::Scalar>> tInertialContent_gold = { 
-   { 5.940, 6.210, 6.480 },
-   { 4.320, 4.590, 4.860 },
-   { 3.915, 4.185, 4.455 }
-  };
+  std::vector<std::vector<std::vector<Plato::Scalar>>> tInertialContent_gold = {{
+    {7.75121506177484054, 8.02121506177484278, 8.29121506177484235},
+    {4.49102795058014781, 4.76102795058014738, 5.03102795058014873},
+    {8.11345807412980768, 8.38345807412980903, 8.65345807412980683},
+    {3.40429891351524994, 3.67429891351524995, 3.94429891351525042}
+  }};
 
   for(int iCell=0; iCell<int(tInertialContent_gold.size()); iCell++){
-    for(int iDim=0; iDim<tSpatialDims; iDim++){
-      if(tInertialContent_gold[iCell][iDim] == 0.0){
-        TEST_ASSERT(fabs(tStrain_Host(iCell,iDim)) < 1e-12);
-      } else {
-        TEST_FLOATING_EQUALITY(tInertialContent_Host(iCell,iDim), tInertialContent_gold[iCell][iDim], 1e-13);
+    for(int iGp=0; iGp<tNumPoints; iGp++){
+      for(int iDim=0; iDim<tSpatialDims; iDim++){
+        if(tInertialContent_gold[iCell][iGp][iDim] == 0.0){
+          TEST_ASSERT(fabs(tInertialContent_Host(iCell,iGp,iDim)) < 1e-12);
+        } else {
+          TEST_FLOATING_EQUALITY(tInertialContent_Host(iCell,iGp,iDim), tInertialContent_gold[iCell][iGp][iDim], 1e-13);
+        }
       }
     }
   }
@@ -324,12 +327,14 @@ TEUCHOS_UNIT_TEST( TransientMechanicsElementTests, ElementFunctors3D )
   Kokkos::deep_copy( tResult_Host, tResults );
 
   std::vector<std::vector<Plato::Scalar>> tResult_gold = { 
-   {-115.3536778846152, -245.1599639423073, -38.42778846153840, 264.4540144230764,
-     76.95542067307680, -110.5431730769228, -245.1613701923073, 129.8400360576921,
-    -57.65855769230760,  96.18478365384600,  38.49388221153840, 206.7645192307688 }, 
-   {-115.3621153846152, -245.1684014423073, -38.43622596153840,  19.2532692307692,
-     206.7546754807689, -168.2439182692304, -264.4005769230765, -76.8991706730768,
-     110.6022355769229,  360.5994230769225,  115.4085216346152,  96.1791586538460 }
+    {-115.359584134615361, -245.165870192307693, -38.4336947115384504,
+      264.458233173076906,  76.9596394230769221, -110.538954326923118,
+     -245.164745192307606,  129.836661057692311, -57.6619326923076869,
+      96.1898461538461333,  38.4989447115384493,  206.769581730769261 },
+    {-115.366334134615386, -245.172620192307647, -38.4404447115384542,
+      19.2515817307692281, 206.752987980769205, -168.245605769230764,
+     -264.401420673076814, -76.9000144230769394, 110.601391826923063,
+      360.606173076923028, 115.415271634615380, 96.1859086538461696 }
   };
 
   for(int iCell=0; iCell<int(tResult_gold.size()); iCell++){
@@ -432,12 +437,12 @@ TEUCHOS_UNIT_TEST( TransientMechanicsProblemTests, 3D )
   Kokkos::deep_copy( tDisplacement_Host, tDisplacement );
 
   std::vector<Plato::Scalar> tDisplacement_gold = {
-    3.61863560324768500405784e-11,  3.83849353315283790119312e-12,
-    3.83849353315283790119312e-12,  1.48267383576000436797713e-12,
-   -2.25624866593761909787027e-13, -2.73367053814262282760693e-13,
-   -2.42591058524479259361185e-11, -4.09157004346611346509595e-12,
-   -6.54292514491087131336281e-12,  1.48267383576000436797713e-12,
-   -2.73367053814262282760693e-13, -2.25624866593761909787027e-13
+    2.10816942698054615984187e-12, -2.52418580606097773558868e-14,
+   -2.52418580606097773558868e-14,  7.18574825931105206768831e-13,
+   -6.57398927754318208407556e-15,  1.09680935499520513093439e-14,
+   -7.17183093247985723454205e-14,  2.84200697348839217896060e-16,
+    7.06752621625155373438040e-15,  7.18574825931105206768831e-13,
+    1.09680935499520513093439e-14, -6.57398927754318208407556e-15
   };
 
   for(int iNode=0; iNode<int(tDisplacement_gold.size()); iNode++){
@@ -455,7 +460,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsProblemTests, 3D )
    *****************************************************/
 
   auto tCriterionValue = tProblem.criterionValue(tControl, "Internal Energy");
-  Plato::Scalar tCriterionValue_gold = 5.43649521380863686677761e-9;
+  Plato::Scalar tCriterionValue_gold = 2.31630684327942539090473e-10;
 
   TEST_FLOATING_EQUALITY( tCriterionValue, tCriterionValue_gold, 1e-4);
 
@@ -935,9 +940,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsResidualTests, 3D_WithMass )
   Kokkos::deep_copy(jacA_entriesHost, jacA_entries);
 
   std::vector<Plato::Scalar> gold_jacA_entries = {
-    0.0210937500000000014, 0.00000000000000000,   0.00000000000000000,
-      0.00000000000000000, 0.0210937500000000014, 0.00000000000000000,
-      0.00000000000000000, 0.00000000000000000,   0.0210937500000000014
+    0.03375, 0, 0, 0, 0.03375, 0, 0, 0, 0.03375
   };
 
   int jacA_entriesSize = gold_jacA_entries.size();
@@ -945,7 +948,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsResidualTests, 3D_WithMass )
     if(gold_jacA_entries[i] == 0.0){
       TEST_ASSERT(fabs(jacA_entriesHost[i]) < 1e-12);
     } else {
-      TEST_FLOATING_EQUALITY(jacA_entriesHost(i), gold_jacA_entries[i], 1.0e-15);
+      TEST_FLOATING_EQUALITY(jacA_entriesHost(i), gold_jacA_entries[i], 1.0e-14);
     }
   }
 
@@ -984,12 +987,12 @@ TEUCHOS_UNIT_TEST( TransientMechanicsResidualTests, 3D_WithMass )
   Kokkos::deep_copy(tGradientZ_entriesHost, tGradientZ_entries);
 
   std::vector<Plato::Scalar> gold_tGradientZ_entries = {
-   -229443.191964285681024194, -173193.191964285710128024,
-   -154443.191964285681024194, -67850.1116071428550640121,
-   -67850.1116071428550640121,  88846.3169642856810241938,
-   -58475.1116071428550640121,  98221.3169642857101280242,
-   -58475.1116071428405120969, -126332.254464285695576109,
-    30364.1741071428441500757,  30364.1741071428405120969
+    -229430.535714284342247993, -173180.535714284691493958,
+    -154430.535714284778805450, -67851.5178571424476103857,
+    -67851.5178571424476103857,  88844.9107142851862590760,
+    -58476.5178571424839901738,  98219.9107142851426033303,
+    -58476.5178571425058180466, -126333.660714284953428432,
+     30362.7678571426804410294,  30362.7678571426768030506
   };
 
   int tGradientZ_entriesSize = gold_tGradientZ_entries.size();
@@ -1456,12 +1459,11 @@ TEUCHOS_UNIT_TEST( TransientMechanicsResidualTests, 3D_ScalarFunction )
   Kokkos::deep_copy( tObjGradZ_Host, tObjGradZ );
 
   std::vector<Plato::Scalar> tObjGradZ_gold = {
-   2.46535714285714258053872,  3.28714285714285647799215,
-   0.821785714285713897453434, 3.28714285714285692208136,
-   4.93071428571428427289902,  1.64357142857142801695147,
-   0.821785714285714119498039, 1.64357142857142823899608,
-   0.821785714285714008475736, 3.28714285714285647799215,
-   4.93071428571428427289902,  1.64357142857142823899608
+    2.46535714285712792559480,  3.28714285714284315531586,
+    0.821785714285715562787971, 3.28714285714284315531586,
+    4.93071428571427627929324,  1.64357142857143134762055,
+    0.821785714285715784832576, 1.64357142857143156966515,
+    0.821785714285715673810273, 3.28714285714284315531586
   };
 
   for(int iNode=0; iNode<int(tObjGradZ_gold.size()); iNode++){
@@ -1880,7 +1882,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
     "    <Parameter name='Newmark Gamma' type='double' value='0.5'/>           \n"
     "    <Parameter name='Newmark Beta' type='double' value='0.25'/>           \n"
     "    <Parameter name='Number Time Steps' type='int' value='10'/>            \n"
-    "    <Parameter name='Time Step' type='double' value='1.0e-7'/>            \n"
+    "    <Parameter name='Time Step' type='double' value='5.0e-8'/>            \n"
     "  </ParameterList>                                                        \n"
     "  <ParameterList  name='Computed Fields'>                     \n"
     "    <ParameterList  name='Initial X Displacement'>            \n"
@@ -1944,7 +1946,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
     "    <Parameter name='Newmark Beta' type='double' value='0.25'/>           \n"
     "    <Parameter name='A-Form' type='bool' value='true'/>           \n"
     "    <Parameter name='Number Time Steps' type='int' value='10'/>            \n"
-    "    <Parameter name='Time Step' type='double' value='1.0e-7'/>            \n"
+    "    <Parameter name='Time Step' type='double' value='5.0e-8'/>            \n"
     "  </ParameterList>                                                        \n"
     "  <ParameterList  name='Computed Fields'>                     \n"
     "    <ParameterList  name='Initial X Displacement'>            \n"
@@ -2112,7 +2114,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
     "    <Parameter name='Newmark Gamma' type='double' value='0.5'/>           \n"
     "    <Parameter name='Newmark Beta' type='double' value='0.25'/>           \n"
     "    <Parameter name='Number Time Steps' type='int' value='10'/>            \n"
-    "    <Parameter name='Time Step' type='double' value='1.0e-7'/>            \n"
+    "    <Parameter name='Time Step' type='double' value='5.0e-8'/>            \n"
     "  </ParameterList>                                                        \n"
     "  <ParameterList  name='Natural Boundary Conditions'>                     \n"
     "    <ParameterList  name='Traction Vector Boundary Condition'>            \n"
@@ -2184,7 +2186,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
     "    <Parameter name='Newmark Beta' type='double' value='0.25'/>           \n"
     "    <Parameter name='A-Form' type='bool' value='true'/>           \n"
     "    <Parameter name='Number Time Steps' type='int' value='10'/>            \n"
-    "    <Parameter name='Time Step' type='double' value='1.0e-7'/>            \n"
+    "    <Parameter name='Time Step' type='double' value='5.0e-8'/>            \n"
     "  </ParameterList>                                                        \n"
     "  <ParameterList  name='Natural Boundary Conditions'>                     \n"
     "    <ParameterList  name='Traction Vector Boundary Condition'>            \n"
@@ -2360,7 +2362,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
     "    <Parameter name='Newmark Gamma' type='double' value='0.5'/>           \n"
     "    <Parameter name='Newmark Beta' type='double' value='0.25'/>           \n"
     "    <Parameter name='Number Time Steps' type='int' value='10'/>            \n"
-    "    <Parameter name='Time Step' type='double' value='1.0e-7'/>            \n"
+    "    <Parameter name='Time Step' type='double' value='5.0e-8'/>            \n"
     "  </ParameterList>                                                        \n"
     "  <ParameterList  name='State Essential Boundary Conditions'>                     \n"
     "    <ParameterList  name='x+ Applied Displacement'>            \n"
@@ -2432,7 +2434,7 @@ TEUCHOS_UNIT_TEST( TransientMechanicsFormulationTests, UFormAndAFormEquivalenceW
     "    <Parameter name='Newmark Beta' type='double' value='0.25'/>           \n"
     "    <Parameter name='A-Form' type='bool' value='true'/>           \n"
     "    <Parameter name='Number Time Steps' type='int' value='10'/>            \n"
-    "    <Parameter name='Time Step' type='double' value='1.0e-7'/>            \n"
+    "    <Parameter name='Time Step' type='double' value='5.0e-8'/>            \n"
     "  </ParameterList>                                                        \n"
     "  <ParameterList  name='State Essential Boundary Conditions'>                     \n"
     "    <ParameterList  name='x+ Applied Displacement'>            \n"

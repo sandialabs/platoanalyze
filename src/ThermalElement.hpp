@@ -15,6 +15,7 @@ class ThermalElement : public TopoElementTypeT, public ElementBase<TopoElementTy
   public:
     using TopoElementTypeT::mNumNodesPerCell;
     using TopoElementTypeT::mNumSpatialDims;
+    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
@@ -24,7 +25,9 @@ class ThermalElement : public TopoElementTypeT, public ElementBase<TopoElementTy
     static constexpr Plato::OrdinalType mNumControl = NumControls;
 
     static constexpr Plato::OrdinalType mNumNodeStatePerNode = 0;
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = 0;
+
+    static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
 
 };
 

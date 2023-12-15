@@ -19,18 +19,25 @@ class Tet4
     static constexpr Plato::OrdinalType mNumSpatialDims  = 3;
     static constexpr Plato::OrdinalType mNumNodesPerCell = 4;
     static constexpr Plato::OrdinalType mNumNodesPerFace = 3;
-    static constexpr Plato::OrdinalType mNumGaussPoints  = 1;
+    static constexpr Plato::OrdinalType mNumGaussPoints  = 4;
 
     static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims-1;
 
     static inline Plato::Array<mNumGaussPoints>
-    getCubWeights() { return Plato::Array<mNumGaussPoints>({Plato::Scalar(1.0)/6}); }
+    getCubWeights() 
+    {
+        return Plato::Array<mNumGaussPoints>
+                 ({Plato::Scalar(1.0)/24.0, Plato::Scalar(1.0)/24.0, Plato::Scalar(1.0)/24.0, Plato::Scalar(1.0)/24.0});
+    }
 
     static inline Plato::Matrix<mNumGaussPoints,mNumSpatialDims>
     getCubPoints()
     {
-        return Plato::Matrix<mNumGaussPoints,mNumSpatialDims>({
-            Plato::Scalar(1.0)/4, Plato::Scalar(1.0)/4, Plato::Scalar(1.0)/4
+        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>({
+            0.585410196624969, 0.138196601125011, 0.138196601125011,
+            0.138196601125011, 0.585410196624969, 0.138196601125011,
+            0.138196601125011, 0.138196601125011, 0.585410196624969,
+            0.138196601125011, 0.138196601125011, 0.138196601125011
         });
     }
 

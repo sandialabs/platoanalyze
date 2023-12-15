@@ -25,6 +25,7 @@ class TensileEnergyDensity
         const Plato::Array<mNumSpatialDims, StrainType> & aPrincipalStrains,
         const Plato::Scalar & aLameLambda,
         const Plato::Scalar & aLameMu,
+        const ResultType & aWeightTimesDet,
         const Plato::ScalarVectorT<ResultType> & aTensileEnergyDensity
     ) const 
     {
@@ -42,7 +43,7 @@ class TensileEnergyDensity
         StrainType tStrainTraceTensile = (tStrainTrace >= 0.0) ? tStrainTrace : static_cast<Plato::Scalar>(0.0);
         tTensileEnergyDensity += (aLameLambda * tStrainTraceTensile * 
                                                 tStrainTraceTensile * static_cast<Plato::Scalar>(0.5));
-        aTensileEnergyDensity(aCellOrdinal) = tTensileEnergyDensity;
+        Kokkos::atomic_add(&aTensileEnergyDensity(aCellOrdinal), aWeightTimesDet*tTensileEnergyDensity);
     }
 };
 //class TensileEnergyDensity

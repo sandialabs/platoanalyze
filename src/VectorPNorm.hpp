@@ -46,18 +46,19 @@ public:
       Plato::ScalarVectorT<ResultScalarType>       aPnorm,
       Plato::Array<VectorLength, VectorScalarType> aArgVector,
       Plato::OrdinalType                           aPvalue,
-      VolumeScalarType                             aCellVolume
+      VolumeScalarType                             aVolume
     ) const
     {
         // compute scalar product
         //
-        aPnorm(aCellOrdinal) = 0.0;
+        ResultScalarType tPnorm(0.0);
         for(Plato::OrdinalType iTerm = 0; iTerm < VectorLength; iTerm++)
         {
-            aPnorm(aCellOrdinal) += aArgVector(iTerm) * aArgVector(iTerm);
+            tPnorm += aArgVector(iTerm) * aArgVector(iTerm);
         }
-        aPnorm(aCellOrdinal) = pow(aPnorm(aCellOrdinal), aPvalue / 2.0);
-        aPnorm(aCellOrdinal) *= aCellVolume;
+        tPnorm = pow(tPnorm, aPvalue / 2.0);
+        tPnorm *= aVolume;
+        Kokkos::atomic_add(&aPnorm(aCellOrdinal), tPnorm);
     }
 };
 // class VectorPNorm

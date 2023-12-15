@@ -239,7 +239,6 @@ class LocalByGlobalEntryFunctor
 };
 
 /******************************************************************************/
-//template<Plato::OrdinalType mNumNodesPerCell, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofsPerGP>
 template<typename ElementType>
 class GlobalByLocalEntryFunctor
 {
@@ -253,26 +252,36 @@ class GlobalByLocalEntryFunctor
       mColumnIndices(matrix->columnIndices()),
       mCells2nodes(mesh->Connectivity()) { }
 
+    /******************************************************************************//**
+    * \brief Returns offset into global by local block matrix.  Matrix is assumed to 
+    *        be [N,G] where N is the number of nodes in the mesh, and G is the number
+    *        of gauss points in the mesh.  The block size is [d,s] where d is the number
+    *        of dofs per node and s is the number of states per gauss point.
+    * \param [in] aCellOrdinal mesh-local element ordinal
+    * \param [in] aGpOrdinal elem-local gauss point ordinal
+    * \param [in] aICellDofOrdinal ordinal into array of elem-node dofs, e.g., [n1_ux, n1_uy, n1_uz, n2_ux, ...]
+    * \param [in] aIGpStateOrdinal ordinal into array of gp states, e.g., [gp_1, gp_2, ..., gp_s]
+    **********************************************************************************/
     KOKKOS_INLINE_FUNCTION
     Plato::OrdinalType
     operator()(
-        Plato::OrdinalType cellOrdinal,
-        Plato::OrdinalType gpOrdinal,
-        Plato::OrdinalType icellDof,
-        Plato::OrdinalType jcellDof
+        Plato::OrdinalType aCellOrdinal,
+        Plato::OrdinalType aGpOrdinal,
+        Plato::OrdinalType aICellDofOrdinal,
+        Plato::OrdinalType aIGpStateOrdinal
     ) const
     {
-        auto iNode = icellDof / ElementType::mNumDofsPerNode;
-        auto iDof  = icellDof % ElementType::mNumDofsPerNode;
-        Plato::OrdinalType iLocalOrdinal = mCells2nodes(cellOrdinal * ElementType::mNumNodesPerCell + iNode);
-        Plato::OrdinalType jLocalOrdinal = cellOrdinal*ElementType::mNumGaussPoints + gpOrdinal;
+        auto iNode = aICellDofOrdinal / ElementType::mNumDofsPerNode;
+        auto iDof  = aICellDofOrdinal % ElementType::mNumDofsPerNode;
+        Plato::OrdinalType iLocalOrdinal = mCells2nodes(aCellOrdinal * ElementType::mNumNodesPerCell + iNode);
+        Plato::OrdinalType jLocalOrdinal = aCellOrdinal*ElementType::mNumGaussPoints + aGpOrdinal;
         Plato::OrdinalType rowStart = mRowMap(iLocalOrdinal);
         Plato::OrdinalType rowEnd   = mRowMap(iLocalOrdinal+1);
         for (Plato::OrdinalType entryOrdinal=rowStart; entryOrdinal<rowEnd; entryOrdinal++)
         {
           if (mColumnIndices(entryOrdinal) == jLocalOrdinal)
           {
-            return entryOrdinal*ElementType::mNumDofsPerNode*ElementType::mNumLocalStatesPerGP+iDof*ElementType::mNumLocalStatesPerGP+jcellDof;
+            return entryOrdinal*ElementType::mNumDofsPerNode*ElementType::mNumLocalStatesPerGP+iDof*ElementType::mNumLocalStatesPerGP+aIGpStateOrdinal;
           }
         }
         return Plato::OrdinalType(-1);

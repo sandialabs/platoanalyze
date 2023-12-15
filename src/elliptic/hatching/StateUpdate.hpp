@@ -293,7 +293,7 @@ public:
 
             auto tJacobianMatEntries = tJacobianMat->entries();
             Plato::WorksetBase<ElementType>::assembleStateJacobianTranspose
-                (mNumLocalDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tResult, tJacobianMatEntries, tDomain);
+                (mNumLocalStatesPerGP, mNumDofsPerCell, tJacobianMatEntryOrdinal, tResult, tJacobianMatEntries, tDomain);
         }
         return tJacobianMat;
     }

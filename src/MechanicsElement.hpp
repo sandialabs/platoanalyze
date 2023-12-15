@@ -16,6 +16,7 @@ class MechanicsElement : public TopoElementTypeT, public ElementBase<TopoElement
     using TopoElementTypeT::mNumNodesPerCell;
     using TopoElementTypeT::mNumNodesPerFace;
     using TopoElementTypeT::mNumSpatialDims;
+    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
@@ -29,7 +30,9 @@ class MechanicsElement : public TopoElementTypeT, public ElementBase<TopoElement
     static constexpr Plato::OrdinalType mNumControl = NumControls;
 
     static constexpr Plato::OrdinalType mNumNodeStatePerNode = 0;
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = 0;
+    static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
+
 };
 
 }
