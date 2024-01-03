@@ -464,12 +464,13 @@ if(PLATOANALYZE_SMOKE_TESTS)
   add_subdirectory(tests)
 endif()
 
+set(INTEGRATION_TESTS_DIR ${PROJECT_SOURCE_DIR}/../plato-integration-tests ) # Assumes we cloned from the plato super-project
 if(PLATOANALYZE_INTEGRATION_TESTS)
-  add_subdirectory(integration_tests/analyze)
+  add_subdirectory(${INTEGRATION_TESTS_DIR}/analyze ${PROJECT_BINARY_DIR}/integration_tests/analyze)
 endif()
 
 if(PLATOANALYZE_DAKOTA_TESTS)
-  add_subdirectory(integration_tests/dakota_analyze)
+  add_subdirectory(${INTEGRATION_TESTS_DIR}/dakota_analyze ${PROJECT_BINARY_DIR}/integration_tests/dakota_analyze)
 endif()
 
 set(PLATOANALYZE_KEY_INTS
