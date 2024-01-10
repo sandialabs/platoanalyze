@@ -1,0 +1,6 @@
+[submodule "tests/plato"]
+	path = tests/regression
+	url = ../platoanalyze-tests.git
+[submodule "verification"]
+	path = tests/verification
+	url = ../platoanalyze-verification.git
