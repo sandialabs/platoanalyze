@@ -29,7 +29,7 @@ void getTachoParams(std::vector<int> &tachoParams, const int solutionMethod) {
       std::max(tacho::host_space::thread_pool_size(0) / 2, 1);
 #else
   tachoParams[tacho::TASKING_OPTION_MAXNUMSUPERBLOCKS] =
-      std::max(tacho::host_space::impl_thread_pool_size(0) / 2, 1);
+      std::max(tacho::host_space().impl_thread_pool_size(0) / 2, 1);
 #endif
   tachoParams[tacho::TASKING_OPTION_BLOCKSIZE] = 256;
   tachoParams[tacho::TASKING_OPTION_PANELSIZE] = 128;
