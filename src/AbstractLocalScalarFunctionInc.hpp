@@ -53,7 +53,7 @@ public:
     /***************************************************************************//**
      * \brief Destructor
     *******************************************************************************/
-    virtual ~AbstractLocalScalarFunctionInc() { return; }
+    virtual ~AbstractLocalScalarFunctionInc() = default;
 
     /***************************************************************************//**
      * \brief Return reference to mesh data base

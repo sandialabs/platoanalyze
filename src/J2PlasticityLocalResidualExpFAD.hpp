@@ -277,11 +277,6 @@ public:
     }
 
     /**************************************************************************//**
-    * \brief Destructor
-    ******************************************************************************/
-    virtual ~J2PlasticityLocalResidual(){}
-
-    /**************************************************************************//**
     * \brief Evaluate the local J2 plasticity residual
     * \param [in] aGlobalState global state at current time step
     * \param [in] aPrevGlobalState global state at previous time step

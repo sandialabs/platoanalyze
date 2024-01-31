@@ -143,11 +143,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    virtual ~VelocityPredictorResidual(){}
-
-    /***************************************************************************//**
      * \fn void evaluate
      * \brief Evaluate predictor residual.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)

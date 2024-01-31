@@ -125,11 +125,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    virtual ~PressureResidual(){}
-
-    /***************************************************************************//**
      * \brief Evaluate internal forces.
      * \param [in]  aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [out] aResultWS result/output workset

@@ -1563,12 +1563,6 @@ void MPMD_App::exportDataMap(const Plato::data::layout_t & aDataLayout, std::vec
 }
 
 /******************************************************************************/
-MPMD_App::~MPMD_App()
-/******************************************************************************/
-{
-}
-
-/******************************************************************************/
 void MPMD_App::getScalarFieldHostMirror
 (const    std::string & aName,
  typename Plato::ScalarVector::HostMirror & aHostMirror)

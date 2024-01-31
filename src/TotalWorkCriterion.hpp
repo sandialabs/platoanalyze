@@ -132,12 +132,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor of maximize total work criterion
-    *******************************************************************************/
-    virtual ~TotalWorkCriterion(){}
-
-
-    /***************************************************************************//**
      * \brief Evaluates total work criterion. FAD type determines output/result value.
      *
      * \param [in] aCurrentGlobalState  current global states

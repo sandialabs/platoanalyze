@@ -62,9 +62,6 @@ public:
     this->updateNodesets(tNumberChildNodes, tChildNodeLids, tParentNodeLids);
 }
 
-
-    virtual ~TieMultipointConstraint(){}
-
     /*!
      \brief Get constraint matrix and RHS data.
      \param mpcRowMap CRS-style rowMap for constraint data.
@@ -127,7 +124,6 @@ public:
         lengthNnz += tNumberChildNodes;
     }
 
-
     // ! Fill in node set members
     void updateNodesets(const OrdinalType& tNumberChildNodes,
                         const Plato::OrdinalVectorT<const Plato::OrdinalType>& tChildNodeLids,
@@ -142,7 +138,6 @@ public:
             tParentNodes(nodeOrdinal) = tParentNodeLids(nodeOrdinal); // parent node ID
         });
     }
-
 
 private:
     OrdinalVector    mParentNodes;

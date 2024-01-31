@@ -129,15 +129,6 @@ public:
 
     /******************************************************************************//**
      *
-     * \brief Destructor
-     *
-    **********************************************************************************/
-    virtual ~StructuralDynamicsProblem()
-    {
-    }
-
-    /******************************************************************************//**
-     *
      * \brief Set array of angular frequencies and allocate state container
      *
      * \param[in] aInput angular frequencies

@@ -93,15 +93,6 @@ namespace Plato
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    TensileEnergyDensityLocalMeasure<EvaluationType>::
-    ~TensileEnergyDensityLocalMeasure()
-    {
-    }
-
-    /******************************************************************************//**
      * \brief Evaluate tensile energy density local measure
      * \param [in] aState 2D container of state variables
      * \param [in] aControl 2D container of control variables

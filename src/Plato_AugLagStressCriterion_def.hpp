@@ -154,15 +154,6 @@ namespace Plato
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    AugLagStressCriterion<EvaluationType>::
-    ~AugLagStressCriterion()
-    {
-    }
-
-    /******************************************************************************//**
      * \brief Return augmented Lagrangian penalty multiplier
      * \return augmented Lagrangian penalty multiplier
     **********************************************************************************/
