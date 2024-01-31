@@ -167,15 +167,6 @@ public:
 
     /******************************************************************************//**
      *
-     * \brief Destructor
-     *
-    **********************************************************************************/
-    ~StructuralDynamicsResidual()
-    {
-    }
-
-    /******************************************************************************//**
-     *
      * \brief Set mass proportional damping constant
      * \param [in] aInput mass proportional damping constant
      *

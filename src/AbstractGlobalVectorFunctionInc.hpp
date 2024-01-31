@@ -49,9 +49,7 @@ public:
     /***************************************************************************//**
      * \brief Destructor
     *******************************************************************************/
-    virtual ~AbstractGlobalVectorFunctionInc()
-    {
-    }
+    virtual ~AbstractGlobalVectorFunctionInc() = default;
 
     /***************************************************************************//**
      * \brief Return reference to mesh data base

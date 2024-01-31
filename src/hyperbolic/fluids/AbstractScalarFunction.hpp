@@ -29,7 +29,7 @@ private:
 
 public:
     AbstractScalarFunction(){}
-    virtual ~AbstractScalarFunction(){}
+    virtual ~AbstractScalarFunction() = default;
 
     virtual std::string name() const = 0;
     virtual void evaluate(const Plato::WorkSets & aWorkSets, Plato::ScalarVectorT<ResultT> & aResult) const = 0;

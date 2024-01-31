@@ -34,11 +34,6 @@ public:
     CriterionFactory () {}
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    ~CriterionFactory() {}
-
-    /******************************************************************************//**
      * \brief Create criterion interface.
      * \param [in] aModel   computational model metadata
      * \param [in] aDataMap output database

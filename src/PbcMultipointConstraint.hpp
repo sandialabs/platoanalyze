@@ -34,8 +34,6 @@ public:
                             const std::string & aName, 
                             Teuchos::ParameterList & aParam);
 
-    virtual ~PbcMultipointConstraint(){}
-
     /*!
      \brief Get constraint matrix and RHS data.
      \param mpcRowMap CRS-style rowMap for constraint data.

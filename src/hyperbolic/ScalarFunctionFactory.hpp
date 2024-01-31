@@ -26,11 +26,6 @@ public:
     ScalarFunctionFactory () {}
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    ~ScalarFunctionFactory() {}
-
-    /******************************************************************************//**
      * \brief Create method
      * \param [in] aMesh mesh database
      * \param [in] aDataMap Plato Engine and Analyze data map

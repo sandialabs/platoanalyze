@@ -69,11 +69,6 @@ struct ForwardStates
     {
     }
 
-    /***************************************************************************//**
-     * \brief Destructor
-    *******************************************************************************/
-    ~ForwardStates(){}
-
     inline void print(const char my_string[]) const
     {
         if (mProjectedPressGrad.size() <= 0)
@@ -117,11 +112,6 @@ struct AdjointStates
             mPreviousProjPressGradAdjoint(Plato::ScalarVector("Previous Projected Pressure Gradient Adjoint", aNumProjPressGradAdjointVars))
     {
     }
-
-    /***************************************************************************//**
-     * \brief Destructor
-    *******************************************************************************/
-    ~AdjointStates(){}
 
     Plato::ScalarVector mCurrentLocalAdjoint;          /*!< current local adjoint */
     Plato::ScalarVector mPreviousLocalAdjoint;         /*!< previous local adjoint */
@@ -632,11 +622,6 @@ public:
         mNumPseudoTimeSteps(20),
         mLinearSolver(nullptr)
     {}
-
-    /***************************************************************************//**
-     * \brief Destructor
-    *******************************************************************************/
-    ~PathDependentAdjointSolver(){}
 
     /***************************************************************************//**
      * \brief Set number of pseudo time steps

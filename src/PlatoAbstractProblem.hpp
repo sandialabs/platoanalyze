@@ -35,9 +35,7 @@ public:
     /******************************************************************************//**
      * \brief PLATO abstract problem destructor
     **********************************************************************************/
-    virtual ~AbstractProblem()
-    {
-    }
+    virtual ~AbstractProblem() = default;
 
     /******************************************************************************//**
      * \brief PLATO abstract problem constructor

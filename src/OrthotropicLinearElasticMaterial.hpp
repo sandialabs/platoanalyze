@@ -55,11 +55,6 @@ public:
     OrthotropicLinearElasticMaterial(){}
 
     /******************************************************************************//**
-     * \brief Destructor.
-    **********************************************************************************/
-    virtual ~OrthotropicLinearElasticMaterial(){}
-
-    /******************************************************************************//**
      * \brief Initialize linear elastic orthotropic material model.
      * \param [in] aParamList input parameter list
     **********************************************************************************/

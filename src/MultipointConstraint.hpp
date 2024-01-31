@@ -25,9 +25,15 @@ public:
     {
     }
 
-    ~MultipointConstraint()
-    {
-    }
+    virtual ~MultipointConstraint() = default;
+
+    MultipointConstraint(const MultipointConstraint& aMPC) = delete;
+    MultipointConstraint(MultipointConstraint&& aMPC) = delete;
+
+    MultipointConstraint&
+    operator=(const MultipointConstraint& aMPC) = delete;
+    MultipointConstraint&
+    operator=(MultipointConstraint&& aMPC) = delete;
 
     /*!
      \brief Pure virtual function 

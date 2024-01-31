@@ -24,11 +24,6 @@ public:
     ScalarFunctionBaseFactory () {}
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    ~ScalarFunctionBaseFactory() {}
-
-    /******************************************************************************//**
      * \brief Create method
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aDataMap Plato Engine and Analyze data map

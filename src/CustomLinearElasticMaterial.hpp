@@ -29,10 +29,6 @@ public:
     **********************************************************************************/
     CustomLinearElasticMaterial(const Teuchos::ParameterList& aParamList);
 
-    /******************************************************************************//**
-     * \brief Linear elastic custom material model destructor.
-    **********************************************************************************/
-    virtual ~CustomLinearElasticMaterial(){}
 };
 // class CubicLinearElasticMaterial
 

@@ -90,11 +90,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    ~BrinkmanForces(){}
-
-    /***************************************************************************//**
      * \brief Evaluate Brinkman forces, including stabilized forces if enabled.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [in/out] aResultWS result/output workset

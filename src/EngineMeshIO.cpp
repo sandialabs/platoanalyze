@@ -117,10 +117,6 @@ namespace Plato
         }
     }
 
-    EngineMeshIO::~EngineMeshIO()
-    {
-    }
-
     Plato::OrdinalType EngineMeshIO::NumNodes()    const {return mMesh.NumNodes();}
     Plato::OrdinalType EngineMeshIO::NumElements() const {return mMesh.NumElements();}
 
