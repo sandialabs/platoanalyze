@@ -407,7 +407,7 @@ namespace Plato
         Kokkos::parallel_for("elastic energy", Kokkos::RangePolicy<>(0, tNumCells),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
         {
-            Plato::Scalar tVonMises(0.0), tMassMultiplierMeasure(0.0), tDensity(0.0);
+            Plato::Scalar tVonMises(0.0), tDensity(0.0);
             for(Plato::OrdinalType iGpOrdinal=0; iGpOrdinal<tNumPoints; ++iGpOrdinal)
             {
                 Plato::Scalar tLocalVonMises(0.0), tVolume(0.0); 
