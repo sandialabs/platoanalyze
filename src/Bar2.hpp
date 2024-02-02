@@ -38,7 +38,6 @@ class Bar2
     auto basisValues( const Plato::Array<mNumSpatialDims>& aCubPoint ) -> Plato::Array<mNumNodesPerCell>
     {
         const auto x=aCubPoint(0);
-        const auto y=aCubPoint(1);
 
         return Plato::Array<mNumNodesPerCell>
             {(1-x)/2.0,
@@ -48,8 +47,6 @@ class Bar2
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
     auto basisGrads( const Plato::Array<mNumSpatialDims>& aCubPoint ) -> Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
     {
-        const auto x=aCubPoint(0);
-
         return Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
             {Plato::Scalar(-1)/2.0,
              Plato::Scalar(1)/2.0};
