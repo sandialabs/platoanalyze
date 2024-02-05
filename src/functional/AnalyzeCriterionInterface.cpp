@@ -10,7 +10,7 @@
 #include "Solutions.hpp"
 #include "alg/ParseInput.hpp"
 
-namespace Plato::Functional
+namespace plato::functional::criteria::extension
 {
 namespace
 {
@@ -48,7 +48,7 @@ AnalyzeCriterionInterface::AnalyzeCriterionInterface(const std::vector<std::stri
 {
 }
 
-double AnalyzeCriterionInterface::value(const MeshProxy& aMeshProxy) const
+double AnalyzeCriterionInterface::value(const Plato::Functional::MeshProxy& aMeshProxy) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 
@@ -58,7 +58,7 @@ double AnalyzeCriterionInterface::value(const MeshProxy& aMeshProxy) const
     return tResult;
 }
 
-std::vector<double> AnalyzeCriterionInterface::gradient(const MeshProxy& aMeshProxy) const
+std::vector<double> AnalyzeCriterionInterface::gradient(const Plato::Functional::MeshProxy& aMeshProxy) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 
@@ -70,9 +70,13 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const MeshProxy& aMeshPr
 
     return plato::functional::to_std_vector(tGradient);
 }
+}  // namespace plato::functional::criteria::extension
 
-std::unique_ptr<CriterionInterface> plato_create_criterion(const std::vector<std::string>& aFileNames)
+namespace plato::functional
 {
-    return std::make_unique<AnalyzeCriterionInterface>(aFileNames);
+std::unique_ptr<criteria::library::CriterionInterface> plato_create_criterion(
+    const std::vector<std::string>& aFileNames)
+{
+    return std::make_unique<criteria::extension::AnalyzeCriterionInterface>(aFileNames);
 }
-}  // namespace Plato::Functional
+}  // namespace plato::functional

@@ -42,9 +42,12 @@ Plato::Functional::Core::DynamicVector<double> HelmholtzFilterInterface::jacobia
     return Plato::Functional::Core::DynamicVector<double>(to_std_vector(tGradient));
 }
 
-std::unique_ptr<library::FilterInterface> plato_create_filter(const library::FilterParameters& aInput)
-{
-    return std::make_unique<HelmholtzFilterInterface>(aInput);
-}
-
 }  // namespace plato::functional::filter::extension
+
+namespace plato::functional
+{
+std::unique_ptr<filter::library::FilterInterface> plato_create_filter(const filter::library::FilterParameters& aInput)
+{
+    return std::make_unique<filter::extension::HelmholtzFilterInterface>(aInput);
+}
+}  // namespace plato::functional
