@@ -4,8 +4,9 @@
 #include <string>
 #include <string_view>
 
+#include <core/MeshProxy.hpp>
+
 #include "FunctionalInterfaceUtilities.hpp"
-#include "MeshProxy.hpp"
 #include "PlatoAbstractProblem.hpp"
 #include "Solutions.hpp"
 #include "alg/ParseInput.hpp"

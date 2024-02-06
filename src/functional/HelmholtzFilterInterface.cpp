@@ -2,9 +2,10 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "DynamicVector.hpp"
+#include <core/MeshProxy.hpp>
+#include <linear_algebra/DynamicVector.hpp>
+
 #include "FunctionalInterfaceUtilities.hpp"
-#include "MeshProxy.hpp"
 #include "PlatoAbstractProblem.hpp"
 #include "Solutions.hpp"
 

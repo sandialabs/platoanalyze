@@ -4,8 +4,9 @@
 
 #include <Kokkos_Core.hpp>
 
+#include <core/MeshProxy.hpp>
+
 #include "FunctionalInterfaceUtilities.hpp"
-#include "MeshProxy.hpp"
 #include "PlatoAbstractProblem.hpp"
 #include "PlatoProblemFactory.hpp"
 #include "Solutions.hpp"

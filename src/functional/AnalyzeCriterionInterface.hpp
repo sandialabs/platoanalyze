@@ -1,7 +1,8 @@
 #ifndef PLATO_FUNCTIONAL_ANALYZECRITERIONINTERFACE_H
 #define PLATO_FUNCTIONAL_ANALYZECRITERIONINTERFACE_H
 
-#include "CriterionInterface.hpp"
+#include <criteria/CriterionInterface.hpp>
+
 #include "FunctionalInterface.hpp"
 
 namespace plato::functional::criteria::extension

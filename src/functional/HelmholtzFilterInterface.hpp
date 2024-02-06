@@ -1,7 +1,8 @@
 #ifndef PLATO_FUNCTIONAL_HELMHOLTZFILTERINTERFACE_H
 #define PLATO_FUNCTIONAL_HELMHOLTZFILTERINTERFACE_H
 
-#include "FilterInterface.hpp"
+#include <filter/FilterInterface.hpp>
+
 #include "FunctionalInterface.hpp"
 
 namespace plato::functional::filter::extension

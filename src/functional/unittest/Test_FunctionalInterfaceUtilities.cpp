@@ -2,8 +2,9 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <numeric>
 
+#include <filter/FilterInterface.hpp>
+
 #include "BLAS1.hpp"
-#include "FilterInterface.hpp"
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoTestHelpers.hpp"

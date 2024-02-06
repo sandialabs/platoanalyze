@@ -3,9 +3,10 @@
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
 
+#include <filter/FilterInterface.hpp>
+#include <core/MeshProxy.hpp>
+
 #include "CrsMatrixUtils.hpp"
-#include "FilterInterface.hpp"
-#include "MeshProxy.hpp"
 #include "alg/ErrorHandling.hpp"
 
 namespace plato::functional
