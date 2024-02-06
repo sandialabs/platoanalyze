@@ -31,7 +31,7 @@ class FunctionalInterface
 
     /// @brief Solves the forward problem specified by the ParameterList passed on construction,
     ///  and with an updated mesh @a aMeshProxy.
-    auto solveProblem(const MeshProxy& aMeshProxy) -> std::pair<Plato::Solutions, Plato::ScalarVector>;
+    auto solveProblem(const core::MeshProxy& aMeshProxy) -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
     Plato::AbstractProblem& problem();
     Teuchos::ParameterList& parameterList();

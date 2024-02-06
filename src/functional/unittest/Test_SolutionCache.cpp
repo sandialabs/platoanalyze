@@ -15,7 +15,7 @@ TEUCHOS_UNIT_TEST(TestSolutionCache, ComputeOnlyWhenDesignChanges)
 
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", 1);
 
-    auto tSolutionCache = pf::SolutionCache(
+    auto tSolutionCache = SolutionCache(
         [tTag, &tCallCount](const Plato::ScalarVector& aArg)
         {
             Plato::Solutions tSolution;
