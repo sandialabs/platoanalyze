@@ -13,31 +13,30 @@ namespace Teuchos
 {
 class ParameterList;
 }
-
-namespace Plato::Functional
-{
-struct MeshProxy;
-}  // namespace Plato::Functional
-
-namespace plato::functional::filter::library
-{
-struct FilterParameters;
-}  // namespace plato::functional::filter::library
-
 namespace plato::functional
 {
+
+namespace core
+{
+struct MeshProxy;
+}  // namespace core
+
+namespace filter::library
+{
+struct FilterParameters;
+}  // namespace filter::library
+
 [[nodiscard]] Plato::Comm::Machine create_machine();
 
 /// @brief Generates an input ParameterList for running the Helmholtz filter.
 [[nodiscard]] Teuchos::ParameterList helmholtz_filter_parameter_list(
-    const plato::functional::filter::library::FilterParameters& aFilterParameters, const std::string_view aMeshName);
+    const filter::library::FilterParameters& aFilterParameters, const std::string_view aMeshName);
 
 /// @brief Replaces the file name of the mesh in @a aParameterList with @a aMeshName.
 void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_view aMeshName);
 
 /// @brief Copies the nodal density field contained in @a aMeshProxy to a ScalarVector
-[[nodiscard]] Plato::ScalarVector create_control(const Plato::Functional::MeshProxy& aMeshProxy,
-                                                 const Plato::Mesh& aMesh);
+[[nodiscard]] Plato::ScalarVector create_control(const core::MeshProxy& aMeshProxy, const Plato::Mesh& aMesh);
 
 [[nodiscard]] std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato::Mesh& aMesh);
 

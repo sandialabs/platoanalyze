@@ -12,7 +12,7 @@
 #include "alg/ErrorHandling.hpp"
 #include "alg/ParallelComm.hpp"
 
-namespace Plato::Functional
+namespace plato::functional
 {
 namespace
 {
@@ -46,7 +46,8 @@ void start_up()
 }
 
 template <typename T>
-[[nodiscard]] bool should_update_mesh_dependent_object(const MeshProxy& aMeshProxy, const std::shared_ptr<T>& aObject)
+[[nodiscard]] bool should_update_mesh_dependent_object(const core::MeshProxy& aMeshProxy,
+                                                       const std::shared_ptr<T>& aObject)
 {
     return !aObject || aMeshProxy.mNodalDensities.empty();
 }
@@ -56,7 +57,7 @@ template <typename T>
 /// The mesh will only be read from disk if @a aMesh is `nullptr` or @a aMeshProxy does not contain
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
-[[nodiscard]] Plato::Mesh update_mesh(const MeshProxy& aMeshProxy, Plato::Mesh&& aMesh)
+[[nodiscard]] Plato::Mesh update_mesh(const core::MeshProxy& aMeshProxy, Plato::Mesh&& aMesh)
 {
     if (should_update_mesh_dependent_object(aMeshProxy, aMesh))
     {
@@ -74,7 +75,7 @@ template <typename T>
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
 [[nodiscard]] auto update_problem(Plato::Comm::Machine& aMachine,
-                                  const MeshProxy& aMeshProxy,
+                                  const core::MeshProxy& aMeshProxy,
                                   const Plato::Mesh& aMesh,
                                   Teuchos::ParameterList& aParameterList,
                                   std::shared_ptr<Plato::AbstractProblem>&& aProblem)
@@ -101,7 +102,8 @@ FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     start_up();
 }
 
-auto FunctionalInterface::solveProblem(const MeshProxy& aMeshProxy) -> std::pair<Plato::Solutions, Plato::ScalarVector>
+auto FunctionalInterface::solveProblem(const core::MeshProxy& aMeshProxy)
+    -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
     Teuchos::ParameterList tParameterList = mParameterList;
     plato::functional::update_mesh_file_name(tParameterList, aMeshProxy.mFileName.string());
@@ -115,4 +117,4 @@ auto FunctionalInterface::solveProblem(const MeshProxy& aMeshProxy) -> std::pair
 Plato::AbstractProblem& FunctionalInterface::problem() { return *mProblem; }
 
 Teuchos::ParameterList& FunctionalInterface::parameterList() { return mParameterList; }
-}  // namespace Plato::Functional
+}  // namespace plato::functional

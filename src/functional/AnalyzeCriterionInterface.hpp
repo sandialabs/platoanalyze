@@ -10,7 +10,7 @@ namespace plato::functional::criteria::extension
 ///
 /// Given an input file, this will compute the first criterion listed in
 /// the value member function and its gradient in the gradient member.
-class AnalyzeCriterionInterface : public plato::functional::criteria::library::CriterionInterface
+class AnalyzeCriterionInterface : public library::CriterionInterface
 {
    public:
     ///@brief Construct a new Analyze Criterion Interface object
@@ -22,16 +22,16 @@ class AnalyzeCriterionInterface : public plato::functional::criteria::library::C
     ///
     ///@param aMeshProxy
     ///@return double
-    [[nodiscard]] double value(const Plato::Functional::MeshProxy& aMeshProxy) const override;
+    [[nodiscard]] double value(const core::MeshProxy& aMeshProxy) const override;
 
     ///@brief Return the gradient of the criterion evaluated at the control specified by the MeshProxy
     ///
     ///@param aMeshProxy
     ///@return std::vector<double>
-    [[nodiscard]] std::vector<double> gradient(const Plato::Functional::MeshProxy& aMeshProxy) const override;
+    [[nodiscard]] std::vector<double> gradient(const core::MeshProxy& aMeshProxy) const override;
 
    private:
-    mutable Plato::Functional::FunctionalInterface mFunctionalInterface;
+    mutable FunctionalInterface mFunctionalInterface;
 };
 }  // namespace plato::functional::criteria::extension
 

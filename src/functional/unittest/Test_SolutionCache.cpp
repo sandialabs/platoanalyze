@@ -5,10 +5,11 @@
 #include "PlatoTestHelpers.hpp"
 #include "SolutionCache.hpp"
 
+namespace plato::functional::unittest
+{
+
 TEUCHOS_UNIT_TEST(TestSolutionCache, ComputeOnlyWhenDesignChanges)
 {
-    namespace pf = Plato::Functional;
-
     const std::string tTag = "Length";
     unsigned int tCallCount{0};
 
@@ -22,7 +23,7 @@ TEUCHOS_UNIT_TEST(TestSolutionCache, ComputeOnlyWhenDesignChanges)
             return tSolution;
         },
 
-        [&tMesh](const Plato::ScalarVector& aArg) { return plato::functional::hash_current_design(aArg, tMesh); });
+        [&tMesh](const Plato::ScalarVector& aArg) { return hash_current_design(aArg, tMesh); });
 
     TEST_EQUALITY(tCallCount, 0);
     auto tControl = Plato::ScalarVector("test", 10);
@@ -49,3 +50,4 @@ TEUCHOS_UNIT_TEST(TestSolutionCache, ComputeOnlyWhenDesignChanges)
     tSolution = tSolutionCache.compute(tControl);
     TEST_EQUALITY(tCallCount, 3);
 }
+}  // namespace plato::functional::unittest

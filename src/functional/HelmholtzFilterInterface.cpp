@@ -23,17 +23,16 @@ HelmholtzFilterInterface::HelmholtzFilterInterface(const library::FilterParamete
 {
 }
 
-Plato::Functional::MeshProxy HelmholtzFilterInterface::filter(const Plato::Functional::MeshProxy& aMeshProxy) const
+core::MeshProxy HelmholtzFilterInterface::filter(const core::MeshProxy& aMeshProxy) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 
     Plato::ScalarVector tFilteredControl = filtered_control(tSolution);
-    return Plato::Functional::MeshProxy{aMeshProxy.mFileName, to_std_vector(tFilteredControl)};
+    return core::MeshProxy{aMeshProxy.mFileName, to_std_vector(tFilteredControl)};
 }
 
 plato::functional::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
-    const Plato::Functional::MeshProxy& aMeshProxy,
-    const plato::functional::linear_algebra::DynamicVector<double>& aV) const
+    const core::MeshProxy& aMeshProxy, const plato::functional::linear_algebra::DynamicVector<double>& aV) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 

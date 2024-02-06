@@ -48,7 +48,7 @@ AnalyzeCriterionInterface::AnalyzeCriterionInterface(const std::vector<std::stri
 {
 }
 
-double AnalyzeCriterionInterface::value(const Plato::Functional::MeshProxy& aMeshProxy) const
+double AnalyzeCriterionInterface::value(const core::MeshProxy& aMeshProxy) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 
@@ -58,7 +58,7 @@ double AnalyzeCriterionInterface::value(const Plato::Functional::MeshProxy& aMes
     return tResult;
 }
 
-std::vector<double> AnalyzeCriterionInterface::gradient(const Plato::Functional::MeshProxy& aMeshProxy) const
+std::vector<double> AnalyzeCriterionInterface::gradient(const core::MeshProxy& aMeshProxy) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 
