@@ -17,9 +17,9 @@ class HelmholtzFilterInterface : public library::FilterInterface
     [[nodiscard]] Plato::Functional::MeshProxy filter(const Plato::Functional::MeshProxy& aMeshProxy) const override;
 
     ///@brief Evaluate the jacobian times a direction vector.
-    [[nodiscard]] Plato::Functional::Core::DynamicVector<double> jacobianTimesVector(
+    [[nodiscard]] plato::functional::linear_algebra::DynamicVector<double> jacobianTimesVector(
         const Plato::Functional::MeshProxy& aMeshProxy,
-        const Plato::Functional::Core::DynamicVector<double>& aV) const override;
+        const plato::functional::linear_algebra::DynamicVector<double>& aV) const override;
 
    private:
     mutable Plato::Functional::FunctionalInterface mFunctionalInterface;

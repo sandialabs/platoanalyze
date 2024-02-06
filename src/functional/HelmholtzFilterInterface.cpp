@@ -31,15 +31,16 @@ Plato::Functional::MeshProxy HelmholtzFilterInterface::filter(const Plato::Funct
     return Plato::Functional::MeshProxy{aMeshProxy.mFileName, to_std_vector(tFilteredControl)};
 }
 
-Plato::Functional::Core::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
-    const Plato::Functional::MeshProxy& aMeshProxy, const Plato::Functional::Core::DynamicVector<double>& aV) const
+plato::functional::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
+    const Plato::Functional::MeshProxy& aMeshProxy,
+    const plato::functional::linear_algebra::DynamicVector<double>& aV) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
 
     const Plato::ScalarVector tVAsScalarVector = to_scalar_vector(aV.stdVector());
     const Plato::ScalarVector tGradient =
         mFunctionalInterface.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
-    return Plato::Functional::Core::DynamicVector<double>(to_std_vector(tGradient));
+    return plato::functional::linear_algebra::DynamicVector<double>(to_std_vector(tGradient));
 }
 
 }  // namespace plato::functional::filter::extension
