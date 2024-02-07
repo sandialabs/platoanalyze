@@ -13,24 +13,24 @@ namespace Teuchos
 {
 class ParameterList;
 }
-namespace plato::functional
-{
 
-namespace core
+namespace plato::core
 {
 struct MeshProxy;
-}  // namespace core
+}  // namespace plato::core
 
-namespace filter::library
+namespace plato::filter::library
 {
 struct FilterParameters;
-}  // namespace filter::library
+}  // namespace plato::filter::library
 
+namespace plato::functional
+{
 [[nodiscard]] Plato::Comm::Machine create_machine();
 
 /// @brief Generates an input ParameterList for running the Helmholtz filter.
 [[nodiscard]] Teuchos::ParameterList helmholtz_filter_parameter_list(
-    const filter::library::FilterParameters& aFilterParameters, const std::string_view aMeshName);
+    const plato::filter::library::FilterParameters& aFilterParameters, const std::string_view aMeshName);
 
 /// @brief Replaces the file name of the mesh in @a aParameterList with @a aMeshName.
 void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_view aMeshName);

@@ -1,17 +1,16 @@
 #include "AnalyzeCriterionInterface.hpp"
 
 #include <array>
+#include <plato/core/MeshProxy.hpp>
 #include <string>
 #include <string_view>
-
-#include <plato/core/MeshProxy.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
 #include "Solutions.hpp"
 #include "alg/ParseInput.hpp"
 
-namespace plato::functional::criteria::extension
+namespace plato::functional
 {
 namespace
 {
@@ -71,13 +70,13 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const core::MeshProxy& a
 
     return plato::functional::to_std_vector(tGradient);
 }
-}  // namespace plato::functional::criteria::extension
+}  // namespace plato::functional
 
-namespace plato::functional
+namespace plato
 {
 std::unique_ptr<criteria::library::CriterionInterface> plato_create_criterion(
     const std::vector<std::string>& aFileNames)
 {
-    return std::make_unique<criteria::extension::AnalyzeCriterionInterface>(aFileNames);
+    return std::make_unique<plato::functional::AnalyzeCriterionInterface>(aFileNames);
 }
-}  // namespace plato::functional
+}  // namespace plato

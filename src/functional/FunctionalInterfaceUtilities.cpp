@@ -61,7 +61,7 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, const std::st
     aParameterList.set(std::string{kInputMeshEntry}, std::string{aMeshName});
 }
 
-Plato::ScalarVector create_control(const core::MeshProxy& aMeshProxy, const Plato::Mesh& aMesh)
+Plato::ScalarVector create_control(const plato::core::MeshProxy& aMeshProxy, const Plato::Mesh& aMesh)
 {
     if (aMeshProxy.mNodalDensities.empty())
     {

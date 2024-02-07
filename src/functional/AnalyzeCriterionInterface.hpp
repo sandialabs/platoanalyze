@@ -5,13 +5,13 @@
 
 #include "FunctionalInterface.hpp"
 
-namespace plato::functional::criteria::extension
+namespace plato::functional
 {
 /// @brief Main criterion interface to PlatoFunctional.
 ///
 /// Given an input file, this will compute the first criterion listed in
 /// the value member function and its gradient in the gradient member.
-class AnalyzeCriterionInterface : public library::CriterionInterface
+class AnalyzeCriterionInterface : public plato::criteria::library::CriterionInterface
 {
    public:
     ///@brief Construct a new Analyze Criterion Interface object
@@ -34,6 +34,6 @@ class AnalyzeCriterionInterface : public library::CriterionInterface
    private:
     mutable FunctionalInterface mFunctionalInterface;
 };
-}  // namespace plato::functional::criteria::extension
+}  // namespace plato::functional
 
 #endif

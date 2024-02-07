@@ -15,13 +15,13 @@ class AbstractProblem;
 struct Solutions;
 };  // namespace Plato
 
-namespace plato::functional
-{
-namespace core
+namespace plato::core
 {
 struct MeshProxy;
 }
 
+namespace plato::functional
+{
 /// @brief The purpose of this class is to provide common functionality to
 /// plato::functional interface types.
 class FunctionalInterface
