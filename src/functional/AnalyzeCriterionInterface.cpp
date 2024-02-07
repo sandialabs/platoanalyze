@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-#include <core/MeshProxy.hpp>
+#include <plato/core/MeshProxy.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"

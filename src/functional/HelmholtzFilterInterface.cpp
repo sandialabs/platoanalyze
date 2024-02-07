@@ -2,8 +2,8 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include <core/MeshProxy.hpp>
-#include <linear_algebra/DynamicVector.hpp>
+#include <plato/core/MeshProxy.hpp>
+#include <plato/linear_algebra/DynamicVector.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"

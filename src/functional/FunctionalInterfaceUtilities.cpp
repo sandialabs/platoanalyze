@@ -3,8 +3,8 @@
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
 
-#include <filter/FilterInterface.hpp>
-#include <core/MeshProxy.hpp>
+#include <plato/filter/FilterInterface.hpp>
+#include <plato/core/MeshProxy.hpp>
 
 #include "CrsMatrixUtils.hpp"
 #include "alg/ErrorHandling.hpp"

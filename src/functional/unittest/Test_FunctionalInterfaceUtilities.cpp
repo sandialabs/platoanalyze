@@ -2,7 +2,7 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <numeric>
 
-#include <filter/FilterInterface.hpp>
+#include <plato/filter/FilterInterface.hpp>
 
 #include "BLAS1.hpp"
 #include "FunctionalInterfaceUtilities.hpp"
