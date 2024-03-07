@@ -4,7 +4,6 @@
 
 #include "FadTypes.hpp"
 #include "PlatoTypes.hpp"
-#include "CellForcing.hpp"
 #include "ProjectToNode.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
