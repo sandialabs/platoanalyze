@@ -1336,14 +1336,15 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeKinematics)
     auto tSymMicroDistortionTensor_Host = Kokkos::create_mirror_view( tSymMicroDistortionTensors );
     Kokkos::deep_copy( tSymMicroDistortionTensor_Host, tSymMicroDistortionTensors );
        
-    std::vector<std::vector<Plato::Scalar>> tSymMicroDistortionTensor_Gold = { 
-      {1.5e-06, 1.875e-06, 2.25e-06, 6.375e-06, 7.125e-06, 7.875e-06},
-      {1.2e-06,   1.5e-06,  1.8e-06,   5.1e-06,   5.7e-06,   6.3e-06},
-      {1.1e-06, 1.375e-06, 1.65e-06, 4.675e-06, 5.225e-06, 5.775e-06},
-      {1.3e-06, 1.625e-06, 1.95e-06, 5.525e-06, 6.175e-06, 6.825e-06},
-      {1.6e-06,     2e-06,  2.4e-06,   6.8e-06,   7.6e-06,   8.4e-06},
-      {1.7e-06, 2.125e-06, 2.55e-06, 7.225e-06, 8.075e-06, 8.925e-06},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSymMicroDistortionTensor_Gold = { 
+        {1.90249223594997e-06, 2.37811529493746e-06, 2.85373835392495e-06, 8.08559200278735e-06, 9.03683812076233e-06, 9.98808423873732e-06},
+        {1.02111456180002e-06, 1.27639320225002e-06, 1.53167184270003e-06, 4.33973688765008e-06, 4.85029416855009e-06, 5.36085144945010e-06},
+        {1.14472135955000e-06, 1.43090169943750e-06, 1.71708203932500e-06, 4.86506577808749e-06, 5.43742645786249e-06, 6.00978713763749e-06},
+        {8.97507764050041e-07, 1.12188470506255e-06, 1.34626164607506e-06, 3.81440799721267e-06, 4.26316187923769e-06, 4.71191576126271e-06},
+        {1.77888543819999e-06, 2.22360679774998e-06, 2.66832815729998e-06, 7.56026311234994e-06, 8.44970583144994e-06, 9.33914855054993e-06},
+        {1.65527864045001e-06, 2.06909830056251e-06, 2.48291796067501e-06, 7.03493422191253e-06, 7.86257354213754e-06, 8.69021286236254e-06}
+      };
 
     for(int iCell=0; iCell<int(tSymMicroDistortionTensor_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
@@ -1360,14 +1361,15 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeKinematics)
     auto tSkwMicroDistortionTensor_Host = Kokkos::create_mirror_view( tSkwMicroDistortionTensors );
     Kokkos::deep_copy( tSkwMicroDistortionTensor_Host, tSkwMicroDistortionTensors );
 
-    std::vector<std::vector<Plato::Scalar>> tSkwMicroDistortionTensor_Gold = { 
-      {-1.125e-06, -1.125e-06, -1.125e-06},
-      {-9e-07,     -9e-07,     -9e-07},
-      {-8.25e-07,  -8.25e-07,  -8.25e-07},
-      {-9.75e-07,  -9.75e-07,  -9.75e-07},
-      {-1.2e-06,   -1.2e-06,   -1.2e-06},
-      {-1.275e-06, -1.275e-06, -1.275e-06},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSkwMicroDistortionTensor_Gold = { 
+        {-1.42686917696247e-06, -1.42686917696247e-06, -1.42686917696247e-06},
+        {-7.65835921350014e-07, -7.65835921350015e-07, -7.65835921350015e-07},
+        {-8.58541019662499e-07, -8.58541019662499e-07, -8.58541019662499e-07},
+        {-6.73130823037530e-07, -6.73130823037530e-07, -6.73130823037530e-07},
+        {-1.33416407864999e-06, -1.33416407864999e-06, -1.33416407864999e-06},
+        {-1.24145898033751e-06, -1.24145898033751e-06, -1.24145898033751e-06}
+      };
 
     for(int iCell=0; iCell<int(tSkwMicroDistortionTensor_Gold.size()); iCell++){
       for(int iSkw=0; iSkw<tNumSkwTerms; iSkw++){
@@ -1391,7 +1393,7 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
     const int tNumCells = tMesh->NumElements();
     const auto tNumPoints = ElementType::getCubWeights().size();
     TEST_EQUALITY(tNumCells, 6);
-    TEST_EQUALITY(tNumPoints, 1);
+    TEST_EQUALITY(tNumPoints, 4);
 
     constexpr int tNumVoigtTerms = ElementType::mNumVoigtTerms;
     constexpr int tNumSkwTerms = ElementType::mNumSkwTerms;
@@ -1432,14 +1434,16 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
           tSkwDisplacementGradients(iCell,iPoint,iSkw) = tSkwDisplacementGradientVals(iCell*tNumSkwTerms+iSkw);
     });
 
-    std::vector<Plato::Scalar> tKnownSymMicroDistortionTensors = { 
-      1.5e-06, 1.875e-06, 2.25e-06, 6.375e-06, 7.125e-06, 7.875e-06,
-      1.2e-06,   1.5e-06,  1.8e-06,   5.1e-06,   5.7e-06,   6.3e-06,
-      1.1e-06, 1.375e-06, 1.65e-06, 4.675e-06, 5.225e-06, 5.775e-06,
-      1.3e-06, 1.625e-06, 1.95e-06, 5.525e-06, 6.175e-06, 6.825e-06,
-      1.6e-06,     2e-06,  2.4e-06,   6.8e-06,   7.6e-06,   8.4e-06,
-      1.7e-06, 2.125e-06, 2.55e-06, 7.225e-06, 8.075e-06, 8.925e-06,
-    }; // tNumCells x tNumVoigtTerms
+    std::vector<Plato::Scalar>
+      tKnownSymMicroDistortionTensors = { 
+        1.90249223594997e-06, 2.37811529493746e-06, 2.85373835392495e-06, 8.08559200278735e-06, 9.03683812076233e-06, 9.98808423873732e-06,
+        1.02111456180002e-06, 1.27639320225002e-06, 1.53167184270003e-06, 4.33973688765008e-06, 4.85029416855009e-06, 5.36085144945010e-06,
+        1.14472135955000e-06, 1.43090169943750e-06, 1.71708203932500e-06, 4.86506577808749e-06, 5.43742645786249e-06, 6.00978713763749e-06,
+        8.97507764050041e-07, 1.12188470506255e-06, 1.34626164607506e-06, 3.81440799721267e-06, 4.26316187923769e-06, 4.71191576126271e-06,
+        1.77888543819999e-06, 2.22360679774998e-06, 2.66832815729998e-06, 7.56026311234994e-06, 8.44970583144994e-06, 9.33914855054993e-06,
+        1.65527864045001e-06, 2.06909830056251e-06, 2.48291796067501e-06, 7.03493422191253e-06, 7.86257354213754e-06, 8.69021286236254e-06
+      };
+
     auto tSymMicroDistortionTensorVals = Plato::TestHelpers::create_device_view(tKnownSymMicroDistortionTensors);
     Plato::ScalarArray3DT<Plato::Scalar> tSymMicroDistortionTensors("", tNumCells, tNumPoints, tNumVoigtTerms);
     Kokkos::parallel_for("populate", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
@@ -1449,14 +1453,16 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
           tSymMicroDistortionTensors(iCell,iPoint,iVoigt) = tSymMicroDistortionTensorVals(iCell*tNumVoigtTerms+iVoigt);
     });
 
-    std::vector<Plato::Scalar> tKnownSkwMicroDistortionTensors = { 
-      -1.125e-06, -1.125e-06, -1.125e-06,
-      -9e-07,     -9e-07,     -9e-07,
-      -8.25e-07,  -8.25e-07,  -8.25e-07,
-      -9.75e-07,  -9.75e-07,  -9.75e-07,
-      -1.2e-06,   -1.2e-06,   -1.2e-06,
-      -1.275e-06, -1.275e-06, -1.275e-06,
-    }; // tNumCells x tNumSkwTerms
+    std::vector<Plato::Scalar>
+      tKnownSkwMicroDistortionTensors = { 
+        -1.42686917696247e-06, -1.42686917696247e-06, -1.42686917696247e-06,
+        -7.65835921350014e-07, -7.65835921350015e-07, -7.65835921350015e-07,
+        -8.58541019662499e-07, -8.58541019662499e-07, -8.58541019662499e-07,
+        -6.73130823037530e-07, -6.73130823037530e-07, -6.73130823037530e-07,
+        -1.33416407864999e-06, -1.33416407864999e-06, -1.33416407864999e-06,
+        -1.24145898033751e-06, -1.24145898033751e-06, -1.24145898033751e-06
+      };
+
     auto tSkwMicroDistortionTensorVals = Plato::TestHelpers::create_device_view(tKnownSkwMicroDistortionTensors);
     Plato::ScalarArray3DT<Plato::Scalar> tSkwMicroDistortionTensors("", tNumCells, tNumPoints, tNumSkwTerms);
     Kokkos::parallel_for("populate", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
@@ -1486,21 +1492,22 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
     auto tSymCauchyStress_Host = Kokkos::create_mirror_view( tSymCauchyStresses );
     Kokkos::deep_copy( tSymCauchyStress_Host, tSymCauchyStresses );
 
-    std::vector<std::vector<Plato::Scalar>> tSymCauchyStress_Gold = { 
-      {-0.0003664195, -0.000784252, -0.0014249285, -3.996675e-05, -3.787425e-05, -4.917375e-05},
-      { -0.000167986, -0.000502252,  -0.001059362,   -2.9295e-05,   -2.5947e-05,   -3.5991e-05},
-      {-0.0001018415, -0.000408252, -0.0009375065, -2.573775e-05, -2.197125e-05, -3.159675e-05},
-      {-0.0002341305, -0.000596252, -0.0011812175, -3.285225e-05, -2.992275e-05, -4.038525e-05},
-      { -0.000432564, -0.000878252,  -0.001546784,   -4.3524e-05,    -4.185e-05,   -5.3568e-05},
-      {-0.0004987085, -0.000972252, -0.0016686395, -4.708125e-05, -4.582575e-05, -5.796225e-05},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSymCauchyStress_Gold = { 
+        {-0.000632645977007925, -0.00116259470179297,  -0.00191538742657801,  -5.42844050633301e-05, -5.38763350707807e-05, -6.68602650782313e-05},
+        {-4.96631213298136e-05, -0.000334099688092018, -0.000841380254854222, -2.29315977496312e-05, -1.88349621907643e-05, -2.81303266318973e-05},
+        {-0.000131422219667548, -0.000450290077976998, -0.000992001936286448, -2.73286005625923e-05, -2.37492594523090e-05, -3.35619183420258e-05},
+        { 3.20959770079209e-05, -0.000217909298207038, -0.000690758573421997, -1.85345949366701e-05, -1.39206649292195e-05, -2.26987349217689e-05},
+        {-0.000550886878670190, -0.00104640431190799,  -0.00176476574514578,  -4.98874022503690e-05, -4.89620378092360e-05, -6.14286733681029e-05},
+        {-0.000469127780332455, -0.000930213922023007, -0.00161414406371356,  -4.54903994374079e-05, -4.40477405476912e-05, -5.59970816579745e-05}
+      };
 
     for(int iCell=0; iCell<int(tSymCauchyStress_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
         if(tSymCauchyStress_Gold[iCell][iVoigt] == 0.0){
           TEST_ASSERT(fabs(tSymCauchyStress_Host(iCell,iPoint,iVoigt)) < 1e-12);
         } else {
-          TEST_FLOATING_EQUALITY(tSymCauchyStress_Host(iCell,iPoint,iVoigt), tSymCauchyStress_Gold[iCell][iVoigt], 1e-13);
+          TEST_FLOATING_EQUALITY(tSymCauchyStress_Host(iCell,iPoint,iVoigt), tSymCauchyStress_Gold[iCell][iVoigt], 1e-12);
         }
       }
     }
@@ -1510,21 +1517,22 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
     auto tSkwCauchyStress_Host = Kokkos::create_mirror_view( tSkwCauchyStresses );
     Kokkos::deep_copy( tSkwCauchyStress_Host, tSkwCauchyStresses );
 
-    std::vector<std::vector<Plato::Scalar>> tSkwCauchyStress_Gold = { 
-      {0, 0, 0, 5.85000000000001e-11, -1.935e-10, -1.35000000000001e-11},
-      {0, 0, 0,              1.8e-11,  -2.34e-10, -5.40000000000001e-11},
-      {0, 0, 0, 4.50000000000003e-12, -2.475e-10,             -6.75e-11},
-      {0, 0, 0, 3.15000000000002e-11, -2.205e-10,             -4.05e-11},
-      {0, 0, 0, 7.20000000000001e-11,   -1.8e-10,                     0},
-      {0, 0, 0,             8.55e-11, -1.665e-10,  1.35000000000001e-11},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSkwCauchyStress_Gold = { 
+        {0, 0, 0,  1.12836451853245e-10, -1.39163548146755e-10,  4.08364518532452e-11},
+        {0, 0, 0, -6.14953415699743e-12, -2.58149534156997e-10, -7.81495341569974e-11},
+        {0, 0, 0,  1.05373835392498e-11, -2.41462616460750e-10, -6.14626164607503e-11},
+        {0, 0, 0, -2.28364518532444e-11, -2.74836451853245e-10, -9.48364518532445e-11},
+        {0, 0, 0,  9.61495341569981e-11, -1.55850465843002e-10,  2.41495341569981e-11},
+        {0, 0, 0,  7.94626164607511e-11, -1.72537383539249e-10,  7.46261646075093e-12}
+      };
 
     for(int iCell=0; iCell<int(tSkwCauchyStress_Gold.size()); iCell++){
       for(int iSkw=0; iSkw<tNumVoigtTerms; iSkw++){
         if(tSkwCauchyStress_Gold[iCell][iSkw] == 0.0){
           TEST_ASSERT(fabs(tSkwCauchyStress_Host(iCell,iPoint,iSkw)) < 1e-14);
         } else {
-          TEST_FLOATING_EQUALITY(tSkwCauchyStress_Host(iCell,iPoint,iSkw), tSkwCauchyStress_Gold[iCell][iSkw], 1e-13);
+          TEST_FLOATING_EQUALITY(tSkwCauchyStress_Host(iCell,iPoint,iSkw), tSkwCauchyStress_Gold[iCell][iSkw], 1e-12);
         }
       }
     }
@@ -1534,14 +1542,16 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearElasticKi
     auto tSymMicroStress_Host = Kokkos::create_mirror_view( tSymMicroStresses );
     Kokkos::deep_copy( tSymMicroStress_Host, tSymMicroStresses );
 
-    std::vector<std::vector<Plato::Scalar>> tSymMicroStress_Gold = { 
-      {0.00178317375, 0.00197495625, 0.00216673875,  0.00115566,  0.00129162,  0.00142758},
-      {  0.001426539,   0.001579965,   0.001733391, 0.000924528, 0.001033296, 0.001142064},
-      {0.00130766075, 0.00144830125, 0.00158894175, 0.000847484, 0.000947188, 0.001046892},
-      {0.00154541725, 0.00171162875, 0.00187784025, 0.001001572, 0.001119404, 0.001237236},
-      {  0.001902052,    0.00210662,   0.002311188, 0.001232704, 0.001377728, 0.001522752},
-      {0.00202093025, 0.00223828375, 0.00245563725, 0.001309748, 0.001463836, 0.001617924},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSymMicroStress_Gold = { 
+        {0.00226164947648319, 0.00250489262131057, 0.00274813576613796, 0.00146575611826529,  0.00163819801453180,  0.00181063991079830},
+        {0.00121388312156303, 0.00134443772386197, 0.00147499232616091, 0.000786707502993207, 0.000879261326874760, 0.000971815150756314},
+        {0.00136082471960925, 0.00150718306903451, 0.00165354141845978, 0.000881939124251701, 0.000985696668281312, 0.00108945421231092},
+        {0.00106694152351682, 0.00118169237868944, 0.00129644323386205, 0.000691475881734713, 0.000772825985468209, 0.000854176089201704},
+        {0.00211470787843698, 0.00234214727613803, 0.00256958667383909, 0.00137052449700680,  0.00153176267312524,  0.00169300084924369},
+        {0.00196776628039076, 0.00217940193096550, 0.00239103758154023, 0.00127529287574830,  0.00142532733171869,  0.00157536178768908}
+      };
+    
 
     for(int iCell=0; iCell<int(tSymMicroStress_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
@@ -1565,8 +1575,13 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
 
     const int tNumCells = tMesh->NumElements();
     const auto tNumPoints = ElementType::getCubWeights().size();
+
+    if (tNumPoints != 1 && tNumPoints != 4) {
+      throw std::logic_error("This test only works for 1-point or 4-point quadrature.");
+    }
+
     TEST_EQUALITY(tNumCells, 6);
-    TEST_EQUALITY(tNumPoints, 1);
+    TEST_EQUALITY(tNumPoints, 4);
 
     constexpr int tNumVoigtTerms = ElementType::mNumVoigtTerms;
     constexpr int tNumSkwTerms = ElementType::mNumSkwTerms;
@@ -1577,6 +1592,9 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
       {0.4, 0.05, 0.3, 0.25}};
     Plato::ScalarMultiVectorT<Plato::Scalar> tControlWS("density", tNumCells, ElementType::mNumNodesPerCell);
     Plato::TestHelpers::setControlWS(tKnownControl, tControlWS);
+
+    std::vector<Plato::Scalar>
+      tControlWeights = {0.723606797749980, 0.861803398874990, 0.160557280900008, 0.0, 0.0, 0.0};
 
     std::vector<Plato::Scalar> tKnownSymDisplacementGradients = { 
       8e-07, 8e-07, 6e-07, 1.6e-06, 2.6e-06, 2e-06, 
@@ -1612,14 +1630,16 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
           tSkwDisplacementGradients(iCell,iPoint,iSkw) = tSkwDisplacementGradientVals(iCell*tNumSkwTerms+iSkw);
     });
 
-    std::vector<Plato::Scalar> tKnownSymMicroDistortionTensors = { 
-      1.5e-06, 1.875e-06, 2.25e-06, 6.375e-06, 7.125e-06, 7.875e-06,
-      1.2e-06,   1.5e-06,  1.8e-06,   5.1e-06,   5.7e-06,   6.3e-06,
-      1.1e-06, 1.375e-06, 1.65e-06, 4.675e-06, 5.225e-06, 5.775e-06,
-      1.3e-06, 1.625e-06, 1.95e-06, 5.525e-06, 6.175e-06, 6.825e-06,
-      1.6e-06,     2e-06,  2.4e-06,   6.8e-06,   7.6e-06,   8.4e-06,
-      1.7e-06, 2.125e-06, 2.55e-06, 7.225e-06, 8.075e-06, 8.925e-06,
-    }; // tNumCells x tNumVoigtTerms
+    std::vector<Plato::Scalar>
+      tKnownSymMicroDistortionTensors = { 
+        1.90249223594997e-06, 2.37811529493746e-06, 2.85373835392495e-06, 8.08559200278735e-06, 9.03683812076233e-06, 9.98808423873732e-06,
+        1.02111456180002e-06, 1.27639320225002e-06, 1.53167184270003e-06, 4.33973688765008e-06, 4.85029416855009e-06, 5.36085144945010e-06,
+        1.14472135955000e-06, 1.43090169943750e-06, 1.71708203932500e-06, 4.86506577808749e-06, 5.43742645786249e-06, 6.00978713763749e-06,
+        8.97507764050041e-07, 1.12188470506255e-06, 1.34626164607506e-06, 3.81440799721267e-06, 4.26316187923769e-06, 4.71191576126271e-06,
+        1.77888543819999e-06, 2.22360679774998e-06, 2.66832815729998e-06, 7.56026311234994e-06, 8.44970583144994e-06, 9.33914855054993e-06,
+        1.65527864045001e-06, 2.06909830056251e-06, 2.48291796067501e-06, 7.03493422191253e-06, 7.86257354213754e-06, 8.69021286236254e-06
+      };
+
     auto tSymMicroDistortionTensorVals = Plato::TestHelpers::create_device_view(tKnownSymMicroDistortionTensors);
     Plato::ScalarArray3DT<Plato::Scalar> tSymMicroDistortionTensors("", tNumCells, tNumPoints, tNumVoigtTerms);
     Kokkos::parallel_for("populate", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
@@ -1629,14 +1649,16 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
           tSymMicroDistortionTensors(iCell,iPoint,iVoigt) = tSymMicroDistortionTensorVals(iCell*tNumVoigtTerms+iVoigt);
     });
 
-    std::vector<Plato::Scalar> tKnownSkwMicroDistortionTensors = { 
-      -1.125e-06, -1.125e-06, -1.125e-06,
-      -9e-07,     -9e-07,     -9e-07,
-      -8.25e-07,  -8.25e-07,  -8.25e-07,
-      -9.75e-07,  -9.75e-07,  -9.75e-07,
-      -1.2e-06,   -1.2e-06,   -1.2e-06,
-      -1.275e-06, -1.275e-06, -1.275e-06,
-    }; // tNumCells x tNumSkwTerms
+    std::vector<Plato::Scalar>
+      tKnownSkwMicroDistortionTensors = { 
+        -1.42686917696247e-06, -1.42686917696247e-06, -1.42686917696247e-06,
+        -7.65835921350014e-07, -7.65835921350015e-07, -7.65835921350015e-07,
+        -8.58541019662499e-07, -8.58541019662499e-07, -8.58541019662499e-07,
+        -6.73130823037530e-07, -6.73130823037530e-07, -6.73130823037530e-07,
+        -1.33416407864999e-06, -1.33416407864999e-06, -1.33416407864999e-06,
+        -1.24145898033751e-06, -1.24145898033751e-06, -1.24145898033751e-06
+      };
+
     auto tSkwMicroDistortionTensorVals = Plato::TestHelpers::create_device_view(tKnownSkwMicroDistortionTensors);
     Plato::ScalarArray3DT<Plato::Scalar> tSkwMicroDistortionTensors("", tNumCells, tNumPoints, tNumSkwTerms);
     Kokkos::parallel_for("populate", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
@@ -1666,14 +1688,22 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
     auto tSymCauchyStress_Host = Kokkos::create_mirror_view( tSymCauchyStresses );
     Kokkos::deep_copy( tSymCauchyStress_Host, tSymCauchyStresses );
 
-    std::vector<std::vector<Plato::Scalar>> tSymCauchyStress_Gold = { 
-      {-0.0003664195* 1.5, -0.000784252* 1.5, -0.0014249285* 1.5, -3.996675e-05* 1.5, -3.787425e-05* 1.5, -4.917375e-05* 1.5},
-      { -0.000167986*1.75, -0.000502252*1.75,  -0.001059362*1.75,   -2.9295e-05*1.75,   -2.5947e-05*1.75,   -3.5991e-05*1.75},
-      {-0.0001018415*1.25, -0.000408252*1.25, -0.0009375065*1.25, -2.573775e-05*1.25, -2.197125e-05*1.25, -3.159675e-05*1.25},
-      {-0.0002341305* 1.0, -0.000596252* 1.0, -0.0011812175* 1.0, -3.285225e-05* 1.0, -2.992275e-05* 1.0, -4.038525e-05* 1.0},
-      { -0.000432564* 1.0, -0.000878252* 1.0,  -0.001546784* 1.0,   -4.3524e-05* 1.0,    -4.185e-05* 1.0,   -5.3568e-05* 1.0},
-      {-0.0004987085* 1.0, -0.000972252* 1.0, -0.0016686395* 1.0, -4.708125e-05* 1.0, -4.582575e-05* 1.0, -5.796225e-05* 1.0},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSymCauchyStress_Gold = { 
+        {-0.000632645977007925, -0.00116259470179297,  -0.00191538742657801,  -5.42844050633301e-05, -5.38763350707807e-05, -6.68602650782313e-05},
+        {-4.96631213298136e-05, -0.000334099688092018, -0.000841380254854222, -2.29315977496312e-05, -1.88349621907643e-05, -2.81303266318973e-05},
+        {-0.000131422219667548, -0.000450290077976998, -0.000992001936286448, -2.73286005625923e-05, -2.37492594523090e-05, -3.35619183420258e-05},
+        { 3.20959770079209e-05, -0.000217909298207038, -0.000690758573421997, -1.85345949366701e-05, -1.39206649292195e-05, -2.26987349217689e-05},
+        {-0.000550886878670190, -0.00104640431190799,  -0.00176476574514578,  -4.98874022503690e-05, -4.89620378092360e-05, -6.14286733681029e-05},
+        {-0.000469127780332455, -0.000930213922023007, -0.00161414406371356,  -4.54903994374079e-05, -4.40477405476912e-05, -5.59970816579745e-05}
+      };
+
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSymCauchyStress_Gold.size(); i++) {
+      for (auto& tVal : tSymCauchyStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
 
     for(int iCell=0; iCell<int(tSymCauchyStress_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
@@ -1690,21 +1720,29 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
     auto tSkwCauchyStress_Host = Kokkos::create_mirror_view( tSkwCauchyStresses );
     Kokkos::deep_copy( tSkwCauchyStress_Host, tSkwCauchyStresses );
 
-    std::vector<std::vector<Plato::Scalar>> tSkwCauchyStress_Gold = { 
-      {0, 0, 0, 5.85000000000001e-11* 1.5, -1.935e-10* 1.5, -1.35000000000001e-11* 1.5},
-      {0, 0, 0,              1.8e-11*1.75,  -2.34e-10*1.75, -5.40000000000001e-11*1.75},
-      {0, 0, 0, 4.50000000000003e-12*1.25, -2.475e-10*1.25,             -6.75e-11*1.25},
-      {0, 0, 0, 3.15000000000002e-11* 1.0, -2.205e-10* 1.0,             -4.05e-11* 1.0},
-      {0, 0, 0, 7.20000000000001e-11* 1.0,   -1.8e-10* 1.0,                     0* 1.0},
-      {0, 0, 0,             8.55e-11* 1.0, -1.665e-10* 1.0,  1.35000000000001e-11* 1.0},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSkwCauchyStress_Gold = { 
+        {0, 0, 0,  1.12836451853245e-10, -1.39163548146755e-10,  4.08364518532452e-11},
+        {0, 0, 0, -6.14953415699743e-12, -2.58149534156997e-10, -7.81495341569974e-11},
+        {0, 0, 0,  1.05373835392498e-11, -2.41462616460750e-10, -6.14626164607503e-11},
+        {0, 0, 0, -2.28364518532444e-11, -2.74836451853245e-10, -9.48364518532445e-11},
+        {0, 0, 0,  9.61495341569981e-11, -1.55850465843002e-10,  2.41495341569981e-11},
+        {0, 0, 0,  7.94626164607511e-11, -1.72537383539249e-10,  7.46261646075093e-12}
+      };
+
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSkwCauchyStress_Gold.size(); i++) {
+      for (auto& tVal : tSkwCauchyStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
 
     for(int iCell=0; iCell<int(tSkwCauchyStress_Gold.size()); iCell++){
       for(int iSkw=0; iSkw<tNumVoigtTerms; iSkw++){
         if(tSkwCauchyStress_Gold[iCell][iSkw] == 0.0){
           TEST_ASSERT(fabs(tSkwCauchyStress_Host(iCell,iPoint,iSkw)) < 1e-14);
         } else {
-          TEST_FLOATING_EQUALITY(tSkwCauchyStress_Host(iCell,iPoint,iSkw), tSkwCauchyStress_Gold[iCell][iSkw], 1e-13);
+          TEST_FLOATING_EQUALITY(tSkwCauchyStress_Host(iCell,iPoint,iSkw), tSkwCauchyStress_Gold[iCell][iSkw], 1e-12);
         }
       }
     }
@@ -1714,14 +1752,22 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionElast
     auto tSymMicroStress_Host = Kokkos::create_mirror_view( tSymMicroStresses );
     Kokkos::deep_copy( tSymMicroStress_Host, tSymMicroStresses );
 
-    std::vector<std::vector<Plato::Scalar>> tSymMicroStress_Gold = { 
-      {0.00178317375* 1.5, 0.00197495625* 1.5, 0.00216673875* 1.5,  0.00115566* 1.5,  0.00129162* 1.5,  0.00142758* 1.5},
-      {  0.001426539*1.75,   0.001579965*1.75,   0.001733391*1.75, 0.000924528*1.75, 0.001033296*1.75, 0.001142064*1.75},
-      {0.00130766075*1.25, 0.00144830125*1.25, 0.00158894175*1.25, 0.000847484*1.25, 0.000947188*1.25, 0.001046892*1.25},
-      {0.00154541725* 1.0, 0.00171162875* 1.0, 0.00187784025* 1.0, 0.001001572* 1.0, 0.001119404* 1.0, 0.001237236* 1.0},
-      {  0.001902052* 1.0,    0.00210662* 1.0,   0.002311188* 1.0, 0.001232704* 1.0, 0.001377728* 1.0, 0.001522752* 1.0},
-      {0.00202093025* 1.0, 0.00223828375* 1.0, 0.00245563725* 1.0, 0.001309748* 1.0, 0.001463836* 1.0, 0.001617924* 1.0},
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tSymMicroStress_Gold = { 
+        {0.00226164947648319, 0.00250489262131057, 0.00274813576613796, 0.00146575611826529,  0.00163819801453180,  0.00181063991079830},
+        {0.00121388312156303, 0.00134443772386197, 0.00147499232616091, 0.000786707502993207, 0.000879261326874760, 0.000971815150756314},
+        {0.00136082471960925, 0.00150718306903451, 0.00165354141845978, 0.000881939124251701, 0.000985696668281312, 0.00108945421231092},
+        {0.00106694152351682, 0.00118169237868944, 0.00129644323386205, 0.000691475881734713, 0.000772825985468209, 0.000854176089201704},
+        {0.00211470787843698, 0.00234214727613803, 0.00256958667383909, 0.00137052449700680,  0.00153176267312524,  0.00169300084924369},
+        {0.00196776628039076, 0.00217940193096550, 0.00239103758154023, 0.00127529287574830,  0.00142532733171869,  0.00157536178768908}
+      };
+
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSymMicroStress_Gold.size(); i++) {
+      for (auto& tVal : tSymMicroStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
 
     for(int iCell=0; iCell<int(tSymMicroStress_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
@@ -1746,7 +1792,7 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeLinearInertiaKi
     const int tNumCells = tMesh->NumElements();
     const auto tNumPoints = ElementType::getCubWeights().size();
     TEST_EQUALITY(tNumCells, 6);
-    TEST_EQUALITY(tNumPoints, 1);
+    TEST_EQUALITY(tNumPoints, 4);
 
     constexpr int tNumVoigtTerms = ElementType::mNumVoigtTerms;
     constexpr int tNumSkwTerms = ElementType::mNumSkwTerms;
@@ -1946,7 +1992,7 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionInert
     const int tNumCells = tMesh->NumElements();
     const auto tNumPoints = ElementType::getCubWeights().size();
     TEST_EQUALITY(tNumCells, 6);
-    TEST_EQUALITY(tNumPoints, 1);
+    TEST_EQUALITY(tNumPoints, 4);
 
     constexpr int tNumVoigtTerms = ElementType::mNumVoigtTerms;
     constexpr int tNumSkwTerms = ElementType::mNumSkwTerms;
@@ -1957,6 +2003,9 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionInert
       {0.4, 0.05, 0.3, 0.25}};
     Plato::ScalarMultiVectorT<Plato::Scalar> tControlWS("density", tNumCells, ElementType::mNumNodesPerCell);
     Plato::TestHelpers::setControlWS(tKnownControl, tControlWS);
+
+    std::vector<Plato::Scalar>
+      tControlWeights = {0.861803398874990, 0.455278640450005, 0.160557280900008, 0.0, 0.0, 0.0};
 
     std::vector<Plato::Scalar> tKnownSymGradientMicroInertia = { 
       8e-05, 8e-05, 6e-05, 0.00016, 0.00026, 0.0002,
@@ -2048,13 +2097,20 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionInert
     Kokkos::deep_copy( tSymGradientInertiaStress_Host, tSymGradientInertiaStresses );
 
     std::vector<std::vector<Plato::Scalar>> tSymGradientInertiaStress_Gold = { 
-      {0.000536*1.75, 0.000536*1.75, 0.000512*1.75, 3.2e-05*1.75, 5.2e-05*1.75, 4e-05*1.75},
-      {0.000536* 1.5, 0.000536* 1.5, 0.000512* 1.5, 3.2e-05* 1.5, 5.2e-05* 1.5, 4e-05* 1.5},
-      {0.000536*1.25, 0.000536*1.25, 0.000512*1.25, 3.2e-05*1.25, 5.2e-05*1.25, 4e-05*1.25},
-      {0.000536* 1.0, 0.000536* 1.0, 0.000512* 1.0, 3.2e-05* 1.0, 5.2e-05* 1.0, 4e-05* 1.0},
-      {0.000536* 1.0, 0.000536* 1.0, 0.000512* 1.0, 3.2e-05* 1.0, 5.2e-05* 1.0, 4e-05* 1.0},
-      {0.000536* 1.0, 0.000536* 1.0, 0.000512* 1.0, 3.2e-05* 1.0, 5.2e-05* 1.0, 4e-05* 1.0}
+      {0.000536, 0.000536, 0.000512, 3.2e-05, 5.2e-05, 4e-05},
+      {0.000536, 0.000536, 0.000512, 3.2e-05, 5.2e-05, 4e-05},
+      {0.000536, 0.000536, 0.000512, 3.2e-05, 5.2e-05, 4e-05},
+      {0.000536, 0.000536, 0.000512, 3.2e-05, 5.2e-05, 4e-05},
+      {0.000536, 0.000536, 0.000512, 3.2e-05, 5.2e-05, 4e-05},
+      {0.000536, 0.000536, 0.000512, 3.2e-05, 5.2e-05, 4e-05}
     };
+
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSymGradientInertiaStress_Gold.size(); i++) {
+      for (auto& tVal : tSymGradientInertiaStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
 
     for(int iCell=0; iCell<int(tSymGradientInertiaStress_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
@@ -2072,13 +2128,20 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionInert
     Kokkos::deep_copy( tSkwGradientInertiaStress_Host, tSkwGradientInertiaStresses );
 
     std::vector<std::vector<Plato::Scalar>> tSkwGradientInertiaStress_Gold = { 
-      {0, 0, 0, -8e-09*1.75, -2.2e-08*1.75, -1.2e-08*1.75},
-      {0, 0, 0, -8e-09* 1.5, -2.2e-08* 1.5, -1.2e-08* 1.5},
-      {0, 0, 0, -8e-09*1.25, -2.2e-08*1.25, -1.2e-08*1.25},
-      {0, 0, 0, -8e-09* 1.0, -2.2e-08* 1.0, -1.2e-08* 1.0},
-      {0, 0, 0, -8e-09* 1.0, -2.2e-08* 1.0, -1.2e-08* 1.0},
-      {0, 0, 0, -8e-09* 1.0, -2.2e-08* 1.0, -1.2e-08* 1.0}
+      {0, 0, 0, -8e-09, -2.2e-08, -1.2e-08},
+      {0, 0, 0, -8e-09, -2.2e-08, -1.2e-08},
+      {0, 0, 0, -8e-09, -2.2e-08, -1.2e-08},
+      {0, 0, 0, -8e-09, -2.2e-08, -1.2e-08},
+      {0, 0, 0, -8e-09, -2.2e-08, -1.2e-08},
+      {0, 0, 0, -8e-09, -2.2e-08, -1.2e-08}
     };
+
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSkwGradientInertiaStress_Gold.size(); i++) {
+      for (auto& tVal : tSkwGradientInertiaStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
 
     for(int iCell=0; iCell<int(tSkwGradientInertiaStress_Gold.size()); iCell++){
       for(int iSkw=0; iSkw<tNumVoigtTerms; iSkw++){
@@ -2096,13 +2159,20 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionInert
     Kokkos::deep_copy( tSymFreeInertiaStress_Host, tSymFreeInertiaStresses );
 
     std::vector<std::vector<Plato::Scalar>> tSymFreeInertiaStress_Gold = { 
-      {-0.3225*1.75, -0.15*1.75, 0.0225*1.75, 2.86875*1.75, 3.20625*1.75, 3.54375*1.75},
-      { -0.258* 1.5, -0.12* 1.5,  0.018* 1.5,   2.295* 1.5,   2.565* 1.5,   2.835* 1.5},
-      {-0.2365*1.25, -0.11*1.25, 0.0165*1.25, 2.10375*1.25, 2.35125*1.25, 2.59875*1.25},
-      {-0.2795* 1.0, -0.13* 1.0, 0.0195* 1.0, 2.48625* 1.0, 2.77875* 1.0, 3.07125* 1.0},
-      { -0.344* 1.0, -0.16* 1.0,  0.024* 1.0,    3.06* 1.0,    3.42* 1.0,    3.78* 1.0},
-      {-0.3655* 1.0, -0.17* 1.0, 0.0255* 1.0, 3.25125* 1.0, 3.63375* 1.0, 4.01625* 1.0}
+      {-0.3225, -0.15, 0.0225, 2.86875, 3.20625, 3.54375},
+      { -0.258, -0.12,  0.018,   2.295,   2.565,   2.835},
+      {-0.2365, -0.11, 0.0165, 2.10375, 2.35125, 2.59875},
+      {-0.2795, -0.13, 0.0195, 2.48625, 2.77875, 3.07125},
+      { -0.344, -0.16,  0.024,    3.06,    3.42,    3.78},
+      {-0.3655, -0.17, 0.0255, 3.25125, 3.63375, 4.01625}
     };
+
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSymFreeInertiaStress_Gold.size(); i++) {
+      for (auto& tVal : tSymFreeInertiaStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
 
     for(int iCell=0; iCell<int(tSymFreeInertiaStress_Gold.size()); iCell++){
       for(int iVoigt=0; iVoigt<tNumVoigtTerms; iVoigt++){
@@ -2120,14 +2190,20 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, ComputeExpressionInert
     Kokkos::deep_copy( tSkwFreeInertiaStress_Host, tSkwFreeInertiaStresses );
     
     std::vector<std::vector<Plato::Scalar>> tSkwFreeInertiaStress_Gold = { 
-      {0, 0, 0, -1.125e-08*1.75, -1.125e-08*1.75, -1.125e-08*1.75},
-      {0, 0, 0,     -9e-09* 1.5,     -9e-09* 1.5,     -9e-09* 1.5},
-      {0, 0, 0,  -8.25e-09*1.25,  -8.25e-09*1.25,  -8.25e-09*1.25},
-      {0, 0, 0,  -9.75e-09* 1.0,  -9.75e-09* 1.0,  -9.75e-09* 1.0},
-      {0, 0, 0,   -1.2e-08* 1.0,   -1.2e-08* 1.0,   -1.2e-08* 1.0},
-      {0, 0, 0, -1.275e-08* 1.0, -1.275e-08* 1.0, -1.275e-08* 1.0}
+      {0, 0, 0, -1.125e-08, -1.125e-08, -1.125e-08},
+      {0, 0, 0,     -9e-09,     -9e-09,     -9e-09},
+      {0, 0, 0,  -8.25e-09,  -8.25e-09,  -8.25e-09},
+      {0, 0, 0,  -9.75e-09,  -9.75e-09,  -9.75e-09},
+      {0, 0, 0,   -1.2e-08,   -1.2e-08,   -1.2e-08},
+      {0, 0, 0, -1.275e-08, -1.275e-08, -1.275e-08}
     };
 
+    // add weighting due to expression: E0*(1+Z)
+    for (int i=0; i<tSkwFreeInertiaStress_Gold.size(); i++) {
+      for (auto& tVal : tSkwFreeInertiaStress_Gold[i]) {
+        tVal *= (1.0+tControlWeights[i]);
+      }
+    }
     for(int iCell=0; iCell<int(tSkwFreeInertiaStress_Gold.size()); iCell++){
       for(int iSkw=0; iSkw<tNumVoigtTerms; iSkw++){
         if(tSkwFreeInertiaStress_Gold[iCell][iSkw] == 0.0){
@@ -2696,22 +2772,21 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicElementFunctorTests, InertiaContribution)
     Kokkos::deep_copy( tResidual_Host, tResidual );
 
     // just testing the first 3 elements since there is a large number of values
-    std::vector<std::vector<Plato::Scalar>> tResidual_gold = { 
-     {0.0002835546875, 0.000567109374999999, 0.000850664062499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0002835546875, 0.000567109374999999, 0.000850664062499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0002835546875, 0.000567109374999999, 0.000850664062499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.0002835546875, 0.000567109374999999, 0.000850664062499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-
-     {0.00022684375, 0.000453687499999999, 0.000680531249999999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.00022684375, 0.000453687499999999, 0.000680531249999999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.00022684375, 0.000453687499999999, 0.000680531249999999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.00022684375, 0.000453687499999999, 0.000680531249999999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-
-     {0.000207940104166666, 0.000415880208333333, 0.000623820312499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.000207940104166666, 0.000415880208333333, 0.000623820312499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.000207940104166666, 0.000415880208333333, 0.000623820312499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-      0.000207940104166666, 0.000415880208333333, 0.000623820312499999, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-    };
+    std::vector<std::vector<Plato::Scalar>>
+      tResidual_gold = {
+        {0.226843749999999e-3, 0.453687499999998e-3, 0.680531249999997e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.317581250000001e-3, 0.635162500000002e-3, 0.952743750000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.257089583333334e-3, 0.514179166666669e-3, 0.771268750000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.332704166666668e-3, 0.665408333333336e-3, 0.998112500000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.181474999999999e-3, 0.362949999999998e-3, 0.544424999999997e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.211720833333334e-3, 0.423441666666668e-3, 0.635162500000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.226843750000001e-3, 0.453687500000002e-3, 0.680531250000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.287335416666668e-3, 0.574670833333335e-3, 0.862006250000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+        {0.166352083333333e-3, 0.332704166666665e-3, 0.499056249999998e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.211720833333334e-3, 0.423441666666668e-3, 0.635162500000003e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.181475000000001e-3, 0.362950000000002e-3, 0.544425000000002e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+         0.272212500000001e-3, 0.544425000000002e-3, 0.816637500000002e-3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+      };
 
     for(int iCell=0; iCell<int(tResidual_gold.size()); iCell++){
       for(int iDof=0; iDof<tNumDofsPerCell; iDof++){
@@ -2981,6 +3056,10 @@ TEUCHOS_UNIT_TEST(RelaxedMicromorphicResidualTests, ErrorExplicitNotSpecified)
 
 TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_NoInertia )
 {
+    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
+    const auto tCubWeights = ElementType::getCubWeights();
+    const auto tNumPoints = tCubWeights.size();
+
     auto tAllParams = setup_full_model_parameter_list_no_inertia();
     auto tParams = tAllParams->sublist("Plato Problem");
 
@@ -3028,10 +3107,12 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_NoInertia )
     auto tResidual_Host = Kokkos::create_mirror_view( tResidual );
     Kokkos::deep_copy( tResidual_Host, tResidual );
 
-    std::vector<Plato::Scalar> tNode0Residual_gold = {
-      5.989700987499991e-05, 1.266453644999998e-04, 2.063654026249997e-04, 1.012393593749998e-04, 1.551517968749998e-04, 2.090642343749996e-04,
-      6.491307503124990e-05, 7.172831515624989e-05, 7.979902153124987e-05, 6.491308121874990e-05, 7.172827859374989e-05, 7.979900971874988e-05
-    };
+    std::vector<Plato::Scalar>
+      tNode0Residual_gold = {
+        5.98970098750004e-05, 0.000126645364500000, 0.000206365402625000, 7.11731624999997e-05, 0.000118481437499999, 0.000165789712499999,
+        5.18153740999998e-05, 5.70897079749997e-05, 6.36195080999997e-05, 5.18153758999997e-05, 5.70896670249997e-05, 6.36194918999997e-05,
+      };
+    
     int tNodeOrdinal = 0;
     for(int iDof=0; iDof<tNumDofsPerNode; iDof++){
         int tLocalOrdinal = tNodeOrdinal*tNumDofsPerNode + iDof;
@@ -3045,20 +3126,21 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_NoInertia )
     auto jac_entriesHost = Kokkos::create_mirror_view( jac_entries );
     Kokkos::deep_copy(jac_entriesHost, jac_entries);
 
-    std::vector<Plato::Scalar> gold_jac_entries = {
-     1.683700599999997e+02,                        0,                        0,    2.069749999999997e+01,   -2.515416666666663e+00,   -2.515416666666663e+00,                          0,    1.743787499999997e-01,    1.743787499999997e-01,                        0,    1.743712499999997e-01,    1.743712499999997e-01,
-                         0,    1.683700599999998e+02,                        0,   -2.515416666666663e+00,    2.069749999999997e+01,   -2.515416666666663e+00,      1.743787499999997e-01,                        0,    1.743712499999997e-01,    1.743712499999997e-01,                        0,    1.743787499999997e-01,
-                         0,                        0,    1.683700599999998e+02,   -2.515416666666663e+00,   -2.515416666666663e+00,    2.069749999999997e+01,      1.743712499999997e-01,    1.743712499999997e-01,                        0,    1.743787499999997e-01,    1.743787499999997e-01,                        0,
-     2.069749999999997e+01,   -2.515416666666663e+00,   -2.515416666666663e+00,    1.316820312499998e+01,    4.678906249999991e-01,    4.678906249999991e-01,                          0,                        0,                        0,                        0,                        0,                        0,
-    -2.515416666666663e+00,    2.069749999999997e+01,   -2.515416666666663e+00,    4.678906249999991e-01,    1.316820312499998e+01,    4.678906249999991e-01,                          0,                        0,                        0,                        0,                        0,                        0,
-    -2.515416666666663e+00,   -2.515416666666663e+00,    2.069749999999997e+01,    4.678906249999991e-01,    4.678906249999991e-01,    1.316820312499998e+01,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,    1.743787499999997e-01,    1.743712499999997e-01,                        0,                        0,                        0,      1.481642031249998e+00,                        0,                        0,    1.481639218749998e+00,                        0,                        0,
-     1.743787499999997e-01,                        0,    1.743712499999997e-01,                        0,                        0,                        0,                          0,    1.481642031249998e+00,                        0,                        0,    1.481639218749998e+00,                        0,
-     1.743787499999997e-01,    1.743712499999997e-01,                        0,                        0,                        0,                        0,                          0,                        0,    1.481642031249998e+00,                        0,                        0,    1.481639218749998e+00,
-                         0,    1.743712499999997e-01,    1.743787499999997e-01,                        0,                        0,                        0,      1.481639218749998e+00,                        0,                        0,    1.481642031249998e+00,                        0,                        0,
-     1.743712499999997e-01,                        0,    1.743787499999997e-01,                        0,                        0,                        0,                          0,    1.481639218749998e+00,                        0,                        0,    1.481642031249998e+00,                        0,
-     1.743712499999997e-01,    1.743787499999997e-01,                        0,                        0,                        0,                        0,                          0,                        0,    1.481639218749998e+00,                        0,                        0,    1.481642031249998e+00
-    };
+    std::vector<Plato::Scalar>
+      gold_jac_entries = {
+          168.370060000000,                 0,                 0,  20.6974999999999, -2.51541666666665, -2.51541666666665,                 0, 0.174378749999999, 0.174378749999999,                 0, 0.174371249999999, 0.174371249999999,
+                         0,  168.370060000000,                 0, -2.51541666666665,  20.6974999999999, -2.51541666666665, 0.174378749999999,                 0, 0.174371249999999, 0.174371249999999,                 0, 0.174378749999999,
+                         0,                 0,  168.370060000000, -2.51541666666665, -2.51541666666665,  20.6974999999999, 0.174371249999999, 0.174371249999999,                 0, 0.174378749999999, 0.174378749999999,                 0,
+          20.6974999999999, -2.51541666666665, -2.51541666666665,  21.0691249999998, 0.748624999999995, 0.748624999999995,                 0,                 0,                 0,                 0,                 0,                 0,
+         -2.51541666666665,  20.6974999999999, -2.51541666666665, 0.748624999999995,  21.0691249999998, 0.748624999999995,                 0,                 0,                 0,                 0,                 0,                 0,
+         -2.51541666666665, -2.51541666666665,  20.6974999999999, 0.748624999999995, 0.748624999999995,  21.0691249999998,                 0,                 0,                 0,                 0,                 0,                 0,
+                         0, 0.174378749999999, 0.174371249999999,                 0,                 0,                 0,  2.37062724999998,                 0,                 0,  2.37062274999998,                 0,                 0,
+         0.174378749999999,                 0, 0.174371249999999,                 0,                 0,                 0,                 0,  2.37062724999998,                 0,                 0,  2.37062274999998,                 0,
+         0.174378749999999, 0.174371249999999,                 0,                 0,                 0,                 0,                 0,                 0,  2.37062724999998,                 0,                 0,  2.37062274999998,
+                         0, 0.174371249999999, 0.174378749999999,                 0,                 0,                 0,  2.37062274999998,                 0,                 0,  2.37062724999998,                 0,                 0,
+         0.174371249999999,                 0, 0.174378749999999,                 0,                 0,                 0,                 0,  2.37062274999998,                 0,                 0,  2.37062724999998,                 0,
+         0.174371249999999, 0.174378749999999,                 0,                 0,                 0,                 0,                 0,                 0,  2.37062274999998,                 0,                 0,  2.37062724999998
+      };
 
     int jac_entriesSize = gold_jac_entries.size();
     for(int i=0; i<jac_entriesSize; i++){
@@ -3130,6 +3212,10 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_NoInertia )
 
 TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
 {
+    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
+    const auto tCubWeights = ElementType::getCubWeights();
+    const auto tNumPoints = tCubWeights.size();
+
     auto tAllParams = setup_full_model_parameter_list();
     auto tParams = tAllParams->sublist("Plato Problem");
 
@@ -3177,10 +3263,12 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
     auto tResidual_Host = Kokkos::create_mirror_view( tResidual );
     Kokkos::deep_copy( tResidual_Host, tResidual );
 
-    std::vector<Plato::Scalar> tNode0Residual_gold = {
-      2.914539259874995e-03, 5.941914864499990e-03, 8.974266152624987e-03, -1.736751064062498e-02, -7.969848203124989e-03, 1.427814234374998e-03, 
-      1.554555374656560e-01, 1.737436027057810e-01, 1.920329234121560e-01, 1.554555386905935e-01, 1.737436038879685e-01, 1.920329246190935e-01
+    std::vector<Plato::Scalar>
+      tNode0Residual_gold = {
+        0.00232474550987499, 0.00476232736449998, 0.00720488490262497, -0.0139038268374999, -0.00638151856249997, 0.00114078971250000,
+          0.124364314886599,   0.138994589220474,   0.153626119020599,   0.124364315863399,    0.138994590154524,   0.153626119979399
     };
+
     int tNodeOrdinal = 0;
     for(int iDof=0; iDof<tNumDofsPerNode; iDof++){
         int tLocalOrdinal = tNodeOrdinal*tNumDofsPerNode + iDof;
@@ -3194,20 +3282,21 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
     auto jac_entriesHost = Kokkos::create_mirror_view( jac_entries );
     Kokkos::deep_copy(jac_entriesHost, jac_entries);
 
-    std::vector<Plato::Scalar> gold_jac_entries = {
-     1.683700599999997e+02,                        0,                        0,    2.069749999999997e+01,   -2.515416666666663e+00,   -2.515416666666663e+00,                          0,    1.743787499999997e-01,    1.743787499999997e-01,                        0,    1.743712499999997e-01,    1.743712499999997e-01,
-                         0,    1.683700599999998e+02,                        0,   -2.515416666666663e+00,    2.069749999999997e+01,   -2.515416666666663e+00,      1.743787499999997e-01,                        0,    1.743712499999997e-01,    1.743712499999997e-01,                        0,    1.743787499999997e-01,
-                         0,                        0,    1.683700599999998e+02,   -2.515416666666663e+00,   -2.515416666666663e+00,    2.069749999999997e+01,      1.743712499999997e-01,    1.743712499999997e-01,                        0,    1.743787499999997e-01,    1.743787499999997e-01,                        0,
-     2.069749999999997e+01,   -2.515416666666663e+00,   -2.515416666666663e+00,    1.316820312499998e+01,    4.678906249999991e-01,    4.678906249999991e-01,                          0,                        0,                        0,                        0,                        0,                        0,
-    -2.515416666666663e+00,    2.069749999999997e+01,   -2.515416666666663e+00,    4.678906249999991e-01,    1.316820312499998e+01,    4.678906249999991e-01,                          0,                        0,                        0,                        0,                        0,                        0,
-    -2.515416666666663e+00,   -2.515416666666663e+00,    2.069749999999997e+01,    4.678906249999991e-01,    4.678906249999991e-01,    1.316820312499998e+01,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,    1.743787499999997e-01,    1.743712499999997e-01,                        0,                        0,                        0,      1.481642031249998e+00,                        0,                        0,    1.481639218749998e+00,                        0,                        0,
-     1.743787499999997e-01,                        0,    1.743712499999997e-01,                        0,                        0,                        0,                          0,    1.481642031249998e+00,                        0,                        0,    1.481639218749998e+00,                        0,
-     1.743787499999997e-01,    1.743712499999997e-01,                        0,                        0,                        0,                        0,                          0,                        0,    1.481642031249998e+00,                        0,                        0,    1.481639218749998e+00,
-                         0,    1.743712499999997e-01,    1.743787499999997e-01,                        0,                        0,                        0,      1.481639218749998e+00,                        0,                        0,    1.481642031249998e+00,                        0,                        0,
-     1.743712499999997e-01,                        0,    1.743787499999997e-01,                        0,                        0,                        0,                          0,    1.481639218749998e+00,                        0,                        0,    1.481642031249998e+00,                        0,
-     1.743712499999997e-01,    1.743787499999997e-01,                        0,                        0,                        0,                        0,                          0,                        0,    1.481639218749998e+00,                        0,                        0,    1.481642031249998e+00
-    };
+    std::vector<Plato::Scalar>
+      gold_jac_entries = {
+         168.370060000000,                 0,                 0,  20.6974999999999, -2.51541666666665, -2.51541666666665,                 0, 0.174378749999999, 0.174378749999999,                 0, 0.174371249999999, 0.174371249999999,
+                        0,  168.370060000000,                 0, -2.51541666666665,  20.6974999999999, -2.51541666666665, 0.174378749999999,                 0, 0.174371249999999, 0.174371249999999,                 0, 0.174378749999999,
+                        0,                 0,  168.370060000000, -2.51541666666665, -2.51541666666665,  20.6974999999999, 0.174371249999999, 0.174371249999999,                 0, 0.174378749999999, 0.174378749999999,                 0,
+         20.6974999999999, -2.51541666666665, -2.51541666666665,  21.0691249999998, 0.748624999999995, 0.748624999999995,                 0,                 0,                 0,                 0,                 0,                 0,
+        -2.51541666666665,  20.6974999999999, -2.51541666666665, 0.748624999999995,  21.0691249999998, 0.748624999999995,                 0,                 0,                 0,                 0,                 0,                 0,
+        -2.51541666666665, -2.51541666666665,  20.6974999999999, 0.748624999999995, 0.748624999999995,  21.0691249999998,                 0,                 0,                 0,                 0,                 0,                 0,
+                        0, 0.174378749999999, 0.174371249999999,                 0,                 0,                 0,  2.37062724999998,                 0,                 0,  2.37062274999998,                 0,                 0,
+        0.174378749999999,	               0, 0.174371249999999,                 0,                 0,                 0,                 0,  2.37062724999998,                 0,                 0,  2.37062274999998,                 0,
+        0.174378749999999, 0.174371249999999,                 0,                 0,                 0,                 0,                 0,                 0,  2.37062724999998,                 0,                 0,  2.37062274999998,
+                        0, 0.174371249999999, 0.174378749999999,                 0,                 0,                 0,  2.37062274999998,                 0,                 0,  2.37062724999998,                 0,                 0,
+        0.174371249999999,                 0, 0.174378749999999,                 0,                 0,                 0,                 0,  2.37062274999998,                 0,                 0,  2.37062724999998,                 0,
+        0.174371249999999, 0.174378749999999,                 0,                 0,                 0,                 0,                 0,                 0,  2.37062274999998,                 0,                 0,  2.37062724999998
+      };
 
     int jac_entriesSize = gold_jac_entries.size();
     for(int i=0; i<jac_entriesSize; i++){
@@ -3252,20 +3341,21 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
     auto jacA_entriesHost = Kokkos::create_mirror_view( jacA_entries );
     Kokkos::deep_copy(jacA_entriesHost, jacA_entries);
 
-    std::vector<Plato::Scalar> gold_jacA_entries = {
-     1.194222083333331e+01,                        0,                        0,                        0,                        0,                        0,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,    1.194222083333331e+01,                        0,                        0,                        0,                        0,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,                        0,    1.194222083333331e+01,                        0,                        0,                        0,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,                        0,                        0,    2.187499999999997e+01,   -1.406249999999998e+01,   -1.406249999999998e+01,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,                        0,                        0,   -1.406249999999998e+01,    2.187499999999997e+01,   -1.406249999999998e+01,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,                        0,                        0,   -1.406249999999998e+01,   -1.406249999999998e+01,    2.187499999999997e+01,                          0,                        0,                        0,                        0,                        0,                        0,
-                         0,                        0,                        0,                        0,                        0,                        0,      3.515625078124994e+01,                        0,                        0,    3.515624921874995e+01,                        0,                        0,
-                         0,                        0,                        0,                        0,                        0,                        0,                          0,    3.515625078124994e+01,                        0,                        0,    3.515624921874995e+01,                        0,
-                         0,                        0,                        0,                        0,                        0,                        0,                          0,                        0,    3.515625078124994e+01,                        0,                        0,    3.515624921874995e+01,
-                         0,                        0,                        0,                        0,                        0,                        0,      3.515624921874995e+01,                        0,                        0,    3.515625078124994e+01,                        0,                        0,
-                         0,                        0,                        0,                        0,                        0,                        0,                          0,    3.515624921874995e+01,                        0,                        0,    3.515625078124994e+01,                        0,
-                         0,                        0,                        0,                        0,                        0,                        0,                          0,                        0,    3.515624921874995e+01,                        0,                        0,    3.515625078124994e+01
-    };
+    std::vector<Plato::Scalar>
+      gold_jacA_entries = {
+        18.7475333333332,                0,                0,                 0,                 0,                 0,                0,                0,                0,                0,                0,                0,
+                       0, 18.7475333333332,                0,                 0,                 0,                 0,                0,                0,                0,                0,                0,                0,
+                       0,                0, 18.7475333333332,                 0,                 0,                 0,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0,  34.9999999999998, -22.4999999999998, -22.4999999999998,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0, -22.4999999999998,  34.9999999999998, -22.4999999999998,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0, -22.4999999999998, -22.4999999999998,  34.9999999999998,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0,                 0,                 0,                 0, 56.2500012499996,                0,                0, 56.2499987499996,                0,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0, 56.2500012499996,                0,                0, 56.2499987499996,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0,                0, 56.2500012499996,                0,                0, 56.2499987499996,
+                       0,                0,                0,                 0,                 0,                 0, 56.2499987499996,                0,                0, 56.2500012499996,                0,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0, 56.2499987499996,                0,                0, 56.2500012499996,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0,                0, 56.2499987499996,                0,                0, 56.2500012499996
+      };
 
     int jacA_entriesSize = gold_jacA_entries.size();
     for(int i=0; i<jacA_entriesSize; i++){
@@ -3279,6 +3369,10 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_WithInertia )
 
 TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_Expression_WithInertia_Density0p5 )
 {
+    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
+    const auto tCubWeights = ElementType::getCubWeights();
+    const auto tNumPoints = tCubWeights.size();
+
     auto tAllParams = setup_full_model_expression_parameter_list();
     auto tParams = tAllParams->sublist("Plato Problem");
 
@@ -3326,10 +3420,12 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_Expression_WithInertia_D
     auto tResidual_Host = Kokkos::create_mirror_view( tResidual );
     Kokkos::deep_copy( tResidual_Host, tResidual );
 
-    std::vector<Plato::Scalar> tNode0Residual_gold = {
-      0.0028973245148125, 0.00596390354674999, 0.00903794610393749, -0.0260512659609375, -0.0119547723046875, 0.0021417213515625,
-      0.233183306198484, 0.260615404058672, 0.288049385118234, 0.23318330803589, 0.260615405831953, 0.28804938692864
-    };
+    std::vector<Plato::Scalar>
+      tNode0Residual_gold = {
+        0.00230753076481249, 0.00478431604674998, 0.00726856485393747, -0.0208557402562499, -0.00957227784374996, 0.00171118456874999,
+        0.186546472329899, 0.208491883830712, 0.230439178530899, 0.186546473795099, 0.208491885231787, 0.230439179969099
+      };
+
     int tNodeOrdinal = 0;
     for(int iDof=0; iDof<tNumDofsPerNode; iDof++){
         int tLocalOrdinal = tNodeOrdinal*tNumDofsPerNode + iDof;
@@ -3343,20 +3439,21 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_Expression_WithInertia_D
     auto jac_entriesHost = Kokkos::create_mirror_view( jac_entries );
     Kokkos::deep_copy(jac_entriesHost, jac_entries);
 
-    std::vector<Plato::Scalar> gold_jac_entries = {
-              252.55509,                 0,                 0,          31.04625, -3.77312499999999, -3.77312499999999,              0,    0.261568125,    0.261568125,              0,    0.261556875,    0.261556875, 
-                      0,         252.55509,                 0, -3.77312499999999,          31.04625, -3.77312499999999,    0.261568125,              0,    0.261556875,    0.261556875,              0,    0.261568125,
-                      0,                 0,         252.55509, -3.77312499999999, -3.77312499999999,          31.04625,    0.261556875,    0.261556875,              0,    0.261568125,    0.261568125,              0,
-               31.04625, -3.77312499999999, -3.77312499999999,     19.7523046875, 0.701835937499999, 0.701835937499999,              0,              0,              0,              0,              0,              0,
-      -3.77312499999999,          31.04625, -3.77312499999999, 0.701835937499999,     19.7523046875, 0.701835937499999,              0,              0,              0,              0,              0,              0,
-      -3.77312499999999, -3.77312499999999,          31.04625, 0.701835937499999, 0.701835937499999,     19.7523046875,              0,              0,              0,              0,              0,              0,
-                      0,       0.261568125,       0.261556875,                 0,                 0,                 0, 2.222463046875,              0,              0, 2.222458828125,              0,              0,
-            0.261568125,                 0,       0.261556875,                 0,                 0,                 0,              0, 2.222463046875,              0,              0, 2.222458828125,              0,
-            0.261568125,       0.261556875,                 0,                 0,                 0,                 0,              0,              0, 2.222463046875,              0,              0, 2.222458828125,
-                      0,       0.261556875,       0.261568125,                 0,                 0,                 0, 2.222458828125,              0,              0, 2.222463046875,              0,              0,
-            0.261556875,                 0,       0.261568125,                 0,                 0,                 0,              0, 2.222458828125,              0,              0, 2.222463046875,              0,
-            0.261556875,       0.261568125,                 0,                 0,                 0,                 0,              0,              0, 2.222458828125,              0,              0, 2.222463046875
-    };
+    std::vector<Plato::Scalar>
+      gold_jac_entries = {
+        252.555090000000,                 0,                 0,  31.0462499999998, -3.77312499999998, -3.77312499999998,                 0, 0.261568124999999, 0.261568124999999,                 0, 0.261556874999998, 0.261556874999998,
+                       0,  252.555090000000,                 0, -3.77312499999998,  31.0462499999998, -3.77312499999998, 0.261568124999999,                 0, 0.261556874999998, 0.261556874999998,                 0, 0.261568124999999,
+                       0,                 0,  252.555090000000, -3.77312499999998, -3.77312499999998,  31.0462499999998, 0.261556874999998, 0.261556874999998,                 0, 0.261568124999999, 0.261568124999999,                 0,
+        31.0462499999998, -3.77312499999998, -3.77312499999998,  31.6036874999998,  1.12293749999999,  1.12293749999999,                 0,                 0,                 0,                 0,                 0,                 0,
+       -3.77312499999998,  31.0462499999998, -3.77312499999998,  1.12293749999999,  31.6036874999998,  1.12293749999999,                 0,                 0,                 0,                 0,                 0,                 0,
+       -3.77312499999998, -3.77312499999998,  31.0462499999998,  1.12293749999999,  1.12293749999999,  31.6036874999998,                 0,                 0,                 0,                 0,                 0,                 0,
+                       0, 0.261568124999999, 0.261556874999998,                 0,                 0,                 0,  3.55594087499998,                 0,                 0,  3.55593412499998,                 0,                 0,
+       0.261568124999999,                 0, 0.261556874999998,                 0,                 0,                 0,                 0,  3.55594087499998,                 0,                 0,  3.55593412499998,                 0,
+       0.261568124999999, 0.261556874999998,                 0,                 0,                 0,                 0,                 0,                 0,  3.55594087499998,                 0,                 0,  3.55593412499998,
+                       0, 0.261556874999998, 0.261568124999999,                 0,                 0,                 0,  3.55593412499998,                 0,                 0,  3.55594087499998,                 0,                 0,
+       0.261556874999998,                 0, 0.261568124999999,                 0,                 0,                 0,                 0,  3.55593412499998,                 0,                 0,  3.55594087499998,                 0,
+       0.261556874999998, 0.261568124999999,                 0,                 0,                 0,                 0,                 0,                 0,  3.55593412499998,                 0,                 0,  3.55594087499998
+      };
 
     int jac_entriesSize = gold_jac_entries.size();
     for(int i=0; i<jac_entriesSize; i++){
@@ -3401,20 +3498,21 @@ TEUCHOS_UNIT_TEST( RelaxedMicromorphicResidualTests, 3D_Expression_WithInertia_D
     auto jacA_entriesHost = Kokkos::create_mirror_view( jacA_entries );
     Kokkos::deep_copy(jacA_entriesHost, jacA_entries);
 
-    std::vector<Plato::Scalar> gold_jacA_entries = {
-     12.2422375,          0,          0,         0,         0,         0,                0,                0,                0,                0,                0,                0,
-              0, 12.2422375,          0,         0,         0,         0,                0,                0,                0,                0,                0,                0,
-              0,          0, 12.2422375,         0,         0,         0,                0,                0,                0,                0,                0,                0,
-              0,          0,          0,   32.8125, -21.09375, -21.09375,                0,                0,                0,                0,                0,                0,
-              0,          0,          0, -21.09375,   32.8125, -21.09375,                0,                0,                0,                0,                0,                0,
-              0,          0,          0, -21.09375, -21.09375,   32.8125,                0,                0,                0,                0,                0,                0,
-              0,          0,          0,         0,         0,         0, 52.7343761718749,                0,                0, 52.7343738281249,                0,                0,
-              0,          0,          0,         0,         0,         0,                0, 52.7343761718749,                0,                0, 52.7343738281249,                0,
-              0,          0,          0,         0,         0,         0,                0,                0, 52.7343761718749,                0,                0, 52.7343738281249,
-              0,          0,          0,         0,         0,         0, 52.7343738281249,                0,                0, 52.7343761718749,                0,                0,
-              0,          0,          0,         0,         0,         0,                0, 52.7343738281249,                0,                0, 52.7343761718749,                0,
-              0,          0,          0,         0,         0,         0,                0,                0, 52.7343738281249,                0,                0, 52.7343761718749
-    };
+    std::vector<Plato::Scalar>
+      gold_jacA_entries = {
+        19.0475499999999,                0,                0,                 0,                 0,                 0,                0,                0,                0,                0,                0,                0,
+                       0, 19.0475499999999,                0,                 0,                 0,                 0,                0,                0,                0,                0,                0,                0,
+                       0,                0, 19.0475499999999,                 0,                 0,                 0,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0,  52.4999999999996, -33.7499999999998, -33.7499999999998,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0, -33.7499999999998,  52.4999999999996, -33.7499999999998,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0, -33.7499999999998, -33.7499999999998,  52.4999999999996,                0,                0,                0,                0,                0,                0,
+                       0,                0,                0,                 0,                 0,                 0, 84.3750018749994,                0,                0, 84.3749981249994,                0,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0, 84.3750018749994,                0,                0, 84.3749981249994,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0,                0, 84.3750018749994,                0,                0, 84.3749981249994,
+                       0,                0,                0,                 0,                 0,                 0, 84.3749981249994,                0,                0, 84.3750018749994,                0,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0, 84.3749981249994,                0,                0, 84.3750018749994,                0,
+                       0,                0,                0,                 0,                 0,                 0,                0,                0, 84.3749981249994,                0,                0, 84.3750018749994
+      };
 
     int jacA_entriesSize = gold_jacA_entries.size();
     for(int i=0; i<jacA_entriesSize; i++){

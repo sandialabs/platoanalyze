@@ -31,11 +31,6 @@ public:
     PathDependentScalarFunctionFactory () {}
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    ~PathDependentScalarFunctionFactory() {}
-
-    /******************************************************************************//**
      * \brief Create interface for the evaluation of path-dependent scalar function
      *  operators, e.g. value and sensitivities.
      * \param [in] aMesh         mesh database

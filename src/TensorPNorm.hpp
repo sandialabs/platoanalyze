@@ -332,9 +332,7 @@ public:
         mExponent = params.get<Plato::Scalar>("Exponent");
     }
 
-    virtual ~TensorNormBase()
-    {
-    }
+    virtual ~TensorNormBase() = default;
 
     virtual void
     evaluate(Plato::ScalarVectorT<typename EvalT::ResultScalarType> result,

@@ -24,6 +24,7 @@ class ProjectionElement : public TopoElementTypeT, public ElementBase<TopoElemen
     using TopoElementTypeT::mNumNodesPerCell;
     using TopoElementTypeT::mNumNodesPerFace;
     using TopoElementTypeT::mNumSpatialDims;
+    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
@@ -40,7 +41,9 @@ class ProjectionElement : public TopoElementTypeT, public ElementBase<TopoElemen
     static constexpr Plato::OrdinalType mNumNodeStatePerNode = NumProjectionDof;
     static constexpr Plato::OrdinalType mNumNodeStatePerCell = mNumNodeStatePerNode * mNumNodesPerCell;
 
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = 0;
+    static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
+
 };
 
 } // namespace Stabilized

@@ -9,7 +9,7 @@ namespace Contact
 {
 
 template <typename EvaluationType>
-class AbstractSurfaceDisplacement : public EvaluationType::ElementType
+class AbstractSurfaceDisplacement
 {
 protected:
     using InStateT  = typename EvaluationType::StateScalarType;  

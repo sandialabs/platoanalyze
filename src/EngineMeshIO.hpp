@@ -55,7 +55,6 @@ namespace Plato
 
         public:
             EngineMeshIO(std::string aOutputFilePath, Plato::EngineMesh & aMesh, std::string aMode="Write");
-            ~EngineMeshIO();
 
             Plato::OrdinalType NumNodes() const override;
             Plato::OrdinalType NumElements() const override;

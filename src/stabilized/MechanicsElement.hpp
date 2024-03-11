@@ -19,6 +19,7 @@ class MechanicsElement : public TopoElementTypeT, public ElementBase<TopoElement
     using TopoElementTypeT::mNumNodesPerCell;
     using TopoElementTypeT::mNumNodesPerFace;
     using TopoElementTypeT::mNumSpatialDims;
+    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
@@ -36,7 +37,9 @@ class MechanicsElement : public TopoElementTypeT, public ElementBase<TopoElement
     // following defines the nodal state attributes required by VMS
     static constexpr auto mNumNodeStatePerNode = mNumSpatialDims;                         /*!< number of node states, i.e. pressure gradient, dofs per node */
     static constexpr auto mNumNodeStatePerCell = mNumNodeStatePerNode * mNumNodesPerCell; /*!< number of node states, i.e. pressure gradient, dofs  per cell */
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = 0;
+    static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
+
 };
 
 } // namespace Stabilized

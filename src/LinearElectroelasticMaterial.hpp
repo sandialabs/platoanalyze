@@ -67,7 +67,6 @@ LinearElectroelasticMaterial()
 {
   public:
     IsotropicLinearElectroelasticMaterial(const Teuchos::ParameterList& paramList);
-    virtual ~IsotropicLinearElectroelasticMaterial(){}
 };
 // class IsotropicLinearElectroelasticMaterial
 

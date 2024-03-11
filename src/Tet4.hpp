@@ -19,53 +19,50 @@ class Tet4
     static constexpr Plato::OrdinalType mNumSpatialDims  = 3;
     static constexpr Plato::OrdinalType mNumNodesPerCell = 4;
     static constexpr Plato::OrdinalType mNumNodesPerFace = 3;
-    static constexpr Plato::OrdinalType mNumGaussPoints  = 1;
+    static constexpr Plato::OrdinalType mNumGaussPoints  = 4;
 
     static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims-1;
 
-    static inline Plato::Array<mNumGaussPoints>
-    getCubWeights() { return Plato::Array<mNumGaussPoints>({Plato::Scalar(1.0)/6}); }
+    static constexpr Plato::Array<mNumGaussPoints>
+    getCubWeights() 
+    {
+        return Plato::Array<mNumGaussPoints>
+                 ({Plato::Scalar(1.0)/24.0, Plato::Scalar(1.0)/24.0, Plato::Scalar(1.0)/24.0, Plato::Scalar(1.0)/24.0});
+    }
 
-    static inline Plato::Matrix<mNumGaussPoints,mNumSpatialDims>
+    static constexpr Plato::Matrix<mNumGaussPoints,mNumSpatialDims>
     getCubPoints()
     {
-        return Plato::Matrix<mNumGaussPoints,mNumSpatialDims>({
-            Plato::Scalar(1.0)/4, Plato::Scalar(1.0)/4, Plato::Scalar(1.0)/4
+        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>({
+            0.585410196624969, 0.138196601125011, 0.138196601125011,
+            0.138196601125011, 0.585410196624969, 0.138196601125011,
+            0.138196601125011, 0.138196601125011, 0.585410196624969,
+            0.138196601125011, 0.138196601125011, 0.138196601125011
         });
     }
 
-    KOKKOS_INLINE_FUNCTION static Plato::Array<mNumNodesPerCell>
-    basisValues( const Plato::Array<mNumSpatialDims>& aCubPoint )
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
+    auto basisValues( const Plato::Array<mNumSpatialDims>& aCubPoint ) -> Plato::Array<mNumNodesPerCell>
     {
-        auto x=aCubPoint(0);
-        auto y=aCubPoint(1);
-        auto z=aCubPoint(2);
+        const auto x=aCubPoint(0);
+        const auto y=aCubPoint(1);
+        const auto z=aCubPoint(2);
 
-        Plato::Array<mNumNodesPerCell> tN;
-
-        tN(0) = Plato::Scalar(1) - x - y - z;
-        tN(1) = x;
-        tN(2) = y;
-        tN(3) = z;
-
-        return tN;
+        return Plato::Array<mNumNodesPerCell>
+            {Plato::Scalar(1) - x - y - z,
+             x,
+             y,
+             z};
     }
 
-    KOKKOS_INLINE_FUNCTION static Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
-    basisGrads( const Plato::Array<mNumSpatialDims>& aCubPoint )
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
+    auto basisGrads( const Plato::Array<mNumSpatialDims>& aCubPoint ) -> Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
     {
-        auto x=aCubPoint(0);
-        auto y=aCubPoint(1);
-        auto z=aCubPoint(2);
-
-        Plato::Matrix<mNumNodesPerCell, mNumSpatialDims> tG;
-
-        tG(0,0) = -1; tG(0,1) = -1; tG(0,2) = -1;
-        tG(1,0) =  1; tG(1,1) =  0; tG(1,2) =  0;
-        tG(2,0) =  0; tG(2,1) =  1; tG(2,2) =  0;
-        tG(3,0) =  0; tG(3,1) =  0; tG(3,2) =  1;
-
-        return tG;
+        return Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
+            {-1, -1, -1,
+              1,  0,  0,
+              0,  1,  0,
+              0,  0,  1};
     }
 };
 

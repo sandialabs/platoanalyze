@@ -406,6 +406,15 @@ if (PLATOANALYZE_ENABLE_MPMD)
     set(PLATO_LIBS ${PLATO_LIBS} ${ShyLU_NodeTacho_LIBRARIES})
   endif()
 
+  option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
+  if (PLATOANALYZE_ENABLE_UMFPACK)
+    find_library(UMFPACK NAMES umfpack PATHS ${UMFPACK_LIB_DIR})
+    message("adding define: -DPLATO_UMFPACK")
+    add_definitions(-DPLATO_UMFPACK)
+    include_directories( ${UMFPACK_INC_DIR} )
+    set(PLATO_LIBS ${PLATO_LIBS} ${UMFPACK})
+  endif()
+
   target_link_libraries(Analyze_App ${PLATO_LIBS} analyzelib)
   target_link_libraries(analyze_MPMD Analyze_App ${PLATO_LIBS} analyzelib Boost::serialization)
   target_compile_definitions(analyze_MPMD PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build

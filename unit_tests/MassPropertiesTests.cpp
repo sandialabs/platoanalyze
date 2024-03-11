@@ -99,7 +99,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
                                * tPseudoDensity * tFunctionWeight * tMaterialDensity;
 
     // ****** TEST OUTPUT/RESULT VALUE FOR EACH CELL ******
-    constexpr Plato::Scalar tTolerance = 1e-4;
+    constexpr Plato::Scalar tTolerance = 1e-15;
     TEST_FLOATING_EQUALITY(tGoldValue, tObjFuncVal, tTolerance);
 }
 
@@ -178,13 +178,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume3D)
                                * tPseudoDensity * tFunctionWeight * tMaterialDensity;
 
     // ****** TEST OUTPUT/RESULT VALUE FOR EACH CELL ******
-    constexpr Plato::Scalar tTolerance = 1e-4;
+    constexpr Plato::Scalar tTolerance = 1e-15;
     TEST_FLOATING_EQUALITY(tGoldValue, tObjFuncVal, tTolerance);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3D)
 {
-    constexpr Plato::OrdinalType tMeshWidth = 15; // Need high mesh density in order to get correct inertias
+    constexpr Plato::OrdinalType tMeshWidth = 1; 
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
     using ElementType = typename Plato::GeometricalElement<Plato::Tet4>;
@@ -235,21 +235,21 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3D)
     auto tObjFuncVal = tMassProperties.value(tControl);
 
     Plato::Scalar tGoldValue = 2.0*pow((0.4-0.2)/0.2, 2) + 0.1*pow((0.5-0.05),2)
-                             + 2.0*pow((0.5-0.55),2) + 3.0*pow((0.5-0.75),2)
-                             + 4.0*pow((0.2666666-0.5)/0.5,2)
-                             + 5.0*pow((0.2666666-0.5)/0.5,2)
-                             + 6.0*pow((0.2666666-0.5)/0.5,2)
+                             + 2.0*pow((0.5-0.55)/0.55,2) + 3.0*pow((0.5-0.75)/0.75,2)
+                             + 4.0*pow((2.6666666666666666e-1-0.5)/0.5,2)
+                             + 5.0*pow((2.6666666666666666e-1-0.5)/0.5,2)
+                             + 6.0*pow((2.6666666666666666e-1-0.5)/0.5,2)
                              + 7.0*pow((-0.1-0.3)/0.3,2)
                              + 8.0*pow((-0.1-0.3)/0.3,2);
 
     // ****** TEST OUTPUT/RESULT VALUE FOR EACH CELL ******
-    constexpr Plato::Scalar tTolerance = 1e-4;
+    constexpr Plato::Scalar tTolerance = 1e-15;
     TEST_FLOATING_EQUALITY(tGoldValue, tObjFuncVal, tTolerance);
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3DNormalized)
 {
-    constexpr Plato::OrdinalType tMeshWidth = 15; // Need high mesh density in order to get correct inertias
+    constexpr Plato::OrdinalType tMeshWidth = 1; 
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
     // Create control workset
@@ -296,16 +296,17 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3DNormalized)
     auto tObjFuncVal = tMassProperties.value(tControl);
 
     Plato::Scalar tGoldValue = 2.0*pow((0.4-0.2)/0.2, 2) + 0.1*pow((0.5-0.05),2)
-                             + 2.0*pow((0.5-0.55),2) + 3.0*pow((0.5-0.75),2)
-                             + 4.0*pow((-1.0589e-01-5.1241) /  5.1241,2)
-                             + 5.0*pow((2.6130e-02-5.4403)  /  5.4403,2)
-                             + 6.0*pow((1.8531e-01-5.3886)  /  5.3886,2)
-                             + 7.0*pow((1.9408e-04-0.0000)  /  5.1241,2)
-                             + 8.0*pow((9.5366e-02-0.0000)  /  5.1241,2)
-                             + 9.0*pow((3.9663e-02-0.0000)  /  5.1241,2);
+                             + 2.0*pow((0.5-0.55)/0.55,2) + 3.0*pow((0.5-0.75)/0.75,2)
+                             + 4.0*pow((-0.105801712354811-5.1240534614389617) / 5.1240534614389617,2)
+                             + 5.0*pow((0.026312317550603-5.4403485162247298)  /  5.4403485162247298,2)
+                             + 6.0*pow((0.185489394804209-5.3885980223363132)  /  5.3885980223363132,2)
+                             + 7.0*pow((0.000176996782885-0.0000)  /  5.1240534614389617,2)
+                             + 8.0*pow((0.095340493277529-0.0000)  /  5.1240534614389617,2)
+                             + 9.0*pow((0.039658933738485-0.0000)  /  5.1240534614389617,2);
+
 
     // ****** TEST OUTPUT/RESULT VALUE FOR EACH CELL ******
-    constexpr Plato::Scalar tTolerance = 1e-4;
+    constexpr Plato::Scalar tTolerance = 1e-15;
     TEST_FLOATING_EQUALITY(tGoldValue, tObjFuncVal, tTolerance);
 }
 

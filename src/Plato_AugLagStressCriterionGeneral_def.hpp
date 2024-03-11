@@ -141,15 +141,6 @@ namespace Plato
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    AugLagStressCriterionGeneral<EvaluationType>::
-    ~AugLagStressCriterionGeneral()
-    {
-    }
-
-    /******************************************************************************//**
      * \brief Return augmented Lagrangian penalty multiplier
      * \return augmented Lagrangian penalty multiplier
     **********************************************************************************/
@@ -310,29 +301,43 @@ namespace Plato
         auto tNumPoints = tCubWeights.size();
 
         Plato::Scalar tLagrangianMultiplier = static_cast<Plato::Scalar>(1.0 / tNumCells);
-        Kokkos::parallel_for("elastic energy", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        Kokkos::parallel_for("elastic energy", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
         {
-            ConfigT tVolume(0.0);
             ResultT tVonMises(0.0);
+            ResultT tCellMass(0.0);
+            ControlT tCellDensity(0.0);
+            for(Plato::OrdinalType iGpOrdinal=0; iGpOrdinal<tNumPoints; ++iGpOrdinal)
+            {
+                ConfigT tGpVolume(0.0);
+                ResultT tGpVonMises(0.0);
+                Plato::Matrix<mNumNodesPerCell, mNumSpatialDims, ConfigT> tGpGradient;
+                Plato::Array<mNumVoigtTerms, StrainT> tGpStrain(0.0);
+                Plato::Array<mNumVoigtTerms, ResultT> tGpStress(0.0);
 
-            Plato::Matrix<mNumNodesPerCell, mNumSpatialDims, ConfigT> tGradient;
+                auto tCubPoint = tCubPoints(iGpOrdinal);
+                auto tCubWeight = tCubWeights(iGpOrdinal);
 
-            Plato::Array<mNumVoigtTerms, StrainT> tStrain(0.0);
-            Plato::Array<mNumVoigtTerms, ResultT> tStress(0.0);
-
-            auto tCubPoint = tCubPoints(iGpOrdinal);
-
-            tComputeGradient(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tVolume);
-
-            tVolume *= tCubWeights(iGpOrdinal);
-
-            tCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
-            tCauchyStress(tStress, tStrain);
-
-            // Compute 3D Von Mises Yield Criterion
-            tComputeVonMises(iCellOrdinal, tStress, tVonMises);
-
+                // Compute 3D Cauchy Stress
+                tComputeGradient(iCellOrdinal, tCubPoint, aConfigWS, tGpGradient, tGpVolume);
+                tGpVolume *= tCubWeight;
+                tCauchyStrain(iCellOrdinal, tGpStrain, aStateWS, tGpGradient);
+                tCauchyStress(tGpStress, tGpStrain);
+                // Compute 3D Von Mises Yield Criterion
+                tComputeVonMises(iCellOrdinal, tGpStress, tGpVonMises);
+                tVonMises += tGpVonMises;
+                // Calculate density
+                auto tBasisValues = ElementType::basisValues(tCubPoint);
+                tCellDensity += Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
+                // Calculate Mass
+                ResultT tGpCellMass = Plato::cell_mass<mNumNodesPerCell>(iCellOrdinal, tBasisValues, aControlWS);
+                tGpCellMass *= tGpVolume;
+                tCellMass += tGpCellMass;
+            }
+            // We want the average density and VonMises for this cell.
+            tCellDensity /= tNumPoints;
+            tVonMises /= tNumPoints;
+            
             // Compute Von Mises stress constraint residual
             ResultT tVonMisesOverStressLimit = tVonMises / tStressLimit;
             ResultT tVonMisesOverLimitMinusOne = tVonMisesOverStressLimit - static_cast<Plato::Scalar>(1.0);
@@ -340,8 +345,6 @@ namespace Plato
                     * tVonMisesOverLimitMinusOne * tVonMisesOverLimitMinusOne )
                     + ( tVonMisesOverLimitMinusOne * tVonMisesOverLimitMinusOne );
 
-            auto tBasisValues = ElementType::basisValues(tCubPoint);
-            ControlT tCellDensity = Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
             ControlT tMaterialPenalty = tSIMP(tCellDensity);
             tOutputVonMises(iCellOrdinal) = tMaterialPenalty * tVonMises;
             ResultT tTrialConstraintValue = tMaterialPenalty * tConstraintValue;
@@ -354,8 +357,7 @@ namespace Plato
                             tTrueConstraintValue * tTrueConstraintValue ) );
 
             // Compute objective contribution to augmented Lagrangian function
-            ResultT tObjective = ( Plato::cell_mass<mNumNodesPerCell>(iCellOrdinal, tBasisValues, aControlWS) *
-                    tMaterialDensity * tVolume ) / tMassNormalizationMultiplier;
+            ResultT tObjective = ( tCellMass * tMaterialDensity ) / tMassNormalizationMultiplier;
 
             // Compute augmented Lagrangian function
             aResultWS(iCellOrdinal) = (tMassCriterionWeight * tObjective)
@@ -402,27 +404,36 @@ namespace Plato
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
 
-        Kokkos::parallel_for("elastic energy", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        Kokkos::parallel_for("elastic energy", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
         {
-            Plato::Scalar tVolume(0.0), tVonMises(0.0);
+            Plato::Scalar tVonMises(0.0), tDensity(0.0);
+            for(Plato::OrdinalType iGpOrdinal=0; iGpOrdinal<tNumPoints; ++iGpOrdinal)
+            {
+                Plato::Scalar tLocalVonMises(0.0), tVolume(0.0); 
+                Plato::Matrix<mNumNodesPerCell, mNumSpatialDims> tGradient;
+                Plato::Array<mNumVoigtTerms> tStrain(0.0);
+                Plato::Array<mNumVoigtTerms> tStress(0.0);
 
-            Plato::Matrix<mNumNodesPerCell, mNumSpatialDims> tGradient;
+                auto tCubPoint = tCubPoints(iGpOrdinal);
+                auto tCubWeight = tCubWeights(iGpOrdinal);
 
-            Plato::Array<mNumVoigtTerms> tStrain(0.0);
-            Plato::Array<mNumVoigtTerms> tStress(0.0);
-
-            auto tCubPoint = tCubPoints(iGpOrdinal);
-
-            // Compute 3D Cauchy Stress
-            tComputeGradient(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tVolume);
-            tVolume *= tCubWeights(iGpOrdinal);
-            tCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
-            tCauchyStress(tStress, tStrain);
-
-            // Compute 3D Von Mises Yield Criterion
-            tComputeVonMises(iCellOrdinal, tStress, tVonMises);
-
+                // Compute 3D Cauchy Stress
+                tComputeGradient(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tVolume);
+                tCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
+                tCauchyStress(tStress, tStrain);
+                // Compute 3D Von Mises Yield Criterion 
+                tComputeVonMises(iCellOrdinal, tStress, tLocalVonMises);
+                tVonMises += tLocalVonMises;
+                // Calculate density
+                auto tBasisValues = ElementType::basisValues(tCubPoint);
+                tDensity += Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
+            }
+            
+            // We want the average density and VonMises for this cell.
+            tDensity /= tNumPoints;
+            tVonMises /= tNumPoints;
+            
             // Compute Von Mises stress constraint residual
             const Plato::Scalar tVonMisesOverStressLimit = tVonMises / tStressLimit;
             const Plato::Scalar tVonMisesOverLimitMinusOne = tVonMisesOverStressLimit - static_cast<Plato::Scalar>(1.0);
@@ -431,8 +442,6 @@ namespace Plato
                     + ( tVonMisesOverLimitMinusOne * tVonMisesOverLimitMinusOne );
 
             // Compute penalized Von Mises stress constraint
-            auto tBasisValues = ElementType::basisValues(tCubPoint);
-            Plato::Scalar tDensity = Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
             auto tPenalty = tSIMP(tDensity);
             const Plato::Scalar tTrialConstraint = tPenalty * tConstraintValue;
             const Plato::Scalar tTrueConstraint = tVonMisesOverStressLimit > static_cast<Plato::Scalar>(1.0) ?

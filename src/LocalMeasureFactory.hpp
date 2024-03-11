@@ -19,7 +19,6 @@ class LocalMeasureFactory
 /**********************************************************************************/
 public:
     LocalMeasureFactory (){}
-    ~LocalMeasureFactory (){}
     std::shared_ptr<Plato::AbstractLocalMeasure<EvaluationType, SimplexPhysics>> 
     create(Teuchos::ParameterList& aInputParams, const std::string & aFuncName)
     {
