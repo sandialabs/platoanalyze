@@ -44,24 +44,16 @@ public:
     {
         auto tNumCells = aSpatialModel.Mesh->NumElements();
 
-        auto tCubPoints  = ElementType::getCubPoints();
-        auto tCubWeights = ElementType::getCubWeights();
-        auto tNumPoints = tCubWeights.size();
-
-        Kokkos::parallel_for("identity residual", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal, const Plato::OrdinalType & iGPOrdinal)
+        Kokkos::parallel_for("identity residual", Kokkos::RangePolicy<int>(0,tNumCells), 
+        KOKKOS_LAMBDA(const Plato::OrdinalType & iCellOrdinal)
         {
-            auto tCubPoint = tCubPoints(iGPOrdinal);
-            auto tBasisValues = ElementType::basisValues(tCubPoint);
-
             for( Plato::OrdinalType tNode=0; tNode<ElementType::mNumNodesPerCell; tNode++)
             {
                 for( Plato::OrdinalType tDof=0; tDof<ElementType::mNumDofsPerNode; tDof++)
                 {
                     Plato::OrdinalType tLocalOrdinal = tNode * ElementType::mNumDofsPerNode + tDof;
 
-                    ResultScalarType tResult = aState(iCellOrdinal,tLocalOrdinal);
-                    Kokkos::atomic_add(&aResult(iCellOrdinal, tLocalOrdinal), tResult);
+                    aResult(iCellOrdinal, tLocalOrdinal) = aState(iCellOrdinal,tLocalOrdinal);
                 }
             }
 
@@ -96,7 +88,7 @@ public:
                 {
                     Plato::OrdinalType tLocalOrdinal = tNode * ElementType::mNumDofsPerNode + tDof;
 
-                    ResultScalarType tResult = tDisp(tDof);
+                    ResultScalarType tResult = tDisp(tDof)/tNumPoints;
                     Kokkos::atomic_add(&aResult(iCellOrdinal, tLocalOrdinal), tResult);
                 }
             }
@@ -141,7 +133,7 @@ public:
                 {
                     auto tElementDofOrdinal = tLocalNodeOrd * ElementType::mNumDofsPerNode + tDof;
 
-                    ResultScalarType tResult = tDisp(tDof);
+                    ResultScalarType tResult = tDisp(tDof)/tNumPoints;
                     Kokkos::atomic_add(&aResult(tCellOrdinal, tElementDofOrdinal), tResult);
                 }
             }

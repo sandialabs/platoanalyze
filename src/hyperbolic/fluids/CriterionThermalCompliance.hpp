@@ -88,11 +88,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    virtual ~CriterionThermalCompliance(){}
-
-    /***************************************************************************//**
      * \fn std::string name
      * \brief Returns scalar function name
      * \return scalar function name

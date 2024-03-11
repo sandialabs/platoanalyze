@@ -88,15 +88,6 @@ namespace Elliptic
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    VolumeIntegralCriterion<EvaluationType>::
-    ~VolumeIntegralCriterion()
-    {
-    }
-
-    /******************************************************************************//**
      * \brief Set volume integrated quanitity
      * \param [in] aInputEvaluationType evaluation type volume integrated quanitity
     **********************************************************************************/

@@ -18,9 +18,8 @@ namespace Plato
 class MetaDataBase
 {
 public:
-    virtual ~MetaDataBase() = 0;
+    virtual ~MetaDataBase() = default;
 };
-inline MetaDataBase::~MetaDataBase(){}
 // class MetaDataBase
 
 /***************************************************************************//**

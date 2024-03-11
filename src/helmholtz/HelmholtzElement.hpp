@@ -17,6 +17,7 @@ class HelmholtzElement : public TopoElementTypeT, public ElementBase<TopoElement
     using TopoElementTypeT::mNumNodesPerFace;
     using TopoElementTypeT::mNumSpatialDims;
     using TopoElementTypeT::mNumSpatialDimsOnFace;
+    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
@@ -26,7 +27,9 @@ class HelmholtzElement : public TopoElementTypeT, public ElementBase<TopoElement
     static constexpr Plato::OrdinalType mNumControl = 1;
 
     static constexpr Plato::OrdinalType mNumNodeStatePerNode = 0;
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = 0;
+    static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
+
 
 };
 

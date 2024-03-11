@@ -84,9 +84,7 @@ public:
         std::map<std::string, Teuchos::RCP<Parameter>> mParameters;
     public:
         LocalOp(MPMD_App* p, Plato::InputData& opNode, Teuchos::RCP<ProblemDefinition> opDef);
-        virtual ~LocalOp()
-        {
-        }
+        virtual ~LocalOp() = default;
         virtual void operator()()=0;
         const decltype(mDef)& getProblemDefinition()
         {
@@ -123,11 +121,6 @@ public:
             std::string mStrParameters;
             bool mConditional;
     };
-
-    /******************************************************************************//**
-     * \brief Multiple Program, Multiple Data (MPMD) application destructor
-    **********************************************************************************/
-    virtual ~MPMD_App();
 
     /******************************************************************************//**
      * \brief Safely allocate PLATO Analyze data

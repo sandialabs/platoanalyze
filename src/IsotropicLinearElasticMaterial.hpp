@@ -34,11 +34,6 @@ public:
     **********************************************************************************/
     IsotropicLinearElasticMaterial(const Plato::Scalar & aYoungsModulus, const Plato::Scalar & aPoissonsRatio);
 
-    /******************************************************************************//**
-     * \brief Linear elastic isotropic material model destructor.
-    **********************************************************************************/
-    virtual ~IsotropicLinearElasticMaterial(){}
-
 private:
     Plato::Scalar mPoissonsRatio; /*!< Poisson's Ratio */
     Plato::Scalar mYoungsModulus; /*!< Young's Modulus */

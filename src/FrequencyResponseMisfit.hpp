@@ -87,12 +87,6 @@ public:
     {
     }
 
-    /*************************************************************************/
-    virtual ~FrequencyResponseMisfit()
-    /*************************************************************************/
-    {
-    }
-
     /*************************************************************************
      * Evaluate f(u,z)=\frac{1}{2}(u_i, where u denotes
      * states, z denotes controls, K denotes the stiffness matrix and M denotes

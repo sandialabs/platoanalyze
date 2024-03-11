@@ -7,6 +7,7 @@
 #include <BamG.hpp>
 
 #include <Teuchos_RCP.hpp>
+#include "Teuchos_ParameterList.hpp"
 
 #include <string>
 #include <vector>
@@ -187,6 +188,9 @@ void set_dof_value_in_vector(const Plato::ScalarVector & aDofValues,
  **********************************************************************************/
 std::vector<std::vector<Plato::Scalar>>
 to_full( Teuchos::RCP<Plato::CrsMatrixType> aInMatrix );
+
+const Teuchos::RCP<Teuchos::ParameterList> getParameterListForHelmholtzTest();
+const Teuchos::RCP<Teuchos::ParameterList> getSolverParametersForHelmholtzTest();
 
 } // namespace TestHelpers
 } // namespace Plato

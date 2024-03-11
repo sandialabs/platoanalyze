@@ -27,7 +27,7 @@ class CustomMaterial
 {
 public:
     CustomMaterial(const Teuchos::ParameterList& aParamList) {}
-    virtual ~CustomMaterial() {}
+    virtual ~CustomMaterial() = default;
 
 //protected:
     virtual Plato::Scalar GetCustomExpressionValue(

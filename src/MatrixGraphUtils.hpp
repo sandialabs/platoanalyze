@@ -35,7 +35,7 @@ CreateGlobalByLocalBlockMatrix( Plato::Mesh aMesh )
 
     auto tNumElems = aMesh->NumElements();
     auto tNumNodes = aMesh->NumNodes();
-    auto tNumNonZeros = tNumElems*ElementType::mNumGaussPoints*ElementType::mNumNodesPerCell;
+    auto tNumNonZeros = tElementOrds.extent(0)*ElementType::mNumGaussPoints;
 
     constexpr Plato::OrdinalType numBlockDofs = ElementType::mNumDofsPerNode*ElementType::mNumLocalStatesPerGP;
 

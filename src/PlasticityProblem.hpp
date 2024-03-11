@@ -143,14 +143,6 @@ public:
         this->initialize(aInputs);
     }
 
-
-    /***************************************************************************//**
-     * \brief PLATO Plasticity Problem destructor
-    *******************************************************************************/
-    virtual ~PlasticityProblem()
-    {
-    }
-
     /***************************************************************************//**
      * \brief Append global residual evaluation interface
      * \param [in] aInput global residual evaluation interface

@@ -40,7 +40,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, LengthScaleKeywordError)
 
   // set parameters
   //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
+  Teuchos::RCP<Teuchos::ParameterList> tBadParamList =
     Teuchos::getParametersFromXmlString(
     "<ParameterList name='Plato Problem'>                                      \n"
     "  <ParameterList name='Spatial Model'>                                    \n"
@@ -60,9 +60,9 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, LengthScaleKeywordError)
 
   // create PDE
   Plato::DataMap tDataMap;
-  Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+  Plato::SpatialModel tSpatialModel(tMesh, *tBadParamList, tDataMap);
 
-  TEST_THROW(Plato::Helmholtz::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint")), std::runtime_error);
+  TEST_THROW(Plato::Helmholtz::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *tBadParamList, tBadParamList->get<std::string>("PDE Constraint")), std::runtime_error);
 }
 
 /******************************************************************************/
@@ -91,33 +91,13 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, HelmholtzProblemError)
   Plato::ScalarVector testControl("test density", tNumDofs);
   Kokkos::deep_copy(testControl, 1.0);
 
-  // set parameters
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                      \n"
-    "  <ParameterList name='Spatial Model'>                                    \n"
-    "    <ParameterList name='Domains'>                                        \n"
-    "      <ParameterList name='Design Volume'>                                \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>      \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/> \n"
-    "      </ParameterList>                                                    \n"
-    "    </ParameterList>                                                      \n"
-    "  </ParameterList>                                                        \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/> \n"
-    "  <Parameter name='Physics' type='string' value='Helmholtz Filter'/> \n"
-    "  <ParameterList name='Parameters'>                                    \n"
-    "    <Parameter name='Length Scale' type='double' value='0.10'/>              \n"
-    "  </ParameterList>                                                        \n"
-    "</ParameterList>                                                        \n"
-  );
-
   // get machine
   MPI_Comm myComm;
   MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
   Plato::Comm::Machine tMachine(myComm);
 
   // construct problem
+  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
   auto tProblem = Plato::Helmholtz::Problem<PhysicsType>(tMesh, *tParamList, tMachine);
 
   // perform necessary operations
@@ -163,33 +143,8 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, Helmholtz2DUniformFieldTest )
   Kokkos::deep_copy(state, 0.0);
 
   // create PDE
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                         \n"
-    "  <ParameterList name='Spatial Model'>                                       \n"
-    "    <ParameterList name='Domains'>                                           \n"
-    "      <ParameterList name='Design Volume'>                                   \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>         \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/> \n"
-    "      </ParameterList>                                                       \n"
-    "    </ParameterList>                                                         \n"
-    "  </ParameterList>                                                           \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>  \n"
-    "  <ParameterList name='Parameters'>                                          \n"
-    "    <Parameter name='Length Scale' type='double' value='0.10'/>              \n"
-    "  </ParameterList>                                                           \n"
-    "  <ParameterList name='Linear Solver'>                                       \n"
-    "    <Parameter name='Solver Stack' type='string' value='Epetra'/>            \n"
-    "    <Parameter name='Display Iterations' type='int' value='1'/>              \n"
-    "    <Parameter name='Iterations' type='int' value='50'/>                     \n"
-    "    <Parameter name='Tolerance' type='double' value='1e-14'/>                \n"
-    "  </ParameterList>                                                           \n"
-    "</ParameterList>                                                             \n"
-  );
-
-  // create PDE
   Plato::DataMap tDataMap;
+  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
   Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
   Plato::Helmholtz::VectorFunction<PhysicsType>
     vectorFunction(tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -209,15 +164,7 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, Helmholtz2DUniformFieldTest )
   MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
   Plato::Comm::Machine tMachine(myComm);
 
-  Teuchos::RCP<Teuchos::ParameterList> tSolverParams =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Linear Solver'>                              \n"
-    "  <Parameter name='Solver Stack' type='string' value='Epetra'/>   \n"
-    "  <Parameter name='Display Iterations' type='int' value='1'/>     \n"
-    "  <Parameter name='Iterations' type='int' value='50'/>            \n"
-    "  <Parameter name='Tolerance' type='double' value='1e-14'/>       \n"
-    "</ParameterList>                                                  \n"
-  );
+  const auto tSolverParams = Plato::TestHelpers::getSolverParametersForHelmholtzTest();
   Plato::SolverFactory tSolverFactory(*tSolverParams);
 
   auto tSolver = tSolverFactory.create(tMesh->NumNodes(), tMachine, tNumDofsPerNode);
@@ -274,33 +221,8 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Tet4 )
   Kokkos::deep_copy(state, 0.0);
 
   // create PDE
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                         \n"
-    "  <ParameterList name='Spatial Model'>                                       \n"
-    "    <ParameterList name='Domains'>                                           \n"
-    "      <ParameterList name='Design Volume'>                                   \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>         \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/> \n"
-    "      </ParameterList>                                                       \n"
-    "    </ParameterList>                                                         \n"
-    "  </ParameterList>                                                           \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>  \n"
-    "  <ParameterList name='Parameters'>                                          \n"
-    "    <Parameter name='Length Scale' type='double' value='0.10'/>              \n"
-    "  </ParameterList>                                                           \n"
-    "  <ParameterList name='Linear Solver'>                                       \n"
-    "    <Parameter name='Solver Stack' type='string' value='Epetra'/>            \n"
-    "    <Parameter name='Display Iterations' type='int' value='1'/>              \n"
-    "    <Parameter name='Iterations' type='int' value='50'/>                     \n"
-    "    <Parameter name='Tolerance' type='double' value='1e-14'/>                \n"
-    "  </ParameterList>                                                           \n"
-    "</ParameterList>                                                             \n"
-  );
-
-  // create PDE
   Plato::DataMap tDataMap;
+  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
   Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
   Plato::Helmholtz::VectorFunction<PhysicsType>
     vectorFunction(tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -320,15 +242,7 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Tet4 )
   MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
   Plato::Comm::Machine tMachine(myComm);
 
-  Teuchos::RCP<Teuchos::ParameterList> tSolverParams =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Linear Solver'>                              \n"
-    "  <Parameter name='Solver Stack' type='string' value='Epetra'/>   \n"
-    "  <Parameter name='Display Iterations' type='int' value='1'/>     \n"
-    "  <Parameter name='Iterations' type='int' value='50'/>            \n"
-    "  <Parameter name='Tolerance' type='double' value='1e-14'/>       \n"
-    "</ParameterList>                                                  \n"
-  );
+  const auto tSolverParams = Plato::TestHelpers::getSolverParametersForHelmholtzTest();
   Plato::SolverFactory tSolverFactory(*tSolverParams);
 
   auto tSolver = tSolverFactory.create(tMesh->NumNodes(), tMachine, tNumDofsPerNode);
@@ -385,33 +299,8 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Hex8 )
   Kokkos::deep_copy(state, 0.0);
 
   // create PDE
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                         \n"
-    "  <ParameterList name='Spatial Model'>                                       \n"
-    "    <ParameterList name='Domains'>                                           \n"
-    "      <ParameterList name='Design Volume'>                                   \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>         \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/> \n"
-    "      </ParameterList>                                                       \n"
-    "    </ParameterList>                                                         \n"
-    "  </ParameterList>                                                           \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>  \n"
-    "  <ParameterList name='Parameters'>                                          \n"
-    "    <Parameter name='Length Scale' type='double' value='0.10'/>              \n"
-    "  </ParameterList>                                                           \n"
-    "  <ParameterList name='Linear Solver'>                                       \n"
-    "    <Parameter name='Solver Stack' type='string' value='Epetra'/>            \n"
-    "    <Parameter name='Display Iterations' type='int' value='1'/>              \n"
-    "    <Parameter name='Iterations' type='int' value='50'/>                     \n"
-    "    <Parameter name='Tolerance' type='double' value='1e-14'/>                \n"
-    "  </ParameterList>                                                           \n"
-    "</ParameterList>                                                             \n"
-  );
-
-  // create PDE
   Plato::DataMap tDataMap;
+  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
   Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
   Plato::Helmholtz::VectorFunction<PhysicsType>
     vectorFunction(tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -431,15 +320,7 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Hex8 )
   MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
   Plato::Comm::Machine tMachine(myComm);
 
-  Teuchos::RCP<Teuchos::ParameterList> tSolverParams =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Linear Solver'>                              \n"
-    "  <Parameter name='Solver Stack' type='string' value='Epetra'/>   \n"
-    "  <Parameter name='Display Iterations' type='int' value='1'/>     \n"
-    "  <Parameter name='Iterations' type='int' value='50'/>            \n"
-    "  <Parameter name='Tolerance' type='double' value='1e-14'/>       \n"
-    "</ParameterList>                                                  \n"
-  );
+  const auto tSolverParams = Plato::TestHelpers::getSolverParametersForHelmholtzTest();
   Plato::SolverFactory tSolverFactory(*tSolverParams);
 
   auto tSolver = tSolverFactory.create(tMesh->NumNodes(), tMachine, tNumDofsPerNode);
@@ -496,33 +377,8 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Tet10 )
   Kokkos::deep_copy(state, 0.0);
 
   // create PDE
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                         \n"
-    "  <ParameterList name='Spatial Model'>                                       \n"
-    "    <ParameterList name='Domains'>                                           \n"
-    "      <ParameterList name='Design Volume'>                                   \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>         \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/> \n"
-    "      </ParameterList>                                                       \n"
-    "    </ParameterList>                                                         \n"
-    "  </ParameterList>                                                           \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>  \n"
-    "  <ParameterList name='Parameters'>                                          \n"
-    "    <Parameter name='Length Scale' type='double' value='0.10'/>              \n"
-    "  </ParameterList>                                                           \n"
-    "  <ParameterList name='Linear Solver'>                                       \n"
-    "    <Parameter name='Solver Stack' type='string' value='Epetra'/>            \n"
-    "    <Parameter name='Display Iterations' type='int' value='1'/>              \n"
-    "    <Parameter name='Iterations' type='int' value='50'/>                     \n"
-    "    <Parameter name='Tolerance' type='double' value='1e-14'/>                \n"
-    "  </ParameterList>                                                           \n"
-    "</ParameterList>                                                             \n"
-  );
-
-  // create PDE
   Plato::DataMap tDataMap;
+  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
   Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
   Plato::Helmholtz::VectorFunction<PhysicsType>
     vectorFunction(tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -542,15 +398,7 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Tet10 )
   MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
   Plato::Comm::Machine tMachine(myComm);
 
-  Teuchos::RCP<Teuchos::ParameterList> tSolverParams =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Linear Solver'>                              \n"
-    "  <Parameter name='Solver Stack' type='string' value='Epetra'/>   \n"
-    "  <Parameter name='Display Iterations' type='int' value='1'/>     \n"
-    "  <Parameter name='Iterations' type='int' value='50'/>            \n"
-    "  <Parameter name='Tolerance' type='double' value='1e-14'/>       \n"
-    "</ParameterList>                                                  \n"
-  );
+  const auto tSolverParams = Plato::TestHelpers::getSolverParametersForHelmholtzTest();
   Plato::SolverFactory tSolverFactory(*tSolverParams);
 
   auto tSolver = tSolverFactory.create(tMesh->NumNodes(), tMachine, tNumDofsPerNode);
@@ -607,33 +455,8 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Hex27 )
   Kokkos::deep_copy(state, 0.0);
 
   // create PDE
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                         \n"
-    "  <ParameterList name='Spatial Model'>                                       \n"
-    "    <ParameterList name='Domains'>                                           \n"
-    "      <ParameterList name='Design Volume'>                                   \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>         \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/> \n"
-    "      </ParameterList>                                                       \n"
-    "    </ParameterList>                                                         \n"
-    "  </ParameterList>                                                           \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>  \n"
-    "  <ParameterList name='Parameters'>                                          \n"
-    "    <Parameter name='Length Scale' type='double' value='0.10'/>              \n"
-    "  </ParameterList>                                                           \n"
-    "  <ParameterList name='Linear Solver'>                                       \n"
-    "    <Parameter name='Solver Stack' type='string' value='Epetra'/>            \n"
-    "    <Parameter name='Display Iterations' type='int' value='1'/>              \n"
-    "    <Parameter name='Iterations' type='int' value='50'/>                     \n"
-    "    <Parameter name='Tolerance' type='double' value='1e-14'/>                \n"
-    "  </ParameterList>                                                           \n"
-    "</ParameterList>                                                             \n"
-  );
-
-  // create PDE
   Plato::DataMap tDataMap;
+  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
   Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
   Plato::Helmholtz::VectorFunction<PhysicsType>
     vectorFunction(tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -653,15 +476,7 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Hex27 )
   MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
   Plato::Comm::Machine tMachine(myComm);
 
-  Teuchos::RCP<Teuchos::ParameterList> tSolverParams =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Linear Solver'>                              \n"
-    "  <Parameter name='Solver Stack' type='string' value='Epetra'/>   \n"
-    "  <Parameter name='Display Iterations' type='int' value='1'/>     \n"
-    "  <Parameter name='Iterations' type='int' value='50'/>            \n"
-    "  <Parameter name='Tolerance' type='double' value='1e-14'/>       \n"
-    "</ParameterList>                                                  \n"
-  );
+  const auto tSolverParams = Plato::TestHelpers::getSolverParametersForHelmholtzTest();
   Plato::SolverFactory tSolverFactory(*tSolverParams);
 
   auto tSolver = tSolverFactory.create(tMesh->NumNodes(), tMachine, tNumDofsPerNode);

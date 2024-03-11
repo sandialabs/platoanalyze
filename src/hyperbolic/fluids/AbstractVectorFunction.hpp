@@ -35,7 +35,7 @@ private:
 
 public:
     AbstractVectorFunction(){}
-    virtual ~AbstractVectorFunction(){}
+    virtual ~AbstractVectorFunction() = default;
 
     /***************************************************************************//**
      * \fn void evaluate

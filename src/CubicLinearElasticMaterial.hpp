@@ -26,11 +26,6 @@ public:
      * \param [in] aParamList input parameter list
     **********************************************************************************/
     CubicLinearElasticMaterial(const Teuchos::ParameterList& aParamList);
-
-    /******************************************************************************//**
-     * \brief Linear elastic cubic material model destructor.
-    **********************************************************************************/
-    virtual ~CubicLinearElasticMaterial(){}
 };
 // class CubicLinearElasticMaterial
 

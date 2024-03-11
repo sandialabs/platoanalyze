@@ -89,11 +89,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    ~ThermalBuoyancy(){}
-
-    /***************************************************************************//**
      * \brief Evaluate thermal buoyancy forces, including stabilized forces if enabled.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [in/out] aResultWS result/output workset

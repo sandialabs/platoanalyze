@@ -84,11 +84,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    virtual ~CriterionMeanSurfaceTemperature(){}
-
-    /***************************************************************************//**
      * \fn std::string name
      * \brief Returns scalar function name
      * \return scalar function name

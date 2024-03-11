@@ -43,10 +43,6 @@ public:
     {
     }
 
-    ~StructuralDynamicsOutput()
-    {
-    }
-
     template<typename ArrayT>
     void output(
       const ArrayT                   & tFreqArray,

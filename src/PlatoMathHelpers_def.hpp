@@ -283,7 +283,7 @@ RowSummedInverseMultiply( const Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOn
 }
 
 void
-getDataAsNonBlock( const Teuchos::RCP<Plato::CrsMatrixType>       & aMatrix,
+getDataAsNonBlock( const Teuchos::RCP<const Plato::CrsMatrixType> & aMatrix,
                          Plato::ScalarVectorT<Plato::OrdinalType> & aMatrixRowMap,
                          Plato::ScalarVectorT<Plato::OrdinalType> & aMatrixColMap,
                          Plato::ScalarVectorT<Plato::Scalar>      & aMatrixValues,

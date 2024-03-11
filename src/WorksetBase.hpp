@@ -30,6 +30,7 @@ protected:
     using ElementType::mNumNodesPerCell;     /*!< number of nodes per element */
     using ElementType::mNumDofsPerCell;      /*!< number of global degrees of freedom, e.g. displacements, per element  */
     using ElementType::mNumLocalDofsPerCell; /*!< number of local degrees of freedom, e.g. plasticity variables, per element  */
+    using ElementType::mNumLocalStatesPerGP; /*!< number of local states per gauss point */
     using ElementType::mNumNodeStatePerNode; /*!< number of pressure states per node  */
     using ElementType::mNumNodesPerFace;
 
@@ -243,7 +244,7 @@ public:
               Plato::ScalarArray3DT<Plato::Scalar> & aLocalStateWS
     ) const
     {
-      Plato::workset_local_state_scalar_scalar<mNumLocalDofsPerCell>(
+      Plato::workset_local_state_scalar_scalar<mNumLocalStatesPerGP>(
               mNumCells, aLocalState, aLocalStateWS);
     }
 
@@ -259,7 +260,7 @@ public:
         const Plato::SpatialDomain                 & aDomain
     ) const
     {
-      Plato::workset_local_state_scalar_scalar<mNumLocalDofsPerCell>(
+      Plato::workset_local_state_scalar_scalar<mNumLocalStatesPerGP>(
               aDomain, aLocalState, aLocalStateWS);
     }
 

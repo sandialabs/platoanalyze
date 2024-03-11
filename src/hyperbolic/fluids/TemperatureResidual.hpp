@@ -80,11 +80,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    virtual ~TemperatureResidual(){}
-
-    /***************************************************************************//**
      * \fn void evaluate
      * \brief Evaluate predictor residual.
      * \param [in]  aWorkSets holds input worksets (e.g. states, control, etc)

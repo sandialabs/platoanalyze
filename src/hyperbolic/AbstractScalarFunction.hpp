@@ -50,9 +50,7 @@ public:
         }
     }
 
-    virtual ~AbstractScalarFunction()
-    {
-    }
+    virtual ~AbstractScalarFunction() = default;
 
     virtual void
     evaluate(

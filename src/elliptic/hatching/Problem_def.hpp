@@ -64,10 +64,6 @@ namespace
     }
 
     template<typename PhysicsType>
-    Problem<PhysicsType>::
-    ~Problem(){}
-
-    template<typename PhysicsType>
     Plato::OrdinalType
     Problem<PhysicsType>::
     numNodes() const

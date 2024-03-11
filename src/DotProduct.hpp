@@ -17,7 +17,6 @@ class DotProduct
 {
 public:
     DotProduct(){}
-    ~DotProduct(){}
 
     template<typename ProductScalarType, typename ViewScalarTypeOne, typename ViewScalarTypeTwo>
     KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType & aCellOrdinal,

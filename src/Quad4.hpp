@@ -22,84 +22,75 @@ class Quad4
 
     static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims-1;
 
-    static inline Plato::Array<mNumGaussPoints>
+    [[nodiscard]] static constexpr Plato::Array<mNumGaussPoints>
     getCubWeights()
     {
-        return Plato::Array<mNumGaussPoints>({
+        return Plato::Array<mNumGaussPoints>{
             Plato::Scalar(1.0), Plato::Scalar(1.0), Plato::Scalar(1.0), Plato::Scalar(1.0)
-        });
+        };
     }
 
-    static inline Plato::Matrix<mNumGaussPoints,mNumSpatialDims>
+    [[nodiscard]] static constexpr Plato::Matrix<mNumGaussPoints,mNumSpatialDims>
     getCubPoints()
     {
-        const Plato::Scalar sqt = 0.57735026918962584208117050366127; // sqrt(1.0/3.0)
-        return Plato::Matrix<mNumGaussPoints,mNumSpatialDims>({
+        constexpr Plato::Scalar sqt = 0.57735026918962584208117050366127; // sqrt(1.0/3.0)
+        return Plato::Matrix<mNumGaussPoints,mNumSpatialDims>{
             -sqt, -sqt,
              sqt, -sqt,
              sqt,  sqt,
             -sqt,  sqt
-        });
+        };
     }
 
-    KOKKOS_INLINE_FUNCTION static Plato::Array<mNumNodesPerCell>
-    basisValues( const Plato::Array<mNumSpatialDims>& aCubPoint )
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
+    auto basisValues( const Plato::Array<mNumSpatialDims>& aCubPoint ) -> Plato::Array<mNumNodesPerCell>
     {
-        auto x=aCubPoint(0);
-        auto y=aCubPoint(1);
+        const auto x=aCubPoint(0);
+        const auto y=aCubPoint(1);
 
-        Plato::Array<mNumNodesPerCell> tN;
-
-        tN(0) = (1-x)*(1-y)/4.0;
-        tN(1) = (1+x)*(1-y)/4.0;
-        tN(2) = (1+x)*(1+y)/4.0;
-        tN(3) = (1-x)*(1+y)/4.0;
-
-        return tN;
+        return Plato::Array<mNumNodesPerCell>
+            {(1-x)*(1-y)/4.0,
+             (1+x)*(1-y)/4.0,
+             (1+x)*(1+y)/4.0,
+             (1-x)*(1+y)/4.0};
     }
 
-    KOKKOS_INLINE_FUNCTION static Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
-    basisGrads( const Plato::Array<mNumSpatialDims>& aCubPoint )
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
+    auto basisGrads( const Plato::Array<mNumSpatialDims>& aCubPoint ) -> Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
     {
-        auto x=aCubPoint(0);
-        auto y=aCubPoint(1);
+        const auto x=aCubPoint(0);
+        const auto y=aCubPoint(1);
 
-        Plato::Matrix<mNumNodesPerCell, mNumSpatialDims> tG;
-
-        tG(0,0) = -(1-y)/4.0; tG(0,1) = -(1-x)/4.0;
-        tG(1,0) =  (1-y)/4.0; tG(1,1) = -(1+x)/4.0;
-        tG(2,0) =  (1+y)/4.0; tG(2,1) =  (1+x)/4.0;
-        tG(3,0) = -(1+y)/4.0; tG(3,1) =  (1-x)/4.0;
-
-        return tG;
+        return Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
+            {-(1-y)/4.0, -(1-x)/4.0,
+              (1-y)/4.0, -(1+x)/4.0,
+              (1+y)/4.0,  (1+x)/4.0,
+             -(1+y)/4.0,  (1-x)/4.0};
     }
 
     template<typename ScalarType>
-    KOKKOS_INLINE_FUNCTION static 
-    ScalarType differentialMeasure(
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
+    auto differentialMeasure(
         const Plato::Matrix<mNumSpatialDims, mNumSpatialDims+1, ScalarType> & aJacobian
-    )
+    ) -> ScalarType
     {
-        ScalarType ax = aJacobian(0,1)*aJacobian(1,2)-aJacobian(0,2)*aJacobian(1,1);
-        ScalarType ay = aJacobian(0,2)*aJacobian(1,0)-aJacobian(0,0)*aJacobian(1,2);
-        ScalarType az = aJacobian(0,0)*aJacobian(1,1)-aJacobian(0,1)*aJacobian(1,0);
+        const ScalarType ax = aJacobian(0,1)*aJacobian(1,2)-aJacobian(0,2)*aJacobian(1,1);
+        const ScalarType ay = aJacobian(0,2)*aJacobian(1,0)-aJacobian(0,0)*aJacobian(1,2);
+        const ScalarType az = aJacobian(0,0)*aJacobian(1,1)-aJacobian(0,1)*aJacobian(1,0);
 
         return sqrt(ax*ax+ay*ay+az*az);
     }
 
     template<typename ScalarType>
-    KOKKOS_INLINE_FUNCTION static 
-    Plato::Array<mNumSpatialDims+1, ScalarType>
-    differentialVector(
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static 
+    auto differentialVector(
         const Plato::Matrix<mNumSpatialDims, mNumSpatialDims+1, ScalarType> & aJacobian
-    )
+    ) -> Plato::Array<mNumSpatialDims+1, ScalarType>
     {
-        Plato::Array<mNumSpatialDims+1, ScalarType> tReturnVec;
-        tReturnVec(0) = aJacobian(0,1)*aJacobian(1,2)-aJacobian(0,2)*aJacobian(1,1);
-        tReturnVec(1) = aJacobian(0,2)*aJacobian(1,0)-aJacobian(0,0)*aJacobian(1,2);
-        tReturnVec(2) = aJacobian(0,0)*aJacobian(1,1)-aJacobian(0,1)*aJacobian(1,0);
-
-        return tReturnVec;
+        return Plato::Array<mNumSpatialDims+1, ScalarType>
+            {aJacobian(0,1)*aJacobian(1,2)-aJacobian(0,2)*aJacobian(1,1),
+             aJacobian(0,2)*aJacobian(1,0)-aJacobian(0,0)*aJacobian(1,2),
+             aJacobian(0,0)*aJacobian(1,1)-aJacobian(0,1)*aJacobian(1,0)};
     }
 };
 

@@ -111,15 +111,6 @@ namespace Plato
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    AugLagStressCriterionQuadratic<EvaluationType>::
-    ~AugLagStressCriterionQuadratic()
-    {
-    }
-
-    /******************************************************************************//**
      * \brief Return augmented Lagrangian penalty multiplier
      * \return augmented Lagrangian penalty multiplier
     **********************************************************************************/
@@ -256,18 +247,24 @@ namespace Plato
 
         // ****** COMPUTE AUGMENTED LAGRANGIAN FUNCTION ******
         Plato::Scalar tLagrangianMultiplier = static_cast<Plato::Scalar>(1.0 / tNumCells);
-        Kokkos::parallel_for("elastic energy", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+
+        Kokkos::parallel_for("elastic energy", Kokkos::RangePolicy<>(0, tNumCells), 
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
         {
             const ResultT tLocalMeasureValueOverLimit = tLocalMeasureValue(iCellOrdinal) / tLocalMeasureValueLimit;
             const ResultT tLocalMeasureValueOverLimitMinusOne = tLocalMeasureValueOverLimit - static_cast<Plato::Scalar>(1.0);
             const ResultT tConstraintValue = ( //pow(tLocalMeasureValueOverLimitMinusOne, 4) +
                                                pow(tLocalMeasureValueOverLimitMinusOne, 2) );
 
-            auto tCubPoint = tCubPoints(iGpOrdinal);
+            ControlT tDensity(0.0);
+            for(Plato::OrdinalType iGpOrdinal=0; iGpOrdinal<tNumPoints; ++iGpOrdinal)
+            {
+                auto tCubPoint = tCubPoints(iGpOrdinal);
+                auto tBasisValues = ElementType::basisValues(tCubPoint);
+                tDensity += Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
+            }
+            tDensity /= tNumPoints;
 
-            auto tBasisValues = ElementType::basisValues(tCubPoint);
-            ControlT tDensity = Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
             ControlT tMaterialPenalty = tSIMP(tDensity);
             const ResultT tTrialConstraintValue = tMaterialPenalty * tConstraintValue;
             const ResultT tTrueConstraintValue = tLocalMeasureValueOverLimit > static_cast<ResultT>(1.0) ?
@@ -277,9 +274,8 @@ namespace Plato
             const ResultT tResult = tLagrangianMultiplier * ( ( tLagrangeMultipliers(iCellOrdinal) *
                                     tTrueConstraintValue ) + ( static_cast<Plato::Scalar>(0.5) * tAugLagPenalty *
                                     tTrueConstraintValue * tTrueConstraintValue ) );
-            Kokkos::atomic_add(&aResultWS(iCellOrdinal), tResult);
-
-            Kokkos::atomic_add(&tOutputPenalizedLocalMeasure(iCellOrdinal), tMaterialPenalty * tLocalMeasureValue(iCellOrdinal));
+            aResultWS(iCellOrdinal) = tResult;
+            tOutputPenalizedLocalMeasure(iCellOrdinal) = tMaterialPenalty * tLocalMeasureValue(iCellOrdinal);
         });
 
          Plato::toMap(mDataMap, tOutputPenalizedLocalMeasure, mLocalMeasureEvaluationType->getName(), mSpatialDomain);
@@ -318,8 +314,8 @@ namespace Plato
         auto tCubWeights = ElementType::getCubWeights();
         auto tNumPoints = tCubWeights.size();
 
-        Kokkos::parallel_for("elastic energy", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        Kokkos::parallel_for("elastic energy", Kokkos::RangePolicy<>(0, tNumCells), 
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
         {
             // Compute local constraint residual
             const Plato::Scalar tLocalMeasureValueOverLimit = tLocalMeasureValue(iCellOrdinal) / tLocalMeasureValueLimit;
@@ -327,10 +323,15 @@ namespace Plato
             const Plato::Scalar tConstraintValue = ( //pow(tLocalMeasureValueOverLimitMinusOne, 4) +
                                                pow(tLocalMeasureValueOverLimitMinusOne, 2) );
 
-            auto tCubPoint = tCubPoints(iGpOrdinal);
+            Plato::Scalar tDensity(0.0);
+            for(Plato::OrdinalType iGpOrdinal=0; iGpOrdinal<tNumPoints; ++iGpOrdinal)
+            {
+                auto tCubPoint = tCubPoints(iGpOrdinal);
+                auto tBasisValues = ElementType::basisValues(tCubPoint);
+                tDensity += Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
+            }
+            tDensity /= tNumPoints;
 
-            auto tBasisValues = ElementType::basisValues(tCubPoint);
-            Plato::Scalar tDensity = Plato::cell_density<mNumNodesPerCell>(iCellOrdinal, aControlWS, tBasisValues);
             Plato::Scalar tMaterialPenalty = tSIMP(tDensity);
             const Plato::Scalar tTrialConstraintValue = tMaterialPenalty * tConstraintValue;
             const Plato::Scalar tTrueConstraintValue = tLocalMeasureValueOverLimit > static_cast<Plato::Scalar>(1.0) ?

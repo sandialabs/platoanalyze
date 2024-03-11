@@ -57,11 +57,6 @@ public:
     { return; }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    virtual ~CriterionMeanTemperature(){ return; }
-
-    /***************************************************************************//**
      * \fn std::string name
      * \brief Returns scalar function name
      * \return scalar function name

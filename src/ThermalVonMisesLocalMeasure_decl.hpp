@@ -50,18 +50,13 @@ public:
     );
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    virtual ~ThermalVonMisesLocalMeasure();
-
-    /******************************************************************************//**
      * \brief Evaluate vonmises local measure
      * \param [in] aState 2D container of state variables
      * \param [in] aConfig 3D container of configuration/coordinates
      * \param [in] aDataMap map to stored data
      * \param [out] aResult 1D container of cell local measure values
     **********************************************************************************/
-    virtual void
+    void
     operator()(
         const Plato::ScalarMultiVectorT <StateT>   & aStateWS,
         const Plato::ScalarMultiVectorT <ControlT> & aControlWS,

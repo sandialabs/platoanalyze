@@ -174,7 +174,6 @@ Teuchos::ParameterList input_file_parsing(
   const std::string input_config_doc = "Name of the input XML file to use.";
 #endif
   My_CLP.setOption("input-config", &input_config, input_config_doc.c_str());
-
   Teuchos::CommandLineProcessor::EParseCommandLineReturn parseReturn =
       Teuchos::CommandLineProcessor::PARSE_ERROR;
   parseReturn = My_CLP.parse(argc, argv);

@@ -22,7 +22,7 @@ using CrsRowsColumnsValues = std::tuple<
     typename Plato::CrsMatrix<Ordinal>::ScalarVectorT>;
 
 template<typename Ordinal>
-CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(CrsMatrix<Ordinal>& aMatrix);
+CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(const CrsMatrix<Ordinal>& aMatrix);
 
 template<typename Ordinal>
 std::size_t crs_matrix_row_column_hash(
@@ -93,12 +93,8 @@ using ScalarVectorOnHost = typename Plato::CrsMatrix<Ordinal>::ScalarVectorT::Ho
 template<typename KokkosViewLike>
 typename KokkosViewLike::HostMirror host_mirror(const KokkosViewLike& aViewLike)
 {
-#if defined(KOKKOS_ENABLE_CUDA)
     auto tViewLikeOnHost = Kokkos::create_mirror_view(aViewLike);
     Kokkos::deep_copy(tViewLikeOnHost, aViewLike);
-#else
-    typename KokkosViewLike::HostMirror tViewLikeOnHost(aViewLike);
-#endif
     return tViewLikeOnHost;
 }
 
@@ -160,7 +156,7 @@ bool for_each_row_column(
 }
 
 template<typename Ordinal>
-CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(CrsMatrix<Ordinal>& aMatrix)
+CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(const CrsMatrix<Ordinal>& aMatrix)
 {
     typename Plato::CrsMatrix<Ordinal>::RowMapVectorT tRowBegin;
     typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT tColumns;

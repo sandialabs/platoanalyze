@@ -115,18 +115,9 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageVonMisesStressAxial_
     auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, 1000.0, tTolerance);
 
-    auto tCriterionGrad = tProblem.criterionGradient(tControls, tSolution, tCriterionName);
-    std::vector<Plato::Scalar> tGold = {
-      7.50000e+02, 1.87500e+02, 1.87500e+02, 1.25000e+02,
-      3.75000e+02, 3.12500e+02, 3.12500e+02, 7.50000e+02};
-    auto tHostGrad = Kokkos::create_mirror(tCriterionGrad);
-    Kokkos::deep_copy(tHostGrad, tCriterionGrad);
-    TEST_ASSERT( tHostGrad.size() == static_cast<Plato::OrdinalType>(tGold.size() ));
-    for(Plato::OrdinalType tIndex = 0; tIndex < tHostGrad.size(); tIndex++)
-    {
-        //printf("%12.5e\n", tHostGrad(tIndex));
-        TEST_FLOATING_EQUALITY(tHostGrad(tIndex), tGold[tIndex], tTolerance);
-    }
+    auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
+    const Plato::Scalar tUpperBound = 1e-6;
+    TEST_ASSERT(tApproxError < tUpperBound);
 
     // 6. Output Data
     if (tOutputData)
@@ -241,7 +232,6 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageVonMisesStressShear_
     Plato::blas1::fill(tDensity, tControls);
     auto tSolution = tProblem.solution(tControls);
 
-
     // 5. Test results
     Plato::Scalar tSimpPenalty = 1.0e-8 + (1.0 - 1.0e-8) * std::pow(tDensity, 3);
     constexpr Plato::Scalar tTolerance = 1e-4;
@@ -249,18 +239,9 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageVonMisesStressShear_
     auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, tSimpPenalty*1443.3756727, tTolerance);
 
-    auto tCriterionGrad = tProblem.criterionGradient(tControls, tSolution, tCriterionName);
-    std::vector<Plato::Scalar> tGold = {
-      8.76851e+02, 2.19213e+02, 2.19213e+02, 1.46142e+02,
-      4.38425e+02, 3.65354e+02, 3.65354e+02, 8.76851e+02};
-    auto tHostGrad = Kokkos::create_mirror(tCriterionGrad);
-    Kokkos::deep_copy(tHostGrad, tCriterionGrad);
-    TEST_ASSERT( tHostGrad.size() == static_cast<Plato::OrdinalType>(tGold.size() ));
-    for(Plato::OrdinalType tIndex = 0; tIndex < tHostGrad.size(); tIndex++)
-    {
-        //printf("%12.5e\n", tHostGrad(tIndex));
-        TEST_FLOATING_EQUALITY(tHostGrad(tIndex), tGold[tIndex], tTolerance);
-    }
+    auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
+    const Plato::Scalar tUpperBound = 1e-6;
+    TEST_ASSERT(tApproxError < tUpperBound);
 
     // 6. Output Data
     if (tOutputData)
@@ -472,18 +453,9 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageTensileEnergyAxial_3
     auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, 46.666666666666, tTolerance);
 
-    auto tCriterionGrad = tProblem.criterionGradient(tControls, tSolution, tCriterionName);
-    std::vector<Plato::Scalar> tGold = {
-      3.50000e+01, 8.75000e+00, 8.75000e+00, 5.83333e+00,
-      1.75000e+01, 1.45833e+01, 1.45833e+01, 3.50000e+01};
-    auto tHostGrad = Kokkos::create_mirror(tCriterionGrad);
-    Kokkos::deep_copy(tHostGrad, tCriterionGrad);
-    TEST_ASSERT( tHostGrad.size() == static_cast<Plato::OrdinalType>(tGold.size() ));
-    for(Plato::OrdinalType tIndex = 0; tIndex < tHostGrad.size(); tIndex++)
-    {
-        //printf("%12.5e\n", tHostGrad(tIndex));
-        TEST_FLOATING_EQUALITY(tHostGrad(tIndex), tGold[tIndex], tTolerance);
-    }
+    auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
+    const Plato::Scalar tUpperBound = 1e-6;
+    TEST_ASSERT(tApproxError < tUpperBound);
 
     // 6. Output Data
     if (tOutputData)
@@ -606,18 +578,9 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageTensileEnergyShear_3
     auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, tSimpPenalty*41.6666666666, tTolerance);
 
-    auto tCriterionGrad = tProblem.criterionGradient(tControls, tSolution, tCriterionName);
-    std::vector<Plato::Scalar> tGold = {
-      2.53125e+01, 6.32812e+00, 6.32812e+00, 4.21875e+00,
-      1.26562e+01, 1.05469e+01, 1.05469e+01, 2.53125e+01};
-    auto tHostGrad = Kokkos::create_mirror(tCriterionGrad);
-    Kokkos::deep_copy(tHostGrad, tCriterionGrad);
-    TEST_ASSERT( tHostGrad.size() == static_cast<Plato::OrdinalType>(tGold.size() ));
-    for(Plato::OrdinalType tIndex = 0; tIndex < tHostGrad.size(); tIndex++)
-    {
-        //printf("%12.5e\n", tHostGrad(tIndex));
-        TEST_FLOATING_EQUALITY(tHostGrad(tIndex), tGold[tIndex], tTolerance);
-    }
+    auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
+    const Plato::Scalar tUpperBound = 1e-6;
+    TEST_ASSERT(tApproxError < tUpperBound);
 
     // 6. Output Data
     if (tOutputData)

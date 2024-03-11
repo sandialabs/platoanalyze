@@ -93,15 +93,6 @@ namespace Plato
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    TensileEnergyDensityLocalMeasure<EvaluationType>::
-    ~TensileEnergyDensityLocalMeasure()
-    {
-    }
-
-    /******************************************************************************//**
      * \brief Evaluate tensile energy density local measure
      * \param [in] aState 2D container of state variables
      * \param [in] aControl 2D container of control variables
@@ -135,10 +126,12 @@ namespace Plato
         const Plato::Scalar tLameLambda = mLameConstantLambda;
         const Plato::Scalar tLameMu     = mLameConstantMu;
 
+        Plato::ScalarVectorT<ConfigT> tCellVolume("Cell Volume", tNumCells);
+
         Kokkos::parallel_for("compute stress", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
-            ConfigT tVolume(0.0);
+            ConfigT tDetJ(0.0);
 
             Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, ConfigT> tGradient;
 
@@ -146,11 +139,20 @@ namespace Plato
             Plato::Array<ElementType::mNumSpatialDims, StrainT> tPrincipalStrain(0.0);
 
             auto tCubPoint = tCubPoints(iGpOrdinal);
+            auto tCubWeight = tCubWeights(iGpOrdinal);
 
-            tComputeGradientMatrix(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tVolume);
+            tComputeGradientMatrix(iCellOrdinal, tCubPoint, aConfigWS, tGradient, tDetJ);
             tComputeCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
             tComputeEigenvalues(tStrain, tPrincipalStrain, true);
-            tComputeTensileEnergyDensity(iCellOrdinal, tPrincipalStrain, tLameLambda, tLameMu, aResultWS);
+            ResultT tWeightTimesDet = tCubWeight*tDetJ;
+            tComputeTensileEnergyDensity(iCellOrdinal, tPrincipalStrain, tLameLambda, tLameMu, tWeightTimesDet, aResultWS);
+            Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tCubWeight*tDetJ);
+        });
+
+        Kokkos::parallel_for("compute cell quantities", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
+        {
+            aResultWS(iCellOrdinal) /= tCellVolume(iCellOrdinal);
         });
     }
 }

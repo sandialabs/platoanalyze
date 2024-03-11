@@ -78,12 +78,6 @@ public:
     }
 
     /**************************************************************************/
-    ~ExpVolume()
-    {
-    }
-    /**************************************************************************/
-
-    /**************************************************************************/
     void evaluate(const Plato::ScalarMultiVectorT<StateScalarType> &,
                   const Plato::ScalarMultiVectorT<ControlScalarType> & aControl,
                   const Plato::ScalarArray3DT<ConfigScalarType> & aConfig,

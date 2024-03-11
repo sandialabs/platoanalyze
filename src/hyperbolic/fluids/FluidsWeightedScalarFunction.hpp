@@ -78,11 +78,6 @@ public:
     }
 
     /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    virtual ~WeightedScalarFunction(){}
-
-    /******************************************************************************//**
      * \brief Append scalar criterion to list.
      * \param [in] aFunc   scalar criterion
      * \param [in] aTag    scalar criterion tag/name

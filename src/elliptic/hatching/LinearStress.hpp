@@ -58,34 +58,6 @@ public:
       mCellStiffness  (aMaterialModel->getStiffnessMatrix()),
       mReferenceStrain(aMaterialModel->getReferenceStrain()) {}
 
-#ifdef WHAT_USES_THIS_
-    /******************************************************************************//**
-     * \brief Compute the Cauchy stress tensor
-     * \param [in]  aCellOrdinal element ordinal
-     * \param [out] aCauchyStress Cauchy stress tensor
-     * \param [in]  aSmallStrain Infinitesimal strain tensor
-    **********************************************************************************/
-    KOKKOS_INLINE_FUNCTION void
-    operator()(Plato::OrdinalType aCellOrdinal,
-               Plato::ScalarMultiVectorT<ResultT> const& aCauchyStress,
-               Plato::ScalarMultiVectorT<StrainT> const& aSmallStrain) const
-    {
-        // Method used to compute the stress and called from within a
-        // Kokkos parallel_for.
-        for(Plato::OrdinalType tVoigtIndex_I = 0; tVoigtIndex_I < mNumVoigtTerms; tVoigtIndex_I++)
-        {
-            aCauchyStress(aCellOrdinal, tVoigtIndex_I) = 0.0;
-
-            for(Plato::OrdinalType tVoigtIndex_J = 0; tVoigtIndex_J < mNumVoigtTerms; tVoigtIndex_J++)
-            {
-                aCauchyStress(aCellOrdinal, tVoigtIndex_I) +=
-                  (aSmallStrain(aCellOrdinal, tVoigtIndex_J) - mReferenceStrain(tVoigtIndex_J)) *
-                  mCellStiffness(tVoigtIndex_I, tVoigtIndex_J);
-            }
-        }
-    }
-#endif
-
     /******************************************************************************//**
      * \brief Compute Cauchy stress tensor
      * \param [in]  aCellOrdinal element ordinal

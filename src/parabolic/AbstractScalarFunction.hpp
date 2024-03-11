@@ -83,7 +83,7 @@ public:
     /******************************************************************************//**
      * \brief Destructor
     **********************************************************************************/
-    virtual ~AbstractScalarFunction() {}
+    virtual ~AbstractScalarFunction() = default;
 
     /******************************************************************************//**
      * \brief Evaluate time-dependent scalar function

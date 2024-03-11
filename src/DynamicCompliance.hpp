@@ -112,12 +112,6 @@ public:
         mCellStiffness = tDefaultMaterialModel.getStiffnessMatrix();
     }
 
-    /**************************************************************************/
-    virtual ~DynamicCompliance()
-    {
-    }
-    /**************************************************************************/
-
     /*************************************************************************
      * Evaluate f(u,z)=\frac{1}{2}u^{T}(K(z) - \omega^2 M(z))u, where u denotes
      * states, z denotes controls, K denotes the stiffness matrix and M denotes

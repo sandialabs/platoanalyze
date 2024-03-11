@@ -15,7 +15,7 @@ namespace Parabolic
 class ScalarFunctionBase
 {
 public:
-    virtual ~ScalarFunctionBase(){}
+    virtual ~ScalarFunctionBase() = default;
 
     /******************************************************************************//**
      * \brief Return function name

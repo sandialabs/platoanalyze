@@ -26,7 +26,7 @@ class CrsLinearProblem
  public:
   CrsLinearProblem(const Matrix &Aa, Vector &ex, const Vector &be)
       : _A(Aa), _x(ex), _b(be) {}
-  virtual ~CrsLinearProblem(){}
+  virtual ~CrsLinearProblem() = default;
 
   Matrix &A() { return _A; }
   Vector &b() { return _b; }

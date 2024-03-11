@@ -41,10 +41,6 @@ public:
     }
     /**************************************************************************/
 
-    ~BodyLoad()
-    {
-    }
-
     /**************************************************************************/
     template<typename StateScalarType, typename ControlScalarType, typename ConfigScalarType, typename ResultScalarType>
     void

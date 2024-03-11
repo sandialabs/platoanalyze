@@ -29,7 +29,7 @@ namespace Fluids
 class CriterionBase
 {
 public:
-    virtual ~CriterionBase(){}
+    virtual ~CriterionBase() = default;
 
     /***************************************************************************//**
      * \fn std::string name

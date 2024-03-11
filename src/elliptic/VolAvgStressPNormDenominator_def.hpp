@@ -86,7 +86,7 @@ namespace Elliptic
         auto tBasisValues = ElementType::basisValues(tCubPoint);
         applyWeighting(iCellOrdinal, aControl, tBasisValues, tWeightedOne);
 
-        Kokkos::atomic_add(&tCellWeights(iCellOrdinal, 0), tWeightedOne);
+        Kokkos::atomic_add(&tCellWeights(iCellOrdinal, 0), tWeightedOne/tNumPoints);
 
       });
 

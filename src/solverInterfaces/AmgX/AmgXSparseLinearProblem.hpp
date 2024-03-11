@@ -464,6 +464,7 @@ namespace lgr {
       AMGX_SAFE_CALL(AMGX_finalize_plugins());
       AMGX_SAFE_CALL(AMGX_finalize());
     }
+
     static std::string getConfigString(int aMaxIters = 1000)
     {
       std::string configString;

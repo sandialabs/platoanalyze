@@ -76,14 +76,6 @@ public:
 
     /**************************************************************************//**
      *
-     * \brief Destructor
-     *        Destructor for class Plato::RayleighDamping.
-     *
-     *****************************************************************************/
-    ~RayleighDamping(){}
-
-    /**************************************************************************//**
-     *
      * \brief Compute element (i.e. cell) damping forces.
      *        \param aCellOrdinal      element index
      *        \param aStiffPropDamping 2D stiffness proportional damping forces array

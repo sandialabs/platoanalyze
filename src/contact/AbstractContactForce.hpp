@@ -9,7 +9,7 @@ namespace Contact
 {
 
 template<typename EvaluationType>
-class AbstractContactForce : public EvaluationType::ElementType
+class AbstractContactForce
 {
 protected:
     using StateType  = typename EvaluationType::StateScalarType;  

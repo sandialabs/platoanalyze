@@ -70,8 +70,6 @@ public:
       Comm::Machine            aMachine
     );
 
-    ~Problem();
-
     Plato::OrdinalType numNodes() const;
 
     Plato::OrdinalType numCells() const;

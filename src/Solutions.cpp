@@ -15,7 +15,7 @@ Solutions::Solutions
  std::string aPDE) :
     mPDE(aPDE),
     mPhysics(aPhysics)
-{return;}
+{}
 
 std::string Solutions::pde() const
 {

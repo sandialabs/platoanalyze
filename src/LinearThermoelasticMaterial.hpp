@@ -96,7 +96,6 @@ LinearThermoelasticMaterial(const Teuchos::ParameterList& paramList)
 {
   public:
     IsotropicLinearThermoelasticMaterial(const Teuchos::ParameterList& paramList);
-    virtual ~IsotropicLinearThermoelasticMaterial(){}
 };
 
 /******************************************************************************/
@@ -109,7 +108,6 @@ LinearThermoelasticMaterial(const Teuchos::ParameterList& paramList)
 {
   public:
     CubicLinearThermoelasticMaterial(const Teuchos::ParameterList& paramList);
-    virtual ~CubicLinearThermoelasticMaterial(){}
 };
 
 /******************************************************************************/

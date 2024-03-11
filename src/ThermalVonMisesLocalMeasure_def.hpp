@@ -29,16 +29,6 @@ namespace Plato
         mMaterialModel = tFactory.create(mSpatialDomain.getMaterialName());
     }
 
-
-    /******************************************************************************//**
-     * \brief Destructor
-     **********************************************************************************/
-    template<typename EvaluationType>
-    ThermalVonMisesLocalMeasure<EvaluationType>::
-    ~ThermalVonMisesLocalMeasure()
-    {
-    }
-
     /******************************************************************************//**
      * \brief Evaluate vonmises local measure
      * \param [in] aState 2D container of state variables

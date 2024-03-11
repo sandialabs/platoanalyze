@@ -90,7 +90,7 @@ public:
     /******************************************************************************//**
      * \brief Abstract scalar function destructor
     **********************************************************************************/
-    virtual ~AbstractScalarFunction(){}
+    virtual ~AbstractScalarFunction() = default;
 
     /******************************************************************************//**
      * \brief Evaluate abstract scalar function

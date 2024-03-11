@@ -1,5 +1,6 @@
 #include <PlatoTestHelpers.hpp>
 
+#include <Teuchos_XMLParameterListHelpers.hpp>
 
 #include <AnalyzeMacros.hpp>
 
@@ -198,6 +199,35 @@ to_full(Teuchos::RCP<Plato::CrsMatrixType> aInMatrix) {
     }
   }
   return retMatrix;
+}
+
+const Teuchos::RCP<Teuchos::ParameterList> getParameterListForHelmholtzTest() {
+  return
+    Teuchos::getParametersFromXmlString(
+    "<ParameterList name='Plato Problem'>"
+    "  <ParameterList name='Spatial Model'>"
+    "    <ParameterList name='Domains'>"
+    "      <ParameterList name='Design Volume'>"
+    "        <Parameter name='Element Block' type='string' value='body'/>"
+    "        <Parameter name='Material Model' type='string' value='Unobtainium'/>"
+    "      </ParameterList>"
+    "    </ParameterList>"
+    "  </ParameterList>"
+    "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>"
+    "  <Parameter name='Physics' type='string' value='Helmholtz Filter'/>"
+    "  <ParameterList name='Parameters'>"
+    "    <Parameter name='Length Scale' type='double' value='0.10'/>"
+    "  </ParameterList>"
+    "</ParameterList>"
+  );
+}
+
+const Teuchos::RCP<Teuchos::ParameterList> getSolverParametersForHelmholtzTest() {
+  return 
+    Teuchos::getParametersFromXmlString(
+    "<ParameterList name='Linear Solver'>"
+    "</ParameterList>"
+  );
 }
 } // namespace TestHelpers
 } // namespace Plato

@@ -27,7 +27,7 @@ private:
     using ResultT = typename EvaluationT::ResultScalarType; /*!< result FAD evaluation type */
 
 public:
-    virtual ~AbstractVolumeIntegrand(){}
+    virtual ~AbstractVolumeIntegrand() = default;
     virtual void evaluate(const Plato::WorkSets & aWorkSets, Plato::ScalarMultiVectorT<ResultT> & aResultWS) const = 0;
 };
 // class AbstractVolumeIntegrand

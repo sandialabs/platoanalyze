@@ -31,10 +31,8 @@ public:
     {
     }
     /******************************************************************************/
-    virtual ~AbstractLocalVectorFunctionInc()
+    virtual ~AbstractLocalVectorFunctionInc() = default;
     /******************************************************************************/
-    {
-    }
 
     /****************************************************************************//**
     * \brief Return reference to mesh data base 

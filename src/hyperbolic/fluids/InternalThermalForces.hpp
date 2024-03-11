@@ -98,11 +98,6 @@ public:
     }
 
     /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    ~InternalThermalForces(){}
-
-    /***************************************************************************//**
      * \brief Evaluate internal thermal forces.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [in/out] aResultWS result/output workset
@@ -301,11 +296,6 @@ public:
         mEffectiveThermalProperty = Plato::Fluids::calculate_effective_conductivity(tMyMaterialName, aInputs);
         mStabilizationMultiplier = Plato::Fluids::stabilization_constant("Energy Conservation", aInputs);
     }
-
-    /***************************************************************************//**
-     * \brief Destructor
-     ******************************************************************************/
-    ~InternalThermalForces(){}
 
     /***************************************************************************//**
      * \brief Evaluate internal thermal forces. This implementation is only used for

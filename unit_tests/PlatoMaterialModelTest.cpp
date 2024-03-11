@@ -1638,44 +1638,52 @@ TEUCHOS_UNIT_TEST(MaterialModelTests, CubicVoigtField_LameRepresentation_NonUnif
     auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
     Kokkos::deep_copy(tStiffness_host, tStiffness);
 
+    std::vector<Plato::Scalar>
+        tGP = {0.585410196624969, 0.138196601125011, 0.138196601125011};
+
+    std::vector<Plato::Scalar> tN = {1.0-tGP[0]-tGP[1]-tGP[2], tGP[0], tGP[1], tGP[2]};
+    auto tC = tKnownControl[0];
+    Plato::Scalar tGPControl = tN[0]*tC[0] + tN[1]*tC[1] + tN[2]*tC[2] + tN[3]*tC[3];
+    Plato::Scalar tF = (1.0+tGPControl);
+
     constexpr Plato::Scalar tTolerance = 1e-12;
 
-    TEST_FLOATING_EQUALITY(1490.22, tStiffness_host(0,0,0,0), tTolerance);
-    TEST_FLOATING_EQUALITY(-181.11, tStiffness_host(0,0,0,1), tTolerance);
-    TEST_FLOATING_EQUALITY(-181.11, tStiffness_host(0,0,0,2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,0,3), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,0,4), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,0,5), tTolerance);
-    TEST_FLOATING_EQUALITY(-181.11, tStiffness_host(0,0,1,0), tTolerance);
-    TEST_FLOATING_EQUALITY(1490.22, tStiffness_host(0,0,1,1), tTolerance);
-    TEST_FLOATING_EQUALITY(-181.11, tStiffness_host(0,0,1,2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,1,3), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,1,4), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,1,5), tTolerance);
-    TEST_FLOATING_EQUALITY(-181.11, tStiffness_host(0,0,2,0), tTolerance);
-    TEST_FLOATING_EQUALITY(-181.11, tStiffness_host(0,0,2,1), tTolerance);
-    TEST_FLOATING_EQUALITY(1490.22, tStiffness_host(0,0,2,2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,2,3), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,2,4), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,2,5), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,3,0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,3,1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,3,2), tTolerance);
-    TEST_FLOATING_EQUALITY(12.555,  tStiffness_host(0,0,3,3), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,3,4), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,3,5), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,4,0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,4,1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,4,2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,4,3), tTolerance);
-    TEST_FLOATING_EQUALITY(12.555,  tStiffness_host(0,0,4,4), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,4,5), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,5,0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,5,1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,5,2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,5,3), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0,     tStiffness_host(0,0,5,4), tTolerance);
-    TEST_FLOATING_EQUALITY(12.555,  tStiffness_host(0,0,5,5), tTolerance);
+    TEST_FLOATING_EQUALITY( tF*993.48, tStiffness_host(0,0,0,0), tTolerance);
+    TEST_FLOATING_EQUALITY(-tF*120.74, tStiffness_host(0,0,0,1), tTolerance);
+    TEST_FLOATING_EQUALITY(-tF*120.74, tStiffness_host(0,0,0,2), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,0,3), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,0,4), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,0,5), tTolerance);
+    TEST_FLOATING_EQUALITY(-tF*120.74, tStiffness_host(0,0,1,0), tTolerance);
+    TEST_FLOATING_EQUALITY( tF*993.48, tStiffness_host(0,0,1,1), tTolerance);
+    TEST_FLOATING_EQUALITY(-tF*120.74, tStiffness_host(0,0,1,2), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,1,3), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,1,4), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,1,5), tTolerance);
+    TEST_FLOATING_EQUALITY(-tF*120.74, tStiffness_host(0,0,2,0), tTolerance);
+    TEST_FLOATING_EQUALITY(-tF*120.74, tStiffness_host(0,0,2,1), tTolerance);
+    TEST_FLOATING_EQUALITY( tF*993.48, tStiffness_host(0,0,2,2), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,2,3), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,2,4), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,2,5), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,3,0), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,3,1), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,3,2), tTolerance);
+    TEST_FLOATING_EQUALITY(tF*8.37,    tStiffness_host(0,0,3,3), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,3,4), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,3,5), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,4,0), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,4,1), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,4,2), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,4,3), tTolerance);
+    TEST_FLOATING_EQUALITY(tF*8.37,    tStiffness_host(0,0,4,4), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,4,5), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,5,0), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,5,1), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,5,2), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,5,3), tTolerance);
+    TEST_FLOATING_EQUALITY(0.0,        tStiffness_host(0,0,5,4), tTolerance);
+    TEST_FLOATING_EQUALITY(tF*8.37,    tStiffness_host(0,0,5,5), tTolerance);
 }
 
 TEUCHOS_UNIT_TEST(MaterialModelTests, TetragonalSkewField_NoDensityDependence)
@@ -1749,16 +1757,24 @@ TEUCHOS_UNIT_TEST(MaterialModelTests, TetragonalSkewField_NonUniformDensity)
     auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
     Kokkos::deep_copy(tStiffness_host, tStiffness);
 
+    std::vector<Plato::Scalar>
+        tGP = {0.585410196624969, 0.138196601125011, 0.138196601125011};
+
+    std::vector<Plato::Scalar> tN = {1.0-tGP[0]-tGP[1]-tGP[2], tGP[0], tGP[1], tGP[2]};
+    auto tC = tKnownControl[0];
+    Plato::Scalar tGPControl = tN[0]*tC[0] + tN[1]*tC[1] + tN[2]*tC[2] + tN[3]*tC[3];
+    Plato::Scalar tStiff = (1.0+tGPControl) * 1.8e-4;
+
     constexpr Plato::Scalar tTolerance = 1e-12;
-    TEST_FLOATING_EQUALITY(2.7e-4, tStiffness_host(0,0,0,0), tTolerance);
+    TEST_FLOATING_EQUALITY(tStiff, tStiffness_host(0,0,0,0), tTolerance);
     TEST_FLOATING_EQUALITY(0.0,    tStiffness_host(0,0,0,1), tTolerance);
     TEST_FLOATING_EQUALITY(0.0,    tStiffness_host(0,0,0,2), tTolerance);
     TEST_FLOATING_EQUALITY(0.0,    tStiffness_host(0,0,1,0), tTolerance);
-    TEST_FLOATING_EQUALITY(2.7e-4, tStiffness_host(0,0,1,1), tTolerance);
+    TEST_FLOATING_EQUALITY(tStiff, tStiffness_host(0,0,1,1), tTolerance);
     TEST_FLOATING_EQUALITY(0.0,    tStiffness_host(0,0,1,2), tTolerance);
     TEST_FLOATING_EQUALITY(0.0,    tStiffness_host(0,0,2,0), tTolerance);
     TEST_FLOATING_EQUALITY(0.0,    tStiffness_host(0,0,2,1), tTolerance);
-    TEST_FLOATING_EQUALITY(2.7e-4, tStiffness_host(0,0,2,2), tTolerance);
+    TEST_FLOATING_EQUALITY(tStiff, tStiffness_host(0,0,2,2), tTolerance);
 }
 
 /******************************************************************************/

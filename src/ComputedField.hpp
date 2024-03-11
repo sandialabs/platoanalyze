@@ -95,8 +95,6 @@ class ComputedField
     tExpEval.clear_storage();
   }
 
-  ~ComputedField(){}
-
 //  /******************************************************************************/
 //  void get(Plato::ScalarMultiVectorT<ScalarValue> aValues)
 //  /******************************************************************************/

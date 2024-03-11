@@ -9,6 +9,7 @@
 #ifdef PLATO_TACHO
 #include "alg/TachoLinearSolver.hpp"
 #endif
+#include "alg/UMFPACKLinearSolver.hpp"
 
 namespace Plato {
 
@@ -23,6 +24,8 @@ std::string determine_solver_stack(const Teuchos::ParameterList& tSolverParams)
   {
 #ifdef PLATO_TACHO
       tSolverStack = "Tacho";
+#elif PLATO_UMFPACK
+      tSolverStack = "UMFPACK";
 #elif HAVE_AMGX
       tSolverStack = "AmgX";
 #elif PLATO_TPETRA
@@ -84,6 +87,15 @@ SolverFactory::create(
 #else
       ANALYZE_THROWERR("Not compiled with Tacho");
 #endif
+  }
+  else if(tLowerSolverStack == "umfpack")
+  {
+#ifdef PLATO_UMFPACK
+      return std::make_shared<Plato::UMFPACK::UMFPACKLinearSolver>(mSolverParams, aMPCs);
+#else
+      ANALYZE_THROWERR("Not compiled with UMFPACK");
+#endif
+
   }
   ANALYZE_THROWERR("Requested solver stack not found");
 }
