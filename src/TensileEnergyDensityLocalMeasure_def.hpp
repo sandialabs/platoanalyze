@@ -116,7 +116,7 @@ namespace Plato
 
         Plato::SmallStrain<ElementType> tComputeCauchyStrain;
         Plato::ComputeGradientMatrix<ElementType> tComputeGradientMatrix;
-        Plato::Eigenvalues<mNumSpatialDims, mNumVoigtTerms> tComputeEigenvalues;
+        Plato::Eigenvalues<mNumSpatialDims, mNumVoigtTerms> tComputeEigenvalues(5);
         Plato::TensileEnergyDensity<mNumSpatialDims> tComputeTensileEnergyDensity;
 
         auto tCubPoints = ElementType::getCubPoints();
