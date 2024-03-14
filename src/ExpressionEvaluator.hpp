@@ -1337,12 +1337,15 @@ parse_expression( const char* expression )
 
   std::stringstream errorMsg;
 
-  // Preserve the incoming expression.
-  const char* expPtr = expression;
 
   // Get the expression length plus a buffer of 16 more to account for
   // implied operations such a multiplication.
-  const Plato::OrdinalType expLength = strlen(expPtr) + 16;
+  const Plato::OrdinalType expLength = strlen(expression) + 16;
+
+  // Preserve the incoming expression.
+  auto tPaddedExpression = std::unique_ptr<char[]>(new char[expLength]);
+  strcpy(tPaddedExpression.get(), expression);
+  const char* expPtr   = tPaddedExpression.get();
 
   // Create the node array - worst case one for each character in the
   // expression. Will reduce to the actual needed at the end.

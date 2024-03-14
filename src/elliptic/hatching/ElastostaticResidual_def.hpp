@@ -3,7 +3,6 @@
 #include "ToMap.hpp"
 #include "PlatoTypes.hpp"
 #include "SmallStrain.hpp"
-#include "CellForcing.hpp"
 #include "GradientMatrix.hpp"
 #include "ApplyWeighting.hpp"
 #include "ElasticModelFactory.hpp"

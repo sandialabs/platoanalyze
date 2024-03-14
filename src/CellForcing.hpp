@@ -39,6 +39,10 @@ class CellForcing : public ElementType
     {
         // add forcing
         //
+	if(mColumnIndex < 0)
+	{
+            return;
+        }
         for(Plato::OrdinalType tTermIndex = 0; tTermIndex < mNumVoigtTerms; tTermIndex++)
         {
             aTensor(tTermIndex) -= mCellStiffness(tTermIndex, mColumnIndex);
