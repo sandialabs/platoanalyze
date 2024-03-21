@@ -102,6 +102,23 @@ endif()
 
 MESSAGE("-- BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 
+set(SANITIZER_FLAGS "")
+if(BUILD_WITH_SANITIZER_FLAGS)
+  message( "-- Compiling with sanitizer flags turned on ")
+  set(SANITIZER_FLAGS -fsanitize=address 
+                      -fno-omit-frame-pointer 
+                      -fsanitize=undefined 
+                      -fno-sanitize-recover=all 
+                      -fsanitize=float-divide-by-zero 
+                      -fsanitize=float-cast-overflow  
+                      -fsanitize=null 
+                      -fsanitize=alignment 
+                      -fsanitize=enum)
+  message("Sanitizer flags: ${SANITIZER_FLAGS}")
+  add_compile_options(${SANITIZER_FLAGS})
+  add_link_options(${SANITIZER_FLAGS})
+endif()
+
 SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS} )
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Trilinos_CXX_COMPILER_FLAGS} ${CUSTOM_CXX_FLAGS}")
 
