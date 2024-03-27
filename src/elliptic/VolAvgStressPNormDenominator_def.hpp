@@ -76,7 +76,7 @@ namespace Elliptic
         //
         auto tJacobian = ElementType::jacobian(tCubPoint, aConfig, iCellOrdinal);
 
-        ConfigScalarType tVolume = Plato::determinant(tJacobian) * tCubWeight * tSpatialWeights(iCellOrdinal*tNumPoints + iGpOrdinal, 0);
+        ConfigScalarType tVolume = Plato::determinant(tJacobian) * tCubWeight * tSpatialWeights(iCellOrdinal*tNumPoints + iGpOrdinal);
 
         Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tVolume);
 

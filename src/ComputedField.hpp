@@ -18,7 +18,7 @@ class ComputedField
     const std::string   mName;
     const std::string   mFuncString;
 
-    Plato::ScalarMultiVectorT<ScalarType> mValues;
+    Plato::ScalarVectorT<ScalarType> mValues;
 
   public:
 
@@ -29,7 +29,7 @@ class ComputedField
     const std::string & aFunc) :
     mName(aName),
     mFuncString(aFunc),
-    mValues(aName, aMesh->NumNodes(), /*num functions=*/1)
+    mValues(aName, aMesh->NumNodes())
   /**************************************************************************/
   {
     initialize(aMesh, aName, aFunc);
@@ -39,16 +39,17 @@ class ComputedField
   void initialize(
     const Plato::Mesh   aMesh,
     const std::string & aName,
-    const std::string & aFunc)
+    const std::string & aFunction)
   /**************************************************************************/
   {
+    // reshape the mesh coordinates array from (Node*Dimension) to three arrays of size (Dimension)
+    //
     auto tNumPoints = aMesh->NumNodes();
     Plato::ScalarVectorT<ScalarType> tXcoords("x coordinates", tNumPoints);
     Plato::ScalarVectorT<ScalarType> tYcoords("y coordinates", tNumPoints);
     Plato::ScalarVectorT<ScalarType> tZcoords("z coordinates", tNumPoints);
 
     auto tCoords = aMesh->Coordinates();
-    auto tValues = mValues;
     Kokkos::parallel_for("fill coords", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
     {
       if (SpaceDim > 0) tXcoords(aPointOrdinal) = tCoords(aPointOrdinal*SpaceDim + 0);
@@ -56,43 +57,14 @@ class ComputedField
       if (SpaceDim > 2) tZcoords(aPointOrdinal) = tCoords(aPointOrdinal*SpaceDim + 2);
     });
 
-    ExpressionEvaluator<Plato::ScalarMultiVectorT<ScalarType>,
-                        Plato::ScalarMultiVectorT<ScalarType>,
-                        Plato::ScalarVectorT<ScalarType>,
-                        Plato::Scalar> tExpEval;
+    Plato::Evaluator::Expression<ScalarType> tExpression(tNumPoints);
 
-    tExpEval.parse_expression(aFunc.c_str());
-    tExpEval.setup_storage(tNumPoints, /*num vals to eval =*/ 1);
+    tExpression.set("x", tXcoords);
+    tExpression.set("y", tYcoords);
+    tExpression.set("z", tZcoords);
 
-    // The coords are indexed by threads so set the values outside the
-    // parallel for loop.
-   tExpEval.set_variable("x", tXcoords);
-   tExpEval.set_variable("y", tYcoords);
-   tExpEval.set_variable("z", tZcoords);
+    mValues = tExpression.evaluate(aFunction);
 
-    Kokkos::parallel_for("evaluate", Kokkos::RangePolicy<>(0,tNumPoints), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
-    {
-        // Examples when hetrogenous varaible assignment is possible.
-
-        // Set the coords as a constant on a per thread basis. This
-        // call works but is not needed as the coords are indexed by
-        // threads so set the values outside the parallel for loop.
-
-        // tExpEval.set_variable("x", tXcoords(aPointOrdinal), aPointOrdinal);
-        // tExpEval.set_variable("y", tYcoords(aPointOrdinal), aPointOrdinal);
-        // tExpEval.set_variable("z", tZcoords(aPointOrdinal), aPointOrdinal);
-
-        // This call works but is not needed as values are used across
-        // all threads so set the values outside the parallel for loop.
-
-        // tExpEval.set_variable("x", tXcoords, aPointOrdinal);
-        // tExpEval.set_variable("y", tYcoords, aPointOrdinal);
-        // tExpEval.set_variable("z", tZcoords, aPointOrdinal);
-
-        tExpEval.evaluate_expression( aPointOrdinal, tValues );
-    });
-    Kokkos::fence();
-    tExpEval.clear_storage();
   }
 
 //  /******************************************************************************/
@@ -114,7 +86,7 @@ class ComputedField
     auto tToValues = aValues;
     Kokkos::parallel_for("copy", Kokkos::RangePolicy<>(0,tFromValues.extent(0)), KOKKOS_LAMBDA(Plato::OrdinalType aPointOrdinal)
     {
-        tToValues(aStride*aPointOrdinal+aOffset) = tFromValues(aPointOrdinal, 0);
+        tToValues(aStride*aPointOrdinal+aOffset) = tFromValues(aPointOrdinal);
     });
   }
 

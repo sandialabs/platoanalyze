@@ -60,7 +60,7 @@ namespace Elliptic
 
       auto tNumCells = mSpatialDomain.numCells();
 
-      Plato::ScalarMultiVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints, 1);
+      Plato::ScalarVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints);
 
       if (mFuncString == "1.0")
       {
@@ -106,7 +106,7 @@ namespace Elliptic
           tComputeGradient(iCellOrdinal, iGpOrdinal, tCubPoint, aConfig, tGradient, tVolume);
 
           tVolume(iCellOrdinal, iGpOrdinal) *= tCubWeights(iGpOrdinal);
-          tVolume(iCellOrdinal, iGpOrdinal) *= tFxnValues(iCellOrdinal*tNumPoints + iGpOrdinal, 0);
+          tVolume(iCellOrdinal, iGpOrdinal) *= tFxnValues(iCellOrdinal*tNumPoints + iGpOrdinal);
 
           // compute strain and electric field
           //

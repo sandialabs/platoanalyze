@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ExpressionEvaluator.hpp"
+#include "ExpressionParser.hpp"
 #include "SpatialModel.hpp"
 #include "ImplicitFunctors.hpp"
 #include "Plato_TopOptFunctors.hpp"
@@ -12,18 +12,22 @@ namespace Plato
 template<Plato::OrdinalType SpaceDim, typename ScalarType>
 void
 getFunctionValues(
-    const Plato::ScalarArray3DT<ScalarType>      & aPoints,
-    const std::string                            & aFuncString,
-    const Plato::ScalarMultiVectorT<ScalarType>  & aFxnValues
+    const Plato::ScalarArray3DT<ScalarType> & aPoints,
+    const std::string                       & aExpression,
+          Plato::ScalarVectorT<ScalarType>  & aValues
 )
 /******************************************************************************/
 {
+    // reshape the aPoints array from (Element,GPoint,Dimension) to three arrays of (Element*GPoint)
+    //
     Plato::OrdinalType tNumCells = aPoints.extent(0);
     Plato::OrdinalType tNumPoints = aPoints.extent(1);
 
-    Plato::ScalarVectorT<ScalarType> x_coords("x coordinates", tNumCells*tNumPoints);
-    Plato::ScalarVectorT<ScalarType> y_coords("y coordinates", tNumCells*tNumPoints);
-    Plato::ScalarVectorT<ScalarType> z_coords("z coordinates", tNumCells*tNumPoints);
+    auto tNumEntries = tNumCells*tNumPoints;
+
+    Plato::ScalarVectorT<ScalarType> x_coords("x coordinates", tNumEntries);
+    Plato::ScalarVectorT<ScalarType> y_coords("y coordinates", tNumEntries);
+    Plato::ScalarVectorT<ScalarType> z_coords("z coordinates", tNumEntries);
 
     Kokkos::parallel_for("fill coords", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
@@ -33,27 +37,15 @@ getFunctionValues(
         if (SpaceDim > 1) y_coords(tEntryOffset+iGpOrdinal) = aPoints(iCellOrdinal, iGpOrdinal, 1);
         if (SpaceDim > 2) z_coords(tEntryOffset+iGpOrdinal) = aPoints(iCellOrdinal, iGpOrdinal, 2);
     });
+    
 
-    ExpressionEvaluator<Plato::ScalarMultiVectorT<ScalarType>,
-                        Plato::ScalarMultiVectorT<ScalarType>,
-                        Plato::ScalarVectorT<ScalarType>,
-                        Plato::Scalar> tExpEval;
+    Plato::Evaluator::Expression<ScalarType> tExpression(tNumEntries);
 
-    tExpEval.parse_expression(aFuncString.c_str());
-    tExpEval.setup_storage(tNumCells*tNumPoints, /*num vals to eval =*/ 1);
+    tExpression.set("x", x_coords);
+    tExpression.set("y", y_coords);
+    tExpression.set("z", z_coords);
 
-    tExpEval.set_variable("x", x_coords);
-    tExpEval.set_variable("y", y_coords);
-    tExpEval.set_variable("z", z_coords);
-
-    auto tNumTotalPoints = tNumCells*tNumPoints;
-    Kokkos::parallel_for("", Kokkos::RangePolicy<>(0, tNumTotalPoints), KOKKOS_LAMBDA(const Plato::OrdinalType iEntryOrdinal)
-    {
-        tExpEval.evaluate_expression( iEntryOrdinal, aFxnValues );
-    });
-    Kokkos::fence();
-    tExpEval.clear_storage();
-
+    aValues = tExpression.evaluate(aExpression);
 }
 
 /******************************************************************************/
@@ -71,7 +63,7 @@ mapPoints(
     auto tCubWeights = ElementType::getCubWeights();
     auto tNumPoints  = tCubWeights.size();
 
-    Kokkos::deep_copy(aMappedPoints, Plato::Scalar(0.0)); // initialize to 0
+    Kokkos::deep_copy(aMappedPoints, 0.0);
 
     Kokkos::parallel_for("map points", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
     KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
@@ -176,7 +168,7 @@ mapPoints(
  * \brief compute function values at gauss points
 **********************************************************************************/
 template<typename ConfigScalarType, typename ElementType>
-Plato::ScalarMultiVectorT<ConfigScalarType>
+Plato::ScalarVectorT<ConfigScalarType>
 computeSpatialWeights(
     const Plato::SpatialDomain                    & aSpatialDomain,
     const Plato::ScalarArray3DT<ConfigScalarType> & aConfig,
@@ -191,7 +183,7 @@ computeSpatialWeights(
     Plato::ScalarArray3DT<ConfigScalarType> tPhysicalPoints("physical points", tNumCells, tNumPoints, ElementType::mNumSpatialDims);
     Plato::mapPoints<ElementType>(aConfig, tPhysicalPoints);
 
-    Plato::ScalarMultiVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints, 1);
+    Plato::ScalarVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints);
     Plato::getFunctionValues<ElementType::mNumSpatialDims>(tPhysicalPoints, aFunction, tFxnValues);
 
     return tFxnValues;
