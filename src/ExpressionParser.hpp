@@ -1,3 +1,4 @@
+#pragma once
 /******************************************************************
 
 This is a modified version of math expression parser presented in 
@@ -623,15 +624,27 @@ class Expression {
 
   public:
 
-  Expression(IntType aVectorLength) :
+  Expression(IntType aVectorLength=0) :
     mVectorLength(aVectorLength),
     mExpression(NULL)
   {
     mErrormsg[0] = '\0';
   }
 
+  void set(std::string aName, Plato::Scalar aValue)
+  {
+    char *tName = new char [aName.length()+1];
+    std::strcpy (tName, aName.c_str());
+    mVariables[aName] = ArrayType(aValue);
+    delete tName;
+  }
+
   void set(std::string aName, ArrayType aValue)
   {
+    if (mVectorLength == 0)
+    {
+      mVectorLength = aValue.mData.extent(0);
+    }
     assert(mVectorLength == aValue.mData.extent(0));
 
     char *tName = new char [aName.length()+1];
