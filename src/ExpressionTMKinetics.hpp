@@ -2,7 +2,6 @@
 #define PLATO_EXPRESSION_TMKINETICS_HPP
 
 #include "AbstractTMKinetics.hpp"
-#include "ExpressionEvaluator.hpp"
 #include "InterpolateFromNodal.hpp"
 
 #include "material/TensorConstant.hpp"

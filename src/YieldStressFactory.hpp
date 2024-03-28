@@ -3,10 +3,6 @@
 
 #include "YieldStress.hpp"
 
-#ifdef PLATO_CUSTOM_MATERIALS
-  #include "YieldStressExpression.hpp"
-#endif
-
 namespace Plato
 {
 /******************************************************************************//**
@@ -32,21 +28,7 @@ public:
     Teuchos::RCP<Plato::AbstractYieldStress<EvaluationType> > create(
         const Teuchos::ParameterList& mParamList)
     {
-      // Look for a yield stress block.
-      if( mParamList.isSublist("Custom Plasticity Model") )
-      {
-#ifdef PLATO_CUSTOM_MATERIALS
-        return Teuchos::rcp( new Plato::YieldStressExpression<EvaluationType>
-                             (mParamList) );
-#else
-	ANALYZE_THROWERR("Plato Analyze was not built with expression support. "
-		 "Rebuild with the cmake EXPRESSION option ON");
-#endif
-      }
-      else
-      {
-        return Teuchos::rcp( new Plato::YieldStress<EvaluationType> );
-      }
+      return Teuchos::rcp( new Plato::YieldStress<EvaluationType> );
     }
 };
 // class YieldStressFactory

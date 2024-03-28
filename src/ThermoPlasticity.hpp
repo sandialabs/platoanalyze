@@ -7,11 +7,7 @@
 #include "SimplexThermoPlasticity.hpp"
 #include "J2PlasticityLocalResidual.hpp"
 
-#ifdef PLATO_CUSTOM_MATERIALS
-  #include "J2PlasticityLocalResidualExpFAD.hpp"
-#else
-  #include "J2PlasticityLocalResidual.hpp"
-#endif
+#include "J2PlasticityLocalResidual.hpp"
 
 namespace Plato
 {
