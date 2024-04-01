@@ -69,10 +69,7 @@ public:
     Plato::ScalarVectorT<KineticsScalarType>
     operator()(const Plato::ScalarVectorT<ControlScalarType>& aIndependentVariable)  
     {
-        // aIndependentVariable is of dimension (numCells*numCubaturePointsPerCell, 1)
-        auto tCubWeights = ElementType::getCubWeights();
-        Plato::OrdinalType tNumPoints = tCubWeights.size();
-        Plato::OrdinalType tNumCells = aIndependentVariable.size() / tNumPoints;
+        mExpression.set(mIndependentVariableName.c_str(), aIndependentVariable);
 
         std::map<std::string, Plato::Scalar>::iterator tIter = mConstantsMap.begin();
         while(tIter != mConstantsMap.end())
@@ -80,7 +77,6 @@ public:
             mExpression.set(tIter->first.c_str(), tIter->second);
             tIter++;
         }
-        mExpression.set(mIndependentVariableName.c_str(), aIndependentVariable);
 
         auto tResult = mExpression.evaluate(mStrExpression);
 

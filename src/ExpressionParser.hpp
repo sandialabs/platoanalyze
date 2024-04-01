@@ -635,7 +635,7 @@ class Expression {
   {
     char *tName = new char [aName.length()+1];
     std::strcpy (tName, aName.c_str());
-    mVariables[aName] = ArrayType(aValue);
+    mVariables[aName] = ArrayType(mVectorLength,aValue);
     delete tName;
   }
 
