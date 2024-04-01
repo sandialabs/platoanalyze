@@ -111,6 +111,61 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double)
 /******************************************************************************/
 /*!
   \brief Unit tests for Plato::Evaluator::Expression
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_2Vars)
+{
+  using RealType = double;
+
+  int tLength = 10;
+
+  Plato::Evaluator::Expression<RealType> ob(tLength);
+
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
+
+  ob.set("xVar1", tX);
+  ob.set("xVar2", tY);
+
+  auto tAnswer = ob.evaluate("xVar1+xVar2");
+
+  auto tAnswer_Host = Kokkos::create_mirror_view(tAnswer);
+  Kokkos::deep_copy(tAnswer_Host, tAnswer);
+
+  TEST_FLOATING_EQUALITY(tAnswer_Host[0], 3, 1e-18);
+}
+
+/******************************************************************************/
+/*!
+  \brief Unit tests for Plato::Evaluator::Expression
+
+  Test that the Evaluator throws an exception
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Except)
+{
+  using RealType = double;
+
+  int tLength = 10;
+
+  Plato::Evaluator::Expression<RealType> ob(tLength);
+
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
+
+  ob.set("xVar1", tX);
+  ob.set("xVar2", tY);
+
+  TEST_THROW(ob.evaluate("xVar1+xVar2+notDefined"), std::runtime_error);
+  TEST_THROW(ob.evaluate(""), std::runtime_error);
+  TEST_THROW(ob.evaluate("(xVar1+xVar2"), std::runtime_error);
+  TEST_THROW(ob.evaluate("NOT(xVar1+xVar2)"), std::runtime_error);
+}
+
+
+/******************************************************************************/
+/*!
+  \brief Unit tests for Plato::Evaluator::Expression
 
   Test support for intermediate variables, i.e., wVar below.
 

@@ -61,13 +61,6 @@ class RealArray
     mData = aData;
   }
 
-  // accessors (needed?)
-  KOKKOS_INLINE_FUNCTION
-  Real& operator[](int i)       { return mData(i); }
-
-  KOKKOS_INLINE_FUNCTION
-  Real  operator[](int i) const { return mData(i); }
-
   // Unary operators
   array_type operator- () {
     array_type tArray(*this);
@@ -521,7 +514,7 @@ class Expression {
       getToken();
       add_subtract(aResult);
       if (*mToken != ')')
-        strcpy(mErrormsg, "Unbalanced Parentheses");
+        ANALYZE_THROWERR("Evaluator: Unbalanced Parentheses");
       if (tIsFunction)
       {
         if (!strcasecmp(tTempToken, "SIN"))
@@ -559,7 +552,11 @@ class Expression {
         else if (!strcasecmp(tTempToken, "SQR"))
           aResult = aResult*aResult;
         else
-          strcpy(mErrormsg, "Unknown Function");
+        {
+          std::stringstream error;
+          error << "Expression contains an unknown function: " << tTempToken;
+          ANALYZE_THROWERR("Unknown Function");
+        }
       }
       getToken();
     }
@@ -568,7 +565,13 @@ class Expression {
       if (mTokenType == VARIABLE)
       {
         std::string tKey = mToken;
-        aResult = mVariables[tKey];
+        if(mVariables.count(tKey) == 0)
+        {
+          std::stringstream error;
+          error << "Expression contains undefined variable: " << tKey;
+          ANALYZE_THROWERR(error.str())
+        }
+        aResult = mVariables.at(tKey);
         getToken();
         return;
       } else
@@ -579,7 +582,7 @@ class Expression {
         return;
       } else
       {
-        strcpy(mErrormsg, "Syntax Error");
+        ANALYZE_THROWERR("Evaluator: Syntax Error");
       }
     }
   }
@@ -618,25 +621,17 @@ class Expression {
       mTokenType = NUMBER;
     }
     *tTemp = '\0';
-    if ((mTokenType == VARIABLE) && (mToken[1]))
-      strcpy(mErrormsg, "Only first letter of variables is considered");
   }
 
   public:
 
   Expression(IntType aVectorLength=0) :
     mVectorLength(aVectorLength),
-    mExpression(NULL)
-  {
-    mErrormsg[0] = '\0';
-  }
+    mExpression(NULL) {}
 
   void set(std::string aName, Plato::Scalar aValue)
   {
-    char *tName = new char [aName.length()+1];
-    std::strcpy (tName, aName.c_str());
     mVariables[aName] = ArrayType(mVectorLength,aValue);
-    delete tName;
   }
 
   void set(std::string aName, ArrayType aValue)
@@ -647,10 +642,7 @@ class Expression {
     }
     assert(mVectorLength == aValue.mData.extent(0));
 
-    char *tName = new char [aName.length()+1];
-    std::strcpy (tName, aName.c_str());
     mVariables[aName] = aValue;
-    delete tName;
   }
 
   typename ArrayType::data_type get(std::string aName)
@@ -660,7 +652,6 @@ class Expression {
 
   typename ArrayType::data_type evaluate(std::string aExpression)
   {
-    mErrormsg[0] = '\0';
     ArrayType tResult;
     mExpression = new char [aExpression.length()+1];
     std::strcpy (mExpression, aExpression.c_str());
@@ -669,18 +660,16 @@ class Expression {
 
     if (!*mToken)
     {
-      strcpy(mErrormsg, "No Expression Present"); // no expression present
-      return ArrayType(0.0).mData;
+      ANALYZE_THROWERR("Evaluator called with an empty expression.");
     }
 
     assignment(tResult);
 
     if (*mToken) // last token must be null
-      strcpy(mErrormsg, "Syntax Error");
+      ANALYZE_THROWERR("Evaluator: Syntax Error");
     return tResult.mData;
   }
 
-  char mErrormsg[64];
 };
 
 } // end namespace Parser
