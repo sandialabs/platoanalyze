@@ -652,9 +652,9 @@ class Expression {
 
   typename ArrayType::data_type evaluate(std::string aExpression)
   {
-    ArrayType tResult;
-    mExpression = new char [aExpression.length()+1];
-    std::strcpy (mExpression, aExpression.c_str());
+    auto tExpressionHead = new char [aExpression.length()+1];
+    std::strcpy (tExpressionHead, aExpression.c_str());
+    mExpression = tExpressionHead;
 
     getToken();
 
@@ -663,10 +663,14 @@ class Expression {
       ANALYZE_THROWERR("Evaluator called with an empty expression.");
     }
 
+    ArrayType tResult;
     assignment(tResult);
+
+    delete [] tExpressionHead;
 
     if (*mToken) // last token must be null
       ANALYZE_THROWERR("Evaluator: Syntax Error");
+
     return tResult.mData;
   }
 
