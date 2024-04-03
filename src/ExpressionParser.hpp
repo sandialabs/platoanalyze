@@ -652,9 +652,7 @@ class Expression {
 
   typename ArrayType::data_type evaluate(std::string aExpression)
   {
-    auto tExpressionHead = new char [aExpression.length()+1];
-    std::strcpy (tExpressionHead, aExpression.c_str());
-    mExpression = tExpressionHead;
+    mExpression = aExpression.data();
 
     getToken();
 
@@ -665,8 +663,6 @@ class Expression {
 
     ArrayType tResult;
     assignment(tResult);
-
-    delete [] tExpressionHead;
 
     if (*mToken) // last token must be null
       ANALYZE_THROWERR("Evaluator: Syntax Error");
