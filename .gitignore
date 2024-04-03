@@ -5,3 +5,5 @@ build*
 /Debug/
 .vscode
 /spack-*
+compile_commands.json
+.cache/

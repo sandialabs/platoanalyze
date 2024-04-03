@@ -57,6 +57,10 @@ if( CCACHE_FOUND )
   set( CMAKE_CXX_COMPILER_LAUNCHER ccache )
 endif()
 
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  file(CREATE_LINK "${CMAKE_BINARY_DIR}/compile_commands.json" "${CMAKE_SOURCE_DIR}/compile_commands.json" SYMBOLIC )
+endif()
+
 IF (DEFINED Trilinos_PREFIX)
   SET(CMAKE_PREFIX_PATH ${Trilinos_PREFIX} ${CMAKE_PREFIX_PATH})
 ENDIF()
