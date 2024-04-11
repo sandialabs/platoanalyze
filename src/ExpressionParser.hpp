@@ -44,7 +44,7 @@ class RealArray
   data_type mData;
 
   // Constructors
-  RealArray() {}
+  RealArray()=default;
   explicit RealArray(Int aLength, Real aInit=0.0)
   {
     mData = data_type("data", aLength);
@@ -122,10 +122,8 @@ class RealArray
   }
 
   array_type operator=(const Real& b) {
-    array_type tArray(*this);
-    auto tA = tArray.mData;
-    Kokkos::deep_copy(tA, b);
-    return tArray;
+    Kokkos::deep_copy(mData, b);
+    return *this;
   }
 
   // I/O
@@ -627,14 +625,14 @@ class Expression {
 
   Expression(IntType aVectorLength=0) :
     mVectorLength(aVectorLength),
-    mExpression(NULL) {}
+    mExpression(nullptr) {}
 
-  void set(std::string aName, Plato::Scalar aValue)
+  void set(const std::string & aName, Plato::Scalar aValue)
   {
     mVariables[aName] = ArrayType(mVectorLength,aValue);
   }
 
-  void set(std::string aName, ArrayType aValue)
+  void set(const std::string & aName, ArrayType aValue)
   {
     if (mVectorLength == 0)
     {
@@ -645,11 +643,12 @@ class Expression {
     mVariables[aName] = aValue;
   }
 
-  typename ArrayType::data_type get(std::string aName)
+  typename ArrayType::data_type get(const std::string & aName)
   {
     return mVariables[aName].mData;
   }
 
+  [[maybe_unused]]
   typename ArrayType::data_type evaluate(std::string aExpression)
   {
     mExpression = aExpression.data();

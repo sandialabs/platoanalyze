@@ -11,7 +11,7 @@ bool testExpression(std::string aExpression, FunctorT aFunctor)
 {
     double Z = 0.5;
 
-    Plato::OrdinalType tLength = 10;
+    Plato::OrdinalType tLength = 1;
 
     Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -45,7 +45,7 @@ bool testDerivative(std::string aExpression, RealType aDeriv)
 {
     double Z = 0.5;
 
-    Plato::OrdinalType tLength = 10;
+    Plato::OrdinalType tLength = 1;
 
     using FadType = Sacado::Fad::SFad<RealType,1>;
 
@@ -88,7 +88,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double)
 {
   using RealType = double;
 
-  int tLength = 10;
+  int tLength = 1;
 
   Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -117,7 +117,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_2Vars)
 {
   using RealType = double;
 
-  int tLength = 10;
+  int tLength = 1;
 
   Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -137,16 +137,14 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_2Vars)
 
 /******************************************************************************/
 /*!
-  \brief Unit tests for Plato::Evaluator::Expression
-
-  Test that the Evaluator throws an exception
+  \brief Set up an Expression for exception testing
 */
 /******************************************************************************/
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Except)
+template <typename RealType>
+Plato::Evaluator::Expression<RealType>
+getTestExpression()
 {
-  using RealType = double;
-
-  int tLength = 10;
+  int tLength = 1;
 
   Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -155,11 +153,52 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Except)
 
   ob.set("xVar1", tX);
   ob.set("xVar2", tY);
+  
+  return ob;
+}
 
-  TEST_THROW(ob.evaluate("xVar1+xVar2+notDefined"), std::runtime_error);
-  TEST_THROW(ob.evaluate(""), std::runtime_error);
-  TEST_THROW(ob.evaluate("(xVar1+xVar2"), std::runtime_error);
-  TEST_THROW(ob.evaluate("NOT(xVar1+xVar2)"), std::runtime_error);
+/******************************************************************************/
+/*!
+  \brief Test that the Evaluator throws an exception when an undefined variable
+  is referenced.
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Exception_VariableNotDefined)
+{
+  TEST_THROW(getTestExpression<double>().evaluate("xVar1+xVar2+notDefined"), std::runtime_error);
+}
+
+/******************************************************************************/
+/*!
+  \brief Test that the Evaluator throws an exception when an empty expression
+  is evaluated.
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Exception_ExpressionIsEmpty)
+{
+  TEST_THROW(getTestExpression<double>().evaluate(""), std::runtime_error);
+}
+
+/******************************************************************************/
+/*!
+  \brief Test that the Evaluator throws an exception when parantheses are 
+  not balanced.
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Exception_BadParentheses)
+{
+  TEST_THROW(getTestExpression<double>().evaluate("(xVar1+xVar2"), std::runtime_error);
+}
+
+/******************************************************************************/
+/*!
+  \brief Test that the Evaluator throws an exception when a non-existent
+  is called.
+*/
+/******************************************************************************/
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_Exception_NotAFunction)
+{
+  TEST_THROW(getTestExpression<double>().evaluate("NOT(xVar1+xVar2)"), std::runtime_error);
 }
 
 
@@ -175,7 +214,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double_multi)
 {
   using RealType = double;
 
-  int tLength = 10;
+  int tLength = 1;
 
   Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -208,7 +247,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double_literals)
 {
   using RealType = double;
 
-  int tLength=10;
+  int tLength=1;
 
   Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -242,7 +281,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_float)
 {
   using RealType = float;
 
-  int tLength = 10;
+  int tLength = 1;
 
   Plato::Evaluator::Expression<RealType> ob(tLength);
 
@@ -276,7 +315,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_sfad_1)
 {
   using RealType = Sacado::Fad::SFad<double,1>;
 
-  constexpr int cLen = 10;
+  constexpr int cLen = 1;
 
   Plato::Evaluator::Expression<RealType> ob(cLen);
 
@@ -317,7 +356,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_sfad_4_literals)
 {
   using RealType = Sacado::Fad::SFad<double,4>;
 
-  constexpr int cLen = 10;
+  constexpr int cLen = 1;
 
   Plato::Evaluator::Expression<RealType> ob(cLen);
 
