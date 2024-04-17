@@ -1,13 +1,13 @@
 #pragma once
 /******************************************************************
 
-This is a modified version of math expression parser presented in 
+This is a modified version of math expression parser presented in
 the book : "C++ The Complete Reference" by H.Schildt.
 
 -- supports operators: + - * / ^ ( )
 
--- supports math functions : SIN, COS, TAN, ASIN, ACOS, ATAN, SINH, 
-COSH, TANH, ASINH, ACOSH, ATANH, LN, LOG, EXP, SQRT, SQR.
+-- supports math functions : SIN, COS, TAN, ASIN, ACOS, ATAN, SINH,
+COSH, TANH, ASINH, ACOSH, ATANH, LOG (natural), LOG10, EXP, SQRT, SQR.
 
 -- supports case-sensitive variables, and can evaluate a sequence
 of expressions.  See the unit tests below for use cases.
@@ -385,43 +385,40 @@ std::ostream& operator<<(std::ostream& os, const RealArray<Real,Int>& aArray)
     return os;
 }
 
-
-enum types { DELIMITER = 1, VARIABLE, NUMBER, FUNCTION };
+enum class TokenType { Delimiter, Variable, Number, Function };
 
 template <typename RealType, typename IntType=int>
 class Expression {
 
   public: 
   using ArrayType = RealArray<RealType, IntType>;
+  using StringType = std::string;
+  using CharType = StringType::value_type;
 
-  private:
+ private:
   IntType mVectorLength;
-  char *mExpression;
-  char mToken[256];
-  char mTokenType;
-  std::map<std::string,ArrayType> mVariables;
+  StringType mToken;
+  CharType* mExpression;
+  TokenType mTokenType;
+  std::map<StringType, ArrayType> mVariables;
 
   void assignment(ArrayType &aResult)
   {
-    char tTempToken[80];
-    if (mTokenType == VARIABLE)
-    {
+    StringType tToken;
+    if (mTokenType == TokenType::Variable) {
       // save old token
-      char *tPtr = mExpression;
-      strcpy(tTempToken, mToken);
-      std::string tKey = mToken;
+      auto tPtr = mExpression;
+      tToken = mToken;
       // compute the index of the variable
-      getToken();
-      if (*mToken != '=')
-      {
+      advanceTokenAndExpression();
+      if (mToken.front() != '=') {
         mExpression = tPtr; // return current token
-        strcpy(mToken, tTempToken); // restore old token
-        mTokenType = VARIABLE;
-      }
-      else {
-        getToken(); // get next part of exp
+        mToken = tToken;    // restore old token
+        mTokenType = TokenType::Variable;
+      } else {
+        advanceTokenAndExpression();  // get next part of exp
         add_subtract(aResult);
-        mVariables[tKey] = aResult;
+        mVariables[tToken] = aResult;
         return;
       }
     }
@@ -431,12 +428,11 @@ class Expression {
 
   void add_subtract(ArrayType &aResult)
   {
-    char op;
+    CharType op;
     ArrayType tTemp;
     multiply_divide(aResult);
-    while ((op = *mToken) == '+' || op == '-')
-    {
-      getToken();
+    while ((op = mToken.front()) == '+' || op == '-') {
+      advanceTokenAndExpression();
       multiply_divide(tTemp);
       switch (op)
       {
@@ -452,12 +448,11 @@ class Expression {
 
   void multiply_divide(ArrayType &aResult)
   {
-    char op;
+    CharType op;
     ArrayType tTemp;
     exponent(aResult);
-    while ((op = *mToken) == '*' || op == '/')
-    {
-      getToken();
+    while ((op = mToken.front()) == '*' || op == '/') {
+      advanceTokenAndExpression();
       exponent(tTemp);
       switch (op)
       {
@@ -475,9 +470,8 @@ class Expression {
   {
     ArrayType tTemp;
     unary_plus_minus(aResult);
-    while (*mToken == '^')
-    {
-      getToken();
+    while (mToken.front() == '^') {
+      advanceTokenAndExpression();
       unary_plus_minus(tTemp);
       aResult = Math::pow(aResult, tTemp);
     }
@@ -485,12 +479,10 @@ class Expression {
 
   void unary_plus_minus(ArrayType &aResult)
   {
-    char op;
-    op = 0;
-    if ((mTokenType == DELIMITER) && *mToken == '+' || *mToken == '-')
-    {
-      op = *mToken;
-      getToken();
+    CharType op(0);
+    if ((mTokenType == TokenType::Delimiter) && mToken.front() == '+' || mToken.front() == '-') {
+      op = mToken.front();
+      advanceTokenAndExpression();
     }
     process(aResult);
     if (op == '-')
@@ -500,69 +492,64 @@ class Expression {
   // Process a function, a parenthesized expression, a value or a variable
   void process(ArrayType &aResult)
   {
-    bool tIsFunction = (mTokenType == FUNCTION);
-    char tTempToken[80];
+    auto tIsFunction = (mTokenType == TokenType::Function);
+    StringType tToken;
     if (tIsFunction)
     {
-      strcpy(tTempToken, mToken);
-      getToken();
-    } 
-    if ((*mToken == '(')) 
-    {
-      getToken();
+      tToken = mToken;
+      advanceTokenAndExpression();
+    }
+    if ((mToken.front() == '(')) {
+      advanceTokenAndExpression();
       add_subtract(aResult);
-      if (*mToken != ')')
-        ANALYZE_THROWERR("Evaluator: Unbalanced Parentheses");
+      if (mToken.front() != ')') ANALYZE_THROWERR("Evaluator: Unbalanced Parentheses");
       if (tIsFunction)
       {
-        if (!strcasecmp(tTempToken, "SIN"))
+        if (!strcasecmp(tToken.data(), "SIN"))
           aResult = Math::sin(aResult);
-        else if (!strcasecmp(tTempToken, "COS"))
+        else if (!strcasecmp(tToken.data(), "COS"))
           aResult = Math::cos(aResult);
-        else if (!strcasecmp(tTempToken, "TAN"))
+        else if (!strcasecmp(tToken.data(), "TAN"))
           aResult = Math::tan(aResult);
-        else if (!strcasecmp(tTempToken, "ASIN"))
+        else if (!strcasecmp(tToken.data(), "ASIN"))
           aResult = Math::asin(aResult);
-        else if (!strcasecmp(tTempToken, "ACOS"))
+        else if (!strcasecmp(tToken.data(), "ACOS"))
           aResult = Math::acos(aResult);
-        else if (!strcasecmp(tTempToken, "ATAN"))
+        else if (!strcasecmp(tToken.data(), "ATAN"))
           aResult = Math::atan(aResult);
-        else if (!strcasecmp(tTempToken, "SINH"))
+        else if (!strcasecmp(tToken.data(), "SINH"))
           aResult = Math::sinh(aResult);
-        else if (!strcasecmp(tTempToken, "COSH"))
+        else if (!strcasecmp(tToken.data(), "COSH"))
           aResult = Math::cosh(aResult);
-        else if (!strcasecmp(tTempToken, "TANH"))
+        else if (!strcasecmp(tToken.data(), "TANH"))
           aResult = Math::tanh(aResult);
-        else if (!strcasecmp(tTempToken, "ASINH"))
+        else if (!strcasecmp(tToken.data(), "ASINH"))
           aResult = Math::asinh(aResult);
-        else if (!strcasecmp(tTempToken, "ACOSH"))
+        else if (!strcasecmp(tToken.data(), "ACOSH"))
           aResult = Math::acosh(aResult);
-        else if (!strcasecmp(tTempToken, "ATANH"))
+        else if (!strcasecmp(tToken.data(), "ATANH"))
           aResult = Math::atanh(aResult);
-        else if (!strcasecmp(tTempToken, "LN"))
+        else if (!strcasecmp(tToken.data(), "LOG"))
           aResult = Math::log(aResult);
-        else if (!strcasecmp(tTempToken, "LOG"))
+        else if (!strcasecmp(tToken.data(), "LOG10"))
           aResult = Math::log10(aResult);
-        else if (!strcasecmp(tTempToken, "EXP"))
+        else if (!strcasecmp(tToken.data(), "EXP"))
           aResult = Math::exp(aResult);
-        else if (!strcasecmp(tTempToken, "SQRT"))
+        else if (!strcasecmp(tToken.data(), "SQRT"))
           aResult = Math::sqrt(aResult);
-        else if (!strcasecmp(tTempToken, "SQR"))
+        else if (!strcasecmp(tToken.data(), "SQR"))
           aResult = aResult*aResult;
         else
         {
           std::stringstream error;
-          error << "Expression contains an unknown function: " << tTempToken;
+          error << "Expression contains an unknown function: " << tToken;
           ANALYZE_THROWERR("Unknown Function");
         }
       }
-      getToken();
-    }
-    else 
-    {
-      if (mTokenType == VARIABLE)
-      {
-        std::string tKey = mToken;
+      advanceTokenAndExpression();
+    } else {
+      if (mTokenType == TokenType::Variable) {
+        StringType tKey = mToken;
         if(mVariables.count(tKey) == 0)
         {
           std::stringstream error;
@@ -570,16 +557,13 @@ class Expression {
           ANALYZE_THROWERR(error.str())
         }
         aResult = mVariables.at(tKey);
-        getToken();
+        advanceTokenAndExpression();
         return;
-      } else
-      if (mTokenType == NUMBER)
-      {
-        aResult = ArrayType(mVectorLength,atof(mToken));
-        getToken();
+      } else if (mTokenType == TokenType::Number) {
+        aResult = ArrayType(mVectorLength, atof(mToken.data()));
+        advanceTokenAndExpression();
         return;
-      } else
-      {
+      } else {
         ANALYZE_THROWERR("Evaluator: Syntax Error");
       }
     }
@@ -589,36 +573,26 @@ class Expression {
   // 1. set mToken to the next token
   // 2. set mTokenType to the token type
   // 3. advance mExpression past the next token
-  void getToken()
-  {
-    char *tTemp;
-    mTokenType = 0;
-    tTemp = mToken;
-    *tTemp = '\0';
+  void advanceTokenAndExpression() {
+    // char *tTemp;
+    mTokenType = TokenType::Delimiter;
+    mToken.clear();
     if (!*mExpression)  // at end of expression
       return;
     while (isspace(*mExpression))  // skip over white space
-      ++mExpression; 
-    if (strchr("+-*/%^=()", *mExpression)) 
-    {
-      mTokenType = DELIMITER;
-      *tTemp++ = *mExpression++;  // advance to next char
-    }
-    else if (isalpha(*mExpression)) 
-    {
-      while (!strchr(" +-/*%^=()\t\r", *mExpression) && (*mExpression))
-        *tTemp++ = *mExpression++;
+      ++mExpression;
+    if (strchr("+-*/^=()", *mExpression)) {
+      mTokenType = TokenType::Delimiter;
+      mToken += *mExpression++;  // advance to next char
+    } else if (isalpha(*mExpression)) {
+      while (!strchr(" +-/*^=()\t\r", *mExpression) && (*mExpression)) mToken += *mExpression++;
       while (isspace(*mExpression))  // skip over white space
         ++mExpression;
-      mTokenType = (*mExpression == '(') ? FUNCTION : VARIABLE;
+      mTokenType = (*mExpression == '(') ? TokenType::Function : TokenType::Variable;
+    } else if (isdigit(*mExpression) || *mExpression == '.') {
+      while (!strchr(" +-/*^=()\t\r", *mExpression) && (*mExpression)) mToken += toupper(*mExpression++);
+      mTokenType = TokenType::Number;
     }
-    else if (isdigit(*mExpression) || *mExpression == '.')
-    {
-      while (!strchr(" +-/*%^=()\t\r", *mExpression) && (*mExpression))
-        *tTemp++ = toupper(*mExpression++);
-      mTokenType = NUMBER;
-    }
-    *tTemp = '\0';
   }
 
   public:
@@ -627,13 +601,9 @@ class Expression {
     mVectorLength(aVectorLength),
     mExpression(nullptr) {}
 
-  void set(const std::string & aName, Plato::Scalar aValue)
-  {
-    mVariables[aName] = ArrayType(mVectorLength,aValue);
-  }
+  void set(const StringType& aName, Plato::Scalar aValue) { mVariables[aName] = ArrayType(mVectorLength, aValue); }
 
-  void set(const std::string & aName, ArrayType aValue)
-  {
+  void set(const StringType& aName, ArrayType aValue) {
     if (mVectorLength == 0)
     {
       mVectorLength = aValue.mData.extent(0);
@@ -643,32 +613,25 @@ class Expression {
     mVariables[aName] = aValue;
   }
 
-  typename ArrayType::data_type get(const std::string & aName)
-  {
-    return mVariables[aName].mData;
-  }
+  typename ArrayType::data_type get(const StringType& aName) { return mVariables[aName].mData; }
 
-  [[maybe_unused]]
-  typename ArrayType::data_type evaluate(std::string aExpression)
-  {
+  [[maybe_unused]] typename ArrayType::data_type evaluate(StringType aExpression) {
     mExpression = aExpression.data();
 
-    getToken();
+    advanceTokenAndExpression();
 
-    if (!*mToken)
-    {
+    if (mToken.empty()) {
       ANALYZE_THROWERR("Evaluator called with an empty expression.");
     }
 
     ArrayType tResult;
     assignment(tResult);
 
-    if (*mToken) // last token must be null
+    if (mToken.empty() == false)  // last token must be null
       ANALYZE_THROWERR("Evaluator: Syntax Error");
 
     return tResult.mData;
   }
-
 };
 
 } // end namespace Parser
