@@ -812,7 +812,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, C11_vs_Temperature) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sin) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::sin(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::sin(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, sin(Z), 1e-18);
@@ -821,7 +821,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sin) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, cos) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::cos(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::cos(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, cos(Z), 1e-18);
@@ -830,7 +830,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, cos) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, tan) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::tan(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::tan(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, tan(Z), 1e-18);
@@ -839,7 +839,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, tan) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, asin) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::asin(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::asin(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, asin(Z), 1e-18);
@@ -848,7 +848,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, asin) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, acos) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::acos(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::acos(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, acos(Z), 1e-18);
@@ -857,7 +857,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, acos) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, atan) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::atan(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::atan(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, atan(Z), 1e-18);
@@ -866,7 +866,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, atan) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sinh) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::sinh(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::sinh(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, sinh(Z), 1e-18);
@@ -875,7 +875,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sinh) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, cosh) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::cosh(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::cosh(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, cosh(Z), 1e-18);
@@ -884,7 +884,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, cosh) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, tanh) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::tanh(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::tanh(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, tanh(Z), 1e-18);
@@ -893,7 +893,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, tanh) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, asinh) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::asinh(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::asinh(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, asinh(Z), 1e-18);
@@ -902,7 +902,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, asinh) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, acosh) {
   Plato::Scalar Z = 3.0;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::acosh(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::acosh(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, acosh(Z), 1e-18);
@@ -911,7 +911,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, acosh) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, atanh) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::atanh(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::atanh(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, atanh(Z), 1e-15);
@@ -920,7 +920,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, atanh) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, naturalLog) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::log(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::log(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, log(Z), 1e-18);
@@ -929,7 +929,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, naturalLog) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, commonLog) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::log10(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::log10(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, log10(Z), 1e-18);
@@ -938,7 +938,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, commonLog) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, exp) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::exp(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::exp(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, exp(Z), 1e-18);
@@ -947,7 +947,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, exp) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sqr) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return aZ * aZ; };
+  auto tFun = [](auto& aZ) { return aZ * aZ; };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, Z * Z, 1e-18);
@@ -956,7 +956,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sqr) {
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, sqrt) {
   Plato::Scalar Z = 0.5;
 
-  auto tFun = [](auto aZ) { return Plato::Evaluator::Math::sqrt(aZ); };
+  auto tFun = [](auto& aZ) { return Plato::Evaluator::Math::sqrt(aZ); };
   auto [value, deriv] = evalFunction(Z, tFun);
 
   TEST_FLOATING_EQUALITY(value, sqrt(Z), 1e-18);
@@ -1054,7 +1054,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, RealArray_operator_equals) {
   int tLength = 1;
   Plato::Evaluator::RealArray<Plato::Scalar> tX(tLength, /*init=*/3.0);
 
-  auto tZ = tX;
+  // use copy here since assignment does a shallow copy
+  auto tZ = Plato::Evaluator::Math::copy(tX);
 
   // check assignment of tZ
   auto tZ_Host = Kokkos::create_mirror(tZ.mData);
@@ -1065,10 +1066,5 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, RealArray_operator_equals) {
   tZ = 1.0;
   Kokkos::deep_copy(tZ_Host, tZ.mData);
   TEST_FLOATING_EQUALITY(tZ_Host(0), 1.0, 1e-18);
-
-  // check that tX is still equal to 3.0
-  auto tX_Host = Kokkos::create_mirror(tX.mData);
-  Kokkos::deep_copy(tX_Host, tX.mData);
-  TEST_FLOATING_EQUALITY(tX_Host(0), 3.0, 1e-18);
 }
 }

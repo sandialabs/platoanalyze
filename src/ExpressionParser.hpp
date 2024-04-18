@@ -33,6 +33,21 @@ namespace Plato
 namespace Evaluator
 {
 
+namespace Math
+{
+
+template <typename T>
+T copy(const T& aArray)
+{
+  T tArray;
+  tArray.mData = typename T::data_type("data", aArray.mData.extent(0));
+  Kokkos::deep_copy(tArray.mData, aArray.mData);
+  return tArray;
+}
+
+} // end namespace Math
+
+
 template <typename Real = double, typename Int = int>
 class RealArray
 {
@@ -45,15 +60,15 @@ class RealArray
 
   // Constructors
   RealArray()=default;
+  RealArray(array_type &&)=delete;
+  RealArray(array_type const &)=default;
+  array_type& operator=(array_type&&)=default;
+  array_type& operator=(const array_type&)=default;
+
   explicit RealArray(Int aLength, Real aInit=0.0)
   {
     mData = data_type("data", aLength);
     Kokkos::deep_copy(mData, aInit);
-  }
-  RealArray(array_type const & aArray)
-  {
-    mData = data_type("data", aArray.mData.extent(0));
-    Kokkos::deep_copy(mData, aArray.mData);
   }
 
   RealArray(data_type const & aData)
@@ -63,7 +78,7 @@ class RealArray
 
   // Unary operators
   array_type operator- () {
-    array_type tArray(*this);
+    auto tArray = Math::copy(*this);
     auto tA = tArray.mData;
     Kokkos::parallel_for("operator-", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
     {
@@ -73,12 +88,12 @@ class RealArray
   }
 
   array_type operator+ () {
-   return array_type(*this);
+   return Math::copy(*this);
   }
 
   // binary operators 
   array_type operator+(const array_type& b) {
-    array_type tArray(*this);
+    auto tArray = Math::copy(*this);
     auto tA = tArray.mData;
     auto tB = b.mData;
     Kokkos::parallel_for("operator+", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -89,7 +104,7 @@ class RealArray
   }
 
   array_type operator-(const array_type& b) {
-    array_type tArray(*this);
+    auto tArray = Math::copy(*this);
     auto tA = tArray.mData;
     auto tB = b.mData;
     Kokkos::parallel_for("operator-", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -100,7 +115,7 @@ class RealArray
   }
 
   array_type operator*(const array_type& b) {
-    array_type tArray(*this);
+    auto tArray = Math::copy(*this);
     auto tA = tArray.mData;
     auto tB = b.mData;
     Kokkos::parallel_for("operator*", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -111,7 +126,7 @@ class RealArray
   }
 
   array_type operator/(const array_type& b) {
-    array_type tArray(*this);
+    auto tArray = Math::copy(*this);
     auto tA = tArray.mData;
     auto tB = b.mData;
     Kokkos::parallel_for("operator/", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -139,7 +154,7 @@ namespace Math
 template <typename Real, typename Int>
 RealArray<Real,Int> pow(const RealArray<Real,Int>& aArray, double aExp)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("pow", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -152,7 +167,7 @@ RealArray<Real,Int> pow(const RealArray<Real,Int>& aArray, double aExp)
 template <typename Real, typename Int>
 RealArray<Real,Int> pow(const RealArray<Real,Int>& aArray, const RealArray<Real,Int>& aExp)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   auto tC = aExp.mData;
@@ -166,7 +181,7 @@ RealArray<Real,Int> pow(const RealArray<Real,Int>& aArray, const RealArray<Real,
 template <typename Real, typename Int>
 RealArray<Real,Int> sin(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("sin", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -179,7 +194,7 @@ RealArray<Real,Int> sin(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> cos(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("cos", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -192,7 +207,7 @@ RealArray<Real,Int> cos(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> tan(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("tan", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -205,7 +220,7 @@ RealArray<Real,Int> tan(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> asin(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("asin", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -218,7 +233,7 @@ RealArray<Real,Int> asin(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> acos(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("acos", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -231,7 +246,7 @@ RealArray<Real,Int> acos(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> atan(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("atan", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -244,7 +259,7 @@ RealArray<Real,Int> atan(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> sinh(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("sinh", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -257,7 +272,7 @@ RealArray<Real,Int> sinh(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> cosh(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("cosh", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -270,7 +285,7 @@ RealArray<Real,Int> cosh(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> tanh(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("tanh", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -283,7 +298,7 @@ RealArray<Real,Int> tanh(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> asinh(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("asinh", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -296,7 +311,7 @@ RealArray<Real,Int> asinh(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> acosh(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("acosh", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -309,7 +324,7 @@ RealArray<Real,Int> acosh(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> atanh(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("atanh", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -322,7 +337,7 @@ RealArray<Real,Int> atanh(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> log(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("log", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -335,7 +350,7 @@ RealArray<Real,Int> log(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> log10(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("log10", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -348,7 +363,7 @@ RealArray<Real,Int> log10(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> exp(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("exp", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -361,7 +376,7 @@ RealArray<Real,Int> exp(const RealArray<Real,Int>& aArray)
 template <typename Real, typename Int>
 RealArray<Real,Int> sqrt(const RealArray<Real,Int>& aArray)
 {
-  RealArray<Real,Int> tArray(aArray);
+  auto tArray = copy(aArray);
   auto tA = tArray.mData;
   auto tB = aArray.mData;
   Kokkos::parallel_for("sqrt", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
@@ -603,14 +618,14 @@ class Expression {
 
   void set(const StringType& aName, Plato::Scalar aValue) { mVariables[aName] = ArrayType(mVectorLength, aValue); }
 
-  void set(const StringType& aName, ArrayType aValue) {
+  void set(const StringType& aName, const ArrayType& aValue) {
     if (mVectorLength == 0)
     {
       mVectorLength = aValue.mData.extent(0);
     }
     assert(mVectorLength == aValue.mData.extent(0));
 
-    mVariables[aName] = aValue;
+    mVariables[aName] = Math::copy(aValue);
   }
 
   typename ArrayType::data_type get(const StringType& aName) { return mVariables[aName].mData; }
