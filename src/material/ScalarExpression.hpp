@@ -5,7 +5,7 @@
 #include "FadTypes.hpp"
 #include "AnalyzeMacros.hpp"
 #include "ParseTools.hpp"
-#include "ExpressionParser.hpp"
+#include "utilities/ExpressionParser.hpp"
 
 #include <Teuchos_ParameterList.hpp>
 #include <Kokkos_Core.hpp>

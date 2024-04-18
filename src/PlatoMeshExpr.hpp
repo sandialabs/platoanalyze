@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ExpressionParser.hpp"
+#include "utilities/ExpressionParser.hpp"
 #include "SpatialModel.hpp"
 #include "ImplicitFunctors.hpp"
 #include "Plato_TopOptFunctors.hpp"
