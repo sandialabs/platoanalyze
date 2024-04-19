@@ -25,6 +25,7 @@ and to ensure that data remain in device memory during evaluation.
 #include <math.h> 
 
 #include <Sacado.hpp>
+#include "PlatoUtilities.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "utilities/RealArray.hpp"
 
@@ -50,6 +51,26 @@ class Expression {
   CharType* mExpression;
   TokenType mTokenType;
   std::map<StringType, ArrayType> mVariables;
+  std::map<const StringType, const std::function<ArrayType(ArrayType)>>
+  mFunctions = {
+    {"sin",   Math::sin  <RealType,IntType>},
+    {"cos",   Math::cos  <RealType,IntType>},
+    {"tan",   Math::tan  <RealType,IntType>},
+    {"asin",  Math::asin <RealType,IntType>},
+    {"acos",  Math::acos <RealType,IntType>},
+    {"atan",  Math::atan <RealType,IntType>},
+    {"sinh",  Math::sinh <RealType,IntType>},
+    {"cosh",  Math::cosh <RealType,IntType>},
+    {"tanh",  Math::tanh <RealType,IntType>},
+    {"asinh", Math::asinh<RealType,IntType>},
+    {"acosh", Math::acosh<RealType,IntType>},
+    {"atanh", Math::atanh<RealType,IntType>},
+    {"log",   Math::log  <RealType,IntType>},
+    {"log10", Math::log10<RealType,IntType>},
+    {"exp",   Math::exp  <RealType,IntType>},
+    {"sqrt",  Math::sqrt <RealType,IntType>},
+    {"sqr",   Math::sqr  <RealType,IntType>}
+  };
 
   void assignment(ArrayType &aResult)
   {
@@ -154,45 +175,16 @@ class Expression {
       if (mToken.front() != ')') ANALYZE_THROWERR("Evaluator: Unbalanced Parentheses");
       if (tIsFunction)
       {
-        if (!strcasecmp(tToken.data(), "SIN"))
-          aResult = Math::sin(aResult);
-        else if (!strcasecmp(tToken.data(), "COS"))
-          aResult = Math::cos(aResult);
-        else if (!strcasecmp(tToken.data(), "TAN"))
-          aResult = Math::tan(aResult);
-        else if (!strcasecmp(tToken.data(), "ASIN"))
-          aResult = Math::asin(aResult);
-        else if (!strcasecmp(tToken.data(), "ACOS"))
-          aResult = Math::acos(aResult);
-        else if (!strcasecmp(tToken.data(), "ATAN"))
-          aResult = Math::atan(aResult);
-        else if (!strcasecmp(tToken.data(), "SINH"))
-          aResult = Math::sinh(aResult);
-        else if (!strcasecmp(tToken.data(), "COSH"))
-          aResult = Math::cosh(aResult);
-        else if (!strcasecmp(tToken.data(), "TANH"))
-          aResult = Math::tanh(aResult);
-        else if (!strcasecmp(tToken.data(), "ASINH"))
-          aResult = Math::asinh(aResult);
-        else if (!strcasecmp(tToken.data(), "ACOSH"))
-          aResult = Math::acosh(aResult);
-        else if (!strcasecmp(tToken.data(), "ATANH"))
-          aResult = Math::atanh(aResult);
-        else if (!strcasecmp(tToken.data(), "LOG"))
-          aResult = Math::log(aResult);
-        else if (!strcasecmp(tToken.data(), "LOG10"))
-          aResult = Math::log10(aResult);
-        else if (!strcasecmp(tToken.data(), "EXP"))
-          aResult = Math::exp(aResult);
-        else if (!strcasecmp(tToken.data(), "SQRT"))
-          aResult = Math::sqrt(aResult);
-        else if (!strcasecmp(tToken.data(), "SQR"))
-          aResult = aResult*aResult;
+        auto tTokenLower = Plato::tolower(tToken);
+        if(mFunctions.count(tTokenLower))
+        {
+          aResult = mFunctions.at(tTokenLower)(aResult);
+        }
         else
         {
           std::stringstream error;
           error << "Expression contains an unknown function: " << tToken;
-          ANALYZE_THROWERR("Unknown Function");
+          ANALYZE_THROWERR(error.str());
         }
       }
       advanceTokenAndExpression();

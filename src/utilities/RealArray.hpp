@@ -368,6 +368,19 @@ RealArray<Real,Int> sqrt(const RealArray<Real,Int>& aArray)
   return tArray;
 }
 
+template <typename Real, typename Int>
+RealArray<Real,Int> sqr(const RealArray<Real,Int>& aArray)
+{
+  auto tArray = copy(aArray);
+  auto tA = tArray.mData;
+  auto tB = aArray.mData;
+  Kokkos::parallel_for("sqrt", Kokkos::RangePolicy<Int>(0,tArray.mData.extent(0)), KOKKOS_LAMBDA(Int aOrdinal)
+  {
+    tA(aOrdinal) *= tA(aOrdinal);
+  });
+  return tArray;
+}
+
 }
 
 template <typename Real = double, typename Int = int>
