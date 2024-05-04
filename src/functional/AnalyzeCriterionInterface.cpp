@@ -25,14 +25,6 @@ namespace
     return Plato::input_file_parsing(tArgc, tArgv.data(), tMachine);
 }
 
-[[nodiscard]] std::string first_criterion_name(const Teuchos::ParameterList& aProblem)
-{
-    auto tPlatoProblemList = aProblem.sublist("Plato Problem");
-    assert(tPlatoProblemList.isSublist("Criteria"));
-    auto tCriteriaList = tPlatoProblemList.sublist("Criteria");
-    return tCriteriaList.name(tCriteriaList.begin());
-}
-
 [[nodiscard]] std::string first_file_name(const std::vector<std::string>& aFileNames)
 {
     if (aFileNames.empty())
