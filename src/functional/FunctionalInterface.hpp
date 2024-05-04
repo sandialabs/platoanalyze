@@ -33,8 +33,11 @@ class FunctionalInterface
     ///  and with an updated mesh @a aMeshProxy.
     auto solveProblem(const core::MeshProxy& aMeshProxy) -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
+    Plato::Solutions computeState(const Plato::ScalarVector& aArg) const;
+
     Plato::AbstractProblem& problem();
     Teuchos::ParameterList& parameterList();
+    const Teuchos::ParameterList& parameterList() const;
 
    private:
     Plato::Comm::Machine mMachine;
