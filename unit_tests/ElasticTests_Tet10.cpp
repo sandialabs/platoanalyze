@@ -354,14 +354,14 @@ TEUCHOS_UNIT_TEST( Tet10, ComputeStresses )
       voigtStress(tStress, tStrain);
 
       tVolume *= tCubWeights(gpOrdinal);
-      tCellVolume(cellOrdinal) += tVolume;
+      Kokkos::atomic_add(&tCellVolume(cellOrdinal), tVolume);
 
       stressDivergence(cellOrdinal, tResult, tStress, tGradient, tVolume);
 
       for(int i=0; i<ElementType::mNumVoigtTerms; i++)
       {
-          tCellStrain(cellOrdinal,i) += tVolume*tStrain(i);
-          tCellStress(cellOrdinal,i) += tVolume*tStress(i);
+          Kokkos::atomic_add(&tCellStrain(cellOrdinal,i), tVolume*tStrain(i));
+          Kokkos::atomic_add(&tCellStress(cellOrdinal,i), tVolume*tStress(i));
       }
   });
 
