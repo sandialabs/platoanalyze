@@ -26,6 +26,8 @@ struct FilterParameters;
 
 namespace plato::functional
 {
+[[nodiscard]] std::string first_criterion_name(const Teuchos::ParameterList& aProblem);
+
 [[nodiscard]] Plato::Comm::Machine create_machine();
 
 /// @brief Generates an input ParameterList for running the Helmholtz filter.

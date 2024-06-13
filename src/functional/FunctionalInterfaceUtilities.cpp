@@ -2,9 +2,8 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
-
-#include <plato/filter/FilterInterface.hpp>
 #include <plato/core/MeshProxy.hpp>
+#include <plato/filter/FilterInterface.hpp>
 
 #include "CrsMatrixUtils.hpp"
 #include "alg/ErrorHandling.hpp"
@@ -32,6 +31,20 @@ Teuchos::ParameterList& parameters_sublist(Teuchos::ParameterList& aParameterLis
     return plato_problem_sublist(aParameterList).sublist("Parameters");
 }
 }  // namespace
+
+[[nodiscard]] std::string first_criterion_name(const Teuchos::ParameterList& aProblem)
+{
+    auto tPlatoProblemList = aProblem.sublist("Plato Problem");
+    if (tPlatoProblemList.isSublist("Criteria"))
+    {
+        auto tCriteriaList = tPlatoProblemList.sublist("Criteria");
+        return tCriteriaList.name(tCriteriaList.begin());
+    }
+    else
+    {
+        return "";
+    }
+}
 
 Plato::Comm::Machine create_machine()
 {
