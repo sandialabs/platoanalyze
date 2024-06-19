@@ -22,11 +22,7 @@ template<typename EvaluationType>
 class ScalarExpression
 {
 protected:
-    using StateT  = typename EvaluationType::StateScalarType;
-    using ConfigT = typename EvaluationType::ConfigScalarType;
     using KineticsScalarType = typename EvaluationType::ResultScalarType;
-    using ElementType = typename EvaluationType::ElementType;
-    using KinematicsScalarType = typename Plato::fad_type_t<ElementType, StateT, ConfigT>;
     using ControlScalarType = typename EvaluationType::ControlScalarType;
 
 public:

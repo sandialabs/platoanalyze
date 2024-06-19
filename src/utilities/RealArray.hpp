@@ -42,7 +42,7 @@ class RealArray
 
   // Constructors
   RealArray()=default;
-  RealArray(array_type &&)=delete;
+  RealArray(array_type &&)=default;
   RealArray(array_type const &)=default;
   array_type& operator=(array_type&&)=default;
   array_type& operator=(const array_type&)=default;

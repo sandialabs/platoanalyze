@@ -8,12 +8,12 @@
 
 template <typename RealType>
 Plato::Evaluator::Expression<RealType> getTestExpression() {
-  int tLength = 1;
+  constexpr int cLength = 1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(cLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(cLength, 2.0);
 
   ob.set("xVar1", tX);
   ob.set("xVar2", tY);
@@ -24,13 +24,13 @@ Plato::Evaluator::Expression<RealType> getTestExpression() {
 template<typename RealType, typename FunctorT>
 bool testExpression(std::string aExpression, FunctorT aFunctor)
 {
-  Plato::Scalar Z = 0.5;
+  constexpr Plato::Scalar cZ = 0.5;
 
-  Plato::OrdinalType tLength = 1;
+  constexpr Plato::OrdinalType cLength = 1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(tLength, Z);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(cLength, cZ);
   ob.set("Z", tZ);
 
   auto tResult = ob.evaluate(aExpression);
@@ -38,17 +38,17 @@ bool testExpression(std::string aExpression, FunctorT aFunctor)
   auto tResult_Host = Kokkos::create_mirror(tResult);
   Kokkos::deep_copy(tResult_Host, tResult);
 
-  Plato::Scalar result = aFunctor(Z);
+  Plato::Scalar result = aFunctor(cZ);
 
   std::cout << std::endl;
 
-  for (int i = 0; i < tLength; ++i) {
+  for (int i = 0; i < cLength; ++i) {
     std::cout.precision(25);
     std::cout << "exp=" << tResult_Host(i) << " eq=" << result << "  diff=" << tResult_Host(i) - result << std::endl;
     }
 
     bool tPassed = true;
-    for(int i=0; i<tLength; ++i)
+    for(int i=0; i<cLength; ++i)
     {
       tPassed = tPassed && (fabs(tResult_Host(i) - result) < 1e-10);
     }
@@ -57,16 +57,16 @@ bool testExpression(std::string aExpression, FunctorT aFunctor)
 template<typename RealType>
 bool testDerivative(std::string aExpression, RealType aDeriv)
 {
-  Plato::Scalar Z = 0.5;
+  constexpr Plato::Scalar cZ = 0.5;
 
-  Plato::OrdinalType tLength = 1;
+  constexpr Plato::OrdinalType cLength = 1;
 
   using FadType = Sacado::Fad::SFad<RealType, 1>;
 
-  Plato::Evaluator::Expression<FadType> ob(tLength);
+  Plato::Evaluator::Expression<FadType> ob(cLength);
 
-  Plato::ScalarVectorT<FadType> tZ("Z", tLength);
-  Kokkos::deep_copy(tZ, FadType(1, 0, Z));
+  Plato::ScalarVectorT<FadType> tZ("Z", cLength);
+  Kokkos::deep_copy(tZ, FadType(1, 0, cZ));
 
   ob.set("Z", tZ);
 
@@ -77,14 +77,14 @@ bool testDerivative(std::string aExpression, RealType aDeriv)
 
   std::cout << std::endl;
 
-  for (int i = 0; i < tLength; ++i) {
+  for (int i = 0; i < cLength; ++i) {
     std::cout.precision(25);
     std::cout << "computed=" << tResult_Host(i).dx(0) << " gold=" << aDeriv
               << "  diff=" << tResult_Host(i).dx(0) - aDeriv << std::endl;
     }
 
     bool tPassed = true;
-    for(int i=0; i<tLength; ++i)
+    for(int i=0; i<cLength; ++i)
     {
       tPassed = tPassed && (fabs(tResult_Host(i).dx(0) - aDeriv)/fabs(aDeriv) < 1e-10);
     }
@@ -102,13 +102,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double)
 {
   using RealType = double;
 
-  int tLength = 1;
+  constexpr int cLength = 1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(tLength, 3.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(cLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(cLength, 2.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(cLength, 3.0);
 
   ob.set("xVar", tX);
   ob.set("yVar", tY);
@@ -131,12 +131,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_2Vars)
 {
   using RealType = double;
 
-  int tLength = 1;
+  constexpr int cLength = 1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(cLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(cLength, 2.0);
 
   ob.set("xVar1", tX);
   ob.set("xVar2", tY);
@@ -293,13 +293,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double_multi)
 {
   using RealType = double;
 
-  int tLength = 1;
+  constexpr int cLength = 1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(tLength, 3.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(cLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(cLength, 2.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(cLength, 3.0);
 
   ob.set("xVar", tX);
   ob.set("yVar", tY);
@@ -326,12 +326,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_double_literals)
 {
   using RealType = double;
 
-  int tLength=1;
+  constexpr int cLength=1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(tLength, 3.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(cLength, 2.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(cLength, 3.0);
 
   ob.set("yVar", tY);
   ob.set("zVar", tZ);
@@ -360,13 +360,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ExpressionParser_float)
 {
   using RealType = float;
 
-  int tLength = 1;
+  constexpr int cLength = 1;
 
-  Plato::Evaluator::Expression<RealType> ob(tLength);
+  Plato::Evaluator::Expression<RealType> ob(cLength);
 
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(tLength, 1.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(tLength, 2.0);
-  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(tLength, 3.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tX(cLength, 1.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tY(cLength, 2.0);
+  typename Plato::Evaluator::Expression<RealType>::ArrayType tZ(cLength, 3.0);
 
   ob.set("x", tX);
   ob.set("y", tY);
