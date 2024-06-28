@@ -695,11 +695,20 @@ namespace Plato
 
         Int tNumNodeVars;
         tErrorStatus = ex_get_variable_param(mFileID, EX_NODAL, &tNumNodeVars);
-        if(tErrorStatus) { ANALYZE_THROWERR("Unable to read data. ex_get_variable_param() failed."); }
+        if (tErrorStatus) {
+          ANALYZE_THROWERR("Unable to read data. ex_get_variable_param() failed.");
+        }
 
-        char** tNames = new char*[tNumNodeVars];
-        for(Int i=0; i<tNumNodeVars; i++)
-             tNames[i] = new char[MAX_STR_LENGTH+1];
+        char** const tNames = new char*[tNumNodeVars];
+        for (Int i = 0; i < tNumNodeVars; i++) {
+          tNames[i] = new char[MAX_STR_LENGTH + 1];
+        }
+        const auto deleteNames = [tNames, tNumNodeVars]() {
+          for (Int i = 0; i < tNumNodeVars; i++) {
+            delete[] tNames[i];
+          }
+          delete[] tNames;
+        };
         tErrorStatus = ex_get_variable_names(mFileID, EX_NODAL, tNumNodeVars, tNames);
         if(tErrorStatus) { ANALYZE_THROWERR("Unable to read data. ex_get_variable_names() failed."); }
 
@@ -723,12 +732,11 @@ namespace Plato
             {
                 tMessage << "  " << tNames[iName] << std::endl;
             }
+            deleteNames();
             ANALYZE_THROWERR(tMessage.str());
         }
 
-        for(Int i=0; i<tNumNodeVars; i++)
-           delete [] tNames[i];
-        delete [] tNames;
+        deleteNames();
 
         tErrorStatus = ex_get_var(mFileID, tReadTimeStep, EX_NODAL, tOneBasedVarIndex, 1, mNumNodes, aData);
         if(tErrorStatus) { ANALYZE_THROWERR("Unable to read data. ex_get_var() failed."); }

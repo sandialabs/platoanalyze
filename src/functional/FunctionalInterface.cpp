@@ -3,7 +3,6 @@
 #include <mpi.h>
 
 #include <Kokkos_Core.hpp>
-
 #include <plato/core/MeshProxy.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
@@ -96,7 +95,7 @@ template <typename T>
 FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     : mMachine(plato::functional::create_machine()),
       mParameterList(std::move(aParameterList)),
-      mSolutionCache{[this](const Plato::ScalarVector& aArg) { return mProblem->solution(aArg); },
+      mSolutionCache{[this](const Plato::ScalarVector& aArg) { return computeState(aArg); },
                      [this](const Plato::ScalarVector& aArg)
                      { return plato::functional::hash_current_design(aArg, mMesh); }}
 {
@@ -115,7 +114,22 @@ auto FunctionalInterface::solveProblem(const core::MeshProxy& aMeshProxy)
     return {mSolutionCache.compute(tControl), tControl};
 }
 
+Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aArg) const
+{
+    const std::string tCriterionName = first_criterion_name(parameterList());
+    if (!tCriterionName.empty() && mProblem->criterionIsLinear(tCriterionName))
+    {
+        return Plato::Solutions{};
+    }
+    else
+    {
+        return mProblem->solution(aArg);
+    }
+}
+
 Plato::AbstractProblem& FunctionalInterface::problem() { return *mProblem; }
 
 Teuchos::ParameterList& FunctionalInterface::parameterList() { return mParameterList; }
+
+const Teuchos::ParameterList& FunctionalInterface::parameterList() const { return mParameterList; }
 }  // namespace plato::functional

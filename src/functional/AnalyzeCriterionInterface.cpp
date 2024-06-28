@@ -25,14 +25,6 @@ namespace
     return Plato::input_file_parsing(tArgc, tArgv.data(), tMachine);
 }
 
-[[nodiscard]] std::string first_criterion_name(const Teuchos::ParameterList& aProblem)
-{
-    auto tPlatoProblemList = aProblem.sublist("Plato Problem");
-    assert(tPlatoProblemList.isSublist("Criteria"));
-    auto tCriteriaList = tPlatoProblemList.sublist("Criteria");
-    return tCriteriaList.name(tCriteriaList.begin());
-}
-
 [[nodiscard]] std::string first_file_name(const std::vector<std::string>& aFileNames)
 {
     if (aFileNames.empty())
@@ -72,11 +64,8 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const core::MeshProxy& a
 }
 }  // namespace plato::functional
 
-namespace plato
-{
-std::unique_ptr<criteria::library::CriterionInterface> plato_create_criterion(
+std::unique_ptr<::plato::criteria::library::CriterionInterface> plato_create_criterion(
     const std::vector<std::string>& aFileNames)
 {
-    return std::make_unique<plato::functional::AnalyzeCriterionInterface>(aFileNames);
+    return std::make_unique<::plato::functional::AnalyzeCriterionInterface>(aFileNames);
 }
-}  // namespace plato
