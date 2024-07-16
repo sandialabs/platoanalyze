@@ -18,6 +18,11 @@ target_include_directories(analyzelib PUBLIC "${PLATOENGINE_PREFIX}/include")
 target_link_libraries(${LIB_NAME} PUBLIC analyzelib)
 
 install( TARGETS ${LIB_NAME} DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+if(EXISTS "${PLATOENGINE_PREFIX}")
+  message(STATUS "Installing platoanalyze to platoengine plugins directory at ${PLATOENGINE_PREFIX}")
+  install(TARGETS ${LIB_NAME} DESTINATION ${PLATOENGINE_PREFIX}/plugins)
+  install(FILES "platoanalyze.config" DESTINATION ${PLATOENGINE_PREFIX}/plugins)
+endif()
 
 if( PLATOANALYZE_UNIT_TEST )
   add_subdirectory(./unittest)

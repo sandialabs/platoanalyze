@@ -36,4 +36,7 @@ class AnalyzeCriterionInterface : public plato::criteria::library::CriterionInte
 };
 }  // namespace plato::functional
 
+extern "C" std::unique_ptr<::plato::criteria::library::CriterionInterface> plato_create_criterion(
+    const std::vector<std::string>& aFileNames);
+
 #endif

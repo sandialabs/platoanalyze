@@ -64,11 +64,8 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const core::MeshProxy& a
 }
 }  // namespace plato::functional
 
-namespace plato
-{
-std::unique_ptr<criteria::library::CriterionInterface> plato_create_criterion(
+std::unique_ptr<::plato::criteria::library::CriterionInterface> plato_create_criterion(
     const std::vector<std::string>& aFileNames)
 {
-    return std::make_unique<plato::functional::AnalyzeCriterionInterface>(aFileNames);
+    return std::make_unique<::plato::functional::AnalyzeCriterionInterface>(aFileNames);
 }
-}  // namespace plato
