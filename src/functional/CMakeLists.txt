@@ -1,13 +1,11 @@
 set(SRCS AnalyzeCriterionInterface.cpp
          FunctionalInterface.cpp
          FunctionalInterfaceUtilities.cpp
-         SolutionCache.cpp
          HelmholtzFilterInterface.cpp)
 
 set(HDRS AnalyzeCriterionInterface.hpp
          FunctionalInterface.hpp
          FunctionalInterfaceUtilities.hpp
-         SolutionCache.hpp
          HelmholtzFilterInterface.hpp)
 
 set(LIB_NAME AnalyzeFunctionalInterface)

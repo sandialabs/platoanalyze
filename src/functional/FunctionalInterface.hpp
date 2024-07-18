@@ -3,10 +3,11 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <memory>
+#include <plato/utilities/StateCache.hpp>
 #include <utility>
 
 #include "PlatoMesh.hpp"
-#include "SolutionCache.hpp"
+#include "Solutions.hpp"
 #include "alg/ParallelComm.hpp"
 
 namespace Plato
@@ -26,6 +27,8 @@ namespace plato::functional
 /// plato::functional interface types.
 class FunctionalInterface
 {
+    using SolutionCache = plato::utilities::StateCache<Plato::Solutions, const Plato::ScalarVector&>;
+
    public:
     FunctionalInterface(Teuchos::ParameterList aParameterList);
 
