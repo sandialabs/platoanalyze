@@ -2,8 +2,8 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
-#include <plato/core/MeshProxy.hpp>
 #include <plato/filter/FilterInterface.hpp>
+#include <plato/mesh/MeshDesignVariables.hpp>
 
 #include "CrsMatrixUtils.hpp"
 #include "alg/ErrorHandling.hpp"
@@ -57,7 +57,7 @@ Teuchos::ParameterList helmholtz_filter_parameter_list(const filter::library::Fi
 {
     Teuchos::ParameterList tParameterList;
     tParameterList.set("Physics", "Plato Driver");
-    tParameterList.set("Spatial Dimension", 2);  // FIX-ME
+    tParameterList.set("Spatial Dimension", 3);
     tParameterList.set(std::string{kInputMeshEntry}, std::string{aMeshName});
     plato_problem_sublist(tParameterList).set("Physics", "Helmholtz Filter");
     plato_problem_sublist(tParameterList).set("PDE Constraint", "Helmholtz Filter");
@@ -74,9 +74,10 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, const std::st
     aParameterList.set(std::string{kInputMeshEntry}, std::string{aMeshName});
 }
 
-Plato::ScalarVector create_control(const plato::core::MeshProxy& aMeshProxy, const Plato::Mesh& aMesh)
+Plato::ScalarVector create_control(const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+                                   const Plato::Mesh& aMesh)
 {
-    if (aMeshProxy.mNodalDensities.empty())
+    if (aMeshDesignVariables.mBlockDensities.empty())
     {
         Plato::ScalarVector tControl("control", aMesh->NumNodes());
         constexpr double tFullDensity = 1.0;
@@ -85,7 +86,7 @@ Plato::ScalarVector create_control(const plato::core::MeshProxy& aMeshProxy, con
     }
     else
     {
-        return to_scalar_vector(aMeshProxy.mNodalDensities);
+        return to_scalar_vector(aMeshDesignVariables);
     }
 }
 
@@ -118,4 +119,31 @@ Plato::ScalarVector to_scalar_vector(const std::vector<double>& aVector)
     Kokkos::deep_copy(tScalarVector, tScalarVectorOnHost);
     return tScalarVector;
 }
+
+Plato::ScalarVector to_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables)
+{
+    const auto& tFirstBlockDensities = aDesignVariables.mBlockDensities.begin()->second;
+    const auto tScalarVector = Plato::ScalarVector("control", tFirstBlockDensities.size());
+    auto tScalarVectorOnHost = Kokkos::create_mirror_view(tScalarVector);
+    for (std::size_t tIndex = 0; tIndex < tFirstBlockDensities.size(); ++tIndex)
+    {
+        tScalarVectorOnHost[tIndex] = tFirstBlockDensities[tIndex].mDensity;
+    }
+    Kokkos::deep_copy(tScalarVector, tScalarVectorOnHost);
+    return tScalarVector;
+}
+
+plato::mesh::MeshDesignVariables::BlockDensities to_mesh_design_variables(const Plato::ScalarVector aScalarVector)
+{
+    auto tScalarVectorOnHost = Kokkos::create_mirror_view(aScalarVector);
+    Kokkos::deep_copy(tScalarVectorOnHost, aScalarVector);
+    auto tFirstBlockDensities = std::vector<plato::mesh::Density>{};
+    tFirstBlockDensities.reserve(aScalarVector.size());
+    for (std::size_t tIndex = 0; tIndex < aScalarVector.size(); ++tIndex)
+    {
+        tFirstBlockDensities.emplace_back(plato::mesh::Density{tIndex + 1, tIndex, tScalarVectorOnHost[tIndex]});
+    }
+    return plato::mesh::MeshDesignVariables::BlockDensities{{1, std::move(tFirstBlockDensities)}};
+}
+
 }  // namespace plato::functional

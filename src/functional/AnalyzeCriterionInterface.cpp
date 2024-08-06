@@ -1,7 +1,7 @@
 #include "AnalyzeCriterionInterface.hpp"
 
 #include <array>
-#include <plato/core/MeshProxy.hpp>
+#include <plato/mesh/MeshDesignVariables.hpp>
 #include <string>
 #include <string_view>
 
@@ -40,9 +40,9 @@ AnalyzeCriterionInterface::AnalyzeCriterionInterface(const std::vector<std::stri
 {
 }
 
-double AnalyzeCriterionInterface::value(const core::MeshProxy& aMeshProxy) const
+double AnalyzeCriterionInterface::value(const mesh::MeshDesignVariables& aMeshDesignVariables) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
+    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
     const double tResult = mFunctionalInterface.problem().criterionValue(tControl, tSolution, tCriterionName);
@@ -50,13 +50,13 @@ double AnalyzeCriterionInterface::value(const core::MeshProxy& aMeshProxy) const
     return tResult;
 }
 
-std::vector<double> AnalyzeCriterionInterface::gradient(const core::MeshProxy& aMeshProxy) const
+std::vector<double> AnalyzeCriterionInterface::gradient(const mesh::MeshDesignVariables& aMeshDesignVariables) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
+    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
     const Plato::ScalarVector tGradient =
-        aMeshProxy.mNodalDensities.empty()
+        aMeshDesignVariables.mBlockDensities.empty()
             ? mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName)
             : mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName);
 

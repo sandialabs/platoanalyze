@@ -2,6 +2,7 @@
 #define PLATO_FUNCTIONAL_FUNCTIONALINTERFACEUTILITIES_H
 
 #include <memory>
+#include <plato/mesh/MeshDesignVariables.hpp>
 #include <string_view>
 #include <vector>
 
@@ -14,10 +15,10 @@ namespace Teuchos
 class ParameterList;
 }
 
-namespace plato::core
+namespace plato::mesh
 {
-struct MeshProxy;
-}  // namespace plato::core
+struct MeshDesignVariables;
+}  // namespace plato::mesh
 
 namespace plato::filter::library
 {
@@ -37,13 +38,20 @@ namespace plato::functional
 /// @brief Replaces the file name of the mesh in @a aParameterList with @a aMeshName.
 void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_view aMeshName);
 
-/// @brief Copies the nodal density field contained in @a aMeshProxy to a ScalarVector
-[[nodiscard]] Plato::ScalarVector create_control(const core::MeshProxy& aMeshProxy, const Plato::Mesh& aMesh);
+/// @brief Copies the nodal density field contained in @a aMeshDesignVariables to a ScalarVector
+[[nodiscard]] Plato::ScalarVector create_control(const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                                 const Plato::Mesh& aMesh);
 
 [[nodiscard]] std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato::Mesh& aMesh);
 
 std::vector<double> to_std_vector(const Plato::ScalarVector aScalarVector);
+
 Plato::ScalarVector to_scalar_vector(const std::vector<double>& aVector);
+
+Plato::ScalarVector to_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables);
+
+auto to_mesh_design_variables(Plato::ScalarVector aScalarVector) -> plato::mesh::MeshDesignVariables::BlockDensities;
+
 }  // namespace plato::functional
 
 #endif

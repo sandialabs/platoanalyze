@@ -16,9 +16,9 @@ class AbstractProblem;
 struct Solutions;
 };  // namespace Plato
 
-namespace plato::core
+namespace plato::mesh
 {
-struct MeshProxy;
+struct MeshDesignVariables;
 }
 
 namespace plato::functional
@@ -34,7 +34,8 @@ class FunctionalInterface
 
     /// @brief Solves the forward problem specified by the ParameterList passed on construction,
     ///  and with an updated mesh @a aMeshProxy.
-    auto solveProblem(const core::MeshProxy& aMeshProxy) -> std::pair<Plato::Solutions, Plato::ScalarVector>;
+    auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
+        -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
     Plato::Solutions computeState(const Plato::ScalarVector& aArg) const;
 

@@ -15,21 +15,13 @@ class AnalyzeCriterionInterface : public plato::criteria::library::CriterionInte
 {
    public:
     ///@brief Construct a new Analyze Criterion Interface object
-    ///
-    ///@param aFileNames
     explicit AnalyzeCriterionInterface(const std::vector<std::string>& aFileNames);
 
-    ///@brief Return the value of the criterion at the control specified by the MeshProxy
-    ///
-    ///@param aMeshProxy
-    ///@return double
-    [[nodiscard]] double value(const core::MeshProxy& aMeshProxy) const override;
+    ///@brief Return the value of the criterion at the control specified by @a aMeshDesignVariables
+    [[nodiscard]] double value(const mesh::MeshDesignVariables& aMeshDesignVariables) const override;
 
-    ///@brief Return the gradient of the criterion evaluated at the control specified by the MeshProxy
-    ///
-    ///@param aMeshProxy
-    ///@return std::vector<double>
-    [[nodiscard]] std::vector<double> gradient(const core::MeshProxy& aMeshProxy) const override;
+    ///@brief Return the gradient of the criterion evaluated at the control specified by @a aMeshDesignVariables
+    [[nodiscard]] std::vector<double> gradient(const mesh::MeshDesignVariables& aMeshDesignVariables) const override;
 
    private:
     mutable FunctionalInterface mFunctionalInterface;

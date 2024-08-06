@@ -1,8 +1,8 @@
 #include "HelmholtzFilterInterface.hpp"
 
 #include <Teuchos_ParameterList.hpp>
-#include <plato/core/MeshProxy.hpp>
 #include <plato/linear_algebra/DynamicVector.hpp>
+#include <plato/mesh/MeshDesignVariables.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
@@ -23,18 +23,20 @@ HelmholtzFilterInterface::HelmholtzFilterInterface(const plato::filter::library:
 {
 }
 
-core::MeshProxy HelmholtzFilterInterface::filter(const plato::core::MeshProxy& aMeshProxy) const
+mesh::MeshDesignVariables HelmholtzFilterInterface::filter(
+    const plato::mesh::MeshDesignVariables& aMeshDesignVariables) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
+    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
 
     Plato::ScalarVector tFilteredControl = filtered_control(tSolution);
-    return plato::core::MeshProxy{aMeshProxy.mFileName, to_std_vector(tFilteredControl)};
+    return plato::mesh::MeshDesignVariables{aMeshDesignVariables.mFileName, to_mesh_design_variables(tFilteredControl)};
 }
 
 plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
-    const plato::core::MeshProxy& aMeshProxy, const plato::linear_algebra::DynamicVector<double>& aV) const
+    const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+    const plato::linear_algebra::DynamicVector<double>& aV) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshProxy);
+    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
 
     const Plato::ScalarVector tVAsScalarVector = to_scalar_vector(aV.stdVector());
     const Plato::ScalarVector tGradient =
