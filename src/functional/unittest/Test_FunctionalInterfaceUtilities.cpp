@@ -1,16 +1,32 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <numeric>
-
 #include <plato/filter/FilterInterface.hpp>
 
 #include "BLAS1.hpp"
 #include "FunctionalInterfaceUtilities.hpp"
+#include "PlatoMeshTestHelpers.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoTestHelpers.hpp"
 
 namespace plato::functional::unittest
 {
+namespace
+{
+const auto tDensityVector1 =
+    std::vector<plato::mesh::Density>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
+const auto tDensityVector2 =
+    std::vector<plato::mesh::Density>{{3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}, {6, 5, 6.0}, {7, 6, 7.0}, {8, 7, 8.0}};
+const auto tVectorDensities = std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
+
+Plato::Mesh test_mesh(const std::filesystem::path& aMeshFilePath)
+{
+    Plato::TestHelpers::write_two_block_mesh(aMeshFilePath);
+    return Plato::MeshFactory::create(aMeshFilePath.string());
+}
+
+}  // namespace
+
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ParameterList)
 {
     constexpr double tFilterRadius = 42.0;
@@ -115,4 +131,96 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, HashCurrentDesign_ControlChanges
     tNewHash = hash_current_design(tControl, tMesh);
     TEST_INEQUALITY(tNewHash, tOriginalHash);
 }
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ToScalarVectorFromMeshDesignVariables)
+{
+    const auto tMeshFilePath = std::filesystem::path{"test-mesh.exo"};
+    const auto tMesh = test_mesh(tMeshFilePath);
+
+    const auto tMeshDesignVariables =
+        plato::mesh::MeshDesignVariables{tMeshFilePath, {{1, tDensityVector1}, {2, tDensityVector2}}};
+
+    const auto tResultOnDevice = to_scalar_vector(tMeshDesignVariables, tMesh);
+
+    TEST_EQUALITY(tVectorDensities.size(), tResultOnDevice.size());
+
+    const auto tResultOnHost = Kokkos::create_mirror_view(tResultOnDevice);
+    Kokkos::deep_copy(tResultOnHost, tResultOnDevice);
+    for (auto tIndex = 0U; tIndex < tVectorDensities.size(); ++tIndex)
+    {
+        TEST_EQUALITY(tResultOnHost[tIndex], tVectorDensities[tIndex]);
+    }
+
+    std::filesystem::remove(tMeshFilePath);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ToScalarVectorFromMeshDesignVariablesFixedBlock)
+{
+    const auto tMeshFilePath = std::filesystem::path{"test-mesh.exo"};
+    const auto tMesh = test_mesh(tMeshFilePath);
+
+    // Omits block 1, which is then assumed fixed.
+    const auto tMeshDesignVariables = plato::mesh::MeshDesignVariables{tMeshFilePath, {{1, tDensityVector1}}};
+
+    const auto tResultOnDevice = to_scalar_vector(tMeshDesignVariables, tMesh);
+    const auto tResultOnHost = Kokkos::create_mirror_view(tResultOnDevice);
+    Kokkos::deep_copy(tResultOnHost, tResultOnDevice);
+
+    // The last three nodes are in the fixed block so they have density 1.
+    // Border nodes belong to the design block.
+    auto tExpectedDensities = tVectorDensities;
+    tExpectedDensities[5] = 1.0;
+    tExpectedDensities[6] = 1.0;
+    tExpectedDensities[7] = 1.0;
+
+    for (auto tIndex = 0U; tIndex < tVectorDensities.size(); ++tIndex)
+    {
+        TEST_EQUALITY(tResultOnHost[tIndex], tExpectedDensities[tIndex]);
+    }
+
+    std::filesystem::remove(tMeshFilePath);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ToMeshDesignVariablesFromScalarVector)
+{
+    const auto tMeshFilePath = std::filesystem::path{"test-mesh.exo"};
+    const auto tMesh = test_mesh(tMeshFilePath);
+
+    const auto tBaseMeshDesignVariables =
+        plato::mesh::MeshDesignVariables{tMeshFilePath, {{1, tDensityVector1}, {2, tDensityVector2}}};
+
+    const auto tControlsOnDevice = Plato::ScalarVector{"Controls", static_cast<unsigned>(tMesh->NumNodes())};
+    const auto tControlsOnHost = Kokkos::create_mirror_view(tControlsOnDevice);
+    for (auto tIndex = 0U; tIndex < tControlsOnHost.size(); ++tIndex)
+    {
+        tControlsOnHost[tIndex] = -static_cast<double>(tIndex + 1);
+    }
+    Kokkos::deep_copy(tControlsOnDevice, tControlsOnHost);
+
+    const auto tResultMeshDesignVariables = to_mesh_design_variables(tControlsOnDevice, tBaseMeshDesignVariables);
+
+    TEST_EQUALITY(tResultMeshDesignVariables.mBlockDensities.size(), tBaseMeshDesignVariables.mBlockDensities.size());
+
+    auto tExpectedDesignVariablesIterator = tBaseMeshDesignVariables.mBlockDensities.cbegin();
+    for (const auto& [tResultBlockID, tResultDensityVector] : tResultMeshDesignVariables.mBlockDensities)
+    {
+        const auto& [tExpectedBlockID, tExpectedDensityVector] = *tExpectedDesignVariablesIterator;
+        TEST_EQUALITY(tResultBlockID, tExpectedBlockID);
+        TEST_EQUALITY(tResultDensityVector.size(), tExpectedDensityVector.size());
+
+        for (auto tIndex = 0U; tIndex < tResultDensityVector.size(); ++tIndex)
+        {
+            TEST_EQUALITY(tResultDensityVector[tIndex].mGlobalMeshEntityID,
+                          tExpectedDensityVector[tIndex].mGlobalMeshEntityID);
+            TEST_EQUALITY(tResultDensityVector[tIndex].mDesignVariableVectorIndex,
+                          tExpectedDensityVector[tIndex].mDesignVariableVectorIndex);
+            TEST_EQUALITY(tResultDensityVector[tIndex].mDensity, -tExpectedDensityVector[tIndex].mDensity);
+        }
+
+        ++tExpectedDesignVariablesIterator;
+    }
+
+    std::filesystem::remove(tMeshFilePath);
+}
+
 }  // namespace plato::functional::unittest

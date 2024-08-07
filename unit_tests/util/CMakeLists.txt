@@ -2,7 +2,8 @@
 
 set( TEST_UTIL_SRC 
      PlatoTestHelpers.cpp 
-     PlatoMathTestHelpers.cpp )
+     PlatoMathTestHelpers.cpp
+     PlatoMeshTestHelpers.cpp )
 
 add_library( Analyze_UnitTestUtils ${TEST_UTIL_SRC} )
 
