@@ -8,6 +8,8 @@ configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/nodal_surface_pressure_field.e
                  ${CMAKE_CURRENT_BINARY_DIR}/nodal_surface_pressure_field.exo COPYONLY)
 configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/two_block_contact.exo
                  ${CMAKE_CURRENT_BINARY_DIR}/two_block_contact.exo COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/hex-1-1-1.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/hex-1-1-1.exo COPYONLY)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/BamG)
 
@@ -121,6 +123,7 @@ if(PLATOANALYZE_ENABLE_MPMD)
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
     set(EngineMesh_SOURCES
       EngineMeshIntxTests.cpp
+      EngineMeshTests.cpp
       PlatoUnitTestMain.cpp
     )
     add_executable(EngineMeshIntxTests

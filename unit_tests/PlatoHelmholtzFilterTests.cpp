@@ -1,4 +1,5 @@
 #include "util/PlatoTestHelpers.hpp"
+#include "util/PlatoMeshTestHelpers.hpp"
 
 #include "Teuchos_UnitTestHarness.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
@@ -498,4 +499,66 @@ TEUCHOS_UNIT_TEST( HelmholtzFilterTests, HelmholtzUniformFieldTest_Hex27 )
   for(int iDof=0; iDof<tNumDofs; iDof++){
     TEST_FLOATING_EQUALITY(stateView_host(iDof), 1.0, 1.0e-13);
   }
+}
+
+TEUCHOS_UNIT_TEST(HelmholtzFilterTests, HelmholtzFixedBlockTest_Tri3) {
+  const auto tParamList = Teuchos::getParametersFromXmlString(
+      "<ParameterList name='Plato Problem'>"
+      "  <ParameterList name='Spatial Model'>"
+      "    <ParameterList name='Domains'>"
+      "      <ParameterList name='Design Volume'>"
+      "        <Parameter name='Element Block' type='string' value='BLOCK_2'/>"
+      "        <Parameter name='Material Model' type='string' value='Unobtainium'/>"
+      "      </ParameterList>"
+      "      <ParameterList name='Fixed Volume'>"
+      "        <Parameter name='Element Block' type='string' value='BLOCK_1'/>"
+      "        <Parameter name='Material Model' type='string' value='Unobtainium'/>"
+      "      </ParameterList>"
+      "    </ParameterList>"
+      "  </ParameterList>"
+      "  <Parameter name='PDE Constraint' type='string' value='Helmholtz Filter'/>"
+      "  <Parameter name='Physics' type='string' value='Helmholtz Filter'/>"
+      "  <ParameterList name='Parameters'>"
+      "    <Parameter name='Length Scale' type='double' value='0.10'/>"
+      "  </ParameterList>"
+      "</ParameterList>");
+
+  auto tComm = MPI_Comm{};
+  MPI_Comm_dup(MPI_COMM_WORLD, &tComm);
+
+  const auto tMeshFilePath = std::filesystem::path{"test-mesh.exo"};
+  Plato::TestHelpers::write_two_block_mesh(tMeshFilePath);
+  auto tMesh = Plato::MeshFactory::create(tMeshFilePath.string());
+
+  // create mesh based density
+  //
+  using PhysicsType = ::Plato::HelmholtzFilter<Plato::Tri3>;
+  using ElementType = typename PhysicsType::ElementType;
+
+  const auto tNumDofs = tMesh->NumNodes();
+  const auto tControlOnDevice = Plato::ScalarVector{"density", static_cast<unsigned long>(tNumDofs)};
+  const auto tControlOnHost = Kokkos::create_mirror_view(tControlOnDevice);
+
+  Kokkos::deep_copy(tControlOnHost, 0.0);
+  const auto tNumberOfNodesInBlock1 = 2U;
+  for (auto tControlIndex = 0; tControlIndex < tNumberOfNodesInBlock1; ++tControlIndex) {
+    tControlOnHost[tControlIndex] = 1.0;
+  }
+  Kokkos::deep_copy(tControlOnDevice, tControlOnHost);
+
+  // construct problem
+  auto tProblem = Plato::Helmholtz::Problem<PhysicsType>(tMesh, *tParamList, Plato::Comm::Machine{tComm});
+
+  // perform necessary operations
+  const auto tSolution = tProblem.solution(tControlOnDevice);
+  const auto tFilteredControlOnDevice = Kokkos::subview(tSolution.get("State"), 0, Kokkos::ALL());
+  const auto tFilteredControlOnHost = Kokkos::create_mirror_view(tFilteredControlOnDevice);
+  Kokkos::deep_copy(tFilteredControlOnHost, tFilteredControlOnDevice);
+
+  TEST_EQUALITY(tFilteredControlOnHost.size(), tControlOnHost.size());
+  for (auto tIndex = 0U; tIndex < tFilteredControlOnHost.size(); ++tIndex) {
+    TEST_FLOATING_EQUALITY(tFilteredControlOnHost[tIndex], tControlOnHost[tIndex], 1.0e-14);
+  }
+
+  std::filesystem::remove(tMeshFilePath);
 }
