@@ -326,4 +326,15 @@ namespace Plato
         Omega_h::LOs tNodes(aNodes);
         mMeshSets[Omega_h::NODE_SET][aNodeSetName] = tNodes;
     }
-}
+
+    auto OmegaHMesh::NodeMap() const -> const NodeMapType& {
+      if (!mNodeMap) {
+        mNodeMap = std::unordered_map<GlobalNodeID, MeshArrayIndex>{};
+        mNodeMap->reserve(NumNodes());
+        for (MeshArrayIndex tMeshArrayIndex = 0; tMeshArrayIndex < NumNodes(); ++tMeshArrayIndex) {
+          mNodeMap->emplace(tMeshArrayIndex + 1, tMeshArrayIndex);
+        }
+      }
+      return *mNodeMap;
+    }
+}  // namespace Plato

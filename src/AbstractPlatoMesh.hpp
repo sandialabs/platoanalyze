@@ -1,6 +1,7 @@
 #pragma once
 
 #include <initializer_list>
+#include <unordered_map>
 
 #include "PlatoStaticsTypes.hpp"
 
@@ -197,5 +198,13 @@ namespace Plato
             Plato::OrdinalVectorT<const Plato::OrdinalType>
             GetSideSetLocalNodesComplement( std::vector<std::string> aExcludeNames) = 0;
         
+            using GlobalNodeID = Plato::OrdinalType;
+            using MeshArrayIndex = Plato::OrdinalType;
+            using NodeMapType = std::unordered_map<GlobalNodeID, MeshArrayIndex>;
+
+            /// @return The node map in the mesh, which gives the mapping between a user-defined ID and
+            ///  the index into the mesh arrays. The map key is the user-defined ID and the value is the
+            ///  array index.
+            virtual auto NodeMap() const -> const NodeMapType& = 0;
     };
 }
