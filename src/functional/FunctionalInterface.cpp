@@ -132,4 +132,7 @@ Plato::AbstractProblem& FunctionalInterface::problem() { return *mProblem; }
 Teuchos::ParameterList& FunctionalInterface::parameterList() { return mParameterList; }
 
 const Teuchos::ParameterList& FunctionalInterface::parameterList() const { return mParameterList; }
+
+const Plato::Mesh& FunctionalInterface::mesh() const { return mMesh; }
+
 }  // namespace plato::functional

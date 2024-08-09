@@ -43,6 +43,8 @@ class FunctionalInterface
     Teuchos::ParameterList& parameterList();
     const Teuchos::ParameterList& parameterList() const;
 
+    const Plato::Mesh& mesh() const;
+
    private:
     Plato::Comm::Machine mMachine;
     Plato::Mesh mMesh;

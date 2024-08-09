@@ -1,5 +1,6 @@
 set(Test_SOURCES Test_FunctionalInterfaceUtilities.cpp
                  Test_SolutionCache.cpp
+                 Inputs.cpp
                  UnitMain.cpp)
 
 set(Test_NAME "AnalyzeFunctional_UnitTests")

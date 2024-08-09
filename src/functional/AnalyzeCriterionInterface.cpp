@@ -60,7 +60,7 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const mesh::MeshDesignVa
             ? mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName)
             : mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName);
 
-    return plato::functional::to_std_vector(tGradient);
+    return functional::design_variable_std_vector(tGradient, aMeshDesignVariables, mFunctionalInterface.mesh());
 }
 }  // namespace plato::functional
 

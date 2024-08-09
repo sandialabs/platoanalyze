@@ -48,7 +48,8 @@ Teuchos::ParameterList& parameters_sublist(Teuchos::ParameterList& aParameterLis
 
 Plato::Comm::Machine create_machine()
 {
-    MPI_Comm tComm = MPI_COMM_WORLD;
+    MPI_Comm tComm;
+    MPI_Comm_dup(MPI_COMM_SELF, &tComm);
     return Plato::Comm::Machine{tComm};
 }
 
@@ -86,7 +87,7 @@ Plato::ScalarVector create_control(const plato::mesh::MeshDesignVariables& aMesh
     }
     else
     {
-        return to_scalar_vector(aMeshDesignVariables, aMesh);
+        return full_nodal_scalar_vector(aMeshDesignVariables, aMesh);
     }
 }
 
@@ -97,30 +98,53 @@ std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato
     return tSeed;
 }
 
-std::vector<double> to_std_vector(const Plato::ScalarVector aScalarVector)
+std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalarVector,
+                                               const plato::mesh::MeshDesignVariables& aDesignVariables,
+                                               const Plato::Mesh& aMesh)
 {
     auto tScalarVectorOnHost = Kokkos::create_mirror_view(aScalarVector);
     Kokkos::deep_copy(tScalarVectorOnHost, aScalarVector);
-    std::vector<double> tResult;
-    tResult.reserve(tScalarVectorOnHost.size());
-    std::copy(tScalarVectorOnHost.data(), tScalarVectorOnHost.data() + tScalarVectorOnHost.size(),
-              std::back_inserter(tResult));
+    auto tResult = std::vector<double>(number_of_design_variables(aDesignVariables));
+    const auto& tNodeMap = aMesh->NodeMap();
+    for (const auto& [tBlockID, tDensityVector] : aDesignVariables.mBlockDensities)
+    {
+        for (const auto& tDensity : tDensityVector)
+        {
+            const auto tPAControlVectorIndex = tNodeMap.find(tDensity.mGlobalMeshEntityID);
+            assert(tPAControlVectorIndex != tNodeMap.cend());
+            tResult[tDensity.mDesignVariableVectorIndex] = aScalarVector[tPAControlVectorIndex->second];
+        }
+    }
     return tResult;
 }
 
-Plato::ScalarVector to_scalar_vector(const std::vector<double>& aVector)
+Plato::ScalarVector full_nodal_scalar_vector(const std::vector<double>& aVector,
+                                             const plato::mesh::MeshDesignVariables& aDesignVariables,
+                                             const Plato::Mesh& aMesh)
 {
-    const auto tScalarVector = Plato::ScalarVector("control", aVector.size());
+    const auto tScalarVector = Plato::ScalarVector("control", aMesh->NumNodes());
     auto tScalarVectorOnHost = Kokkos::create_mirror_view(tScalarVector);
-    for (std::size_t tIndex = 0; tIndex < aVector.size(); ++tIndex)
+
+    constexpr auto tFixedControlValue = double{1.0};
+    Kokkos::deep_copy(tScalarVectorOnHost, tFixedControlValue);
+
+    const auto& tNodeMap = aMesh->NodeMap();
+    for (const auto& [tBlockID, tDensityVector] : aDesignVariables.mBlockDensities)
     {
-        tScalarVectorOnHost[tIndex] = aVector[tIndex];
+        for (const auto& tDensity : tDensityVector)
+        {
+            const auto tPAControlVectorIndex = tNodeMap.find(tDensity.mGlobalMeshEntityID);
+            assert(tPAControlVectorIndex != tNodeMap.cend());
+            tScalarVectorOnHost[tPAControlVectorIndex->second] = aVector[tDensity.mDesignVariableVectorIndex];
+        }
     }
+
     Kokkos::deep_copy(tScalarVector, tScalarVectorOnHost);
     return tScalarVector;
 }
 
-Plato::ScalarVector to_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables, const Plato::Mesh& aMesh)
+Plato::ScalarVector full_nodal_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables,
+                                             const Plato::Mesh& aMesh)
 {
     const auto& tFirstBlockDensities = aDesignVariables.mBlockDensities.begin()->second;
     const auto tScalarVector = Plato::ScalarVector("control", static_cast<unsigned>(aMesh->NumNodes()));
@@ -129,32 +153,73 @@ Plato::ScalarVector to_scalar_vector(const plato::mesh::MeshDesignVariables& aDe
     constexpr auto tFixedControlValue = double{1.0};
     Kokkos::deep_copy(tScalarVectorOnHost, tFixedControlValue);
 
+    const auto& tNodeMap = aMesh->NodeMap();
     for (const auto& [tBlockID, tDensityVector] : aDesignVariables.mBlockDensities)
     {
         for (const auto& tDensity : tDensityVector)
         {
-            tScalarVectorOnHost[tDensity.mDesignVariableVectorIndex] = tDensity.mDensity;
+            const auto tPAControlVectorIndex = tNodeMap.find(tDensity.mGlobalMeshEntityID);
+            assert(tPAControlVectorIndex != tNodeMap.cend());
+            tScalarVectorOnHost[tPAControlVectorIndex->second] = tDensity.mDensity;
         }
     }
     Kokkos::deep_copy(tScalarVector, tScalarVectorOnHost);
     return tScalarVector;
 }
 
-plato::mesh::MeshDesignVariables to_mesh_design_variables(const Plato::ScalarVector aScalarVector,
-                                                          plato::mesh::MeshDesignVariables aMeshDesignVariables)
+plato::mesh::MeshDesignVariables mesh_design_variables(const Plato::ScalarVector aScalarVector,
+                                                       plato::mesh::MeshDesignVariables aMeshDesignVariables,
+                                                       const Plato::Mesh& aMesh)
 {
     const auto tScalarVectorOnHost = Kokkos::create_mirror_view(aScalarVector);
     Kokkos::deep_copy(tScalarVectorOnHost, aScalarVector);
 
+    const auto& tNodeMap = aMesh->NodeMap();
     for (auto& [tBlockID, tDensityVector] : aMeshDesignVariables.mBlockDensities)
     {
         for (auto& tDensity : tDensityVector)
         {
-            tDensity.mDensity = tScalarVectorOnHost[tDensity.mDesignVariableVectorIndex];
+            const auto tPAControlVectorIndex = tNodeMap.find(tDensity.mGlobalMeshEntityID);
+            assert(tPAControlVectorIndex != tNodeMap.cend());
+            tDensity.mDensity = tScalarVectorOnHost[tPAControlVectorIndex->second];
         }
     }
 
     return aMeshDesignVariables;
+}
+
+std::size_t number_of_design_variables(const plato::mesh::MeshDesignVariables& aMeshDesignVariables)
+{
+    using Density = plato::mesh::Density;
+    using IndexType = plato::mesh::Density::IndexType;
+    using DensityVector = plato::mesh::MeshDesignVariables::DensityVector;
+
+    if (aMeshDesignVariables.mBlockDensities.empty())
+    {
+        return 0U;
+    }
+
+    const auto tLessVectorIndex = [](const Density& aDensityLeft, const Density& aDensityRight)
+    { return aDensityLeft.mDesignVariableVectorIndex < aDensityRight.mDesignVariableVectorIndex; };
+
+    const auto tMaxIndex = [&tLessVectorIndex](const DensityVector& aBlockDensities)
+    {
+        const auto aMaxIndexIterator =
+            std::max_element(aBlockDensities.cbegin(), aBlockDensities.cend(), tLessVectorIndex);
+        return aMaxIndexIterator == aBlockDensities.cend() ? IndexType{0}
+                                                           : aMaxIndexIterator->mDesignVariableVectorIndex;
+    };
+
+    const auto tBlockDensityVector = [&tMaxIndex](const auto& tBlockMapEntry)
+    { return tMaxIndex(tBlockMapEntry.second); };
+
+    const auto tMax = [](const IndexType aIndexLeft, const IndexType aIndexRight)
+    { return std::max(aIndexLeft, aIndexRight); };
+
+    const auto tMaxVectorIndex =
+        std::transform_reduce(aMeshDesignVariables.mBlockDensities.cbegin(),
+                              aMeshDesignVariables.mBlockDensities.cend(), IndexType{0}, tMax, tBlockDensityVector);
+    return tMaxVectorIndex + 1;
 }
 
 }  // namespace plato::functional
