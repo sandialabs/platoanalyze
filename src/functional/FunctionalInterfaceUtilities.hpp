@@ -77,7 +77,7 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// Essentially, the density values in this object will be replaced with those in @a aScalarVector.
 /// @pre All `mDesignVariableVectorIndex` entries must be less than size of @a aScalarVector.
 [[nodiscard]] auto mesh_design_variables(Plato::ScalarVector aScalarVector,
-                                         plato::mesh::MeshDesignVariables aMeshDesignVariablesIndices,
+                                         plato::mesh::MeshDesignVariables aDesignVariablesIndices,
                                          const Plato::Mesh& aMesh) -> plato::mesh::MeshDesignVariables;
 
 /// @brief Returns the number of design variables associated with @a aMeshDesignVariables.
