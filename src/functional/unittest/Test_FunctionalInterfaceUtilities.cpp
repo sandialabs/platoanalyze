@@ -163,41 +163,40 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, HashCurrentDesign_ControlChanges
     TEST_INEQUALITY(tNewHash, tOriginalHash);
 }
 
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, DesignVariableStdVectorAllBlocks)
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, DesignVariableStdVector)
 {
     const auto tTestFixture = TestMeshSetupTeardown{};
+
+    const auto tTestFunction =
+        [&](const std::vector<double>& aResult, const auto aFullControls, const auto aNumberOfFixedNodes)
+    {
+        const auto tExpectedSize = aFullControls.size() - aNumberOfFixedNodes;
+        const auto tExpected = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aFullControls);
+        TEST_EQUALITY(aResult.size(), tExpectedSize);
+        for (std::size_t tIndex = aNumberOfFixedNodes; tIndex < aFullControls.size(); ++tIndex)
+        {
+            TEST_EQUALITY(aResult.at(tIndex - aNumberOfFixedNodes), tExpected(tIndex));
+        }
+    };
 
     const auto tNumEntries = tTestFixture.mesh()->NumNodes();
     const auto tControl = Plato::ScalarVector("test", tNumEntries);
     fill_with_transformed_indices(tControl, [](const auto tIndex) { return static_cast<double>(tIndex); });
-
-    const auto tResult =
-        design_variable_std_vector(tControl, tTestFixture.meshDesignVariablesAllDesignBlocks(), tTestFixture.mesh());
-    const auto tExpected = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tControl);
-    TEST_EQUALITY(tResult.size(), tExpected.size());
-    for (std::size_t tIndex = 0; tIndex < tExpected.size(); ++tIndex)
+    // All blocks
     {
-        TEST_EQUALITY(tResult.at(tIndex), tExpected[tIndex]);
+        const auto tResult = design_variable_std_vector(tControl, tTestFixture.meshDesignVariablesAllDesignBlocks(),
+                                                        tTestFixture.mesh());
+
+        constexpr auto tNumberOfFixedNodes = 0U;
+        tTestFunction(tResult, tControl, tNumberOfFixedNodes);
     }
-}
-
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, DesignVariableStdVectorFixedBlock)
-{
-    const auto tTestFixture = TestMeshSetupTeardown{};
-
-    const auto tNumEntries = tTestFixture.mesh()->NumNodes();
-    const auto tControl = Plato::ScalarVector("test", tNumEntries);
-    fill_with_transformed_indices(tControl, [](const auto tIndex) { return static_cast<double>(tIndex); });
-
-    const auto tResult =
-        design_variable_std_vector(tControl, tTestFixture.meshDesignVariablesBlock1Fixed(), tTestFixture.mesh());
-
-    constexpr auto tNumberOfFixedNodes = 2U;
-    const auto tExpectedSize = tControl.size() - tNumberOfFixedNodes;
-    TEST_EQUALITY(tResult.size(), tExpectedSize);
-    for (std::size_t tIndex = tNumberOfFixedNodes; tIndex < tControl.size(); ++tIndex)
+    // Fixed block
     {
-        TEST_EQUALITY(tResult.at(tIndex - tNumberOfFixedNodes), tControl(tIndex));
+        const auto tResult =
+            design_variable_std_vector(tControl, tTestFixture.meshDesignVariablesBlock1Fixed(), tTestFixture.mesh());
+
+        constexpr auto tNumberOfFixedNodes = 2U;
+        tTestFunction(tResult, tControl, tNumberOfFixedNodes);
     }
 }
 
@@ -282,73 +281,60 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorBlock2)
     }
 }
 
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, MeshDesignVariablesFromScalarVectorAllBlocks)
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, MeshDesignVariablesFromScalarVector)
 {
     const auto tTestMeshFixture = TestMeshSetupTeardown{};
 
-    const auto tBaseMeshDesignVariables = tTestMeshFixture.meshDesignVariablesAllDesignBlocks();
+    const auto tTestFunction = [&](const plato::mesh::MeshDesignVariables& aResultMeshDesignVariables,
+                                   const plato::mesh::MeshDesignVariables& aBaseMeshDesignVariables)
+    {
+        TEST_EQUALITY(aResultMeshDesignVariables.mBlockDensities.size(),
+                      aBaseMeshDesignVariables.mBlockDensities.size());
+
+        auto tExpectedDesignVariablesIterator = aBaseMeshDesignVariables.mBlockDensities.cbegin();
+        for (const auto& [tResultBlockID, tResultDensityVector] : aResultMeshDesignVariables.mBlockDensities)
+        {
+            const auto& [tExpectedBlockID, tExpectedDensityVector] = *tExpectedDesignVariablesIterator;
+            TEST_EQUALITY(tResultBlockID, tExpectedBlockID);
+            TEST_EQUALITY(tResultDensityVector.size(), tExpectedDensityVector.size());
+
+            for (auto tIndex = 0U; tIndex < tResultDensityVector.size(); ++tIndex)
+            {
+                TEST_EQUALITY(tResultDensityVector[tIndex].mGlobalMeshEntityID,
+                              tExpectedDensityVector[tIndex].mGlobalMeshEntityID);
+                TEST_EQUALITY(tResultDensityVector[tIndex].mDesignVariableVectorIndex,
+                              tExpectedDensityVector[tIndex].mDesignVariableVectorIndex);
+                TEST_EQUALITY(tResultDensityVector[tIndex].mDensity, -tExpectedDensityVector[tIndex].mDensity);
+            }
+
+            ++tExpectedDesignVariablesIterator;
+        }
+    };
+
     const auto tControlsOnDevice =
         Plato::ScalarVector{"Controls", static_cast<unsigned>(tTestMeshFixture.mesh()->NumNodes())};
     fill_with_transformed_indices(tControlsOnDevice,
                                   [](const auto tIndex) { return -static_cast<double>(tIndex + 1); });
-
-    const auto tResultMeshDesignVariables =
-        mesh_design_variables(tControlsOnDevice, tBaseMeshDesignVariables, tTestMeshFixture.mesh());
-
-    TEST_EQUALITY(tResultMeshDesignVariables.mBlockDensities.size(), tBaseMeshDesignVariables.mBlockDensities.size());
-
-    auto tExpectedDesignVariablesIterator = tBaseMeshDesignVariables.mBlockDensities.cbegin();
-    for (const auto& [tResultBlockID, tResultDensityVector] : tResultMeshDesignVariables.mBlockDensities)
+    // All blocks
     {
-        const auto& [tExpectedBlockID, tExpectedDensityVector] = *tExpectedDesignVariablesIterator;
-        TEST_EQUALITY(tResultBlockID, tExpectedBlockID);
-        TEST_EQUALITY(tResultDensityVector.size(), tExpectedDensityVector.size());
-
-        for (auto tIndex = 0U; tIndex < tResultDensityVector.size(); ++tIndex)
-        {
-            TEST_EQUALITY(tResultDensityVector[tIndex].mGlobalMeshEntityID,
-                          tExpectedDensityVector[tIndex].mGlobalMeshEntityID);
-            TEST_EQUALITY(tResultDensityVector[tIndex].mDesignVariableVectorIndex,
-                          tExpectedDensityVector[tIndex].mDesignVariableVectorIndex);
-            TEST_EQUALITY(tResultDensityVector[tIndex].mDensity, -tExpectedDensityVector[tIndex].mDensity);
-        }
-
-        ++tExpectedDesignVariablesIterator;
+        const auto tBaseMeshDesignVariables = tTestMeshFixture.meshDesignVariablesAllDesignBlocks();
+        const auto tResultMeshDesignVariables =
+            mesh_design_variables(tControlsOnDevice, tBaseMeshDesignVariables, tTestMeshFixture.mesh());
+        tTestFunction(tResultMeshDesignVariables, tBaseMeshDesignVariables);
     }
-}
-
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, MeshDesignVariablesFromScalarVectorFixedBlock1)
-{
-    const auto tTestMeshFixture = TestMeshSetupTeardown{};
-
-    const auto tBaseMeshDesignVariables = tTestMeshFixture.meshDesignVariablesBlock1Fixed();
-    const auto tControlsOnDevice =
-        Plato::ScalarVector{"Controls", static_cast<unsigned>(tTestMeshFixture.mesh()->NumNodes())};
-    fill_with_transformed_indices(tControlsOnDevice,
-                                  [](const auto tIndex) { return -static_cast<double>(tIndex + 1); });
-
-    const auto tResultMeshDesignVariables =
-        mesh_design_variables(tControlsOnDevice, tBaseMeshDesignVariables, tTestMeshFixture.mesh());
-
-    TEST_EQUALITY(tResultMeshDesignVariables.mBlockDensities.size(), tBaseMeshDesignVariables.mBlockDensities.size());
-
-    auto tExpectedDesignVariablesIterator = tBaseMeshDesignVariables.mBlockDensities.cbegin();
-    for (const auto& [tResultBlockID, tResultDensityVector] : tResultMeshDesignVariables.mBlockDensities)
+    // Block 1 fixed
     {
-        const auto& [tExpectedBlockID, tExpectedDensityVector] = *tExpectedDesignVariablesIterator;
-        TEST_EQUALITY(tResultBlockID, tExpectedBlockID);
-        TEST_EQUALITY(tResultDensityVector.size(), tExpectedDensityVector.size());
-
-        for (auto tIndex = 0U; tIndex < tResultDensityVector.size(); ++tIndex)
-        {
-            TEST_EQUALITY(tResultDensityVector[tIndex].mGlobalMeshEntityID,
-                          tExpectedDensityVector[tIndex].mGlobalMeshEntityID);
-            TEST_EQUALITY(tResultDensityVector[tIndex].mDesignVariableVectorIndex,
-                          tExpectedDensityVector[tIndex].mDesignVariableVectorIndex);
-            TEST_EQUALITY(tResultDensityVector[tIndex].mDensity, -tExpectedDensityVector[tIndex].mDensity);
-        }
-
-        ++tExpectedDesignVariablesIterator;
+        const auto tBaseMeshDesignVariables = tTestMeshFixture.meshDesignVariablesBlock1Fixed();
+        const auto tResultMeshDesignVariables =
+            mesh_design_variables(tControlsOnDevice, tBaseMeshDesignVariables, tTestMeshFixture.mesh());
+        tTestFunction(tResultMeshDesignVariables, tBaseMeshDesignVariables);
+    }
+    // Block 2 fixed
+    {
+        const auto tBaseMeshDesignVariables = tTestMeshFixture.meshDesignVariablesBlock2Fixed();
+        const auto tResultMeshDesignVariables =
+            mesh_design_variables(tControlsOnDevice, tBaseMeshDesignVariables, tTestMeshFixture.mesh());
+        tTestFunction(tResultMeshDesignVariables, tBaseMeshDesignVariables);
     }
 }
 
