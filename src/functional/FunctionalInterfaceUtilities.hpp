@@ -32,8 +32,11 @@ namespace plato::functional
 [[nodiscard]] Plato::Comm::Machine create_machine();
 
 /// @brief Generates an input ParameterList for running the Helmholtz filter.
+/// @param aBlockNames The block names that are used in the filter, must match the blocks names in @a aMeshName.
 [[nodiscard]] Teuchos::ParameterList helmholtz_filter_parameter_list(
-    const plato::filter::library::FilterParameters& aFilterParameters, const std::string_view aMeshName);
+    const plato::filter::library::FilterParameters& aFilterParameters,
+    const std::string_view aMeshName,
+    const std::vector<std::string>& aBlockNames);
 
 /// @brief Replaces the file name of the mesh in @a aParameterList with @a aMeshName.
 void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_view aMeshName);
@@ -54,7 +57,8 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
                                                              const Plato::Mesh& aMesh);
 
 /// @brief Converts a std::vector to a ScalarVector and expands to the full set of nodes. The entries of @a aVector are
-/// copied and the indices of @a aDesignVariables are used to place the entries.
+/// copied and the indices of @a aDesignVariables are used to place the entries. The missing entries are filled with @a
+/// aFillValue.
 ///
 /// Assume `N` is the number of design variables  (from @a aDesignVariables ) and `M` is the total number of nodes (from
 /// @a aMesh ).
@@ -62,7 +66,8 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// @post The size of the returned vector will be `M`, the total number of nodes.
 [[nodiscard]] Plato::ScalarVector full_nodal_scalar_vector(const std::vector<double>& aVector,
                                                            const plato::mesh::MeshDesignVariables& aDesignVariables,
-                                                           const Plato::Mesh& aMesh);
+                                                           const Plato::Mesh& aMesh,
+                                                           const double aFillValue);
 
 /// @brief Converts a MeshDesignVariables to a ScalarVector.
 ///

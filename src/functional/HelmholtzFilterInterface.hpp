@@ -24,6 +24,7 @@ class HelmholtzFilterInterface : public plato::filter::library::FilterInterface
         const plato::linear_algebra::DynamicVector<double>& aV) const override;
 
    private:
+    plato::filter::library::FilterParameters mFilterParameters;
     mutable FunctionalInterface mFunctionalInterface;
 };
 }  // namespace plato::functional

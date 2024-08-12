@@ -1,6 +1,5 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
-#include <chrono>
 #include <numeric>
 #include <plato/filter/FilterInterface.hpp>
 #include <random>
@@ -10,72 +9,13 @@
 #include "PlatoMeshTestHelpers.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoTestHelpers.hpp"
+#include "TestMeshSetupTeardown.hpp"
 
 namespace plato::functional::unittest
 {
 namespace
 {
-// A vector of nodal densities with densities equal to the global ID. This can be used for tests that include all blocks
-// (none fixed).
-const auto tDensityVector1AllBlocks =
-    std::vector<plato::mesh::Density>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
-const auto tDensityVector2AllBlocks =
-    std::vector<plato::mesh::Density>{{3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}, {6, 5, 6.0}, {7, 6, 7.0}, {8, 7, 8.0}};
-
-// A vector of nodal densities for block 1 with densities equal to the vector index assuming block 2 is fixed.
-// The densities are set to the vector index.
-const auto tDensityVector1Block2Fixed =
-    std::vector<plato::mesh::Density>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
-
-// A vector of nodal densities for block 2 with densities equal to the vector index assuming block 1 is fixed.
-// The densities are set to the vector index.
-const auto tDensityVector2Block1Fixed =
-    std::vector<plato::mesh::Density>{{3, 0, 3.0}, {4, 1, 4.0}, {5, 2, 5.0}, {6, 3, 6.0}, {7, 4, 7.0}, {8, 5, 8.0}};
-
 const auto tVectorDensities = std::vector<double>{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
-
-std::vector<double> density_values(const std::vector<plato::mesh::Density>& aDensityVector)
-{
-    auto tDensityValues = std::vector<double>{};
-    tDensityValues.reserve(aDensityVector.size());
-    std::transform(aDensityVector.cbegin(), aDensityVector.cend(), std::back_inserter(tDensityValues),
-                   [](const auto& tDensity) { return tDensity.mDensity; });
-    return tDensityValues;
-}
-
-Plato::Mesh test_mesh(const std::filesystem::path& aMeshFilePath)
-{
-    Plato::TestHelpers::write_two_block_mesh(aMeshFilePath);
-    return Plato::MeshFactory::create(aMeshFilePath.string());
-}
-
-class TestMeshSetupTeardown
-{
-   public:
-    ~TestMeshSetupTeardown() { std::filesystem::remove(mTestMeshPath); }
-
-    auto meshDesignVariablesAllDesignBlocks() const -> plato::mesh::MeshDesignVariables
-    {
-        return plato::mesh::MeshDesignVariables{mTestMeshPath,
-                                                {{1, tDensityVector1AllBlocks}, {2, tDensityVector2AllBlocks}}};
-    }
-
-    auto meshDesignVariablesBlock1Fixed() const -> plato::mesh::MeshDesignVariables
-    {
-        return plato::mesh::MeshDesignVariables{mTestMeshPath, {{2, tDensityVector2Block1Fixed}}};
-    }
-
-    auto meshDesignVariablesBlock2Fixed() const -> plato::mesh::MeshDesignVariables
-    {
-        return plato::mesh::MeshDesignVariables{mTestMeshPath, {{1, tDensityVector1Block2Fixed}}};
-    }
-
-    const Plato::Mesh& mesh() const { return mMesh; }
-
-   private:
-    std::filesystem::path mTestMeshPath = "test-mesh.exo";
-    Plato::Mesh mMesh = test_mesh(mTestMeshPath);
-};
 
 template <typename TransformFunction>
 void fill_with_transformed_indices(const Plato::ScalarVector tVectorOnDevice,
@@ -99,7 +39,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ParameterList)
         filter::library::FilterParameters{/*.mFilterRadius=*/tFilterRadius,
                                           /*.mBoundaryStickingPenalty=*/tBoundaryStickingPenalty};
     constexpr auto tMeshName = std::string_view{"not-a-mesh.exo"};
-    const Teuchos::ParameterList tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName);
+    const Teuchos::ParameterList tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
 
     TEST_EQUALITY(tParameterList.get<std::string>("Physics"), "Plato Driver");
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters").get<double>("Length Scale"),
@@ -112,13 +52,41 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, UpdateMesh)
 {
     constexpr std::string_view tInitialMeshName = "first-mesh-name.exo";
     Teuchos::ParameterList tParameterList =
-        helmholtz_filter_parameter_list(filter::library::FilterParameters{}, tInitialMeshName);
+        helmholtz_filter_parameter_list(filter::library::FilterParameters{}, tInitialMeshName, {});
 
     TEST_EQUALITY(tParameterList.get<std::string>("Input Mesh"), std::string{tInitialMeshName});
 
     constexpr std::string_view tNewMeshName = "second-mesh-name.exo";
     update_mesh_file_name(tParameterList, tNewMeshName);
     TEST_EQUALITY(tParameterList.get<std::string>("Input Mesh"), std::string{tNewMeshName});
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, BlockNames)
+{
+    const auto tBlock1Name = std::string{"block_1"};
+    const auto tBlock42Name = std::string{"the_answer"};
+    constexpr auto tMeshName = std::string_view{"not-a-mesh.exo"};
+    const auto tParameterList =
+        helmholtz_filter_parameter_list(filter::library::FilterParameters{}, tMeshName, {tBlock1Name, tBlock42Name});
+
+    TEST_EQUALITY(tParameterList.get<std::string>("Physics"), "Plato Driver");
+
+    const auto& tDomains = tParameterList.sublist("Plato Problem").sublist("Spatial Model").sublist("Domains");
+    TEST_ASSERT(tDomains.isSublist(tBlock1Name));
+    TEST_ASSERT(tDomains.isSublist(tBlock42Name));
+    TEST_ASSERT(!tDomains.isSublist("block_2"));  // Arbitrary, but not unlikely
+
+    const auto& tBlock1Sublist = tDomains.sublist(tBlock1Name);
+    const auto tElementBlockSublist = std::string{"Element Block"};
+    TEST_EQUALITY(tBlock1Sublist.get<std::string>(tElementBlockSublist), tBlock1Name);
+
+    const auto& tBlock42Sublist = tDomains.sublist(tBlock42Name);
+    TEST_EQUALITY(tBlock42Sublist.get<std::string>(tElementBlockSublist), tBlock42Name);
+
+    const auto tMaterialModelSublist = std::string{"Material Model"};
+    const auto tExpectedMaterialModelName = std::string{"material_1"};
+    TEST_EQUALITY(tBlock1Sublist.get<std::string>(tMaterialModelSublist), tExpectedMaterialModelName);
+    TEST_EQUALITY(tBlock42Sublist.get<std::string>(tMaterialModelSublist), tExpectedMaterialModelName);
 }
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, HashCurrentDesign_MeshChanges)
@@ -207,7 +175,8 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorFromVectorA
 
     const auto tMeshDesignVariables = tTestFixture.meshDesignVariablesAllDesignBlocks();
 
-    const auto tResult = full_nodal_scalar_vector(tVector, tMeshDesignVariables, tTestFixture.mesh());
+    constexpr auto tFillValue = 1.0;
+    const auto tResult = full_nodal_scalar_vector(tVector, tMeshDesignVariables, tTestFixture.mesh(), tFillValue);
     const auto tResultOnHost = Kokkos::create_mirror_view(tResult);
     Kokkos::deep_copy(tResultOnHost, tResult);
 
@@ -222,10 +191,11 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorFromVectorF
 {
     const auto tTestFixture = TestMeshSetupTeardown{};
 
-    const auto tVector = density_values(tDensityVector2Block1Fixed);
+    const auto tVector = tTestFixture.densityValuesBlock1Fixed();
     const auto tMeshDesignVariables = tTestFixture.meshDesignVariablesBlock1Fixed();
 
-    const auto tResult = full_nodal_scalar_vector(tVector, tMeshDesignVariables, tTestFixture.mesh());
+    constexpr auto tFixedNodeValue = double{1.0};
+    const auto tResult = full_nodal_scalar_vector(tVector, tMeshDesignVariables, tTestFixture.mesh(), tFixedNodeValue);
     const auto tResultOnHost = Kokkos::create_mirror_view(tResult);
     Kokkos::deep_copy(tResultOnHost, tResult);
 
@@ -233,7 +203,6 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorFromVectorF
     constexpr auto tNumFixedNodes = 2U;
     for (std::size_t tIndex = 0; tIndex < tNumFixedNodes; ++tIndex)
     {
-        constexpr auto tFixedNodeValue = double{1.0};
         TEST_EQUALITY(tResultOnHost[tIndex], tFixedNodeValue);
     }
     for (std::size_t tIndex = 0; tIndex < tVector.size(); ++tIndex)
@@ -268,12 +237,13 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorBlock2)
     const auto tResultOnHost =
         Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tResultOnDevice);
 
-    // The last three nodes are in the fixed block so they have density 1.
+    // The last three nodes are in the fixed block so they have density tFillValue.
     // Border nodes belong to the design block.
+    constexpr auto tFillValue = double{1.0};
     auto tExpectedDensities = tVectorDensities;
-    tExpectedDensities[5] = 1.0;
-    tExpectedDensities[6] = 1.0;
-    tExpectedDensities[7] = 1.0;
+    tExpectedDensities[5] = tFillValue;
+    tExpectedDensities[6] = tFillValue;
+    tExpectedDensities[7] = tFillValue;
 
     for (auto tIndex = 0U; tIndex < tVectorDensities.size(); ++tIndex)
     {
@@ -352,11 +322,13 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, NumberOfDesignVariables)
     }
     {
         const auto tMeshDesignVariables = tTestFixture.meshDesignVariablesBlock1Fixed();
-        TEST_EQUALITY(number_of_design_variables(tMeshDesignVariables), tDensityVector2Block1Fixed.size());
+        TEST_EQUALITY(number_of_design_variables(tMeshDesignVariables),
+                      tTestFixture.numberOfMeshDesignVariablesBlock1Fixed());
     }
     {
         const auto tMeshDesignVariables = tTestFixture.meshDesignVariablesBlock2Fixed();
-        TEST_EQUALITY(number_of_design_variables(tMeshDesignVariables), tDensityVector1Block2Fixed.size());
+        TEST_EQUALITY(number_of_design_variables(tMeshDesignVariables),
+                      tTestFixture.numberOfMeshDesignVariablesBlock2Fixed());
     }
 }
 

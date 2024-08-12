@@ -30,20 +30,31 @@ class FunctionalInterface
     using SolutionCache = plato::utilities::StateCache<Plato::Solutions, const Plato::ScalarVector&>;
 
    public:
-    FunctionalInterface(Teuchos::ParameterList aParameterList);
+    FunctionalInterface();
+    explicit FunctionalInterface(Teuchos::ParameterList aParameterList);
 
     /// @brief Solves the forward problem specified by the ParameterList passed on construction,
     ///  and with an updated mesh @a aMeshProxy.
-    auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
+    [[nodiscard]] auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
-    Plato::Solutions computeState(const Plato::ScalarVector& aArg) const;
+    /// @brief Solves the forward problem specified by the @a aParameterList
+    template <typename Function>
+    [[nodiscard]] auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                    const Function& aMeshDependentParameterListUpdater)
+        -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
-    Plato::AbstractProblem& problem();
-    Teuchos::ParameterList& parameterList();
-    const Teuchos::ParameterList& parameterList() const;
+    [[nodiscard]] Plato::Solutions computeState(const Plato::ScalarVector& aArg) const;
 
-    const Plato::Mesh& mesh() const;
+    [[nodiscard]] Plato::AbstractProblem& problem();
+    [[nodiscard]] const Teuchos::ParameterList& parameterList() const;
+    [[nodiscard]] const Plato::Mesh& mesh() const;
+
+   private:
+    auto updateMesh(const mesh::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList;
+    [[nodiscard]] auto solveProblemImpl(const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                        Teuchos::ParameterList aParameterList)
+        -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
    private:
     Plato::Comm::Machine mMachine;
@@ -52,6 +63,16 @@ class FunctionalInterface
     SolutionCache mSolutionCache;
     Teuchos::ParameterList mParameterList;
 };
+
+template <typename Function>
+auto FunctionalInterface::solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                       const Function& aMeshDependentParameterListUpdater)
+    -> std::pair<Plato::Solutions, Plato::ScalarVector>
+{
+    updateMesh(aMeshDesignVariables);
+    return solveProblemImpl(aMeshDesignVariables, aMeshDependentParameterListUpdater(aMeshDesignVariables, mMesh));
+}
+
 }  // namespace plato::functional
 
 #endif

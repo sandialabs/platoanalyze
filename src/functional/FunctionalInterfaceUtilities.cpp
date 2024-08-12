@@ -21,9 +21,12 @@ Teuchos::ParameterList& plato_problem_sublist(Teuchos::ParameterList& aParameter
     return aParameterList.sublist(std::string{kPlatoProblemList});
 }
 
-Teuchos::ParameterList& block_1_sublist(Teuchos::ParameterList& aParameterList)
+Teuchos::ParameterList& block_sublist(Teuchos::ParameterList& aParameterList, const std::string_view aBlockName)
 {
-    return plato_problem_sublist(aParameterList).sublist("Spatial Model").sublist("Domains").sublist("Block 1");
+    return plato_problem_sublist(aParameterList)
+        .sublist("Spatial Model")
+        .sublist("Domains")
+        .sublist(std::string{aBlockName});
 }
 
 Teuchos::ParameterList& parameters_sublist(Teuchos::ParameterList& aParameterList)
@@ -54,10 +57,11 @@ void for_each_design_variable(MeshDesignVariableType&& aDesignVariables,
 
 [[nodiscard]] std::string first_criterion_name(const Teuchos::ParameterList& aProblem)
 {
-    auto tPlatoProblemList = aProblem.sublist("Plato Problem");
-    if (tPlatoProblemList.isSublist("Criteria"))
+    const auto tPlatoProblemName = std::string{"Plato Problem"};
+    const auto tCriteriaName = std::string{"Criteria"};
+    if (aProblem.isSublist(tPlatoProblemName) && aProblem.sublist(tPlatoProblemName).isSublist(tCriteriaName))
     {
-        auto tCriteriaList = tPlatoProblemList.sublist("Criteria");
+        const auto& tCriteriaList = aProblem.sublist(tPlatoProblemName).sublist(tCriteriaName);
         return tCriteriaList.name(tCriteriaList.begin());
     }
     else
@@ -74,7 +78,8 @@ Plato::Comm::Machine create_machine()
 }
 
 Teuchos::ParameterList helmholtz_filter_parameter_list(const filter::library::FilterParameters& aFilterParameters,
-                                                       const std::string_view aMeshName)
+                                                       const std::string_view aMeshName,
+                                                       const std::vector<std::string>& aBlockNames)
 {
     Teuchos::ParameterList tParameterList;
     tParameterList.set("Physics", "Plato Driver");
@@ -82,8 +87,11 @@ Teuchos::ParameterList helmholtz_filter_parameter_list(const filter::library::Fi
     tParameterList.set(std::string{kInputMeshEntry}, std::string{aMeshName});
     plato_problem_sublist(tParameterList).set("Physics", "Helmholtz Filter");
     plato_problem_sublist(tParameterList).set("PDE Constraint", "Helmholtz Filter");
-    block_1_sublist(tParameterList).set("Element Block", "block_1");
-    block_1_sublist(tParameterList).set("Material Model", "material_1");
+    for (const auto& tBlockName : aBlockNames)
+    {
+        block_sublist(tParameterList, tBlockName).set("Element Block", tBlockName);
+        block_sublist(tParameterList, tBlockName).set("Material Model", "material_1");
+    }
     parameters_sublist(tParameterList).set("Length Scale", aFilterParameters.mFilterRadius);
     parameters_sublist(tParameterList)
         .set("Surface Length Scale", aFilterParameters.mBoundaryStickingPenalty.value_or(-1.0));
@@ -135,13 +143,13 @@ std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalar
 
 Plato::ScalarVector full_nodal_scalar_vector(const std::vector<double>& aVector,
                                              const plato::mesh::MeshDesignVariables& aDesignVariables,
-                                             const Plato::Mesh& aMesh)
+                                             const Plato::Mesh& aMesh,
+                                             const double aFillValue)
 {
     const auto tScalarVector = Plato::ScalarVector("control", aMesh->NumNodes());
     auto tScalarVectorOnHost = Kokkos::create_mirror_view(tScalarVector);
 
-    constexpr auto tFixedControlValue = double{1.0};
-    Kokkos::deep_copy(tScalarVectorOnHost, tFixedControlValue);
+    Kokkos::deep_copy(tScalarVectorOnHost, aFillValue);
 
     for_each_design_variable(
         aDesignVariables, aMesh,

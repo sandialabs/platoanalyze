@@ -16,18 +16,29 @@ Plato::ScalarVector filtered_control(const Plato::Solutions& aSolution)
 {
     return Kokkos::subview(aSolution.get("State"), 0, Kokkos::ALL());
 }
+
+auto parameter_list_updater(const plato::filter::library::FilterParameters& aFilterParameters)
+{
+    return [tFilterParameters = aFilterParameters](const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+                                                   const Plato::Mesh& aMesh)
+    {
+        const auto tBlockNames = aMesh->GetElementBlockNames();
+        return helmholtz_filter_parameter_list(tFilterParameters, aMeshDesignVariables.mFileName.string(), tBlockNames);
+    };
+}
+
 }  // namespace
 
 HelmholtzFilterInterface::HelmholtzFilterInterface(const plato::filter::library::FilterParameters& aFilterParameters)
-    : mFunctionalInterface(helmholtz_filter_parameter_list(aFilterParameters, ""))
+    : mFilterParameters{aFilterParameters}
 {
 }
 
 mesh::MeshDesignVariables HelmholtzFilterInterface::filter(
     const plato::mesh::MeshDesignVariables& aMeshDesignVariables) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
-
+    const auto [tSolution, tControl] =
+        mFunctionalInterface.solveProblem(aMeshDesignVariables, parameter_list_updater(mFilterParameters));
     Plato::ScalarVector tFilteredControl = filtered_control(tSolution);
     return mesh_design_variables(tFilteredControl, aMeshDesignVariables, mFunctionalInterface.mesh());
 }
@@ -36,10 +47,12 @@ plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianT
     const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
     const plato::linear_algebra::DynamicVector<double>& aV) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
+    const auto [tSolution, tControl] =
+        mFunctionalInterface.solveProblem(aMeshDesignVariables, parameter_list_updater(mFilterParameters));
 
-    const Plato::ScalarVector tVAsScalarVector =
-        full_nodal_scalar_vector(aV.stdVector(), aMeshDesignVariables, mFunctionalInterface.mesh());
+    constexpr auto tFixedValueGradient = 0.0;
+    const Plato::ScalarVector tVAsScalarVector = full_nodal_scalar_vector(
+        aV.stdVector(), aMeshDesignVariables, mFunctionalInterface.mesh(), tFixedValueGradient);
     const Plato::ScalarVector tGradient =
         mFunctionalInterface.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
     return plato::linear_algebra::DynamicVector<double>(

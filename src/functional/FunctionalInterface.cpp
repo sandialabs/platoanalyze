@@ -92,6 +92,8 @@ template <typename T>
 }
 }  // namespace
 
+FunctionalInterface::FunctionalInterface() : FunctionalInterface{Teuchos::ParameterList{}} {}
+
 FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     : mMachine(plato::functional::create_machine()),
       mParameterList(std::move(aParameterList)),
@@ -105,13 +107,7 @@ FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
 auto FunctionalInterface::solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
-    Teuchos::ParameterList tParameterList = mParameterList;
-    plato::functional::update_mesh_file_name(tParameterList, aMeshDesignVariables.mFileName.string());
-    mMesh = update_mesh(aMeshDesignVariables, std::move(mMesh));
-    mProblem = update_problem(mMachine, aMeshDesignVariables, mMesh, tParameterList, std::move(mProblem));
-
-    Plato::ScalarVector tControl = plato::functional::create_control(aMeshDesignVariables, mMesh);
-    return {mSolutionCache.compute(tControl), tControl};
+    return solveProblemImpl(aMeshDesignVariables, updateMesh(aMeshDesignVariables));
 }
 
 Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aArg) const
@@ -129,10 +125,25 @@ Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aA
 
 Plato::AbstractProblem& FunctionalInterface::problem() { return *mProblem; }
 
-Teuchos::ParameterList& FunctionalInterface::parameterList() { return mParameterList; }
-
 const Teuchos::ParameterList& FunctionalInterface::parameterList() const { return mParameterList; }
 
 const Plato::Mesh& FunctionalInterface::mesh() const { return mMesh; }
+
+auto FunctionalInterface::updateMesh(const mesh::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList
+{
+    Teuchos::ParameterList tParameterList = mParameterList;
+    plato::functional::update_mesh_file_name(tParameterList, aMeshDesignVariables.mFileName.string());
+    mMesh = update_mesh(aMeshDesignVariables, std::move(mMesh));
+    return tParameterList;
+}
+
+auto FunctionalInterface::solveProblemImpl(const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                           Teuchos::ParameterList aParameterList)
+    -> std::pair<Plato::Solutions, Plato::ScalarVector>
+{
+    mProblem = update_problem(mMachine, aMeshDesignVariables, mMesh, aParameterList, std::move(mProblem));
+    Plato::ScalarVector tControl = plato::functional::create_control(aMeshDesignVariables, mMesh);
+    return {mSolutionCache.compute(tControl), tControl};
+}
 
 }  // namespace plato::functional
