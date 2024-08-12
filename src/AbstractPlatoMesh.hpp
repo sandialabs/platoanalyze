@@ -206,8 +206,5 @@ namespace Plato
             ///  the index into the mesh arrays. The map key is the user-defined ID and the value is the
             ///  array index.
             virtual auto NodeMap() const -> const NodeMapType& = 0;
-
-            /// @return A map from exodus block IDs to block names.
-            virtual auto BlockIDMap() const -> std::map<int, std::string> = 0;
     };
 }

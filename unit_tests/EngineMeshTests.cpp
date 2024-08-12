@@ -35,23 +35,4 @@ TEUCHOS_UNIT_TEST(EngineMeshTests, NodeMapArbitrary) {
   }
 }
 
-TEUCHOS_UNIT_TEST(EngineMeshTest, BlockIDMapTwoBlockMesh) {
-  constexpr auto tMeshFileName = "two_block_contact.exo";
-  const auto tMesh = Plato::MeshFactory::create(tMeshFileName);
-
-  const auto tBlockIDMap = tMesh->BlockIDMap();
-
-  constexpr auto tExpectedMapSize = 2U;
-  TEST_EQUALITY(tBlockIDMap.size(), tExpectedMapSize);
-
-  const auto tExpectedBlockIDs = std::vector{1U, 2U};
-  const auto tExpectedBlockNames = std::vector<std::string_view>{"block_1", "block_2"};
-  auto tBlockIDIterator = tBlockIDMap.cbegin();
-  for (auto tIndex = 0U; tIndex < tExpectedBlockIDs.size(); ++tIndex) {
-    TEST_EQUALITY(tBlockIDIterator->first, tExpectedBlockIDs[tIndex]);
-    TEST_EQUALITY(tBlockIDIterator->second, tExpectedBlockNames[tIndex]);
-    ++tBlockIDIterator;
-  }
-}
-
 }  // namespace Plato::UnitTests

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <map>
 #include <string>
 #include <vector>
 
@@ -82,7 +81,6 @@ class ExodusIO
 
     std::string getElemTypeInBlk(Int blk) const;
     std::string getBlockName(Int blk) const;
-    std::map<Int, std::string> getBlockIDMap();
 
     Int getNumNodeSets() const;
     Int getNodeSetLength(Int i) const;
