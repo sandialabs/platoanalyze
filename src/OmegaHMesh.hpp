@@ -108,6 +108,10 @@ namespace Plato
             /// @warning This only uses a 1-N nodemap, not the map in the exodus file.
             auto NodeMap() const -> const std::unordered_map<GlobalNodeID, MeshArrayIndex>& override;
 
+            /// @return A map from exodus block IDs to block names.
+            /// @warning Not implemented. Only returns an empty map.
+            auto BlockIDMap() const -> std::map<int, std::string> override;
+
             template<int cSpaceDims>
             void
             InvertSideSet(

@@ -131,6 +131,9 @@ namespace Plato
             ///  array index.
             auto NodeMap() const -> const NodeMapType& override;
 
+            /// @return A map from exodus block IDs to block names.
+            auto BlockIDMap() const -> std::map<int, std::string> override;
+
             void initialize();
             void openMesh();
             void closeMesh();

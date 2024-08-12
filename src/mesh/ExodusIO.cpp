@@ -506,6 +506,14 @@ namespace Plato
     std::string
     ExodusIO::getBlockName(Int blk) const { return mElementBlocks[blk].name; }
 
+    std::map<Int, std::string> ExodusIO::getBlockIDMap() {
+      auto tBlockIDMap = std::map<Int, std::string>{};
+      for (const auto& tBlockData : mElementBlocks) {
+        tBlockIDMap.emplace(tBlockData.ID, tBlockData.name);
+      }
+      return tBlockIDMap;
+    }
+
     Int ExodusIO::getNumNodeSets() const { return mNodeSets.size(); }
     Int ExodusIO::getNodeSetLength(Int i) const { return mNodeSets[i].nodes.size(); }
     std::string ExodusIO::getNodeSetName(Int i) const { return mNodeSets[i].name; }

@@ -337,4 +337,10 @@ namespace Plato
       }
       return *mNodeMap;
     }
+
+    auto OmegaHMesh::BlockIDMap() const -> std::map<int, std::string>
+    {
+        return {};
+    }
+
 }  // namespace Plato

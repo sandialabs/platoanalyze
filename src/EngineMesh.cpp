@@ -825,4 +825,10 @@ namespace Plato
       }
       return *mNodeMap;
     }
+
+    auto EngineMesh::BlockIDMap() const -> std::map<int, std::string>
+    {
+        return mMeshIO->getBlockIDMap();
+    }
+
 }  // namespace Plato
