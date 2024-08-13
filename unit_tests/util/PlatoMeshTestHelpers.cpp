@@ -42,7 +42,7 @@ void write_two_block_mesh(const std::filesystem::path& aFilePath) {
   write_text_mesh(tTwoDTriMesh, aFilePath);
 }
 
-void write_mesh_with_nodemap(const std::filesystem::path& aFilePath) {
+void write_one_block_mesh(const std::filesystem::path& aFilePath) {
   constexpr auto tTwoDTriMesh = std::string_view{
       "textmesh:"
       "0,1,TRI_3_2D,1,2,3,block_1\n"

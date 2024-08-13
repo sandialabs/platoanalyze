@@ -7,7 +7,7 @@
 namespace Plato::UnitTests {
 TEUCHOS_UNIT_TEST(EngineMeshTests, NodeMapIdentity) {
   const auto tMeshFilePath = std::filesystem::path{"test-mesh.exo"};
-  TestHelpers::write_mesh_with_nodemap(tMeshFilePath);
+  TestHelpers::write_one_block_mesh(tMeshFilePath);
   const auto tMesh = Plato::MeshFactory::create(tMeshFilePath.string());
 
   const auto tNodeMap = tMesh->NodeMap();
