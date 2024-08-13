@@ -34,11 +34,14 @@ class FunctionalInterface
     explicit FunctionalInterface(Teuchos::ParameterList aParameterList);
 
     /// @brief Solves the forward problem specified by the ParameterList passed on construction,
-    ///  and with an updated mesh @a aMeshProxy.
+    ///  and with an updated mesh given by @a aMeshDesignVariables.
     [[nodiscard]] auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
-    /// @brief Solves the forward problem specified by the @a aParameterList
+    /// @brief Solves the forward problem with an updated mesh given by @a aMeshDesignVariables.
+    /// @param aMeshDependentParameterListUpdater A function that generates a new ParameterList based on a mesh and @a
+    /// aMeshDesignVariables.
+    ///  The signature must be `ParameterList(const plato::mesh::MeshDesignVariables&, const Plato::Mesh&)`.
     template <typename Function>
     [[nodiscard]] auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables,
                                     const Function& aMeshDependentParameterListUpdater)

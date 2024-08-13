@@ -47,7 +47,7 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 
 /// @brief Computes a hash by combining the controls in @a aControl and the mesh coordinates in @a aMesh.
 ///
-/// This is mainly useful for the state cacheing functionality.
+/// This is mainly useful for the state caching functionality.
 [[nodiscard]] std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato::Mesh& aMesh);
 
 /// @brief Converts a ScalarVector to a std::vector and reduces to only the design variables, removing any entries
@@ -71,7 +71,8 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 
 /// @brief Converts a MeshDesignVariables to a ScalarVector.
 ///
-/// The ordering of the entries is set by the `plato::mesh::Density::mDesignVariableVectorIndex` field in each Density.
+/// The ordering of the entries is set by the nodemap give by @a aMesh, which maps global IDs to a PA ScalarVector's
+/// entries.
 /// @post The size of the returned vector will be equal to the number of nodes in @a aMesh.
 [[nodiscard]] Plato::ScalarVector full_nodal_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables,
                                                            const Plato::Mesh& aMesh);
