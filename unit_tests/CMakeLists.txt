@@ -127,7 +127,7 @@ if(PLATOANALYZE_ENABLE_MPMD)
     )
     if(PLATOANALYZE_STK_ENABLED)
       # Tests requiring stk
-      list(APPEND EngineMesh_SOURCES EngineMeshStkTests.cpp)
+      Plato_add_test(EngineMeshStk EngineMeshStkTests.cpp)
     endif()
 
     add_executable(EngineMeshIntxTests
