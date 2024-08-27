@@ -2,8 +2,12 @@
 
 set( TEST_UTIL_SRC 
      PlatoTestHelpers.cpp 
-     PlatoMathTestHelpers.cpp
-     PlatoMeshTestHelpers.cpp )
+     PlatoMathTestHelpers.cpp )
+
+if(PLATOANALYZE_STK_ENABLED)
+  # These mesh test helpers use STK
+  list(APPEND TEST_UTIL_SRC PlatoMeshTestHelpers.cpp)
+endif()
 
 add_library( Analyze_UnitTestUtils ${TEST_UTIL_SRC} )
 

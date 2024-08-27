@@ -123,9 +123,13 @@ if(PLATOANALYZE_ENABLE_MPMD)
   if (PLATOANALYZE_ENABLE_ENGINEMESH)
     set(EngineMesh_SOURCES
       EngineMeshIntxTests.cpp
-      EngineMeshTests.cpp
       PlatoUnitTestMain.cpp
     )
+    if(PLATOANALYZE_STK_ENABLED)
+      # Tests requiring stk
+      list(APPEND EngineMesh_SOURCES EngineMeshStkTests.cpp)
+    endif()
+
     add_executable(EngineMeshIntxTests
       ${EngineMesh_SOURCES}
     )

@@ -1,5 +1,4 @@
 #include "util/PlatoTestHelpers.hpp"
-#include "util/PlatoMeshTestHelpers.hpp"
 
 #include "Teuchos_UnitTestHarness.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
