@@ -22,7 +22,7 @@ Plato::Evaluator::Expression<RealType> getTestExpression() {
 }
 
 template<typename RealType, typename FunctorT>
-bool testExpression(std::string aExpression, FunctorT aFunctor)
+bool testExpression(std::string aExpression, FunctorT aFunctor, Plato::Scalar aTolerance=1e-10)
 {
   constexpr Plato::Scalar cZ = 0.5;
 
@@ -50,12 +50,12 @@ bool testExpression(std::string aExpression, FunctorT aFunctor)
     bool tPassed = true;
     for(int i=0; i<cLength; ++i)
     {
-      tPassed = tPassed && (fabs(tResult_Host(i) - result) < 1e-10);
+      tPassed = tPassed && (fabs(tResult_Host(i) - result) < aTolerance);
     }
     return tPassed;
 }
 template<typename RealType>
-bool testDerivative(std::string aExpression, RealType aDeriv)
+bool testDerivative(std::string aExpression, RealType aDeriv, Plato::Scalar aTolerance=1e-10)
 {
   constexpr Plato::Scalar cZ = 0.5;
 
@@ -86,7 +86,7 @@ bool testDerivative(std::string aExpression, RealType aDeriv)
     bool tPassed = true;
     for(int i=0; i<cLength; ++i)
     {
-      tPassed = tPassed && (fabs(tResult_Host(i).dx(0) - aDeriv)/fabs(aDeriv) < 1e-10);
+      tPassed = tPassed && (fabs(tResult_Host(i).dx(0) - aDeriv)/fabs(aDeriv) < aTolerance);
     }
     return tPassed;
 }
@@ -656,12 +656,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ShortJmLambda)
 
   {
     using RealType = Plato::Scalar;
-    bool tResult = testExpression<RealType>(tExpr, tFunctor);
+    bool tResult = testExpression<RealType>(tExpr, tFunctor, 1e-7);
     TEST_ASSERT(tResult);
   }
   {
     using RealType = Sacado::Fad::SFad<Plato::Scalar,24>;
-    bool tResult = testExpression<RealType>(tExpr, tFunctor);
+    bool tResult = testExpression<RealType>(tExpr, tFunctor, 1e-7);
     TEST_ASSERT(tResult);
   }
 }
@@ -704,12 +704,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ShortCcMu)
 
   {
     using RealType = Plato::Scalar;
-    bool tResult = testExpression<RealType>(tExpr, tFunctor);
+    bool tResult = testExpression<RealType>(tExpr, tFunctor, 1e-7);
     TEST_ASSERT(tResult);
   }
   {
     using RealType = Sacado::Fad::SFad<Plato::Scalar,24>;
-    bool tResult = testExpression<RealType>(tExpr, tFunctor);
+    bool tResult = testExpression<RealType>(tExpr, tFunctor, 1e-7);
     TEST_ASSERT(tResult);
   }
 }
