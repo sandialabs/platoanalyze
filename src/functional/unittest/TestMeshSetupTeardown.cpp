@@ -7,26 +7,26 @@ namespace
 // A vector of nodal densities with densities equal to the global ID. This can be used for tests that include all blocks
 // (none fixed).
 const auto tDensityVector1AllBlocks =
-    std::vector<plato::mesh::Density>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
-const auto tDensityVector2AllBlocks =
-    std::vector<plato::mesh::Density>{{3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}, {6, 5, 6.0}, {7, 6, 7.0}, {8, 7, 8.0}};
+    std::vector<plato::mesh::ScalarFieldValue>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
+const auto tDensityVector2AllBlocks = std::vector<plato::mesh::ScalarFieldValue>{{3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0},
+                                                                                 {6, 5, 6.0}, {7, 6, 7.0}, {8, 7, 8.0}};
 
 // A vector of nodal densities for block 1 with densities equal to the vector index assuming block 2 is fixed.
 // The densities are set to the vector index.
 const auto tDensityVector1Block2Fixed =
-    std::vector<plato::mesh::Density>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
+    std::vector<plato::mesh::ScalarFieldValue>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
 
 // A vector of nodal densities for block 2 with densities equal to the vector index assuming block 1 is fixed.
 // The densities are set to the vector index.
-const auto tDensityVector2Block1Fixed =
-    std::vector<plato::mesh::Density>{{3, 0, 3.0}, {4, 1, 4.0}, {5, 2, 5.0}, {6, 3, 6.0}, {7, 4, 7.0}, {8, 5, 8.0}};
+const auto tDensityVector2Block1Fixed = std::vector<plato::mesh::ScalarFieldValue>{
+    {3, 0, 3.0}, {4, 1, 4.0}, {5, 2, 5.0}, {6, 3, 6.0}, {7, 4, 7.0}, {8, 5, 8.0}};
 
-std::vector<double> density_values(const std::vector<plato::mesh::Density>& aDensityVector)
+std::vector<double> density_values(const std::vector<plato::mesh::ScalarFieldValue>& aDensityVector)
 {
     auto tDensityValues = std::vector<double>{};
     tDensityValues.reserve(aDensityVector.size());
     std::transform(aDensityVector.cbegin(), aDensityVector.cend(), std::back_inserter(tDensityValues),
-                   [](const auto& tDensity) { return tDensity.mDensity; });
+                   [](const auto& tDensity) { return tDensity.mValue; });
     return tDensityValues;
 }
 

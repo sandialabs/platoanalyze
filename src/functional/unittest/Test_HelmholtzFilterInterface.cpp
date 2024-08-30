@@ -17,15 +17,15 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
     const auto tTestFunction = [&](const plato::mesh::MeshDesignVariables& aResult,
                                    const std::map<int, std::vector<double>>& aRegressionBlockDensities)
     {
-        TEST_EQUALITY(aResult.mBlockDensities.size(), aRegressionBlockDensities.size());
-        for (const auto& [tBlockID, tResultDensities] : aResult.mBlockDensities)
+        TEST_EQUALITY(aResult.mBlockScalarField.size(), aRegressionBlockDensities.size());
+        for (const auto& [tBlockID, tResultDensities] : aResult.mBlockScalarField)
         {
             const auto& tRegressionDensities = aRegressionBlockDensities.at(tBlockID);
             TEST_EQUALITY(tRegressionDensities.size(), tResultDensities.size());
             constexpr auto tTolerance = 1e-14;
             for (auto tIndex = 0U; tIndex < tRegressionDensities.size(); ++tIndex)
             {
-                TEST_FLOATING_EQUALITY(tRegressionDensities[tIndex], tResultDensities[tIndex].mDensity, tTolerance);
+                TEST_FLOATING_EQUALITY(tRegressionDensities[tIndex], tResultDensities[tIndex].mValue, tTolerance);
             }
         }
     };

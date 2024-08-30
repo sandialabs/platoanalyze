@@ -71,13 +71,14 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 
 /// @brief Converts a MeshDesignVariables to a ScalarVector.
 ///
-/// The ordering of the entries is set by the nodemap give by @a aMesh, which maps global IDs to a PA ScalarVector's
+/// The ordering of the entries is set by the nodemap given by @a aMesh, which maps global IDs to a PA ScalarVector's
 /// entries.
 /// @post The size of the returned vector will be equal to the number of nodes in @a aMesh.
 [[nodiscard]] Plato::ScalarVector full_nodal_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables,
                                                            const Plato::Mesh& aMesh);
 
-/// @brief Converts a ScalarVector the block-based data structure BlockDensities held by a MeshDesignVariables object.
+/// @brief Converts a ScalarVector to the block-based data structure BlockDensities held by a MeshDesignVariables
+/// object.
 /// @param aScalarVector The vector of nodal densities to populate the result with.
 /// @param aMeshDesignVariablesIndices A MeshDesignVariables object whose indices will be used for the result.
 /// Essentially, the density values in this object will be replaced with those in @a aScalarVector.

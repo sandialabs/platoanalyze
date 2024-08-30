@@ -56,7 +56,7 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const mesh::MeshDesignVa
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
     const Plato::ScalarVector tGradient =
-        aMeshDesignVariables.mBlockDensities.empty()
+        aMeshDesignVariables.mBlockScalarField.empty()
             ? mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName)
             : mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName);
 

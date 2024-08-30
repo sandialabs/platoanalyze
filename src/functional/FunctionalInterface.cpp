@@ -49,7 +49,7 @@ template <typename T>
 [[nodiscard]] bool should_update_mesh_dependent_object(const mesh::MeshDesignVariables& aMeshDesignVariables,
                                                        const std::shared_ptr<T>& aObject)
 {
-    return !aObject || aMeshDesignVariables.mBlockDensities.empty();
+    return !aObject || aMeshDesignVariables.mBlockScalarField.empty();
 }
 
 /// @brief Updates the mesh @a aMesh with on disk with path found in @a aParameterList if necessary.

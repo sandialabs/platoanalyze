@@ -258,11 +258,11 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, MeshDesignVariablesFromScalarVec
     const auto tTestFunction = [&](const plato::mesh::MeshDesignVariables& aResultMeshDesignVariables,
                                    const plato::mesh::MeshDesignVariables& aBaseMeshDesignVariables)
     {
-        TEST_EQUALITY(aResultMeshDesignVariables.mBlockDensities.size(),
-                      aBaseMeshDesignVariables.mBlockDensities.size());
+        TEST_EQUALITY(aResultMeshDesignVariables.mBlockScalarField.size(),
+                      aBaseMeshDesignVariables.mBlockScalarField.size());
 
-        auto tExpectedDesignVariablesIterator = aBaseMeshDesignVariables.mBlockDensities.cbegin();
-        for (const auto& [tResultBlockID, tResultDensityVector] : aResultMeshDesignVariables.mBlockDensities)
+        auto tExpectedDesignVariablesIterator = aBaseMeshDesignVariables.mBlockScalarField.cbegin();
+        for (const auto& [tResultBlockID, tResultDensityVector] : aResultMeshDesignVariables.mBlockScalarField)
         {
             const auto& [tExpectedBlockID, tExpectedDensityVector] = *tExpectedDesignVariablesIterator;
             TEST_EQUALITY(tResultBlockID, tExpectedBlockID);
@@ -274,7 +274,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, MeshDesignVariablesFromScalarVec
                               tExpectedDensityVector[tIndex].mGlobalMeshEntityID);
                 TEST_EQUALITY(tResultDensityVector[tIndex].mDesignVariableVectorIndex,
                               tExpectedDensityVector[tIndex].mDesignVariableVectorIndex);
-                TEST_EQUALITY(tResultDensityVector[tIndex].mDensity, -tExpectedDensityVector[tIndex].mDensity);
+                TEST_EQUALITY(tResultDensityVector[tIndex].mValue, -tExpectedDensityVector[tIndex].mValue);
             }
 
             ++tExpectedDesignVariablesIterator;
