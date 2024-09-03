@@ -61,7 +61,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, UpdateMesh)
     TEST_EQUALITY(tParameterList.get<std::string>("Input Mesh"), std::string{tNewMeshName});
 }
 
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, BlockNames)
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, HelmholtzFilterParameterList)
 {
     const auto tBlock1Name = std::string{"block_1"};
     const auto tBlock42Name = std::string{"the_answer"};
