@@ -36,14 +36,14 @@ public:
 
         Plato::ScalarVectorT<ControlScalarType> tIndependentVariable("density", tNumCells*tNumPoints);
         this->calculateIndependentVariable(aLocalControl, tIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementMu = this->getTensorProperty("Mu")(tIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementMu = this->getTensorProperty("Mu")(tIndependentVariable);
       
         Plato::ScalarArray4DT<KineticsScalarType> tStiffness("stiffness", tNumCells, tNumPoints, mNumSkwTerms, mNumSkwTerms);   
         Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             const auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            const auto tCurMu = tElementMu(tEntryOrdinal, 0);
+            const auto tCurMu = tElementMu(tEntryOrdinal);
             for(int k=0; k<mNumSkwTerms; ++k)
             {
                 tStiffness(iCellOrdinal, iGpOrdinal, k, k) = tCurMu;

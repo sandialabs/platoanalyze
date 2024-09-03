@@ -24,7 +24,8 @@ Plato_add_test(PlatoMathHelpers PlatoMathHelpersTest.cpp)
 #TODO: update StructuralDynamics to new element
 #Plato_add_test(PlatoFunctors PlatoFunctorsTest.cpp)
 
-Plato_add_test(ExpressionEvaluator ExpressionEvaluatorTest.cpp)
+Plato_add_test(RealArray RealArrayTest.cpp)
+Plato_add_test(ExpressionParser ExpressionParserTest.cpp)
 Plato_add_test(MassProperties MassPropertiesTests.cpp)
 Plato_add_test(GeometryMisfit GeometryMisfitTests.cpp)
 Plato_add_test(LinearMaterialModel LinearMaterialModelTests.cpp)

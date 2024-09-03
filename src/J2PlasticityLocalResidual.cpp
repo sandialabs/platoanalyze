@@ -1,8 +1,4 @@
-#ifdef PLATO_CUSTOM_MATERIALS
-  #include "J2PlasticityLocalResidualExpFAD.hpp"
-#else
-  #include "J2PlasticityLocalResidual.hpp"
-#endif
+#include "J2PlasticityLocalResidual.hpp"
 
 #ifdef PLATOANALYZE_2D
 PLATO_EXPL_DEF_INC_LOCAL_2(Plato::J2PlasticityLocalResidual, Plato::SimplexPlasticity, 2)

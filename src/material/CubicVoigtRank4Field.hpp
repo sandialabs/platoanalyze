@@ -91,17 +91,17 @@ public:
         const Plato::OrdinalType tNumCells = aElementC11.extent(0);
         const Plato::OrdinalType tNumPoints = aElementC11.extent(1);
 
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementYoungsModulus = this->getTensorProperty("Youngs Modulus")(aIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementPoissonsRatio = this->getTensorProperty("Poissons Ratio")(aIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementShearModulus = this->getTensorProperty("Shear Modulus")(aIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementYoungsModulus = this->getTensorProperty("Youngs Modulus")(aIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementPoissonsRatio = this->getTensorProperty("Poissons Ratio")(aIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementShearModulus = this->getTensorProperty("Shear Modulus")(aIndependentVariable);
         
         Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             const auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            const auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal, 0);
-            const auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal, 0);
-            const auto tCurShearModulus = tElementShearModulus(tEntryOrdinal, 0);
+            const auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal);
+            const auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal);
+            const auto tCurShearModulus = tElementShearModulus(tEntryOrdinal);
             const auto tCoeff = tCurYoungsModulus / ((1.0 + tCurPoissonsRatio) * (1.0 - 2.0 * tCurPoissonsRatio));
 
             aElementC11(iCellOrdinal, iGpOrdinal) = tCoeff * (1.0 - tCurPoissonsRatio);
@@ -120,17 +120,17 @@ public:
         const Plato::OrdinalType tNumCells = aElementC11.extent(0);
         const Plato::OrdinalType tNumPoints = aElementC11.extent(1);
 
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementLambda = this->getTensorProperty("Lambda")(aIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementMu = this->getTensorProperty("Mu")(aIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementAlpha = this->getTensorProperty("Alpha")(aIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementLambda = this->getTensorProperty("Lambda")(aIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementMu = this->getTensorProperty("Mu")(aIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementAlpha = this->getTensorProperty("Alpha")(aIndependentVariable);
         
         Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             const auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            const auto tCurLambda = tElementLambda(tEntryOrdinal, 0);
-            const auto tCurMu = tElementMu(tEntryOrdinal, 0);
-            const auto tCurAlpha = tElementAlpha(tEntryOrdinal, 0);
+            const auto tCurLambda = tElementLambda(tEntryOrdinal);
+            const auto tCurMu = tElementMu(tEntryOrdinal);
+            const auto tCurAlpha = tElementAlpha(tEntryOrdinal);
 
             aElementC11(iCellOrdinal, iGpOrdinal) = tCurLambda + 2.0 * tCurMu;
             aElementC12(iCellOrdinal, iGpOrdinal) = tCurLambda;

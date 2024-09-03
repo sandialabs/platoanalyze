@@ -1282,7 +1282,7 @@ TEUCHOS_UNIT_TEST( Tet10, IntegrateExpression )
   //
   std::string tFuncString = "1.0";
   auto tTotalNumPoints = tNumCells*tNumPoints;
-  Plato::ScalarMultiVectorT<Plato::Scalar> tFxnValues("function values", tTotalNumPoints, 1);
+  Plato::ScalarVectorT<Plato::Scalar> tFxnValues("function values", tTotalNumPoints);
   Plato:: getFunctionValues<ElementType::mNumSpatialDims>(tPhysicalPoints, tFuncString, tFxnValues);
 
   Plato::Scalar tSum(0.0);
@@ -1296,7 +1296,7 @@ TEUCHOS_UNIT_TEST( Tet10, IntegrateExpression )
 
       auto tCellVolume = Plato::determinant(tJacobian);
 
-      auto tPointValue = tFxnValues(cellOrdinal*tNumPoints+ptOrdinal, 0);
+      auto tPointValue = tFxnValues(cellOrdinal*tNumPoints+ptOrdinal);
       aUpdate += tCellVolume*tPointValue*tCubWeight;
   }, tSum);
 

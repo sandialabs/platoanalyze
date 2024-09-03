@@ -176,7 +176,7 @@ namespace Elliptic
 
             tCellVolume *= tCubWeight;
 
-            ResultT tValue = tVolumeIntegratedQuantity(iCellOrdinal) * tCellVolume * tSpatialWeights(iCellOrdinal*tNumPoints + iGpOrdinal, 0);
+            ResultT tValue = tVolumeIntegratedQuantity(iCellOrdinal) * tCellVolume * tSpatialWeights(iCellOrdinal*tNumPoints + iGpOrdinal);
 
             auto tBasisValues = ElementType::basisValues(tCubPoint);
             tApplyWeighting(iCellOrdinal, aControlWS, tBasisValues, tValue);

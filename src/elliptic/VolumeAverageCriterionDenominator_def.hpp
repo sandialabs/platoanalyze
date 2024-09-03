@@ -68,7 +68,7 @@ namespace Elliptic
 
             tCellVolume *= tCubWeight;
 
-            Kokkos::atomic_add(&aResult(iCellOrdinal), tCellVolume*tSpatialWeights(iCellOrdinal * tNumPoints + iGpOrdinal, 0));
+            Kokkos::atomic_add(&aResult(iCellOrdinal), tCellVolume*tSpatialWeights(iCellOrdinal * tNumPoints + iGpOrdinal));
         });
     }
 } // namespace Elliptic
