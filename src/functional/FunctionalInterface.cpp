@@ -3,7 +3,7 @@
 #include <mpi.h>
 
 #include <Kokkos_Core.hpp>
-#include <plato/core/MeshProxy.hpp>
+#include <plato/mesh/MeshDesignVariables.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
@@ -46,22 +46,22 @@ void start_up()
 }
 
 template <typename T>
-[[nodiscard]] bool should_update_mesh_dependent_object(const core::MeshProxy& aMeshProxy,
+[[nodiscard]] bool should_update_mesh_dependent_object(const mesh::MeshDesignVariables& aMeshDesignVariables,
                                                        const std::shared_ptr<T>& aObject)
 {
-    return !aObject || aMeshProxy.mNodalDensities.empty();
+    return !aObject || aMeshDesignVariables.mBlockScalarField.empty();
 }
 
 /// @brief Updates the mesh @a aMesh with on disk with path found in @a aParameterList if necessary.
 ///
-/// The mesh will only be read from disk if @a aMesh is `nullptr` or @a aMeshProxy does not contain
+/// The mesh will only be read from disk if @a aMesh is `nullptr` or @a aMeshDesignVariables does not contain
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
-[[nodiscard]] Plato::Mesh update_mesh(const core::MeshProxy& aMeshProxy, Plato::Mesh&& aMesh)
+[[nodiscard]] Plato::Mesh update_mesh(const mesh::MeshDesignVariables& aMeshDesignVariables, Plato::Mesh&& aMesh)
 {
-    if (should_update_mesh_dependent_object(aMeshProxy, aMesh))
+    if (should_update_mesh_dependent_object(aMeshDesignVariables, aMesh))
     {
-        return Plato::MeshFactory::create(aMeshProxy.mFileName.string());
+        return Plato::MeshFactory::create(aMeshDesignVariables.mFileName.string());
     }
     else
     {
@@ -75,13 +75,13 @@ template <typename T>
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
 [[nodiscard]] auto update_problem(Plato::Comm::Machine& aMachine,
-                                  const core::MeshProxy& aMeshProxy,
+                                  const mesh::MeshDesignVariables& aMeshDesignVariables,
                                   const Plato::Mesh& aMesh,
                                   Teuchos::ParameterList& aParameterList,
                                   std::shared_ptr<Plato::AbstractProblem>&& aProblem)
     -> std::shared_ptr<Plato::AbstractProblem>
 {
-    if (should_update_mesh_dependent_object(aMeshProxy, aProblem))
+    if (should_update_mesh_dependent_object(aMeshDesignVariables, aProblem))
     {
         return Plato::ProblemFactory{}.create(aMesh, aParameterList, aMachine);
     }
@@ -91,6 +91,8 @@ template <typename T>
     }
 }
 }  // namespace
+
+FunctionalInterface::FunctionalInterface() : FunctionalInterface{Teuchos::ParameterList{}} {}
 
 FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     : mMachine(plato::functional::create_machine()),
@@ -102,16 +104,10 @@ FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     start_up();
 }
 
-auto FunctionalInterface::solveProblem(const core::MeshProxy& aMeshProxy)
+auto FunctionalInterface::solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
-    Teuchos::ParameterList tParameterList = mParameterList;
-    plato::functional::update_mesh_file_name(tParameterList, aMeshProxy.mFileName.string());
-    mMesh = update_mesh(aMeshProxy, std::move(mMesh));
-    mProblem = update_problem(mMachine, aMeshProxy, mMesh, tParameterList, std::move(mProblem));
-
-    Plato::ScalarVector tControl = plato::functional::create_control(aMeshProxy, mMesh);
-    return {mSolutionCache.compute(tControl), tControl};
+    return solveProblemImpl(aMeshDesignVariables, updateMesh(aMeshDesignVariables));
 }
 
 Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aArg) const
@@ -129,7 +125,25 @@ Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aA
 
 Plato::AbstractProblem& FunctionalInterface::problem() { return *mProblem; }
 
-Teuchos::ParameterList& FunctionalInterface::parameterList() { return mParameterList; }
-
 const Teuchos::ParameterList& FunctionalInterface::parameterList() const { return mParameterList; }
+
+const Plato::Mesh& FunctionalInterface::mesh() const { return mMesh; }
+
+auto FunctionalInterface::updateMesh(const mesh::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList
+{
+    Teuchos::ParameterList tParameterList = mParameterList;
+    plato::functional::update_mesh_file_name(tParameterList, aMeshDesignVariables.mFileName.string());
+    mMesh = update_mesh(aMeshDesignVariables, std::move(mMesh));
+    return tParameterList;
+}
+
+auto FunctionalInterface::solveProblemImpl(const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                           Teuchos::ParameterList aParameterList)
+    -> std::pair<Plato::Solutions, Plato::ScalarVector>
+{
+    mProblem = update_problem(mMachine, aMeshDesignVariables, mMesh, aParameterList, std::move(mProblem));
+    Plato::ScalarVector tControl = plato::functional::create_control(aMeshDesignVariables, mMesh);
+    return {mSolutionCache.compute(tControl), tControl};
+}
+
 }  // namespace plato::functional

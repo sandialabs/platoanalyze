@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <unordered_map>
 
 #include "AbstractPlatoMesh.hpp"
 #include "mesh/ExodusIO.hpp"
@@ -48,6 +50,8 @@ namespace Plato
         Plato::OrdinalVector mFullSurfaceSideSetLocalNodeOrdinals;
 
         std::map<std::string, Plato::OrdinalVector> mNodeSetOrdinals;
+
+        mutable std::optional<NodeMapType> mNodeMap;
 
         template<typename T1, typename T2>
         void copy(T1& tTo, T2 tFrom)
@@ -122,6 +126,11 @@ namespace Plato
             void
             CreateNodeSet( std::string aNodeSetName, std::initializer_list<Plato::OrdinalType> aNodes) override;
 
+            /// @return The node map in the mesh, which gives the mapping between a user-defined ID and
+            ///  the index into the mesh arrays. The map key is the user-defined ID and the value is the
+            ///  array index.
+            auto NodeMap() const -> const NodeMapType& override;
+
             void initialize();
             void openMesh();
             void closeMesh();
@@ -134,5 +143,6 @@ namespace Plato
             void loadSideSets();
 
             void createFullSurfaceSideSet();
+
     };
-}
+    }  // namespace Plato

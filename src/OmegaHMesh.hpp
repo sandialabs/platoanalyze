@@ -6,6 +6,8 @@
 #include <Omega_h_array.hpp>
 #include <Omega_h_assoc.hpp>
 
+#include <optional>
+
 namespace Plato
 {
     namespace OmegaH
@@ -25,6 +27,8 @@ namespace Plato
         std::map<std::vector<std::string>, Plato::OrdinalVector> mSideSetFacesComplementOrdinals;
         std::map<std::vector<std::string>, Plato::OrdinalVector> mSideSetElementsComplementOrdinals;
         std::map<std::vector<std::string>, Plato::OrdinalVector> mSideSetLocalNodesComplementOrdinals;
+
+        mutable std::optional<NodeMapType> mNodeMap;
 
         void initialize();
 
@@ -100,6 +104,9 @@ namespace Plato
 
             void
             CreateNodeSet( std::string aNodeSetName, std::initializer_list<Plato::OrdinalType> aNodes) override;
+
+            /// @warning This only uses a 1-N nodemap, not the map in the exodus file.
+            auto NodeMap() const -> const std::unordered_map<GlobalNodeID, MeshArrayIndex>& override;
 
             template<int cSpaceDims>
             void

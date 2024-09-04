@@ -1,5 +1,7 @@
 set(Test_SOURCES Test_FunctionalInterfaceUtilities.cpp
+                 Test_HelmholtzFilterInterface.cpp
                  Test_SolutionCache.cpp
+                 TestMeshSetupTeardown.cpp
                  UnitMain.cpp)
 
 set(Test_NAME "AnalyzeFunctional_UnitTests")
