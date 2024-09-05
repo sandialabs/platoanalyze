@@ -3,7 +3,7 @@
 #include <mpi.h>
 
 #include <Kokkos_Core.hpp>
-#include <plato/mesh/MeshDesignVariables.hpp>
+#include <plato/design_variables/MeshDesignVariables.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
@@ -46,8 +46,8 @@ void start_up()
 }
 
 template <typename T>
-[[nodiscard]] bool should_update_mesh_dependent_object(const mesh::MeshDesignVariables& aMeshDesignVariables,
-                                                       const std::shared_ptr<T>& aObject)
+[[nodiscard]] bool should_update_mesh_dependent_object(
+    const design_variables::MeshDesignVariables& aMeshDesignVariables, const std::shared_ptr<T>& aObject)
 {
     return !aObject || aMeshDesignVariables.mBlockScalarField.empty();
 }
@@ -57,7 +57,8 @@ template <typename T>
 /// The mesh will only be read from disk if @a aMesh is `nullptr` or @a aMeshDesignVariables does not contain
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
-[[nodiscard]] Plato::Mesh update_mesh(const mesh::MeshDesignVariables& aMeshDesignVariables, Plato::Mesh&& aMesh)
+[[nodiscard]] Plato::Mesh update_mesh(const design_variables::MeshDesignVariables& aMeshDesignVariables,
+                                      Plato::Mesh&& aMesh)
 {
     if (should_update_mesh_dependent_object(aMeshDesignVariables, aMesh))
     {
@@ -75,7 +76,7 @@ template <typename T>
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
 [[nodiscard]] auto update_problem(Plato::Comm::Machine& aMachine,
-                                  const mesh::MeshDesignVariables& aMeshDesignVariables,
+                                  const design_variables::MeshDesignVariables& aMeshDesignVariables,
                                   const Plato::Mesh& aMesh,
                                   Teuchos::ParameterList& aParameterList,
                                   std::shared_ptr<Plato::AbstractProblem>&& aProblem)
@@ -104,7 +105,7 @@ FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     start_up();
 }
 
-auto FunctionalInterface::solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
+auto FunctionalInterface::solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
     return solveProblemImpl(aMeshDesignVariables, updateMesh(aMeshDesignVariables));
@@ -129,7 +130,8 @@ const Teuchos::ParameterList& FunctionalInterface::parameterList() const { retur
 
 const Plato::Mesh& FunctionalInterface::mesh() const { return mMesh; }
 
-auto FunctionalInterface::updateMesh(const mesh::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList
+auto FunctionalInterface::updateMesh(const design_variables::MeshDesignVariables& aMeshDesignVariables)
+    -> Teuchos::ParameterList
 {
     Teuchos::ParameterList tParameterList = mParameterList;
     plato::functional::update_mesh_file_name(tParameterList, aMeshDesignVariables.mFileName.string());
@@ -137,7 +139,7 @@ auto FunctionalInterface::updateMesh(const mesh::MeshDesignVariables& aMeshDesig
     return tParameterList;
 }
 
-auto FunctionalInterface::solveProblemImpl(const mesh::MeshDesignVariables& aMeshDesignVariables,
+auto FunctionalInterface::solveProblemImpl(const design_variables::MeshDesignVariables& aMeshDesignVariables,
                                            Teuchos::ParameterList aParameterList)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {

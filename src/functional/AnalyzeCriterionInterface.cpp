@@ -1,7 +1,7 @@
 #include "AnalyzeCriterionInterface.hpp"
 
 #include <array>
-#include <plato/mesh/MeshDesignVariables.hpp>
+#include <plato/design_variables/MeshDesignVariables.hpp>
 #include <string>
 #include <string_view>
 
@@ -40,7 +40,7 @@ AnalyzeCriterionInterface::AnalyzeCriterionInterface(const std::vector<std::stri
 {
 }
 
-double AnalyzeCriterionInterface::value(const mesh::MeshDesignVariables& aMeshDesignVariables) const
+double AnalyzeCriterionInterface::value(const design_variables::MeshDesignVariables& aMeshDesignVariables) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
 
@@ -50,7 +50,8 @@ double AnalyzeCriterionInterface::value(const mesh::MeshDesignVariables& aMeshDe
     return tResult;
 }
 
-std::vector<double> AnalyzeCriterionInterface::gradient(const mesh::MeshDesignVariables& aMeshDesignVariables) const
+std::vector<double> AnalyzeCriterionInterface::gradient(
+    const design_variables::MeshDesignVariables& aMeshDesignVariables) const
 {
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
 

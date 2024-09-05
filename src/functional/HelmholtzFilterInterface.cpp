@@ -1,8 +1,8 @@
 #include "HelmholtzFilterInterface.hpp"
 
 #include <Teuchos_ParameterList.hpp>
+#include <plato/design_variables/MeshDesignVariables.hpp>
 #include <plato/linear_algebra/DynamicVector.hpp>
-#include <plato/mesh/MeshDesignVariables.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
@@ -19,8 +19,8 @@ Plato::ScalarVector filtered_control(const Plato::Solutions& aSolution)
 
 auto parameter_list_updater(const plato::filter::library::FilterParameters& aFilterParameters)
 {
-    return [tFilterParameters = aFilterParameters](const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
-                                                   const Plato::Mesh& aMesh)
+    return [tFilterParameters = aFilterParameters](
+               const plato::design_variables::MeshDesignVariables& aMeshDesignVariables, const Plato::Mesh& aMesh)
     {
         const auto tBlockNames = aMesh->GetElementBlockNames();
         return helmholtz_filter_parameter_list(tFilterParameters, aMeshDesignVariables.mFileName.string(), tBlockNames);
@@ -34,8 +34,8 @@ HelmholtzFilterInterface::HelmholtzFilterInterface(const plato::filter::library:
 {
 }
 
-mesh::MeshDesignVariables HelmholtzFilterInterface::filter(
-    const plato::mesh::MeshDesignVariables& aMeshDesignVariables) const
+design_variables::MeshDesignVariables HelmholtzFilterInterface::filter(
+    const plato::design_variables::MeshDesignVariables& aMeshDesignVariables) const
 {
     const auto [tSolution, tControl] =
         mFunctionalInterface.solveProblem(aMeshDesignVariables, parameter_list_updater(mFilterParameters));
@@ -44,7 +44,7 @@ mesh::MeshDesignVariables HelmholtzFilterInterface::filter(
 }
 
 plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
-    const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+    const plato::design_variables::MeshDesignVariables& aMeshDesignVariables,
     const plato::linear_algebra::DynamicVector<double>& aV) const
 {
     const auto [tSolution, tControl] =

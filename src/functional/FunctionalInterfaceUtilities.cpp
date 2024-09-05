@@ -2,8 +2,8 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
+#include <plato/design_variables/MeshDesignVariables.hpp>
 #include <plato/filter/FilterInterface.hpp>
-#include <plato/mesh/MeshDesignVariables.hpp>
 
 #include "CrsMatrixUtils.hpp"
 #include "alg/ErrorHandling.hpp"
@@ -39,7 +39,7 @@ void for_each_design_variable(MeshDesignVariableType&& aDesignVariables,
                               const Plato::Mesh& aMesh,
                               const Function& aFunction)
 {
-    static_assert(std::is_same_v<std::decay_t<MeshDesignVariableType>, plato::mesh::MeshDesignVariables>);
+    static_assert(std::is_same_v<std::decay_t<MeshDesignVariableType>, plato::design_variables::MeshDesignVariables>);
 
     const auto& tNodeMap = aMesh->NodeMap();
     for (auto& [tBlockID, tDensityVector] : aDesignVariables.mBlockScalarField)
@@ -103,7 +103,7 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, const std::st
     aParameterList.set(std::string{kInputMeshEntry}, std::string{aMeshName});
 }
 
-Plato::ScalarVector create_control(const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+Plato::ScalarVector create_control(const plato::design_variables::MeshDesignVariables& aMeshDesignVariables,
                                    const Plato::Mesh& aMesh)
 {
     if (aMeshDesignVariables.mBlockScalarField.empty())
@@ -127,7 +127,7 @@ std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato
 }
 
 std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalarVector,
-                                               const plato::mesh::MeshDesignVariables& aDesignVariables,
+                                               const plato::design_variables::MeshDesignVariables& aDesignVariables,
                                                const Plato::Mesh& aMesh)
 {
     auto tScalarVectorOnHost = Kokkos::create_mirror_view(aScalarVector);
@@ -137,13 +137,13 @@ std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalar
     for_each_design_variable(
         aDesignVariables, aMesh,
         [&tDesignVariables, tScalarVectorOnHost](const auto aPAControlIndex,
-                                                 const plato::mesh::ScalarFieldValue& aDensity)
+                                                 const plato::design_variables::ScalarFieldValue& aDensity)
         { tDesignVariables[aDensity.mDesignVariableVectorIndex] = tScalarVectorOnHost[aPAControlIndex]; });
     return tDesignVariables;
 }
 
 Plato::ScalarVector full_nodal_scalar_vector(const std::vector<double>& aVector,
-                                             const plato::mesh::MeshDesignVariables& aDesignVariables,
+                                             const plato::design_variables::MeshDesignVariables& aDesignVariables,
                                              const Plato::Mesh& aMesh,
                                              const double aFillValue)
 {
@@ -152,16 +152,16 @@ Plato::ScalarVector full_nodal_scalar_vector(const std::vector<double>& aVector,
 
     Kokkos::deep_copy(tScalarVectorOnHost, aFillValue);
 
-    for_each_design_variable(
-        aDesignVariables, aMesh,
-        [&aVector, tScalarVectorOnHost](const auto aPAControlIndex, const plato::mesh::ScalarFieldValue& aDensity)
-        { tScalarVectorOnHost[aPAControlIndex] = aVector[aDensity.mDesignVariableVectorIndex]; });
+    for_each_design_variable(aDesignVariables, aMesh,
+                             [&aVector, tScalarVectorOnHost](const auto aPAControlIndex,
+                                                             const plato::design_variables::ScalarFieldValue& aDensity)
+                             { tScalarVectorOnHost[aPAControlIndex] = aVector[aDensity.mDesignVariableVectorIndex]; });
 
     Kokkos::deep_copy(tScalarVector, tScalarVectorOnHost);
     return tScalarVector;
 }
 
-Plato::ScalarVector full_nodal_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables,
+Plato::ScalarVector full_nodal_scalar_vector(const plato::design_variables::MeshDesignVariables& aDesignVariables,
                                              const Plato::Mesh& aMesh)
 {
     const auto tScalarVector = Plato::ScalarVector("control", static_cast<unsigned>(aMesh->NumNodes()));
@@ -172,32 +172,34 @@ Plato::ScalarVector full_nodal_scalar_vector(const plato::mesh::MeshDesignVariab
 
     for_each_design_variable(
         aDesignVariables, aMesh,
-        [tScalarVectorOnHost](const auto aPAControlIndex, const plato::mesh::ScalarFieldValue& aDensity)
+        [tScalarVectorOnHost](const auto aPAControlIndex, const plato::design_variables::ScalarFieldValue& aDensity)
         { tScalarVectorOnHost[aPAControlIndex] = aDensity.mValue; });
 
     Kokkos::deep_copy(tScalarVector, tScalarVectorOnHost);
     return tScalarVector;
 }
 
-plato::mesh::MeshDesignVariables mesh_design_variables(const Plato::ScalarVector aScalarVector,
-                                                       plato::mesh::MeshDesignVariables aDesignVariables,
-                                                       const Plato::Mesh& aMesh)
+plato::design_variables::MeshDesignVariables mesh_design_variables(
+    const Plato::ScalarVector aScalarVector,
+    plato::design_variables::MeshDesignVariables aDesignVariables,
+    const Plato::Mesh& aMesh)
 {
     const auto tScalarVectorOnHost = Kokkos::create_mirror_view(aScalarVector);
     Kokkos::deep_copy(tScalarVectorOnHost, aScalarVector);
 
-    for_each_design_variable(aDesignVariables, aMesh,
-                             [tScalarVectorOnHost](const auto aPAControlIndex, plato::mesh::ScalarFieldValue& aDensity)
-                             { aDensity.mValue = tScalarVectorOnHost[aPAControlIndex]; });
+    for_each_design_variable(
+        aDesignVariables, aMesh,
+        [tScalarVectorOnHost](const auto aPAControlIndex, plato::design_variables::ScalarFieldValue& aDensity)
+        { aDensity.mValue = tScalarVectorOnHost[aPAControlIndex]; });
 
     return aDesignVariables;
 }
 
-std::size_t number_of_design_variables(const plato::mesh::MeshDesignVariables& aMeshDesignVariables)
+std::size_t number_of_design_variables(const plato::design_variables::MeshDesignVariables& aMeshDesignVariables)
 {
-    using Density = plato::mesh::ScalarFieldValue;
-    using IndexType = plato::mesh::ScalarFieldValue::IndexType;
-    using ScalarFieldVector = plato::mesh::MeshDesignVariables::ScalarFieldVector;
+    using Density = plato::design_variables::ScalarFieldValue;
+    using IndexType = plato::design_variables::ScalarFieldValue::IndexType;
+    using ScalarFieldVector = plato::design_variables::MeshDesignVariables::ScalarFieldVector;
 
     if (aMeshDesignVariables.mBlockScalarField.empty())
     {

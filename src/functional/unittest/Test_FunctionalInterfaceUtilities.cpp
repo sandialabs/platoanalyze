@@ -255,8 +255,8 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, MeshDesignVariablesFromScalarVec
 {
     const auto tTestMeshFixture = TestMeshSetupTeardown{};
 
-    const auto tTestFunction = [&](const plato::mesh::MeshDesignVariables& aResultMeshDesignVariables,
-                                   const plato::mesh::MeshDesignVariables& aBaseMeshDesignVariables)
+    const auto tTestFunction = [&](const plato::design_variables::MeshDesignVariables& aResultMeshDesignVariables,
+                                   const plato::design_variables::MeshDesignVariables& aBaseMeshDesignVariables)
     {
         TEST_EQUALITY(aResultMeshDesignVariables.mBlockScalarField.size(),
                       aBaseMeshDesignVariables.mBlockScalarField.size());
@@ -312,7 +312,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, NumberOfDesignVariables)
 {
     const auto tTestFixture = TestMeshSetupTeardown{};
     {
-        const auto tMeshDesignVariables = plato::mesh::MeshDesignVariables{};
+        const auto tMeshDesignVariables = plato::design_variables::MeshDesignVariables{};
         constexpr auto tSizeForEmptyDesignVariables = 0U;
         TEST_EQUALITY(number_of_design_variables(tMeshDesignVariables), tSizeForEmptyDesignVariables);
     }

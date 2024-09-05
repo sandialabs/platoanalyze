@@ -2,7 +2,7 @@
 #define PLATO_FUNCTIONAL_UNITTEST_TESTMESHSETUPTEARDOWN_H
 
 #include <filesystem>
-#include <plato/mesh/MeshDesignVariables.hpp>
+#include <plato/design_variables/MeshDesignVariables.hpp>
 
 #include "PlatoMesh.hpp"
 #include "PlatoMeshTestHelpers.hpp"
@@ -18,9 +18,9 @@ class TestMeshSetupTeardown
    public:
     ~TestMeshSetupTeardown();
 
-    auto meshDesignVariablesAllDesignBlocks() const -> plato::mesh::MeshDesignVariables;
-    auto meshDesignVariablesBlock1Fixed() const -> plato::mesh::MeshDesignVariables;
-    auto meshDesignVariablesBlock2Fixed() const -> plato::mesh::MeshDesignVariables;
+    auto meshDesignVariablesAllDesignBlocks() const -> plato::design_variables::MeshDesignVariables;
+    auto meshDesignVariablesBlock1Fixed() const -> plato::design_variables::MeshDesignVariables;
+    auto meshDesignVariablesBlock2Fixed() const -> plato::design_variables::MeshDesignVariables;
 
     auto numberOfMeshDesignVariablesBlock1Fixed() const -> unsigned;
     auto numberOfMeshDesignVariablesBlock2Fixed() const -> unsigned;

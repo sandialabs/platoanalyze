@@ -14,7 +14,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
 {
     const auto tTestFixture = TestMeshSetupTeardown{};
 
-    const auto tTestFunction = [&](const plato::mesh::MeshDesignVariables& aResult,
+    const auto tTestFunction = [&](const plato::design_variables::MeshDesignVariables& aResult,
                                    const std::map<int, std::vector<double>>& aRegressionBlockDensities)
     {
         TEST_EQUALITY(aResult.mBlockScalarField.size(), aRegressionBlockDensities.size());

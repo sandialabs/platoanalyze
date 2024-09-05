@@ -18,10 +18,11 @@ class AnalyzeCriterionInterface : public plato::criteria::library::CriterionInte
     explicit AnalyzeCriterionInterface(const std::vector<std::string>& aFileNames);
 
     ///@brief Return the value of the criterion at the control specified by @a aMeshDesignVariables
-    [[nodiscard]] double value(const mesh::MeshDesignVariables& aMeshDesignVariables) const override;
+    [[nodiscard]] double value(const design_variables::MeshDesignVariables& aMeshDesignVariables) const override;
 
     ///@brief Return the gradient of the criterion evaluated at the control specified by @a aMeshDesignVariables
-    [[nodiscard]] std::vector<double> gradient(const mesh::MeshDesignVariables& aMeshDesignVariables) const override;
+    [[nodiscard]] std::vector<double> gradient(
+        const design_variables::MeshDesignVariables& aMeshDesignVariables) const override;
 
    private:
     mutable FunctionalInterface mFunctionalInterface;

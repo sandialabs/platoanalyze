@@ -16,7 +16,7 @@ class AbstractProblem;
 struct Solutions;
 };  // namespace Plato
 
-namespace plato::mesh
+namespace plato::design_variables
 {
 struct MeshDesignVariables;
 }
@@ -35,15 +35,15 @@ class FunctionalInterface
 
     /// @brief Solves the forward problem specified by the ParameterList passed on construction,
     ///  and with an updated mesh given by @a aMeshDesignVariables.
-    [[nodiscard]] auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables)
+    [[nodiscard]] auto solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
     /// @brief Solves the forward problem with an updated mesh given by @a aMeshDesignVariables.
     /// @param aMeshDependentParameterListUpdater A function that generates a new ParameterList based on a mesh and @a
     /// aMeshDesignVariables.
-    ///  The signature must be `ParameterList(const plato::mesh::MeshDesignVariables&, const Plato::Mesh&)`.
+    ///  The signature must be `ParameterList(const plato::design_variables::MeshDesignVariables&, const Plato::Mesh&)`.
     template <typename Function>
-    [[nodiscard]] auto solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables,
+    [[nodiscard]] auto solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables,
                                     const Function& aMeshDependentParameterListUpdater)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
@@ -54,8 +54,8 @@ class FunctionalInterface
     [[nodiscard]] const Plato::Mesh& mesh() const;
 
    private:
-    auto updateMesh(const mesh::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList;
-    [[nodiscard]] auto solveProblemImpl(const mesh::MeshDesignVariables& aMeshDesignVariables,
+    auto updateMesh(const design_variables::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList;
+    [[nodiscard]] auto solveProblemImpl(const design_variables::MeshDesignVariables& aMeshDesignVariables,
                                         Teuchos::ParameterList aParameterList)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
@@ -68,7 +68,7 @@ class FunctionalInterface
 };
 
 template <typename Function>
-auto FunctionalInterface::solveProblem(const mesh::MeshDesignVariables& aMeshDesignVariables,
+auto FunctionalInterface::solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables,
                                        const Function& aMeshDependentParameterListUpdater)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
