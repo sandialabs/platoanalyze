@@ -103,7 +103,7 @@ std::size_t hash_vector(const KokkosLike& aVector)
 {
     std::size_t tSeed = 0;
     auto tVectorOnHost = detail::host_mirror(aVector);
-    for(int i = 0; i < tVectorOnHost.size() - 1; ++i)
+    for(int i = 0; i < tVectorOnHost.size(); ++i)
     {
         boost::hash_combine(tSeed, tVectorOnHost(i));
     }

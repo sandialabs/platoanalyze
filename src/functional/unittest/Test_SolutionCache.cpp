@@ -1,9 +1,10 @@
 #include <Teuchos_UnitTestHarness.hpp>
+#include <plato/utilities/StateCache.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "PlatoTestHelpers.hpp"
-#include "SolutionCache.hpp"
+#include "Solutions.hpp"
 
 namespace plato::functional::unittest
 {
@@ -15,7 +16,7 @@ TEUCHOS_UNIT_TEST(TestSolutionCache, ComputeOnlyWhenDesignChanges)
 
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", 1);
 
-    auto tSolutionCache = SolutionCache(
+    auto tSolutionCache = plato::utilities::StateCache<Plato::Solutions, const Plato::ScalarVector&>(
         [tTag, &tCallCount](const Plato::ScalarVector& aArg)
         {
             Plato::Solutions tSolution;

@@ -108,6 +108,8 @@ class ExodusIO
     std::vector<std::vector<Int>> getFaceGraph(std::string) const;
     std::vector<std::vector<Int>> getFaceGraph(Int aBlockIndex) const;
 
+    const std::vector<Int>& getNodeGlobalIds() const;
+
   private:
     void readData();
     void closeMesh();

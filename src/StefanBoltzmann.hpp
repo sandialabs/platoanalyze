@@ -3,7 +3,6 @@
 #include "FadTypes.hpp"
 #include "SpatialModel.hpp"
 #include "SurfaceArea.hpp"
-#include "ExpressionEvaluator.hpp"
 
 namespace Plato
 {

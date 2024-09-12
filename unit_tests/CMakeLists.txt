@@ -8,6 +8,8 @@ configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/nodal_surface_pressure_field.e
                  ${CMAKE_CURRENT_BINARY_DIR}/nodal_surface_pressure_field.exo COPYONLY)
 configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/two_block_contact.exo
                  ${CMAKE_CURRENT_BINARY_DIR}/two_block_contact.exo COPYONLY)
+configure_file(  ${CMAKE_CURRENT_SOURCE_DIR}/data/hex-1-1-1.exo
+                 ${CMAKE_CURRENT_BINARY_DIR}/hex-1-1-1.exo COPYONLY)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/BamG)
 
@@ -24,7 +26,8 @@ Plato_add_test(PlatoMathHelpers PlatoMathHelpersTest.cpp)
 #TODO: update StructuralDynamics to new element
 #Plato_add_test(PlatoFunctors PlatoFunctorsTest.cpp)
 
-Plato_add_test(ExpressionEvaluator ExpressionEvaluatorTest.cpp)
+Plato_add_test(RealArray RealArrayTest.cpp)
+Plato_add_test(ExpressionParser ExpressionParserTest.cpp)
 Plato_add_test(MassProperties MassPropertiesTests.cpp)
 Plato_add_test(GeometryMisfit GeometryMisfitTests.cpp)
 Plato_add_test(LinearMaterialModel LinearMaterialModelTests.cpp)
@@ -122,6 +125,11 @@ if(PLATOANALYZE_ENABLE_MPMD)
       EngineMeshIntxTests.cpp
       PlatoUnitTestMain.cpp
     )
+    if(PLATOANALYZE_STK_ENABLED)
+      # Tests requiring stk
+      Plato_add_test(EngineMeshStk EngineMeshStkTests.cpp)
+    endif()
+
     add_executable(EngineMeshIntxTests
       ${EngineMesh_SOURCES}
     )

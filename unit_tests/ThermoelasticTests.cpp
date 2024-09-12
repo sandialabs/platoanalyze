@@ -32,7 +32,6 @@
 #include "Thermomechanics.hpp"
 #include "ImplicitFunctors.hpp"
 #include "LinearThermoelasticMaterial.hpp"
-#include "ExpressionEvaluator.hpp"
 #include "material/MaterialModel.hpp"
 
 #include <fenv.h>

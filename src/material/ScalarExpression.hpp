@@ -5,7 +5,7 @@
 #include "FadTypes.hpp"
 #include "AnalyzeMacros.hpp"
 #include "ParseTools.hpp"
-#include "ExpressionEvaluator.hpp"
+#include "utilities/ExpressionParser.hpp"
 
 #include <Teuchos_ParameterList.hpp>
 #include <Kokkos_Core.hpp>
@@ -22,11 +22,7 @@ template<typename EvaluationType>
 class ScalarExpression
 {
 protected:
-    using StateT  = typename EvaluationType::StateScalarType;
-    using ConfigT = typename EvaluationType::ConfigScalarType;
     using KineticsScalarType = typename EvaluationType::ResultScalarType;
-    using ElementType = typename EvaluationType::ElementType;
-    using KinematicsScalarType = typename Plato::fad_type_t<ElementType, StateT, ConfigT>;
     using ControlScalarType = typename EvaluationType::ControlScalarType;
 
 public:
@@ -51,7 +47,7 @@ public:
                 mConstantsMap[tConstantNames[j]] = tConstantValues[j];
             }
             mIndependentVariableName = Plato::ParseTools::getParam<std::string>(tSubList, "Independent Variable Name", "");
-            mExpression = Plato::ParseTools::getParam<std::string>(tSubList, "Expression", "");
+            mStrExpression = Plato::ParseTools::getParam<std::string>(tSubList, "Expression", "");
         }
         else
         { 
@@ -60,52 +56,42 @@ public:
         }
     }  
 
-    const std::string& getExpression() const { return mExpression; }
+    const std::string& getExpression() const { return mStrExpression; }
 
     const std::map<std::string, Plato::Scalar>& getConstantsMap() const { return mConstantsMap; }
 
     const std::string& getIndependentVariableName() const { return mIndependentVariableName; }
 
-    Plato::ScalarMultiVectorT<KineticsScalarType>
+    Plato::ScalarVectorT<KineticsScalarType>
     operator()(const Plato::ScalarVectorT<ControlScalarType>& aIndependentVariable)  
     {
-        // aIndependentVariable is of dimension (numCells*numCubaturePointsPerCell, 1)
-        auto tCubWeights = ElementType::getCubWeights();
-        Plato::OrdinalType tNumPoints = tCubWeights.size();
-        Plato::OrdinalType tNumCells = aIndependentVariable.size() / tNumPoints;
+        mExpression.set(mIndependentVariableName.c_str(), aIndependentVariable);
 
-        mExpEval.parse_expression(mExpression.c_str());
-        mExpEval.setup_storage(tNumCells*tNumPoints, 1);
         std::map<std::string, Plato::Scalar>::iterator tIter = mConstantsMap.begin();
         while(tIter != mConstantsMap.end())
         {
-            mExpEval.set_variable(tIter->first.c_str(), tIter->second);
+            mExpression.set(tIter->first.c_str(), tIter->second);
             tIter++;
         }
-        mExpEval.set_variable(mIndependentVariableName.c_str(), aIndependentVariable);
 
-        auto &tExpEval = mExpEval;
-        Plato::ScalarMultiVectorT<KineticsScalarType> tResults("Expression Results", tNumCells*tNumPoints, 1);
+        auto tResult = mExpression.evaluate(mStrExpression);
 
-        Kokkos::parallel_for("compute element values", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
+        // For now, create the return type and convert
+        // TODO: this conversion should not be necessary.
+        Plato::ScalarVectorT<KineticsScalarType> tReturn("return", tResult.extent(0));
+        Kokkos::parallel_for("convert", Kokkos::RangePolicy<Plato::OrdinalType>(0,tResult.extent(0)), KOKKOS_LAMBDA(const Plato::OrdinalType aOrdinal)
         {
-            auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            tExpEval.evaluate_expression( tEntryOrdinal, tResults );
+          tReturn(aOrdinal) = KineticsScalarType(tResult(aOrdinal));
         });
+        return tReturn;
 
-        return tResults;
     }
 
 protected:
-    std::string mExpression;
+    std::string mStrExpression;
     std::string mIndependentVariableName;
     std::map<std::string, Plato::Scalar> mConstantsMap;
-    ExpressionEvaluator<Plato::ScalarMultiVectorT<KineticsScalarType>,
-                        Plato::ScalarMultiVectorT<KinematicsScalarType>,
-                        Plato::ScalarVectorT<ControlScalarType>,
-                        Plato::Scalar > mExpEval;
-
+    Plato::Evaluator::Expression<ControlScalarType> mExpression;
 };
 
 }

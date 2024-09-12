@@ -37,16 +37,16 @@ public:
 
         Plato::ScalarVectorT<ControlScalarType> tIndependentVariable("density", tNumCells*tNumPoints);
         this->calculateIndependentVariable(aLocalControl, tIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementYoungsModulus = this->getTensorProperty("Youngs Modulus")(tIndependentVariable);
-        Plato::ScalarMultiVectorT<KineticsScalarType> tElementPoissonsRatio = this->getTensorProperty("Poissons Ratio")(tIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementYoungsModulus = this->getTensorProperty("Youngs Modulus")(tIndependentVariable);
+        Plato::ScalarVectorT<KineticsScalarType> tElementPoissonsRatio = this->getTensorProperty("Poissons Ratio")(tIndependentVariable);
       
         Plato::ScalarArray4DT<KineticsScalarType> tStiffness("stiffness", tNumCells, tNumPoints, ElementType::mNumVoigtTerms, ElementType::mNumVoigtTerms);   
         Kokkos::parallel_for("compute stiffness tensor", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),      
         KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
         {
             const auto tEntryOrdinal = iCellOrdinal*tNumPoints + iGpOrdinal;
-            const auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal, 0);
-            const auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal, 0);
+            const auto tCurYoungsModulus = tElementYoungsModulus(tEntryOrdinal);
+            const auto tCurPoissonsRatio = tElementPoissonsRatio(tEntryOrdinal);
             const auto tCoeff = tCurYoungsModulus / ((1.0 + tCurPoissonsRatio) * (1.0 - 2.0 * tCurPoissonsRatio));
             for(int k=0; k<ElementType::mNumSpatialDims; ++k)
             {

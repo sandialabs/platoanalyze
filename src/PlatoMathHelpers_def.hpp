@@ -622,13 +622,9 @@ MatrixMinusMatrix(      Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOne,
     KernelHandle tKernel;
     tKernel.create_spadd_handle(/*sort rows=*/ false);
     auto tAddHandle = tKernel.get_spadd_handle();
-    KokkosSparse::Experimental::spadd_symbolic< KernelHandle,
-      OrdinalType, OrdinalType,
-      OrdinalView, OrdinalView,
-      OrdinalView, OrdinalView,
-      OrdinalView
-    >
-    ( &tKernel, tNumRowsOne, tNumColsOne,
+    KokkosSparse::Experimental::spadd_symbolic
+    ( &tKernel,
+      tNumRowsOne, tNumColsOne,
       tMatOneRowMap, tMatOneColMap,
       tMatTwoRowMap, tMatTwoColMap,
       tOutRowMap
@@ -638,13 +634,9 @@ MatrixMinusMatrix(      Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOne,
 
     OrdinalView tOutColMap("output graph", t_nnz);
     ScalarView  tOutValues("output values", t_nnz);
-    KokkosSparse::Experimental::spadd_numeric<KernelHandle,
-      OrdinalType, OrdinalType,
-      OrdinalView, OrdinalView, ScalarView, Scalar,
-      OrdinalView, OrdinalView, ScalarView, Scalar,
-      OrdinalView, OrdinalView, ScalarView
-    >
-    ( &tKernel, tNumRowsOne, tNumColsOne,
+    KokkosSparse::Experimental::spadd_numeric
+    ( &tKernel,
+      tNumRowsOne, tNumColsOne,
       tMatOneRowMap, tMatOneColMap, tMatOneValues, 1.0,
       tMatTwoRowMap, tMatTwoColMap, tMatTwoValues, -1.0,
       tOutRowMap,    tOutColMap,    tOutValues

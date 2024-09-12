@@ -66,7 +66,7 @@ public:
 
         // get integrand values at quadrature points
         //
-        Plato::ScalarMultiVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints, 1);
+        Plato::ScalarVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints);
         Plato::getFunctionValues<mSpaceDim>(tPhysicalPoints, mFuncString, tFxnValues);
 
         // integrate and assemble
@@ -88,7 +88,7 @@ public:
 
             auto tEntryOffset = iCellOrdinal * tNumPoints;
 
-            auto tFxnValue = tFxnValues(tEntryOffset + iGpOrdinal, 0);
+            auto tFxnValue = tFxnValues(tEntryOffset + iGpOrdinal);
             auto tWeight = aScale * tCubWeights(iGpOrdinal) * tDetJ;
             for (Plato::OrdinalType tFieldOrdinal = 0; tFieldOrdinal < ElementType::mNumNodesPerCell; tFieldOrdinal++)
             {

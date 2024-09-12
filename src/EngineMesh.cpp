@@ -808,4 +808,21 @@ namespace Plato
 
         mNodeSetOrdinals[aNodeSetName] = tDeviceData;
     }
-}
+
+    auto EngineMesh::NodeMap() const -> const NodeMapType& {
+      if (!mNodeMap) {
+        assert(mMeshIO);
+
+        const auto& tNodeGlobalIds = mMeshIO->getNodeGlobalIds();
+        assert(tNodeGlobalIds.size() == NumNodes());
+
+        mNodeMap = std::unordered_map<GlobalNodeID, MeshArrayIndex>{};
+        mNodeMap->reserve(NumNodes());
+
+        for (MeshArrayIndex tMeshArrayIndex = 0; tMeshArrayIndex < NumNodes(); ++tMeshArrayIndex) {
+          mNodeMap->emplace(tNodeGlobalIds[tMeshArrayIndex], tMeshArrayIndex);
+        }
+      }
+      return *mNodeMap;
+    }
+}  // namespace Plato

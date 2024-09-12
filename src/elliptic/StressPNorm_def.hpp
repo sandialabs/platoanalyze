@@ -57,7 +57,7 @@ namespace Elliptic
 
         auto tNumCells = mSpatialDomain.numCells();
       
-        Plato::ScalarMultiVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints, 1);
+        Plato::ScalarVectorT<ConfigScalarType> tFxnValues("function values", tNumCells*tNumPoints);
 
         if (mFuncString == "1.0")
         {
@@ -101,7 +101,7 @@ namespace Elliptic
             computeVoigtStress(tStress, tStrain);
 
             tVolume *= tCubWeights(iGpOrdinal);
-            tVolume *= tFxnValues(iCellOrdinal*tNumPoints + iGpOrdinal, 0);
+            tVolume *= tFxnValues(iCellOrdinal*tNumPoints + iGpOrdinal);
 
             auto tBasisValues = ElementType::basisValues(tCubPoint);
             applyWeighting(iCellOrdinal, aControl, tBasisValues, tStress);

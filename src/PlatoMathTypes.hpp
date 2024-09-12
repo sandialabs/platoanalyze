@@ -52,7 +52,10 @@ namespace Plato
         ScalarType mData[M*N];
 
         public:
-            constexpr KOKKOS_INLINE_FUNCTION Matrix() noexcept = default;
+            constexpr KOKKOS_INLINE_FUNCTION Matrix() noexcept
+            {
+                for (ScalarType& v : mData) { v = ScalarType(0.0); }
+            }
 
             explicit constexpr KOKKOS_INLINE_FUNCTION Matrix(ScalarType aInit) noexcept
             {

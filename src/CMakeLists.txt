@@ -7,7 +7,6 @@ configure_file(
 set(ANALYZE_SOURCES
     ParseTools.cpp
     InputDataUtils.cpp
-    ExpressionEvaluator.cpp
     LinearElasticMaterial.cpp
     CubicLinearElasticMaterial.cpp
     LinearElectroelasticMaterial.cpp
@@ -27,16 +26,6 @@ set(ANALYZE_SOURCES
     NaturalBCTypes.cpp
     NaturalBCData.cpp
 )
-
-if(EXPRESSION)
-  set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
-      CustomMaterial.cpp
-      CustomLinearElasticMaterial.cpp
-      LinearStressExpression.cpp
-      YieldStressExpression.cpp
-      ExpressionTMKinetics.cpp
-  )
-endif()
 
 ## criterion sources
 set(ANALYZE_SOURCES ${ANALYZE_SOURCES}

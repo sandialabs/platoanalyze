@@ -742,4 +742,9 @@ namespace Plato
         if(tErrorStatus) { ANALYZE_THROWERR("Unable to read data. ex_get_var() failed."); }
     }
 
+    const std::vector<Int>& ExodusIO::getNodeGlobalIds() const
+    {
+        return mNodeGlobalIds;
+    }
+
 } // end namespace Plato
