@@ -16,9 +16,9 @@ class AbstractProblem;
 struct Solutions;
 };  // namespace Plato
 
-namespace plato::design_variables
+namespace plato::analysis
 {
-struct MeshDesignVariables;
+struct AnalysisDomainMesh;
 }
 
 namespace plato::functional
@@ -34,16 +34,16 @@ class FunctionalInterface
     explicit FunctionalInterface(Teuchos::ParameterList aParameterList);
 
     /// @brief Solves the forward problem specified by the ParameterList passed on construction,
-    ///  and with an updated mesh given by @a aMeshDesignVariables.
-    [[nodiscard]] auto solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables)
+    ///  and with an updated mesh given by @a aAnalysisDomainMesh.
+    [[nodiscard]] auto solveProblem(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
-    /// @brief Solves the forward problem with an updated mesh given by @a aMeshDesignVariables.
+    /// @brief Solves the forward problem with an updated mesh given by @a aAnalysisDomainMesh.
     /// @param aMeshDependentParameterListUpdater A function that generates a new ParameterList based on a mesh and @a
-    /// aMeshDesignVariables.
-    ///  The signature must be `ParameterList(const plato::design_variables::MeshDesignVariables&, const Plato::Mesh&)`.
+    /// aAnalysisDomainMesh.
+    ///  The signature must be `ParameterList(const plato::analysis::AnalysisDomainMesh&, const Plato::Mesh&)`.
     template <typename Function>
-    [[nodiscard]] auto solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables,
+    [[nodiscard]] auto solveProblem(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                     const Function& aMeshDependentParameterListUpdater)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
@@ -54,8 +54,8 @@ class FunctionalInterface
     [[nodiscard]] const Plato::Mesh& mesh() const;
 
    private:
-    auto updateMesh(const design_variables::MeshDesignVariables& aMeshDesignVariables) -> Teuchos::ParameterList;
-    [[nodiscard]] auto solveProblemImpl(const design_variables::MeshDesignVariables& aMeshDesignVariables,
+    auto updateMesh(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh) -> Teuchos::ParameterList;
+    [[nodiscard]] auto solveProblemImpl(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                         Teuchos::ParameterList aParameterList)
         -> std::pair<Plato::Solutions, Plato::ScalarVector>;
 
@@ -68,12 +68,12 @@ class FunctionalInterface
 };
 
 template <typename Function>
-auto FunctionalInterface::solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables,
+auto FunctionalInterface::solveProblem(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                        const Function& aMeshDependentParameterListUpdater)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
-    updateMesh(aMeshDesignVariables);
-    return solveProblemImpl(aMeshDesignVariables, aMeshDependentParameterListUpdater(aMeshDesignVariables, mMesh));
+    updateMesh(aAnalysisDomainMesh);
+    return solveProblemImpl(aAnalysisDomainMesh, aMeshDependentParameterListUpdater(aAnalysisDomainMesh, mMesh));
 }
 
 }  // namespace plato::functional

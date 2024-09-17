@@ -6,22 +6,22 @@ namespace
 {
 // A vector of nodal densities with densities equal to the global ID. This can be used for tests that include all blocks
 // (none fixed).
-const auto tDensityVector1AllBlocks = std::vector<plato::design_variables::ScalarFieldValue>{
-    {1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
-const auto tDensityVector2AllBlocks = std::vector<plato::design_variables::ScalarFieldValue>{
+const auto tDensityVector1AllBlocks =
+    std::vector<plato::analysis::ScalarFieldValue>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
+const auto tDensityVector2AllBlocks = std::vector<plato::analysis::ScalarFieldValue>{
     {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}, {6, 5, 6.0}, {7, 6, 7.0}, {8, 7, 8.0}};
 
 // A vector of nodal densities for block 1 with densities equal to the vector index assuming block 2 is fixed.
 // The densities are set to the vector index.
-const auto tDensityVector1Block2Fixed = std::vector<plato::design_variables::ScalarFieldValue>{
-    {1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
+const auto tDensityVector1Block2Fixed =
+    std::vector<plato::analysis::ScalarFieldValue>{{1, 0, 1.0}, {2, 1, 2.0}, {3, 2, 3.0}, {4, 3, 4.0}, {5, 4, 5.0}};
 
 // A vector of nodal densities for block 2 with densities equal to the vector index assuming block 1 is fixed.
 // The densities are set to the vector index.
-const auto tDensityVector2Block1Fixed = std::vector<plato::design_variables::ScalarFieldValue>{
+const auto tDensityVector2Block1Fixed = std::vector<plato::analysis::ScalarFieldValue>{
     {3, 0, 3.0}, {4, 1, 4.0}, {5, 2, 5.0}, {6, 3, 6.0}, {7, 4, 7.0}, {8, 5, 8.0}};
 
-std::vector<double> density_values(const std::vector<plato::design_variables::ScalarFieldValue>& aDensityVector)
+std::vector<double> density_values(const std::vector<plato::analysis::ScalarFieldValue>& aDensityVector)
 {
     auto tDensityValues = std::vector<double>{};
     tDensityValues.reserve(aDensityVector.size());
@@ -40,28 +40,28 @@ Plato::Mesh test_mesh(const std::filesystem::path& aMeshFilePath)
 
 TestMeshSetupTeardown::~TestMeshSetupTeardown() { std::filesystem::remove(mTestMeshPath); }
 
-auto TestMeshSetupTeardown::meshDesignVariablesAllDesignBlocks() const -> plato::design_variables::MeshDesignVariables
+auto TestMeshSetupTeardown::meshDesignVariablesAllDesignBlocks() const -> plato::analysis::AnalysisDomainMesh
 {
-    return plato::design_variables::MeshDesignVariables{mTestMeshPath,
-                                                        {{1, tDensityVector1AllBlocks}, {2, tDensityVector2AllBlocks}}};
+    return plato::analysis::AnalysisDomainMesh{mTestMeshPath,
+                                               {{1, tDensityVector1AllBlocks}, {2, tDensityVector2AllBlocks}}};
 }
 
-auto TestMeshSetupTeardown::meshDesignVariablesBlock1Fixed() const -> plato::design_variables::MeshDesignVariables
+auto TestMeshSetupTeardown::meshDesignVariablesBlock1Fixed() const -> plato::analysis::AnalysisDomainMesh
 {
-    return plato::design_variables::MeshDesignVariables{mTestMeshPath, {{2, tDensityVector2Block1Fixed}}};
+    return plato::analysis::AnalysisDomainMesh{mTestMeshPath, {{2, tDensityVector2Block1Fixed}}};
 }
 
-auto TestMeshSetupTeardown::meshDesignVariablesBlock2Fixed() const -> plato::design_variables::MeshDesignVariables
+auto TestMeshSetupTeardown::meshDesignVariablesBlock2Fixed() const -> plato::analysis::AnalysisDomainMesh
 {
-    return plato::design_variables::MeshDesignVariables{mTestMeshPath, {{1, tDensityVector1Block2Fixed}}};
+    return plato::analysis::AnalysisDomainMesh{mTestMeshPath, {{1, tDensityVector1Block2Fixed}}};
 }
 
-auto TestMeshSetupTeardown::numberOfMeshDesignVariablesBlock1Fixed() const -> unsigned
+auto TestMeshSetupTeardown::numberOfAnalysisDomainMeshBlock1Fixed() const -> unsigned
 {
     return tDensityVector2Block1Fixed.size();
 }
 
-auto TestMeshSetupTeardown::numberOfMeshDesignVariablesBlock2Fixed() const -> unsigned
+auto TestMeshSetupTeardown::numberOfAnalysisDomainMeshBlock2Fixed() const -> unsigned
 {
     return tDensityVector1Block2Fixed.size();
 }

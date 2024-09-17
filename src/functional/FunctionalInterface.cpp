@@ -3,7 +3,7 @@
 #include <mpi.h>
 
 #include <Kokkos_Core.hpp>
-#include <plato/design_variables/MeshDesignVariables.hpp>
+#include <plato/analysis/AnalysisDomainMesh.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
@@ -46,23 +46,22 @@ void start_up()
 }
 
 template <typename T>
-[[nodiscard]] bool should_update_mesh_dependent_object(
-    const design_variables::MeshDesignVariables& aMeshDesignVariables, const std::shared_ptr<T>& aObject)
+[[nodiscard]] bool should_update_mesh_dependent_object(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
+                                                       const std::shared_ptr<T>& aObject)
 {
-    return !aObject || aMeshDesignVariables.mBlockScalarField.empty();
+    return !aObject || aAnalysisDomainMesh.mBlockScalarField.empty();
 }
 
 /// @brief Updates the mesh @a aMesh with on disk with path found in @a aParameterList if necessary.
 ///
-/// The mesh will only be read from disk if @a aMesh is `nullptr` or @a aMeshDesignVariables does not contain
+/// The mesh will only be read from disk if @a aMesh is `nullptr` or @a aAnalysisDomainMesh does not contain
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
-[[nodiscard]] Plato::Mesh update_mesh(const design_variables::MeshDesignVariables& aMeshDesignVariables,
-                                      Plato::Mesh&& aMesh)
+[[nodiscard]] Plato::Mesh update_mesh(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh, Plato::Mesh&& aMesh)
 {
-    if (should_update_mesh_dependent_object(aMeshDesignVariables, aMesh))
+    if (should_update_mesh_dependent_object(aAnalysisDomainMesh, aMesh))
     {
-        return Plato::MeshFactory::create(aMeshDesignVariables.mFileName.string());
+        return Plato::MeshFactory::create(aAnalysisDomainMesh.mFileName.string());
     }
     else
     {
@@ -76,13 +75,13 @@ template <typename T>
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
 [[nodiscard]] auto update_problem(Plato::Comm::Machine& aMachine,
-                                  const design_variables::MeshDesignVariables& aMeshDesignVariables,
+                                  const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                   const Plato::Mesh& aMesh,
                                   Teuchos::ParameterList& aParameterList,
                                   std::shared_ptr<Plato::AbstractProblem>&& aProblem)
     -> std::shared_ptr<Plato::AbstractProblem>
 {
-    if (should_update_mesh_dependent_object(aMeshDesignVariables, aProblem))
+    if (should_update_mesh_dependent_object(aAnalysisDomainMesh, aProblem))
     {
         return Plato::ProblemFactory{}.create(aMesh, aParameterList, aMachine);
     }
@@ -105,10 +104,10 @@ FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
     start_up();
 }
 
-auto FunctionalInterface::solveProblem(const design_variables::MeshDesignVariables& aMeshDesignVariables)
+auto FunctionalInterface::solveProblem(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
-    return solveProblemImpl(aMeshDesignVariables, updateMesh(aMeshDesignVariables));
+    return solveProblemImpl(aAnalysisDomainMesh, updateMesh(aAnalysisDomainMesh));
 }
 
 Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aArg) const
@@ -130,21 +129,20 @@ const Teuchos::ParameterList& FunctionalInterface::parameterList() const { retur
 
 const Plato::Mesh& FunctionalInterface::mesh() const { return mMesh; }
 
-auto FunctionalInterface::updateMesh(const design_variables::MeshDesignVariables& aMeshDesignVariables)
-    -> Teuchos::ParameterList
+auto FunctionalInterface::updateMesh(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh) -> Teuchos::ParameterList
 {
     Teuchos::ParameterList tParameterList = mParameterList;
-    plato::functional::update_mesh_file_name(tParameterList, aMeshDesignVariables.mFileName.string());
-    mMesh = update_mesh(aMeshDesignVariables, std::move(mMesh));
+    plato::functional::update_mesh_file_name(tParameterList, aAnalysisDomainMesh.mFileName.string());
+    mMesh = update_mesh(aAnalysisDomainMesh, std::move(mMesh));
     return tParameterList;
 }
 
-auto FunctionalInterface::solveProblemImpl(const design_variables::MeshDesignVariables& aMeshDesignVariables,
+auto FunctionalInterface::solveProblemImpl(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                            Teuchos::ParameterList aParameterList)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
-    mProblem = update_problem(mMachine, aMeshDesignVariables, mMesh, aParameterList, std::move(mProblem));
-    Plato::ScalarVector tControl = plato::functional::create_control(aMeshDesignVariables, mMesh);
+    mProblem = update_problem(mMachine, aAnalysisDomainMesh, mMesh, aParameterList, std::move(mProblem));
+    Plato::ScalarVector tControl = plato::functional::create_control(aAnalysisDomainMesh, mMesh);
     return {mSolutionCache.compute(tControl), tControl};
 }
 
