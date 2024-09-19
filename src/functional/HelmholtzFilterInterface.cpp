@@ -1,8 +1,8 @@
 #include "HelmholtzFilterInterface.hpp"
 
 #include <Teuchos_ParameterList.hpp>
+#include <plato/analysis/AnalysisDomainMesh.hpp>
 #include <plato/linear_algebra/DynamicVector.hpp>
-#include <plato/mesh/MeshDesignVariables.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
@@ -19,11 +19,11 @@ Plato::ScalarVector filtered_control(const Plato::Solutions& aSolution)
 
 auto parameter_list_updater(const plato::filter::library::FilterParameters& aFilterParameters)
 {
-    return [tFilterParameters = aFilterParameters](const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+    return [tFilterParameters = aFilterParameters](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                                    const Plato::Mesh& aMesh)
     {
         const auto tBlockNames = aMesh->GetElementBlockNames();
-        return helmholtz_filter_parameter_list(tFilterParameters, aMeshDesignVariables.mFileName.string(), tBlockNames);
+        return helmholtz_filter_parameter_list(tFilterParameters, aAnalysisDomainMesh.mFileName.string(), tBlockNames);
     };
 }
 
@@ -34,29 +34,29 @@ HelmholtzFilterInterface::HelmholtzFilterInterface(const plato::filter::library:
 {
 }
 
-mesh::MeshDesignVariables HelmholtzFilterInterface::filter(
-    const plato::mesh::MeshDesignVariables& aMeshDesignVariables) const
+analysis::AnalysisDomainMesh HelmholtzFilterInterface::filter(
+    const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh) const
 {
     const auto [tSolution, tControl] =
-        mFunctionalInterface.solveProblem(aMeshDesignVariables, parameter_list_updater(mFilterParameters));
+        mFunctionalInterface.solveProblem(aAnalysisDomainMesh, parameter_list_updater(mFilterParameters));
     Plato::ScalarVector tFilteredControl = filtered_control(tSolution);
-    return mesh_design_variables(tFilteredControl, aMeshDesignVariables, mFunctionalInterface.mesh());
+    return mesh_analysis(tFilteredControl, aAnalysisDomainMesh, mFunctionalInterface.mesh());
 }
 
 plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
-    const plato::mesh::MeshDesignVariables& aMeshDesignVariables,
+    const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
     const plato::linear_algebra::DynamicVector<double>& aV) const
 {
     const auto [tSolution, tControl] =
-        mFunctionalInterface.solveProblem(aMeshDesignVariables, parameter_list_updater(mFilterParameters));
+        mFunctionalInterface.solveProblem(aAnalysisDomainMesh, parameter_list_updater(mFilterParameters));
 
     constexpr auto tFixedValueGradient = 0.0;
-    const Plato::ScalarVector tVAsScalarVector = full_nodal_scalar_vector(
-        aV.stdVector(), aMeshDesignVariables, mFunctionalInterface.mesh(), tFixedValueGradient);
+    const Plato::ScalarVector tVAsScalarVector =
+        full_nodal_scalar_vector(aV.stdVector(), aAnalysisDomainMesh, mFunctionalInterface.mesh(), tFixedValueGradient);
     const Plato::ScalarVector tGradient =
         mFunctionalInterface.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
     return plato::linear_algebra::DynamicVector<double>(
-        design_variable_std_vector(tGradient, aMeshDesignVariables, mFunctionalInterface.mesh()));
+        design_variable_std_vector(tGradient, aAnalysisDomainMesh, mFunctionalInterface.mesh()));
 }
 
 }  // namespace plato::functional

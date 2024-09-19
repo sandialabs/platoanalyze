@@ -2,7 +2,7 @@
 #define PLATO_FUNCTIONAL_FUNCTIONALINTERFACEUTILITIES_H
 
 #include <memory>
-#include <plato/mesh/MeshDesignVariables.hpp>
+#include <plato/analysis/AnalysisDomainMesh.hpp>
 #include <string_view>
 #include <vector>
 
@@ -17,7 +17,7 @@ class ParameterList;
 
 namespace plato::mesh
 {
-struct MeshDesignVariables;
+struct AnalysisDomainMesh;
 }  // namespace plato::mesh
 
 namespace plato::filter::library
@@ -41,8 +41,8 @@ namespace plato::functional
 /// @brief Replaces the file name of the mesh in @a aParameterList with @a aMeshName.
 void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_view aMeshName);
 
-/// @brief Copies the nodal density field contained in @a aMeshDesignVariables to a ScalarVector
-[[nodiscard]] Plato::ScalarVector create_control(const mesh::MeshDesignVariables& aMeshDesignVariables,
+/// @brief Copies the nodal density field contained in @a aAnalysisDomainMesh to a ScalarVector
+[[nodiscard]] Plato::ScalarVector create_control(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                                  const Plato::Mesh& aMesh);
 
 /// @brief Computes a hash by combining the controls in @a aControl and the mesh coordinates in @a aMesh.
@@ -52,9 +52,10 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 
 /// @brief Converts a ScalarVector to a std::vector and reduces to only the design variables, removing any entries
 /// associated with fixed nodes.
-[[nodiscard]] std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalarVector,
-                                                             const plato::mesh::MeshDesignVariables& aDesignVariables,
-                                                             const Plato::Mesh& aMesh);
+[[nodiscard]] std::vector<double> design_variable_std_vector(
+    const Plato::ScalarVector aScalarVector,
+    const plato::analysis::AnalysisDomainMesh& aDesignVariables,
+    const Plato::Mesh& aMesh);
 
 /// @brief Converts a std::vector to a ScalarVector and expands to the full set of nodes. The entries of @a aVector are
 /// copied and the indices of @a aDesignVariables are used to place the entries. The missing entries are filled with @a
@@ -65,32 +66,32 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// @pre The size of @a aVector must be `N`, the number of design variables.
 /// @post The size of the returned vector will be `M`, the total number of nodes.
 [[nodiscard]] Plato::ScalarVector full_nodal_scalar_vector(const std::vector<double>& aVector,
-                                                           const plato::mesh::MeshDesignVariables& aDesignVariables,
+                                                           const plato::analysis::AnalysisDomainMesh& aDesignVariables,
                                                            const Plato::Mesh& aMesh,
                                                            const double aFillValue);
 
-/// @brief Converts a MeshDesignVariables to a ScalarVector.
+/// @brief Converts a AnalysisDomainMesh to a ScalarVector.
 ///
 /// The ordering of the entries is set by the nodemap given by @a aMesh, which maps global IDs to a PA ScalarVector's
 /// entries.
 /// @post The size of the returned vector will be equal to the number of nodes in @a aMesh.
-[[nodiscard]] Plato::ScalarVector full_nodal_scalar_vector(const plato::mesh::MeshDesignVariables& aDesignVariables,
+[[nodiscard]] Plato::ScalarVector full_nodal_scalar_vector(const plato::analysis::AnalysisDomainMesh& aDesignVariables,
                                                            const Plato::Mesh& aMesh);
 
-/// @brief Converts a ScalarVector to the block-based data structure BlockDensities held by a MeshDesignVariables
+/// @brief Converts a ScalarVector to the block-based data structure BlockDensities held by a AnalysisDomainMesh
 /// object.
 /// @param aScalarVector The vector of nodal densities to populate the result with.
-/// @param aMeshDesignVariablesIndices A MeshDesignVariables object whose indices will be used for the result.
+/// @param aAnalysisDomainMeshIndices A AnalysisDomainMesh object whose indices will be used for the result.
 /// Essentially, the density values in this object will be replaced with those in @a aScalarVector.
 /// @pre All `mDesignVariableVectorIndex` entries must be less than size of @a aScalarVector.
-[[nodiscard]] auto mesh_design_variables(Plato::ScalarVector aScalarVector,
-                                         plato::mesh::MeshDesignVariables aDesignVariablesIndices,
-                                         const Plato::Mesh& aMesh) -> plato::mesh::MeshDesignVariables;
+[[nodiscard]] auto mesh_analysis(Plato::ScalarVector aScalarVector,
+                                 plato::analysis::AnalysisDomainMesh aDesignVariablesIndices,
+                                 const Plato::Mesh& aMesh) -> plato::analysis::AnalysisDomainMesh;
 
-/// @brief Returns the number of design variables associated with @a aMeshDesignVariables.
+/// @brief Returns the number of design variables associated with @a aAnalysisDomainMesh.
 ///
-/// This is the max vector index found in any block in @a aMeshDesignVariables.
-std::size_t number_of_design_variables(const plato::mesh::MeshDesignVariables& aMeshDesignVariables);
+/// This is the max vector index found in any block in @a aAnalysisDomainMesh.
+std::size_t number_of_analysis(const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh);
 
 }  // namespace plato::functional
 
