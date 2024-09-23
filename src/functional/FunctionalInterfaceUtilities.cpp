@@ -1,5 +1,6 @@
 #include "FunctionalInterfaceUtilities.hpp"
 
+#include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
 #include <plato/filter/FilterInterface.hpp>
@@ -124,6 +125,17 @@ std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato
     std::size_t tSeed = Plato::detail::hash_vector(aMesh->Coordinates());
     boost::hash_combine(tSeed, Plato::detail::hash_vector(aControl));
     return tSeed;
+}
+
+std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector)
+{
+    const auto tHostVec = Kokkos::create_mirror_view(aScalarVector);
+    Kokkos::deep_copy(tHostVec, aScalarVector);
+    std::vector<double> tReturnVec;
+    tReturnVec.reserve(tHostVec.size());
+    std::copy(Kokkos::Experimental::cbegin(tHostVec), Kokkos::Experimental::cend(tHostVec),
+              std::back_inserter(tReturnVec));
+    return tReturnVec;
 }
 
 std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalarVector,

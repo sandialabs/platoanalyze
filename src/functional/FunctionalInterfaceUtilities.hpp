@@ -92,6 +92,9 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// This is the max vector index found in any block in @a aMeshDesignVariables.
 std::size_t number_of_design_variables(const plato::mesh::MeshDesignVariables& aMeshDesignVariables);
 
+/// @brief Returns a std::vector cøpy of the passed-in ScalarVector.
+std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector);
+
 }  // namespace plato::functional
 
 #endif
