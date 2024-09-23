@@ -1,7 +1,7 @@
 #include "AnalyzeCriterionInterface.hpp"
 
 #include <array>
-#include <plato/mesh/MeshDesignVariables.hpp>
+#include <plato/analysis/AnalysisDomainMesh.hpp>
 #include <string>
 #include <string_view>
 
@@ -40,9 +40,9 @@ AnalyzeCriterionInterface::AnalyzeCriterionInterface(const std::vector<std::stri
 {
 }
 
-double AnalyzeCriterionInterface::value(const mesh::MeshDesignVariables& aMeshDesignVariables) const
+double AnalyzeCriterionInterface::value(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
+    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aAnalysisDomainMesh);
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
     const double tResult = mFunctionalInterface.problem().criterionValue(tControl, tSolution, tCriterionName);
@@ -50,18 +50,18 @@ double AnalyzeCriterionInterface::value(const mesh::MeshDesignVariables& aMeshDe
     return tResult;
 }
 
-std::vector<double> AnalyzeCriterionInterface::gradient(const mesh::MeshDesignVariables& aMeshDesignVariables) const
+std::vector<double> AnalyzeCriterionInterface::gradient(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh) const
 {
-    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aMeshDesignVariables);
+    const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aAnalysisDomainMesh);
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
 
-    return aMeshDesignVariables.mBlockScalarField.empty()
+    return aAnalysisDomainMesh.mBlockScalarField.empty()
                ? functional::scalar_vector_to_std_vector(
                      mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName))
                : functional::design_variable_std_vector(
                      mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName),
-                     aMeshDesignVariables, mFunctionalInterface.mesh());
+                     aAnalysisDomainMesh, mFunctionalInterface.mesh());
 }
 }  // namespace plato::functional
 
