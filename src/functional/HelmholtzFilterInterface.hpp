@@ -19,7 +19,7 @@ class HelmholtzFilterInterface : public plato::filter::library::FilterInterface
         const analysis::AnalysisDomainMesh& aAnalysisDomainMesh) const override;
 
     ///@brief Evaluate the jacobian times a direction vector.
-    [[nodiscard]] plato::linear_algebra::DynamicVector<double> jacobianTimesVector(
+    [[nodiscard]] plato::linear_algebra::DynamicVector<double> rowVectorTimesJacobian(
         const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
         const plato::linear_algebra::DynamicVector<double>& aV) const override;
 
