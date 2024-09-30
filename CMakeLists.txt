@@ -365,7 +365,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
   find_package(SEACASExodus REQUIRED)
   find_package(SEACASNemesis REQUIRED)
   find_package(Shards REQUIRED)
-  find_package(Intrepid REQUIRED)
   find_package(TeuchosCore REQUIRED)
 
   set(PLATO_LIBS
@@ -374,7 +373,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
       PlatoEngine::PlatoParser
       AztecOO::aztecoo
       Epetra::epetra
-      Intrepid::intrepid
       Shards::shards
       Sacado::sacado
       TeuchosCore::teuchoscore
