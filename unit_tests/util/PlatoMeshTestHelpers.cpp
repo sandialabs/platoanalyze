@@ -42,6 +42,20 @@ void write_two_block_mesh(const std::filesystem::path& aFilePath) {
   write_text_mesh(tTwoDTriMesh, aFilePath);
 }
 
+void write_tet_mesh(const std::filesystem::path& aFilePath) {
+  constexpr auto tThreeDTetMesh = std::string_view{
+      "textmesh:"
+      "0,1,TET_4,5,1,2,3,block_1\n"
+      "0,2,TET_4,6,5,2,3,block_1\n"
+      "0,3,TET_4,6,7,5,3,block_1\n"
+      "0,4,TET_4,6,4,7,3,block_1\n"
+      "0,5,TET_4,6,2,4,3,block_1\n"
+      "0,6,TET_4,6,8,7,4,block_1\n"
+      "|coordinates:0,0,0,0,1,0,1,0,0,1,1,0,0,0,1,0,1,1,1,0,1,1,1,1"
+      "|dimension:3"};
+  write_text_mesh(tThreeDTetMesh, aFilePath);
+}
+
 void write_one_block_mesh(const std::filesystem::path& aFilePath) {
   constexpr auto tTwoDTriMesh = std::string_view{
       "textmesh:"
