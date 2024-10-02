@@ -82,6 +82,9 @@ public:
 
     Plato::OrdinalType numControlsPerNode() const;
 
+    auto pde() -> VectorFunctionType&;
+    auto solver() -> Plato::AbstractSolver&;
+
     /******************************************************************************//**
      * \brief Output solution to visualization file.
      * \param [in] aFilepath output/visualizaton file path
@@ -184,7 +187,6 @@ public:
         const std::string         & aName
     ) override;
 
-private:
     /******************************************************************************/ /**
     * \brief Return solution database.
     * \return solution database

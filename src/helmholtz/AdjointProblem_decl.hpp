@@ -1,0 +1,80 @@
+#pragma once
+
+#include "helmholtz/VectorFunction.hpp"
+#include "helmholtz/Problem_decl.hpp"
+
+namespace Plato::Helmholtz
+{
+/******************************************************************************//**
+ * \brief Manage scalar and vector function evaluations and implement the gradient 
+ *   as multiplication with the adjoint Jacobian.
+**********************************************************************************/
+template<typename PhysicsType>
+class AdjointProblem: public Plato::AbstractProblem
+{
+private:
+
+    using ElementType = typename PhysicsType::ElementType;
+    using VectorFunctionType = Plato::Helmholtz::VectorFunction<PhysicsType>;
+
+public:
+    AdjointProblem(std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> mProblem);
+
+    Plato::OrdinalType numNodes() const;
+    Plato::OrdinalType numCells() const;
+    Plato::OrdinalType numDofsPerCell() const;
+    Plato::OrdinalType numNodesPerCell() const;
+    Plato::OrdinalType numDofsPerNode() const;
+    Plato::OrdinalType numControlsPerNode() const;
+
+    void output(const std::string & aFilepath) override;
+    void updateProblem(const Plato::ScalarVector & aControl, const Plato::Solutions & aSolution) override;
+
+    Plato::Solutions
+    solution(const Plato::ScalarVector & aControl) override;
+
+    Plato::ScalarVector
+    criterionGradient(
+        const Plato::ScalarVector & aControl,
+        const std::string         & aName
+    ) override;
+
+    Plato::Scalar
+    criterionValue(
+        const Plato::ScalarVector & aControl,
+        const std::string         & aName
+    ) override;
+
+    Plato::Scalar
+    criterionValue(
+        const Plato::ScalarVector & aControl,
+        const Plato::Solutions    & aSolution,
+        const std::string         & aName
+    ) override;
+
+    Plato::ScalarVector
+    criterionGradient(
+        const Plato::ScalarVector & aControl,
+        const Plato::Solutions    & aSolution,
+        const std::string         & aName
+    ) override;
+
+    Plato::ScalarVector
+    criterionGradientX(
+        const Plato::ScalarVector & aControl,
+        const Plato::Solutions    & aSolution,
+        const std::string         & aName
+    ) override;
+
+    Plato::ScalarVector
+    criterionGradientX(
+        const Plato::ScalarVector & aControl,
+        const std::string         & aName
+    ) override;
+
+    Plato::Solutions getSolution() const override;
+private:
+    std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> mHelmholtzProblem;
+};
+
+} // namespace Helmholtz
