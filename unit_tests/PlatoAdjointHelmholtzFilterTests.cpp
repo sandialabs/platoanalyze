@@ -15,11 +15,20 @@ auto machine() -> Plato::Comm::Machine {
 using Tet4PhysicsType = ::Plato::HelmholtzFilter<Plato::Tet4>;
 using Tet4ElementType = typename Tet4PhysicsType::ElementType;
 
+auto test_mesh_params_and_machine(const int aMeshWidth) {
+  return std::make_tuple(Plato::TestHelpers::get_box_mesh("TET4", aMeshWidth),
+                         Plato::TestHelpers::getParameterListForHelmholtzTest(), machine());
+}
+
 auto tet4_helmholtz_test_problem(const int aMeshWidth) -> std::shared_ptr<Plato::Helmholtz::Problem<Tet4PhysicsType>> {
-  auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", aMeshWidth);
-  const auto tMachine = machine();
-  const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
-  return std::make_shared<Plato::Helmholtz::Problem<Tet4PhysicsType>>(tMesh, *tParamList, tMachine);
+  auto [tMesh, tParameterList, tMachine] = test_mesh_params_and_machine(aMeshWidth);
+  return std::make_shared<Plato::Helmholtz::Problem<Tet4PhysicsType>>(tMesh, *tParameterList, tMachine);
+}
+
+auto tet4_helmholtz_test_adjoint_problem(const int aMeshWidth)
+    -> std::shared_ptr<Plato::Helmholtz::AdjointProblem<Tet4PhysicsType>> {
+  auto [tMesh, tParameterList, tMachine] = test_mesh_params_and_machine(aMeshWidth);
+  return std::make_shared<Plato::Helmholtz::AdjointProblem<Tet4PhysicsType>>(tMesh, *tParameterList, tMachine);
 }
 
 auto solution_on_host(const Plato::Solutions& aSolutions, const std::string& aTag) {
@@ -89,6 +98,20 @@ auto jacobian_matrix(Plato::AbstractProblem& aProblem, const std::size_t aNumber
 }
 
 }  // namespace
+
+TEUCHOS_UNIT_TEST(HelmholtzFilterTests, AdjointDirectConstruction) {
+  auto tAdjointProblemDirect = tet4_helmholtz_test_adjoint_problem(3);
+  auto tProblem = tet4_helmholtz_test_problem(3);
+  auto tAdjointProblemFromProblem = Plato::Helmholtz::AdjointProblem<Tet4PhysicsType>{tProblem};
+
+  const auto tControl = Plato::ScalarVector("density", tProblem->numNodes());
+  Kokkos::deep_copy(tControl, 1.0);
+
+  const auto tSolutionFromDirect = tAdjointProblemDirect->solution(tControl);
+  const auto tSolutionFromIndirect = tAdjointProblemFromProblem.solution(tControl);
+
+  success = test_equality_of_solutions(tSolutionFromDirect, tSolutionFromIndirect, out);
+}
 
 TEUCHOS_UNIT_TEST(HelmholtzFilterTests, AdjointSizes) {
   constexpr auto tMeshWidth = 4;

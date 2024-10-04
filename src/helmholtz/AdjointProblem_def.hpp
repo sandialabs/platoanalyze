@@ -3,9 +3,17 @@
 #include "helmholtz/AdjointProblem_decl.hpp"
 
 namespace Plato::Helmholtz {
+
 template <typename PhysicsType>
-AdjointProblem<PhysicsType>::AdjointProblem(std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> mProblem)
-    : mHelmholtzProblem{std::move(mProblem)} {
+AdjointProblem<PhysicsType>::AdjointProblem(Plato::Mesh aMesh,
+                                            Teuchos::ParameterList& aProblemParams,
+                                            Comm::Machine aMachine)
+    : mHelmholtzProblem{std::make_shared<Problem<PhysicsType>>(std::move(aMesh), aProblemParams, std::move(aMachine))} {
+}
+
+template <typename PhysicsType>
+AdjointProblem<PhysicsType>::AdjointProblem(std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> aProblem)
+    : mHelmholtzProblem{std::move(aProblem)} {
   assert(mHelmholtzProblem);
 }
 

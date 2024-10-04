@@ -233,6 +233,7 @@ endif()
 if(HELMHOLTZ)
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     helmholtz/Problem.cpp
+    helmholtz/AdjointProblem.cpp
     helmholtz/HelmholtzResidual.cpp
   )
 endif()

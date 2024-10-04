@@ -17,8 +17,9 @@ private:
     using ElementType = typename PhysicsType::ElementType;
     using VectorFunctionType = Plato::Helmholtz::VectorFunction<PhysicsType>;
 
-public:
-    AdjointProblem(std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> mProblem);
+   public:
+    AdjointProblem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine);
+    AdjointProblem(std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> aProblem);
 
     Plato::OrdinalType numNodes() const;
     Plato::OrdinalType numCells() const;
