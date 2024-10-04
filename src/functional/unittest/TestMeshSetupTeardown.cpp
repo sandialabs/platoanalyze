@@ -40,18 +40,18 @@ Plato::Mesh test_mesh(const std::filesystem::path& aMeshFilePath)
 
 TestMeshSetupTeardown::~TestMeshSetupTeardown() { std::filesystem::remove(mTestMeshPath); }
 
-auto TestMeshSetupTeardown::meshDesignVariablesAllDesignBlocks() const -> plato::analysis::AnalysisDomainMesh
+auto TestMeshSetupTeardown::analysisDomainMeshAllDesignBlocks() const -> plato::analysis::AnalysisDomainMesh
 {
     return plato::analysis::AnalysisDomainMesh{mTestMeshPath,
                                                {{1, tDensityVector1AllBlocks}, {2, tDensityVector2AllBlocks}}};
 }
 
-auto TestMeshSetupTeardown::meshDesignVariablesBlock1Fixed() const -> plato::analysis::AnalysisDomainMesh
+auto TestMeshSetupTeardown::analysisDomainMeshBlock1Fixed() const -> plato::analysis::AnalysisDomainMesh
 {
     return plato::analysis::AnalysisDomainMesh{mTestMeshPath, {{2, tDensityVector2Block1Fixed}}};
 }
 
-auto TestMeshSetupTeardown::meshDesignVariablesBlock2Fixed() const -> plato::analysis::AnalysisDomainMesh
+auto TestMeshSetupTeardown::analysisDomainMeshBlock2Fixed() const -> plato::analysis::AnalysisDomainMesh
 {
     return plato::analysis::AnalysisDomainMesh{mTestMeshPath, {{1, tDensityVector1Block2Fixed}}};
 }
