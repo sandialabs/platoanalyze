@@ -338,7 +338,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVector)
     {
         tHostVec[i] = i;
     }
-    const auto tDeviceVec = Kokkos::create_mirror_view(tHostVec);
+    Plato::ScalarVector tDeviceVec{"device_vec", tSize};
     Kokkos::deep_copy(tDeviceVec, tHostVec);
     const std::vector<double> tCopy = scalar_vector_to_std_vector(tDeviceVec);
     TEST_EQUALITY(tCopy.size(), tDeviceVec.size());
