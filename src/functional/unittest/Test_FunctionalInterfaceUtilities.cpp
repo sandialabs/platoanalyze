@@ -344,7 +344,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVector)
     TEST_EQUALITY(tCopy.size(), tDeviceVec.size());
     for (size_t i = 0; i < tSize; ++i)
     {
-        TEST_EQUALITY(tCopy[i], tDeviceVec[i]);
+        TEST_EQUALITY(tCopy[i], tHostVec[i]);
     }
 }
 }  // namespace plato::functional::unittest
