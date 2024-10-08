@@ -2590,13 +2590,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_SimplySupportedBeamPre
 }
 
 
-TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_SimplySupportedBeamPressure2D_2ElasticSteps_EPETRA)
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_SimplySupportedBeamPressure2D_2ElasticSteps_TPETRA)
 {
     Teuchos::RCP<Teuchos::ParameterList> tParamList =
     Teuchos::getParametersFromXmlString(
       "<ParameterList name='Plato Problem'>                                                     \n"
       "  <ParameterList name='Linear Solver'>                                                   \n"
-      "    <Parameter name='Solver Stack' type='string' value='Epetra'/>                         \n"
+      "    <Parameter name='Solver Stack' type='string' value='Tpetra'/>                        \n"
       "  </ParameterList>                                                                       \n"
       "  <ParameterList name='Spatial Model'>                                                   \n"
       "    <ParameterList name='Domains'>                                                       \n"

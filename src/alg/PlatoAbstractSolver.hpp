@@ -20,7 +20,7 @@ enum class LinearSystemType {
 
   Note that the solve() function takes 'native' matrix and vector types.  A next
   step would be to adopt generic matrix and vector interfaces that we can wrap
-  around Epetra types, Tpetra types, Kokkos view-based types, etc.
+  around Tpetra types, Kokkos view-based types, etc.
 **********************************************************************************/
 class AbstractSolver
 {
