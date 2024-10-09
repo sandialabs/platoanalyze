@@ -2,7 +2,6 @@
 #include "PlatoUtilities.hpp"
 
 #include "alg/AmgXLinearSolver.hpp"
-#include "alg/EpetraLinearSolver.hpp"
 #ifdef PLATO_TPETRA
 #include "alg/TpetraLinearSolver.hpp"
 #endif
@@ -30,8 +29,6 @@ std::string determine_solver_stack(const Teuchos::ParameterList& tSolverParams)
       tSolverStack = "AmgX";
 #elif PLATO_TPETRA
       tSolverStack = "Tpetra";
-#elif PLATO_EPETRA
-      tSolverStack = "Epetra";
 #else
       ANALYZE_THROWERR("PLato Analyze was compiled without a linear solver!.  Exiting.");
 #endif
@@ -54,16 +51,7 @@ SolverFactory::create(
   auto tSolverStack = Plato::determine_solver_stack(mSolverParams);
   auto tLowerSolverStack = Plato::tolower(tSolverStack);
 
-  if(tLowerSolverStack == "epetra")
-  {
-#ifdef PLATO_EPETRA
-      const Plato::OrdinalType tNumCondensedNodes = (aMPCs == nullptr) ? aNumNodes : aMPCs->getNumCondensedNodes();
-      return std::make_shared<Plato::EpetraLinearSolver>(mSolverParams, tNumCondensedNodes, aMachine, aDofsPerNode, aMPCs);
-#else
-      ANALYZE_THROWERR("Not compiled with Epetra");
-#endif
-  }
-  else if(tLowerSolverStack == "tpetra")
+  if(tLowerSolverStack == "tpetra")
   {
 #ifdef PLATO_TPETRA
       const Plato::OrdinalType tNumCondensedNodes = (aMPCs == nullptr) ? aNumNodes : aMPCs->getNumCondensedNodes();

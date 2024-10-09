@@ -57,12 +57,6 @@ set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     alg/PlatoAbstractSolver.cpp
 )
 
-if (PLATOANALYZE_ENABLE_EPETRA)
-set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
-    alg/EpetraLinearSolver.cpp
-)
-endif()
-
 IF(OMEGA_H_PREFIX)
   set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     OmegaHMesh.cpp

@@ -18,7 +18,6 @@ option(PLATOANALYZE_ENABLE_MESHMAP  "Enable Plato MeshMap"  ON )
 
 option(PLATOANALYZE_ENABLE_ENGINEMESH "Enable EngineMesh"           ON )
 option(PLATOANALYZE_ENABLE_TPETRA     "Enable Tpetra"               OFF)
-option(PLATOANALYZE_ENABLE_EPETRA     "Enable Tpetra"               OFF)
 option(PLATOANALYZE_ENABLE_PYTHON     "Enable the Python interface" OFF)
 
 option(ELLIPTIC        "Compile with Elliptic physics"       ON )
@@ -348,20 +347,10 @@ if (PLATOANALYZE_ENABLE_TPETRA)
 endif()
 target_link_libraries(analyze ${PLATO_LIBS} Trilinos::all_selected_libs)
 
-if (PLATOANALYZE_ENABLE_EPETRA)
-  find_package(Epetra REQUIRED)
-  find_package(AztecOO REQUIRED)
-  message("adding define: -DPLATO_EPETRA")
-  add_definitions(-DPLATO_EPETRA)
-endif()
-
 ###### PLATO ANALYZE APP + PLATO ENGINE EXECUTABLE ######
 if (PLATOANALYZE_ENABLE_MPMD)
-  FIND_PACKAGE(Epetra REQUIRED)
   set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
   find_package(PlatoEngine REQUIRED HINTS ${PLATOENGINE_PREFIX})
-  find_package(Epetra REQUIRED)
-  find_package(AztecOO REQUIRED)
   find_package(SEACASExodus REQUIRED)
   find_package(SEACASNemesis REQUIRED)
   find_package(Shards REQUIRED)
@@ -371,8 +360,6 @@ if (PLATOANALYZE_ENABLE_MPMD)
       PlatoEngine::PlatoDataLayer
       PlatoEngine::PlatoInterface
       PlatoEngine::PlatoParser
-      AztecOO::aztecoo
-      Epetra::epetra
       Shards::shards
       Sacado::sacado
       TeuchosCore::teuchoscore
