@@ -93,6 +93,9 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// This is the max vector index found in any block in @a aAnalysisDomainMesh.
 std::size_t number_of_analysis(const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh);
 
+/// @brief Returns a std::vector cøpy of the passed-in ScalarVector.
+std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector);
+
 }  // namespace plato::functional
 
 #endif

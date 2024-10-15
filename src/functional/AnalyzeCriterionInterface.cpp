@@ -55,12 +55,13 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const analysis::Analysis
     const auto [tSolution, tControl] = mFunctionalInterface.solveProblem(aAnalysisDomainMesh);
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
-    const Plato::ScalarVector tGradient =
-        aAnalysisDomainMesh.mBlockScalarField.empty()
-            ? mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName)
-            : mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName);
 
-    return functional::design_variable_std_vector(tGradient, aAnalysisDomainMesh, mFunctionalInterface.mesh());
+    return aAnalysisDomainMesh.mBlockScalarField.empty()
+               ? functional::scalar_vector_to_std_vector(
+                     mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName))
+               : functional::design_variable_std_vector(
+                     mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName),
+                     aAnalysisDomainMesh, mFunctionalInterface.mesh());
 }
 }  // namespace plato::functional
 

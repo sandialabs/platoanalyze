@@ -330,4 +330,21 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, NumberOfDesignVariables)
     }
 }
 
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVector)
+{
+    constexpr auto tSize = 5;
+    Plato::HostScalarVector tHostVec{"host_vec", tSize};
+    for (size_t i = 0; i < tSize; ++i)
+    {
+        tHostVec[i] = i;
+    }
+    Plato::ScalarVector tDeviceVec{"device_vec", tSize};
+    Kokkos::deep_copy(tDeviceVec, tHostVec);
+    const std::vector<double> tCopy = scalar_vector_to_std_vector(tDeviceVec);
+    TEST_EQUALITY(tCopy.size(), tDeviceVec.size());
+    for (size_t i = 0; i < tSize; ++i)
+    {
+        TEST_EQUALITY(tCopy[i], tHostVec[i]);
+    }
+}
 }  // namespace plato::functional::unittest
