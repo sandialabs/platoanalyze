@@ -26,7 +26,7 @@ class HelmholtzFilterInterface : public plato::filter::library::FilterInterface
     ///@brief Evaluate the product of a row vector with the transpose of the Jacobian matrix.
     [[nodiscard]] plato::linear_algebra::DynamicVector<double> rowVectorTimesAdjointJacobian(
         const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
-        const plato::linear_algebra::DynamicVector<double>& aV) const;
+        const plato::linear_algebra::DynamicVector<double>& aV) const override;
 
    private:
     plato::filter::library::FilterParameters mFilterParameters;
