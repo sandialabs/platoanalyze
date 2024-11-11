@@ -2,6 +2,7 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <iomanip>
 #include <plato/filter/FilterInterface.hpp>
+#include <random>
 
 #include "FunctionalInterfaceUtilities.hpp"
 #include "HelmholtzFilterInterface.hpp"
@@ -12,23 +13,28 @@ namespace plato::functional::unittest
 
 namespace
 {
-template <typename F>
-auto matrix_from_vectors(const F& aFillFunction, const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh)
+template <typename Engine>
+auto random_vector(const std::size_t aSize, Engine& aRandomEngine) -> linear_algebra::DynamicVector<double>
 {
-    const auto tNumberOfAnalysisVariables = number_of_analysis_field_variables(aAnalysisDomainMesh);
-    auto tMatrix = std::vector<std::vector<double>>{};
-    tMatrix.reserve(tNumberOfAnalysisVariables);
-    for (auto tIndex = unsigned{0}; tIndex < tNumberOfAnalysisVariables; ++tIndex)
-    {
-        auto tEntries = std::vector<double>(tNumberOfAnalysisVariables, 0.0);
-        tEntries[tIndex] = 1.0;
-        auto tVector = plato::linear_algebra::DynamicVector(std::move(tEntries));
-
-        auto tResult = aFillFunction(aAnalysisDomainMesh, tVector);
-        tMatrix.push_back(std::move(tResult).stdVector());
-    }
-    return tMatrix;
+    auto tVector = std::vector<double>(aSize);
+    constexpr auto tMean = 0.0;
+    constexpr auto tStandardDeviation = 1.0;
+    std::generate(tVector.begin(), tVector.end(),
+                  [&aRandomEngine, tDistribution = std::normal_distribution<double>{
+                                       tMean, tStandardDeviation}]() mutable { return tDistribution(aRandomEngine); });
+    return linear_algebra::DynamicVector<double>(std::move(tVector));
 }
+
+template <typename F>
+auto weighted_inner_product(const plato::linear_algebra::DynamicVector<double>& aVectorLeft,
+                            const F& aRowVectorMatrixProduct,
+                            const plato::linear_algebra::DynamicVector<double>& aVectorRight,
+                            const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh)
+{
+    const auto tLeftVectorTimesMatrix = aRowVectorMatrixProduct(aAnalysisDomainMesh, aVectorLeft);
+    return tLeftVectorTimesMatrix.dot(aVectorRight);
+}
+
 }  // namespace
 
 TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
@@ -140,7 +146,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, JacobianRegression)
     }
 }
 
-TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, AdjointJacobian)
+TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, AdjointJacobianWeightedInnerProduct)
 {
     const auto tTestFixture = TestMeshSetupTeardown{};
 
@@ -150,27 +156,24 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, AdjointJacobian)
     const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshAllDesignBlocks();
     const auto tNumberOfAnalysisVariables = number_of_analysis_field_variables(tAnalysisDomainMesh);
 
-    const auto tJacobian =
-        matrix_from_vectors([&tFilter](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
-                                       const plato::linear_algebra::DynamicVector<double>& aVector)
-                            { return tFilter.rowVectorTimesJacobian(aAnalysisDomainMesh, aVector); },
-                            tAnalysisDomainMesh);
-    const auto tAdjointJacobian =
-        matrix_from_vectors([&tFilter](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
-                                       const plato::linear_algebra::DynamicVector<double>& aVector)
-                            { return tFilter.rowVectorTimesAdjointJacobian(aAnalysisDomainMesh, aVector); },
-                            tAnalysisDomainMesh);
-
-    for (auto tRowIndex = unsigned{0}; tRowIndex < tJacobian.size(); ++tRowIndex)
+    const auto tJacobian = [&tFilter](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
+                                      const plato::linear_algebra::DynamicVector<double>& aVector)
+    { return tFilter.rowVectorTimesJacobian(aAnalysisDomainMesh, aVector); };
+    const auto tAdjointJacobian = [&tFilter](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
+                                             const plato::linear_algebra::DynamicVector<double>& aVector)
+    { return tFilter.rowVectorTimesAdjointJacobian(aAnalysisDomainMesh, aVector); };
+    std::cout << "Number of design variables: " << tNumberOfAnalysisVariables << std::endl;
+    constexpr auto tNumberOfTestVectors = 50U;
+    auto tRandomEngine = std::default_random_engine{};
+    for (auto tCount = 0U; tCount < tNumberOfAnalysisVariables; ++tCount)
     {
-        TEST_EQUALITY(tJacobian.at(tRowIndex).size(), tAdjointJacobian.at(tRowIndex).size());
-        const auto tNumberOfColumns = tJacobian.at(tRowIndex).size();
-        for (auto tColumnIndex = unsigned{0}; tColumnIndex < tNumberOfColumns; ++tColumnIndex)
-        {
-            constexpr auto tTolerance = 1e-15;
-            TEST_FLOATING_EQUALITY(tJacobian.at(tRowIndex).at(tColumnIndex),
-                                   tAdjointJacobian.at(tColumnIndex).at(tRowIndex), tTolerance);
-        }
+        const auto tX = random_vector(tNumberOfAnalysisVariables, tRandomEngine);
+        const auto tY = random_vector(tNumberOfAnalysisVariables, tRandomEngine);
+        const auto tInnerProduct = weighted_inner_product(tX, tJacobian, tY, tAnalysisDomainMesh);
+        const auto tAdjointInnerProduct = weighted_inner_product(tY, tAdjointJacobian, tX, tAnalysisDomainMesh);
+
+        constexpr auto tTolerance = 1e-15;
+        TEST_FLOATING_EQUALITY(tInnerProduct, tAdjointInnerProduct, tTolerance);
     }
 }
 
