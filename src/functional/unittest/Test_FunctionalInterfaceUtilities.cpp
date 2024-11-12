@@ -60,7 +60,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AdjointHelmholtzParameterList)
 
     const auto tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters"),
-                  tParameterList.sublist("Plato Problem").sublist("Parameters"));
+                  tAdjointParameterList.sublist("Plato Problem").sublist("Parameters"));
 }
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, UpdateMesh)
