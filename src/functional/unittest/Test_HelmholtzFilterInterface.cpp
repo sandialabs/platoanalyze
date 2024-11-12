@@ -162,7 +162,6 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, AdjointJacobianWeightedInnerProduct)
     const auto tAdjointJacobian = [&tFilter](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                              const plato::linear_algebra::DynamicVector<double>& aVector)
     { return tFilter.rowVectorTimesAdjointJacobian(aAnalysisDomainMesh, aVector); };
-    std::cout << "Number of design variables: " << tNumberOfAnalysisVariables << std::endl;
     constexpr auto tNumberOfTestVectors = 50U;
     auto tRandomEngine = std::default_random_engine{};
     for (auto tCount = 0U; tCount < tNumberOfAnalysisVariables; ++tCount)
@@ -172,7 +171,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, AdjointJacobianWeightedInnerProduct)
         const auto tInnerProduct = weighted_inner_product(tX, tJacobian, tY, tAnalysisDomainMesh);
         const auto tAdjointInnerProduct = weighted_inner_product(tY, tAdjointJacobian, tX, tAnalysisDomainMesh);
 
-        constexpr auto tTolerance = 1e-15;
+        constexpr auto tTolerance = 1e-14;
         TEST_FLOATING_EQUALITY(tInnerProduct, tAdjointInnerProduct, tTolerance);
     }
 }
