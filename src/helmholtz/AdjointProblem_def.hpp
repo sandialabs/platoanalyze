@@ -67,6 +67,9 @@ Plato::Solutions AdjointProblem<PhysicsType>::solution(const Plato::ScalarVector
 template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
                                                                    const std::string& aName) {
+    // Given `K \rho - M z = 0`, \rho = K^-1 M z
+    // The Jacobian J of \rho with respect to z is then K^-1 M
+    // This computes the product of J v, which corresponds to v^T J^T.
     const auto& tPDE = mHelmholtzProblem->pde();
     Plato::ScalarVector tSolution("derivative of criterion wrt unfiltered control", tPDE.size());
     Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tSolution);
