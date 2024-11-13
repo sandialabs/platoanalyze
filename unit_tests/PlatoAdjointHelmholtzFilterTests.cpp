@@ -81,9 +81,9 @@ auto jacobian_matrix(Plato::AbstractProblem& aProblem, const std::size_t aNumber
   auto tMatrix = std::vector<std::vector<double>>{};
   tMatrix.reserve(aNumberOfNodes);
   for (auto tIndex = unsigned{0}; tIndex < aNumberOfNodes; ++tIndex) {
-    const auto tControlOnHost = Plato::HostScalarVector{"control", aNumberOfNodes};
+    const auto tControlOnDevice = Plato::ScalarVector{"control", aNumberOfNodes};
+    const auto tControlOnHost = Kokkos::create_mirror_view(tControlOnDevice);
     tControlOnHost[tIndex] = 1.0;
-    const auto tControlOnDevice = Kokkos::create_mirror_view(tControlOnHost);
     Kokkos::deep_copy(tControlOnDevice, tControlOnHost);
 
     const auto tJacobianRow = aProblem.criterionGradient(tControlOnDevice, "dummy-name");
