@@ -42,10 +42,25 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ParameterList)
     const Teuchos::ParameterList tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
 
     TEST_EQUALITY(tParameterList.get<std::string>("Physics"), "Plato Driver");
+    TEST_EQUALITY(tParameterList.sublist("Plato Problem").get<std::string>("Physics"), "Helmholtz Filter");
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters").get<double>("Length Scale"),
                   tFilterRadius);
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters").get<double>("Surface Length Scale"),
                   tBoundaryStickingPenalty);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AdjointHelmholtzParameterList)
+{
+    const auto tFilterParameters = filter::library::FilterParameters{};
+    constexpr auto tMeshName = std::string_view{"not-a-mesh.exo"};
+    const auto tAdjointParameterList = adjoint_helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
+
+    TEST_EQUALITY(tAdjointParameterList.sublist("Plato Problem").get<std::string>("Physics"),
+                  "Adjoint Helmholtz Filter");
+
+    const auto tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
+    TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters"),
+                  tAdjointParameterList.sublist("Plato Problem").sublist("Parameters"));
 }
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, UpdateMesh)
@@ -152,8 +167,8 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, DesignVariableStdVector)
     fill_with_transformed_indices(tControl, [](const auto tIndex) { return static_cast<double>(tIndex); });
     // All blocks
     {
-        const auto tResult = design_variable_std_vector(tControl, tTestFixture.meshDesignVariablesAllDesignBlocks(),
-                                                        tTestFixture.mesh());
+        const auto tResult =
+            design_variable_std_vector(tControl, tTestFixture.analysisDomainMeshAllDesignBlocks(), tTestFixture.mesh());
 
         constexpr auto tNumberOfFixedNodes = 0U;
         tTestFunction(tResult, tControl, tNumberOfFixedNodes);
@@ -161,7 +176,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, DesignVariableStdVector)
     // Fixed block
     {
         const auto tResult =
-            design_variable_std_vector(tControl, tTestFixture.meshDesignVariablesBlock1Fixed(), tTestFixture.mesh());
+            design_variable_std_vector(tControl, tTestFixture.analysisDomainMeshBlock1Fixed(), tTestFixture.mesh());
 
         constexpr auto tNumberOfFixedNodes = 2U;
         tTestFunction(tResult, tControl, tNumberOfFixedNodes);
@@ -173,7 +188,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorFromVectorA
     const auto tTestFixture = TestMeshSetupTeardown{};
     const auto tVector = std::vector<double>(tTestFixture.mesh()->NumNodes(), 42.0);
 
-    const auto tAnalysisDomainMesh = tTestFixture.meshDesignVariablesAllDesignBlocks();
+    const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshAllDesignBlocks();
 
     constexpr auto tFillValue = 1.0;
     const auto tResult = full_nodal_scalar_vector(tVector, tAnalysisDomainMesh, tTestFixture.mesh(), tFillValue);
@@ -192,7 +207,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorFromVectorF
     const auto tTestFixture = TestMeshSetupTeardown{};
 
     const auto tVector = tTestFixture.densityValuesBlock1Fixed();
-    const auto tAnalysisDomainMesh = tTestFixture.meshDesignVariablesBlock1Fixed();
+    const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshBlock1Fixed();
 
     constexpr auto tFixedNodeValue = double{1.0};
     const auto tResult = full_nodal_scalar_vector(tVector, tAnalysisDomainMesh, tTestFixture.mesh(), tFixedNodeValue);
@@ -215,7 +230,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorAllBlocks)
 {
     const auto tTestMeshFixture = TestMeshSetupTeardown{};
 
-    const auto tAnalysisDomainMesh = tTestMeshFixture.meshDesignVariablesAllDesignBlocks();
+    const auto tAnalysisDomainMesh = tTestMeshFixture.analysisDomainMeshAllDesignBlocks();
     const auto tResultOnDevice = full_nodal_scalar_vector(tAnalysisDomainMesh, tTestMeshFixture.mesh());
 
     TEST_EQUALITY(tVectorDensities.size(), tResultOnDevice.size());
@@ -232,7 +247,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, FullNodalScalarVectorBlock2)
 {
     const auto tTestMeshFixture = TestMeshSetupTeardown{};
 
-    const auto tAnalysisDomainMesh = tTestMeshFixture.meshDesignVariablesBlock2Fixed();
+    const auto tAnalysisDomainMesh = tTestMeshFixture.analysisDomainMeshBlock2Fixed();
     const auto tResultOnDevice = full_nodal_scalar_vector(tAnalysisDomainMesh, tTestMeshFixture.mesh());
     const auto tResultOnHost =
         Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tResultOnDevice);
@@ -287,23 +302,23 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AnalysisDomainMeshFromScalarVect
                                   [](const auto tIndex) { return -static_cast<double>(tIndex + 1); });
     // All blocks
     {
-        const auto tBaseAnalysisDomainMesh = tTestMeshFixture.meshDesignVariablesAllDesignBlocks();
+        const auto tBaseAnalysisDomainMesh = tTestMeshFixture.analysisDomainMeshAllDesignBlocks();
         const auto tResultAnalysisDomainMesh =
-            mesh_analysis(tControlsOnDevice, tBaseAnalysisDomainMesh, tTestMeshFixture.mesh());
+            analysis_domain_mesh(tControlsOnDevice, tBaseAnalysisDomainMesh, tTestMeshFixture.mesh());
         tTestFunction(tResultAnalysisDomainMesh, tBaseAnalysisDomainMesh);
     }
     // Block 1 fixed
     {
-        const auto tBaseAnalysisDomainMesh = tTestMeshFixture.meshDesignVariablesBlock1Fixed();
+        const auto tBaseAnalysisDomainMesh = tTestMeshFixture.analysisDomainMeshBlock1Fixed();
         const auto tResultAnalysisDomainMesh =
-            mesh_analysis(tControlsOnDevice, tBaseAnalysisDomainMesh, tTestMeshFixture.mesh());
+            analysis_domain_mesh(tControlsOnDevice, tBaseAnalysisDomainMesh, tTestMeshFixture.mesh());
         tTestFunction(tResultAnalysisDomainMesh, tBaseAnalysisDomainMesh);
     }
     // Block 2 fixed
     {
-        const auto tBaseAnalysisDomainMesh = tTestMeshFixture.meshDesignVariablesBlock2Fixed();
+        const auto tBaseAnalysisDomainMesh = tTestMeshFixture.analysisDomainMeshBlock2Fixed();
         const auto tResultAnalysisDomainMesh =
-            mesh_analysis(tControlsOnDevice, tBaseAnalysisDomainMesh, tTestMeshFixture.mesh());
+            analysis_domain_mesh(tControlsOnDevice, tBaseAnalysisDomainMesh, tTestMeshFixture.mesh());
         tTestFunction(tResultAnalysisDomainMesh, tBaseAnalysisDomainMesh);
     }
 }
@@ -314,19 +329,21 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, NumberOfDesignVariables)
     {
         const auto tAnalysisDomainMesh = plato::analysis::AnalysisDomainMesh{};
         constexpr auto tSizeForEmptyDesignVariables = 0U;
-        TEST_EQUALITY(number_of_analysis(tAnalysisDomainMesh), tSizeForEmptyDesignVariables);
+        TEST_EQUALITY(number_of_analysis_field_variables(tAnalysisDomainMesh), tSizeForEmptyDesignVariables);
     }
     {
-        const auto tAnalysisDomainMesh = tTestFixture.meshDesignVariablesAllDesignBlocks();
-        TEST_EQUALITY(number_of_analysis(tAnalysisDomainMesh), tTestFixture.mesh()->NumNodes());
+        const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshAllDesignBlocks();
+        TEST_EQUALITY(number_of_analysis_field_variables(tAnalysisDomainMesh), tTestFixture.mesh()->NumNodes());
     }
     {
-        const auto tAnalysisDomainMesh = tTestFixture.meshDesignVariablesBlock1Fixed();
-        TEST_EQUALITY(number_of_analysis(tAnalysisDomainMesh), tTestFixture.numberOfAnalysisDomainMeshBlock1Fixed());
+        const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshBlock1Fixed();
+        TEST_EQUALITY(number_of_analysis_field_variables(tAnalysisDomainMesh),
+                      tTestFixture.numberOfAnalysisDomainMeshBlock1Fixed());
     }
     {
-        const auto tAnalysisDomainMesh = tTestFixture.meshDesignVariablesBlock2Fixed();
-        TEST_EQUALITY(number_of_analysis(tAnalysisDomainMesh), tTestFixture.numberOfAnalysisDomainMeshBlock2Fixed());
+        const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshBlock2Fixed();
+        TEST_EQUALITY(number_of_analysis_field_variables(tAnalysisDomainMesh),
+                      tTestFixture.numberOfAnalysisDomainMeshBlock2Fixed());
     }
 }
 

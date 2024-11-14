@@ -71,7 +71,7 @@ template <typename T>
 
 /// @brief Updates @a aProblem with the new mesh if necessary.
 ///
-/// The AbstractProblem will only be updated if @a aProblem is `nullptr` or @a aMeshProxy does not contain
+/// The AbstractProblem will only be updated if @a aProblem is `nullptr` or @a aAnalysisDomainMesh does not contain
 /// a density vector. A density vector is taken to mean that the mesh is constant and the density field
 /// updates the controls.
 [[nodiscard]] auto update_problem(Plato::Comm::Machine& aMachine,

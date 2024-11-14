@@ -38,6 +38,14 @@ namespace plato::functional
     const std::string_view aMeshName,
     const std::vector<std::string>& aBlockNames);
 
+/// @brief Generates an input ParameterList for the Helmholtz filter but which computes the adjoint of its Jacobian
+/// in computeGradient.
+/// @param aBlockNames The block names that are used in the filter, must match the blocks names in @a aMeshName.
+[[nodiscard]] auto adjoint_helmholtz_filter_parameter_list(const filter::library::FilterParameters& aFilterParameters,
+                                                           const std::string_view aMeshName,
+                                                           const std::vector<std::string>& aBlockNames)
+    -> Teuchos::ParameterList;
+
 /// @brief Replaces the file name of the mesh in @a aParameterList with @a aMeshName.
 void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_view aMeshName);
 
@@ -84,14 +92,15 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// @param aAnalysisDomainMeshIndices A AnalysisDomainMesh object whose indices will be used for the result.
 /// Essentially, the density values in this object will be replaced with those in @a aScalarVector.
 /// @pre All `mDesignVariableVectorIndex` entries must be less than size of @a aScalarVector.
-[[nodiscard]] auto mesh_analysis(Plato::ScalarVector aScalarVector,
-                                 plato::analysis::AnalysisDomainMesh aDesignVariablesIndices,
-                                 const Plato::Mesh& aMesh) -> plato::analysis::AnalysisDomainMesh;
+[[nodiscard]] auto analysis_domain_mesh(Plato::ScalarVector aScalarVector,
+                                        plato::analysis::AnalysisDomainMesh aDesignVariablesIndices,
+                                        const Plato::Mesh& aMesh) -> plato::analysis::AnalysisDomainMesh;
 
 /// @brief Returns the number of design variables associated with @a aAnalysisDomainMesh.
 ///
 /// This is the max vector index found in any block in @a aAnalysisDomainMesh.
-std::size_t number_of_analysis(const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh);
+[[nodiscard]] std::size_t number_of_analysis_field_variables(
+    const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh);
 
 /// @brief Returns a std::vector cøpy of the passed-in ScalarVector.
 std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector);

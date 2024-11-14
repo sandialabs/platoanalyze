@@ -18,14 +18,20 @@ class HelmholtzFilterInterface : public plato::filter::library::FilterInterface
     [[nodiscard]] analysis::AnalysisDomainMesh filter(
         const analysis::AnalysisDomainMesh& aAnalysisDomainMesh) const override;
 
-    ///@brief Evaluate the jacobian times a direction vector.
-    [[nodiscard]] plato::linear_algebra::DynamicVector<double> jacobianTimesVector(
+    ///@brief Evaluate the product of a row vector with the Jacobian matrix.
+    [[nodiscard]] plato::linear_algebra::DynamicVector<double> rowVectorTimesJacobian(
+        const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
+        const plato::linear_algebra::DynamicVector<double>& aV) const override;
+
+    ///@brief Evaluate the product of a row vector with the transpose of the Jacobian matrix.
+    [[nodiscard]] plato::linear_algebra::DynamicVector<double> rowVectorTimesAdjointJacobian(
         const analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
         const plato::linear_algebra::DynamicVector<double>& aV) const override;
 
    private:
     plato::filter::library::FilterParameters mFilterParameters;
     mutable FunctionalInterface mFunctionalInterface;
+    mutable FunctionalInterface mFunctionalInterfaceForAdjoint;
 };
 }  // namespace plato::functional
 

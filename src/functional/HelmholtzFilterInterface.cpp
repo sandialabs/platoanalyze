@@ -22,8 +22,18 @@ auto parameter_list_updater(const plato::filter::library::FilterParameters& aFil
     return [tFilterParameters = aFilterParameters](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
                                                    const Plato::Mesh& aMesh)
     {
-        const auto tBlockNames = aMesh->GetElementBlockNames();
-        return helmholtz_filter_parameter_list(tFilterParameters, aAnalysisDomainMesh.mFileName.string(), tBlockNames);
+        return helmholtz_filter_parameter_list(tFilterParameters, aAnalysisDomainMesh.mFileName.string(),
+                                               aMesh->GetElementBlockNames());
+    };
+}
+
+auto parameter_list_updater_for_adjoint(const plato::filter::library::FilterParameters& aFilterParameters)
+{
+    return [tFilterParameters = aFilterParameters](const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
+                                                   const Plato::Mesh& aMesh)
+    {
+        return adjoint_helmholtz_filter_parameter_list(tFilterParameters, aAnalysisDomainMesh.mFileName.string(),
+                                                       aMesh->GetElementBlockNames());
     };
 }
 
@@ -40,10 +50,10 @@ analysis::AnalysisDomainMesh HelmholtzFilterInterface::filter(
     const auto [tSolution, tControl] =
         mFunctionalInterface.solveProblem(aAnalysisDomainMesh, parameter_list_updater(mFilterParameters));
     Plato::ScalarVector tFilteredControl = filtered_control(tSolution);
-    return mesh_analysis(tFilteredControl, aAnalysisDomainMesh, mFunctionalInterface.mesh());
+    return analysis_domain_mesh(tFilteredControl, aAnalysisDomainMesh, mFunctionalInterface.mesh());
 }
 
-plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianTimesVector(
+plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::rowVectorTimesJacobian(
     const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
     const plato::linear_algebra::DynamicVector<double>& aV) const
 {
@@ -53,10 +63,30 @@ plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::jacobianT
     constexpr auto tFixedValueGradient = 0.0;
     const Plato::ScalarVector tVAsScalarVector =
         full_nodal_scalar_vector(aV.stdVector(), aAnalysisDomainMesh, mFunctionalInterface.mesh(), tFixedValueGradient);
+
     const Plato::ScalarVector tGradient =
         mFunctionalInterface.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
+
     return plato::linear_algebra::DynamicVector<double>(
         design_variable_std_vector(tGradient, aAnalysisDomainMesh, mFunctionalInterface.mesh()));
+}
+
+plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::rowVectorTimesAdjointJacobian(
+    const plato::analysis::AnalysisDomainMesh& aAnalysisDomainMesh,
+    const plato::linear_algebra::DynamicVector<double>& aV) const
+{
+    const auto [tSolution, tControl] = mFunctionalInterfaceForAdjoint.solveProblem(
+        aAnalysisDomainMesh, parameter_list_updater_for_adjoint(mFilterParameters));
+
+    constexpr auto tFixedValueGradient = 0.0;
+    const Plato::ScalarVector tVAsScalarVector = full_nodal_scalar_vector(
+        aV.stdVector(), aAnalysisDomainMesh, mFunctionalInterfaceForAdjoint.mesh(), tFixedValueGradient);
+
+    const Plato::ScalarVector tGradient =
+        mFunctionalInterfaceForAdjoint.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
+
+    return plato::linear_algebra::DynamicVector<double>(
+        design_variable_std_vector(tGradient, aAnalysisDomainMesh, mFunctionalInterfaceForAdjoint.mesh()));
 }
 
 }  // namespace plato::functional

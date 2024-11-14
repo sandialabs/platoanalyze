@@ -74,6 +74,18 @@ namespace Helmholtz
         return (tNumControlsPerNode);
     }
 
+    template<typename PhysicsType>
+    auto Problem<PhysicsType>::pde() -> VectorFunctionType&
+    {
+        return *mPDE;
+    }
+
+    template<typename PhysicsType>
+    auto Problem<PhysicsType>::solver() -> Plato::AbstractSolver&
+    {
+        return *mSolver;
+    }
+
     /******************************************************************************//**
      * \brief Output solution to visualization file.
      * \param [in] aFilepath output/visualizaton file path

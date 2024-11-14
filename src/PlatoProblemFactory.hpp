@@ -62,6 +62,7 @@
 #endif
 
 #ifdef PLATO_HELMHOLTZ
+#include "helmholtz/AdjointProblem.hpp"
 #include "helmholtz/Helmholtz.hpp"
 #include "helmholtz/Problem.hpp"
 #endif
@@ -492,9 +493,8 @@ public:
     )
     {
         auto tInputData = aInputParams.sublist("Plato Problem");
-        auto tPhysics = tInputData.get < std::string > ("Physics");
-        auto tLowerPhysics = Plato::tolower(tPhysics);
-
+        const auto& tPhysics = tInputData.get < std::string > ("Physics");
+        const auto tLowerPhysics = Plato::tolower(tPhysics);
         if(tLowerPhysics == "mechanical")
         {
             return ( Plato::create_mechanical_problem(aMesh, tInputData, aMachine) );
@@ -539,6 +539,10 @@ public:
         if(tLowerPhysics == "helmholtz filter")
         {
             return makeProblem<Plato::Helmholtz::Problem, Plato::HelmholtzFilter>(aMesh, tInputData, aMachine);
+        }
+        if(tLowerPhysics == "adjoint helmholtz filter")
+        {
+            return makeProblem<Plato::Helmholtz::AdjointProblem, Plato::HelmholtzFilter>(aMesh, tInputData, aMachine);
         }
 #endif
         {

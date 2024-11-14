@@ -18,9 +18,9 @@ class TestMeshSetupTeardown
    public:
     ~TestMeshSetupTeardown();
 
-    auto meshDesignVariablesAllDesignBlocks() const -> plato::analysis::AnalysisDomainMesh;
-    auto meshDesignVariablesBlock1Fixed() const -> plato::analysis::AnalysisDomainMesh;
-    auto meshDesignVariablesBlock2Fixed() const -> plato::analysis::AnalysisDomainMesh;
+    auto analysisDomainMeshAllDesignBlocks() const -> plato::analysis::AnalysisDomainMesh;
+    auto analysisDomainMeshBlock1Fixed() const -> plato::analysis::AnalysisDomainMesh;
+    auto analysisDomainMeshBlock2Fixed() const -> plato::analysis::AnalysisDomainMesh;
 
     auto numberOfAnalysisDomainMeshBlock1Fixed() const -> unsigned;
     auto numberOfAnalysisDomainMeshBlock2Fixed() const -> unsigned;
