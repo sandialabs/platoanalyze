@@ -1,12 +1,16 @@
 set(SRCS AnalyzeCriterionInterface.cpp
          FunctionalInterface.cpp
          FunctionalInterfaceUtilities.cpp
-         HelmholtzFilterInterface.cpp)
+         HelmholtzFilterInterface.cpp
+         InputValidation.cpp
+         ParameterListUtilities.cpp)
 
 set(HDRS AnalyzeCriterionInterface.hpp
          FunctionalInterface.hpp
          FunctionalInterfaceUtilities.hpp
-         HelmholtzFilterInterface.hpp)
+         HelmholtzFilterInterface.hpp
+         InputValidation.hpp
+         ParameterListUtilities.hpp)
 
 set(LIB_NAME AnalyzeFunctionalInterface)
 add_library(${LIB_NAME} SHARED ${SRCS} ${HDRS} )

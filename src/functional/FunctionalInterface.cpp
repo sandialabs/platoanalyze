@@ -6,6 +6,8 @@
 #include <plato/analysis/AnalysisDomainMesh.hpp>
 
 #include "FunctionalInterfaceUtilities.hpp"
+#include "InputValidation.hpp"
+#include "ParameterListUtilities.hpp"
 #include "PlatoAbstractProblem.hpp"
 #include "PlatoProblemFactory.hpp"
 #include "Solutions.hpp"
@@ -107,7 +109,12 @@ FunctionalInterface::FunctionalInterface(Teuchos::ParameterList aParameterList)
 auto FunctionalInterface::solveProblem(const analysis::AnalysisDomainMesh& aAnalysisDomainMesh)
     -> std::pair<Plato::Solutions, Plato::ScalarVector>
 {
-    return solveProblemImpl(aAnalysisDomainMesh, updateMesh(aAnalysisDomainMesh));
+    auto tUpdatedParameterList = updateMesh(aAnalysisDomainMesh);
+    if (const auto tErrorMessage = error_messages(tUpdatedParameterList, mMesh); !tErrorMessage.empty())
+    {
+        throw std::runtime_error{tErrorMessage};
+    }
+    return solveProblemImpl(aAnalysisDomainMesh, std::move(tUpdatedParameterList));
 }
 
 Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aArg) const

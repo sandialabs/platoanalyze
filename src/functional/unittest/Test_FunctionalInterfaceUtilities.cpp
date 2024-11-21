@@ -40,7 +40,6 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ParameterList)
                                           /*.mBoundaryStickingPenalty=*/tBoundaryStickingPenalty};
     constexpr auto tMeshName = std::string_view{"not-a-mesh.exo"};
     const Teuchos::ParameterList tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
-
     TEST_EQUALITY(tParameterList.get<std::string>("Physics"), "Plato Driver");
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").get<std::string>("Physics"), "Helmholtz Filter");
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters").get<double>("Length Scale"),
@@ -364,4 +363,5 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVector)
         TEST_EQUALITY(tCopy[i], tHostVec[i]);
     }
 }
+
 }  // namespace plato::functional::unittest
