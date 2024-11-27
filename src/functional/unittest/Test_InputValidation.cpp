@@ -22,8 +22,8 @@ struct BoxMeshFixture
     Plato::Mesh mMesh;
 };
 
-constexpr auto tExpectSuccess = true;
-constexpr auto tExpectFailure = false;
+constexpr auto kExpectSuccess = true;
+constexpr auto kExpectFailure = false;
 
 void test_affirm_input_mesh_blocks_match_mesh(const Plato::Mesh& aMesh,
                                               const std::vector<std::string>& aBlockNames,
@@ -44,13 +44,13 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshAl
     {
         const auto tBoxMeshFixture = BoxMeshFixture{};
         const auto tBlocks = tBoxMeshFixture.mMesh->GetElementBlockNames();
-        test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, tExpectSuccess, out, success);
+        test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, kExpectSuccess, out, success);
     }
     // 2 blocks
     {
         const auto tTestFixture = TestMeshSetupTeardown{};
         const auto tBlocks = tTestFixture.mesh()->GetElementBlockNames();
-        test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocks, tExpectSuccess, out, success);
+        test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocks, kExpectSuccess, out, success);
     }
 }
 
@@ -58,50 +58,42 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshAl
 {
     const auto tBoxMeshFixture = BoxMeshFixture{};
     const auto tBlocks = std::vector<std::string>{"allosaurus"};
-    const auto tParameterList =
-        helmholtz_filter_parameter_list(filter::library::FilterParameters{}, kMeshName, tBlocks);
-    TEST_ASSERT(!affirm_input_mesh_blocks_match_mesh(tParameterList, tBoxMeshFixture.mMesh));
+    test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, kExpectFailure, out, success);
 }
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshBothValidAndInvalid)
 {
-    const auto tTestFunction = [&](const Plato::Mesh& aMesh, const std::vector<std::string>& aBlockNames)
-    {
-        const auto tParameterList =
-            helmholtz_filter_parameter_list(filter::library::FilterParameters{}, kMeshName, aBlockNames);
-        TEST_ASSERT(!affirm_input_mesh_blocks_match_mesh(tParameterList, aMesh));
-    };
     // 1 block
     {
         const auto tBoxMeshFixture = BoxMeshFixture{};
         const auto tValidBlocks = tBoxMeshFixture.mMesh->GetElementBlockNames();
         const auto tBlocks = std::vector<std::string>{"deinosuchus", tValidBlocks.front()};
-        test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, tExpectFailure, out, success);
+        test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, kExpectFailure, out, success);
     }
     // 2 blocks, 1 valid, 1 invalid
     {
         const auto tTestFixture = TestMeshSetupTeardown{};
         const auto tValidBlocks = tTestFixture.mesh()->GetElementBlockNames();
         const auto tBlocks = std::vector<std::string>{"spinosaurus", tValidBlocks.front()};
-        test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocks, tExpectFailure, out, success);
+        test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocks, kExpectFailure, out, success);
     }
     // 3 blocks, 2 valid, 1 invalid
     {
         const auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", kMeshWidth);
         const auto tValidBlocks = tMesh->GetElementBlockNames();
         const auto tBlocks = std::vector<std::string>{tValidBlocks.front(), tValidBlocks.back(), "diplodocus"};
-        test_affirm_input_mesh_blocks_match_mesh(tMesh, tBlocks, tExpectFailure, out, success);
+        test_affirm_input_mesh_blocks_match_mesh(tMesh, tBlocks, kExpectFailure, out, success);
     }
 }
 
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshEdgeCase)
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshRepeatedBlocks)
 {
     const auto tTestFixture = TestMeshSetupTeardown{};
     const auto tValidBlocks = tTestFixture.mesh()->GetElementBlockNames();
     constexpr auto tExpectedSize = 2U;
     TEST_EQUALITY(tValidBlocks.size(), tExpectedSize);
     const auto tBlocksForParameterList = std::vector<std::string>{tValidBlocks.front(), tValidBlocks.front()};
-    test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocksForParameterList, tExpectFailure, out,
+    test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocksForParameterList, kExpectFailure, out,
                                              success);
 }
 
