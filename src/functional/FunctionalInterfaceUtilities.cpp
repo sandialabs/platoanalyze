@@ -7,35 +7,16 @@
 #include <plato/filter/FilterInterface.hpp>
 
 #include "CrsMatrixUtils.hpp"
+#include "ParameterListUtilities.hpp"
 #include "alg/ErrorHandling.hpp"
 
 namespace plato::functional
 {
 namespace
 {
-constexpr auto kProblemList = std::string_view{"Problem"};
-constexpr auto kPlatoProblemList = std::string_view{"Plato Problem"};
 constexpr auto kInputMeshEntry = std::string_view{"Input Mesh"};
 constexpr auto kHelmholtzFilterName = std::string_view{"Helmholtz Filter"};
 constexpr auto kAdjointHelmholtzFilterName = std::string_view{"Adjoint Helmholtz Filter"};
-
-Teuchos::ParameterList& plato_problem_sublist(Teuchos::ParameterList& aParameterList)
-{
-    return aParameterList.sublist(std::string{kPlatoProblemList});
-}
-
-Teuchos::ParameterList& block_sublist(Teuchos::ParameterList& aParameterList, const std::string_view aBlockName)
-{
-    return plato_problem_sublist(aParameterList)
-        .sublist("Spatial Model")
-        .sublist("Domains")
-        .sublist(std::string{aBlockName});
-}
-
-Teuchos::ParameterList& parameters_sublist(Teuchos::ParameterList& aParameterList)
-{
-    return plato_problem_sublist(aParameterList).sublist("Parameters");
-}
 
 template <typename MeshDesignVariableType, typename Function>
 void for_each_design_variable(MeshDesignVariableType&& aDesignVariables,
@@ -69,8 +50,8 @@ auto helmholtz_filter_parameter_list(const filter::library::FilterParameters& aF
     plato_problem_sublist(tParameterList).set("PDE Constraint", std::string{kHelmholtzFilterName});
     for (const auto& tBlockName : aBlockNames)
     {
-        block_sublist(tParameterList, tBlockName).set("Element Block", tBlockName);
-        block_sublist(tParameterList, tBlockName).set("Material Model", "material_1");
+        domain_sublist(tParameterList, tBlockName).set("Element Block", tBlockName);
+        domain_sublist(tParameterList, tBlockName).set("Material Model", "material_1");
     }
     parameters_sublist(tParameterList).set("Length Scale", aFilterParameters.mFilterRadius);
     parameters_sublist(tParameterList)
