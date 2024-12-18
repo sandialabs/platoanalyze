@@ -45,6 +45,11 @@ private:
     Plato::ScalarArray3D mVaryingCartesianBasis;
 
 public:
+    /** \brief Returns whether or not the element block contained in @a aInputParams exists in the mesh @a aMesh.
+      * \param aInputParams Assumed to be `Spatial Domain` sublist and have an `Element Block` entry.
+      */
+    static auto elementBlockExistsInMesh(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aInputParams) -> bool;
+
     /******************************************************************************//**
      * \fn getDomainName
      * \brief Return domain name.
@@ -340,6 +345,11 @@ public:
               Plato::Mesh              aMesh,
         const Teuchos::ParameterList & aInputParams,
               Plato::DataMap         & aDataMap);
+
+    /** 
+     *  \brief Returns whether or not to ignore element blocks that appear in the input, but not in the mesh.
+     */
+    static auto ignoreMissingElementBlocks(const Teuchos::ParameterList& aParameterList) -> bool;
 
     template <Plato::OrdinalType mSpatialDim>
     void applyMask

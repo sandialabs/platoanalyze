@@ -42,6 +42,7 @@ Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
 Plato_add_test(Assembly AssemblyTests.cpp)
 Plato_add_test(NaturalBCsTests NaturalBCsTests.cpp)
 Plato_add_test(NaturalBCDataTests NaturalBCDataTests.cpp)
+Plato_add_test(SpatialDomainTests SpatialDomainTests.cpp)
 
 if(ELLIPTIC)
 Plato_add_test(MultipointConstraint PlatoMultipointConstraintTests.cpp)

@@ -31,6 +31,18 @@ SpatialDomain::SpatialDomain
     this->initialize(aInputParams);
 }
 
+auto SpatialDomain::elementBlockExistsInMesh(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aInputParams)
+    -> bool {
+    constexpr auto tElementBlockTag = "Element Block";
+    if (aInputParams.isType<std::string>(tElementBlockTag)) {
+      const auto tElementBlockName = aInputParams.get<std::string>(tElementBlockTag);
+      const auto tElementBlocksInMesh = aMesh->GetElementBlockNames();
+      return std::find(tElementBlocksInMesh.cbegin(), tElementBlocksInMesh.cend(), tElementBlockName) !=
+             tElementBlocksInMesh.cend();
+    }
+    return false;
+}
+
 void
 SpatialDomain::removeMask()
 {
@@ -173,7 +185,6 @@ SpatialModel::SpatialModel(
         {
             ANALYZE_THROWERR("Parsing 'Spatial Model' parameter list. Required 'Domains' parameter sublist not found");
         }
-
         auto tDomainsParams = tModelParams.sublist("Domains");
         for (auto tIndex = tDomainsParams.begin(); tIndex != tDomainsParams.end(); ++tIndex)
         {
@@ -185,14 +196,30 @@ SpatialModel::SpatialModel(
                 ANALYZE_THROWERR("Parameter in 'Domains' parameter sublist within 'Spatial Model' parameter list not valid.  Expect lists only.");
             }
 
-            Teuchos::ParameterList &tDomainParams = tDomainsParams.sublist(tMyName);
-            Domains.push_back( { aMesh, aDataMap, tDomainParams, tMyName });
+            Teuchos::ParameterList& tDomainParams = tDomainsParams.sublist(tMyName);
+            if (SpatialDomain::elementBlockExistsInMesh(aMesh, tDomainParams))
+            {
+                Domains.emplace_back(aMesh, aDataMap, tDomainParams, tMyName);
+            }
+            else if(!ignoreMissingElementBlocks(tModelParams))
+            {
+                ANALYZE_THROWERR("An Element Block in the input file has no matching block in the exodus mesh.");
+            }
         }
     }
     else
     {
         ANALYZE_THROWERR("Parsing 'Plato Problem'. Required 'Spatial Model' parameter list not found");
     }
+}
+
+auto SpatialModel::ignoreMissingElementBlocks(const Teuchos::ParameterList& aParameterList) -> bool {
+    constexpr auto tParameterName = "Ignore Missing Element Blocks";
+    if (aParameterList.isParameter(tParameterName)) {
+        return aParameterList.get<bool>(tParameterName);
+    }
+    constexpr auto tDefaultValue = false;
+    return tDefaultValue;
 }
 
 void 
