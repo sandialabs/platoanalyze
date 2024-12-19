@@ -50,6 +50,10 @@ public:
       */
     static auto elementBlockExistsInMesh(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aInputParams) -> bool;
 
+    /** \brief Returns the `Element Block` entry from @a aInputParams.
+      */
+    static auto elementBlockName(const Teuchos::ParameterList& aInputParams) -> std::optional<std::string>;
+
     /******************************************************************************//**
      * \fn getDomainName
      * \brief Return domain name.

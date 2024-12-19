@@ -10,6 +10,24 @@
 
 namespace Plato
 {
+namespace {
+auto block_names_as_string(const Plato::Mesh& aMesh) -> std::string {
+  const auto tBlockNames = aMesh->GetElementBlockNames();
+  auto tBlockNameStream = std::stringstream{};
+  std::copy(tBlockNames.cbegin(), tBlockNames.cend(), std::ostream_iterator<std::string>{tBlockNameStream, "\n"});
+  return tBlockNameStream.str();
+}
+
+auto error_message_for_mismatched_blocks(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aDomainParams)
+    -> std::string {
+  const auto tBlockName = SpatialDomain::elementBlockName(aDomainParams).value_or(std::string{"UNKNOWN"});
+  const auto tErrorMessage = "Element Block in the input file with name " + tBlockName +
+                             " has no matching block in the exodus mesh.\nBlock names in mesh: \n";
+  const auto tBlockNamesInMesh = block_names_as_string(aMesh);
+  return tErrorMessage + tBlockNamesInMesh;
+}
+}  // namespace
+
 SpatialDomain::SpatialDomain
 (      Plato::Mesh      aMesh,
        Plato::DataMap & aDataMap,
@@ -33,14 +51,20 @@ SpatialDomain::SpatialDomain
 
 auto SpatialDomain::elementBlockExistsInMesh(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aInputParams)
     -> bool {
-    constexpr auto tElementBlockTag = "Element Block";
-    if (aInputParams.isType<std::string>(tElementBlockTag)) {
-      const auto tElementBlockName = aInputParams.get<std::string>(tElementBlockTag);
+    if (const auto tElementBlockName = SpatialDomain::elementBlockName(aInputParams)) {
       const auto tElementBlocksInMesh = aMesh->GetElementBlockNames();
-      return std::find(tElementBlocksInMesh.cbegin(), tElementBlocksInMesh.cend(), tElementBlockName) !=
+      return std::find(tElementBlocksInMesh.cbegin(), tElementBlocksInMesh.cend(), tElementBlockName.value()) !=
              tElementBlocksInMesh.cend();
     }
     return false;
+}
+
+auto SpatialDomain::elementBlockName(const Teuchos::ParameterList& aInputParams) -> std::optional<std::string> {
+    constexpr auto tElementBlockTag = "Element Block";
+    if (aInputParams.isType<std::string>(tElementBlockTag)) {
+      return aInputParams.get<std::string>(tElementBlockTag);
+    }
+    return std::nullopt;
 }
 
 void
@@ -203,7 +227,7 @@ SpatialModel::SpatialModel(
             }
             else if(!ignoreMissingElementBlocks(tModelParams))
             {
-                ANALYZE_THROWERR("An Element Block in the input file has no matching block in the exodus mesh.");
+                ANALYZE_THROWERR(error_message_for_mismatched_blocks(aMesh, tDomainParams));
             }
         }
     }
