@@ -22,72 +22,57 @@ class TwoBlockMeshRAII {
 
   ~TwoBlockMeshRAII() { std::filesystem::remove(kMeshFilePath); }
 };
+
+auto domain_parameter_list(const std::string_view aElementBlockParameterTag, const std::string_view aElementBlockName)
+    -> Teuchos::ParameterList {
+  auto tParameterList = Teuchos::ParameterList{};
+  tParameterList.set(std::string{aElementBlockParameterTag}, std::string{aElementBlockName});
+  return tParameterList;
+}
+
+auto spatial_model_with_ignore_mismatch_parameter(const std::string_view aIgnoreMismatchParameterTag, const bool aValue)
+    -> Teuchos::ParameterList {
+  auto tParameterList = Teuchos::ParameterList{};
+  tParameterList.set(std::string{aIgnoreMismatchParameterTag}, aValue);
+  return tParameterList;
+}
 }  // namespace
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoreMissingElementBlocks) {
-  const auto tTestInput = [](const bool aParameterValue) {
-    const auto tParameterAsString = std::string{aParameterValue ? "true" : "false"};
-    const auto tInput = std::string{
-        "<ParameterList name='Spatial Model'>\n"
-        "  <Parameter name='Ignore Missing Element Blocks' type='bool' value='" +
-        tParameterAsString +
-        "'/>"
-        "</ParameterList>\n"};
-    return Teuchos::getParametersFromXmlString(tInput);
-  };
-
-  TEST_ASSERT(Plato::SpatialModel::ignoreMissingElementBlocks(*tTestInput(true)));
-  TEST_ASSERT(!Plato::SpatialModel::ignoreMissingElementBlocks(*tTestInput(false)));
+  constexpr auto tIgnoreMismatchParameterName = std::string_view{"Ignore Missing Element Blocks"};
+  TEST_ASSERT(Plato::SpatialModel::ignoreMissingElementBlocks(
+      spatial_model_with_ignore_mismatch_parameter(tIgnoreMismatchParameterName, true)));
+  TEST_ASSERT(!Plato::SpatialModel::ignoreMissingElementBlocks(
+      spatial_model_with_ignore_mismatch_parameter(tIgnoreMismatchParameterName, false)));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoreMissingElementBlocksDefault) {
-  const auto tInput = std::string{
-      "<ParameterList name='Spatial Model'>\n"
-      "  <Parameter name='Ignore Missing Element Blocks Wrong name' type='bool' value='false'/>"
-      "</ParameterList>\n"};
-  const auto tParameterList = Teuchos::getParametersFromXmlString(tInput);
-
-  TEST_ASSERT(!Plato::SpatialModel::ignoreMissingElementBlocks(*tParameterList));
+  TEST_ASSERT(!Plato::SpatialModel::ignoreMissingElementBlocks(
+      spatial_model_with_ignore_mismatch_parameter("Ignore Missing Element Blocks Wrong name", false)));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainElementBlockName) {
-  constexpr auto tInput =
-      "<ParameterList name='Design Volume'>\n"
-      "  <Parameter name='Element Block' type='string' value='octopus'/>\n"
-      "</ParameterList>\n";
-  const auto tParameterList = Teuchos::getParametersFromXmlString(tInput);
-  const auto tBlockName = Plato::SpatialDomain::elementBlockName(*tParameterList);
+  const auto tParameterList = domain_parameter_list("Element Block", "octopus");
+  const auto tBlockName = Plato::SpatialDomain::elementBlockName(tParameterList);
   TEST_ASSERT(tBlockName.has_value());
   TEST_EQUALITY(tBlockName.value(), "octopus");
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainElementBlockNameDoesNotExist) {
-  constexpr auto tInput =
-      "<ParameterList name='Design Volume'>\n"
-      "  <Parameter name='Element Bloke' type='string' value='squid'/>\n"
-      "</ParameterList>\n";
-  const auto tParameterList = Teuchos::getParametersFromXmlString(tInput);
-  TEST_ASSERT(!Plato::SpatialDomain::elementBlockName(*tParameterList).has_value());
+  const auto tParameterList = domain_parameter_list("Element Bloke", "squid");
+  TEST_ASSERT(!Plato::SpatialDomain::elementBlockName(tParameterList).has_value());
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainMeshHasElementBlock) {
   const auto tMesh = TwoBlockMeshRAII{};
-  constexpr auto tInput =
-      "<ParameterList name='Design Volume'>\n"
-      "  <Parameter name='Element Block' type='string' value='BLOCK_1'/>\n"
-      "</ParameterList>\n";
-  const auto tParameterList = Teuchos::getParametersFromXmlString(tInput);
-  TEST_ASSERT(Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, *tParameterList));
+  const auto tParameterList = domain_parameter_list("Element Block", "BLOCK_1");
+  TEST_ASSERT(Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, tParameterList));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainMeshWrongElementBlockTag) {
   const auto tMesh = TwoBlockMeshRAII{};
-  constexpr auto tInput =
-      "<ParameterList name='Design Volume'>\n"
-      "  <Parameter name='Element Bloke' type='string' value='BLOCK_1'/>\n"
-      "</ParameterList>\n";
-  const auto tParameterList = Teuchos::getParametersFromXmlString(tInput);
-  TEST_ASSERT(!Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, *tParameterList));
+  const auto tParameterList = domain_parameter_list("Element Bloke", "BLOCK_1");
+  TEST_ASSERT(!Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, tParameterList));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoresMissingBlocks) {
