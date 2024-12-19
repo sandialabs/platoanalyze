@@ -209,6 +209,7 @@ SpatialModel::SpatialModel(
         {
             ANALYZE_THROWERR("Parsing 'Spatial Model' parameter list. Required 'Domains' parameter sublist not found");
         }
+
         auto tDomainsParams = tModelParams.sublist("Domains");
         for (auto tIndex = tDomainsParams.begin(); tIndex != tDomainsParams.end(); ++tIndex)
         {

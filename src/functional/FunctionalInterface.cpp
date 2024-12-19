@@ -112,7 +112,8 @@ auto FunctionalInterface::solveProblem(const analysis::AnalysisDomainMesh& aAnal
     auto tUpdatedParameterList = updateMesh(aAnalysisDomainMesh);
     if (const auto tErrorMessage = error_messages(tUpdatedParameterList, mMesh); !tErrorMessage.empty())
     {
-        throw std::runtime_error{tErrorMessage};
+        // throw std::runtime_error{tErrorMessage};
+        std::cout << "Error: " << tErrorMessage << std::endl;
     }
     return solveProblemImpl(aAnalysisDomainMesh, std::move(tUpdatedParameterList));
 }

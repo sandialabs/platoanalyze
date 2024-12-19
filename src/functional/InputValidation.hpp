@@ -11,8 +11,9 @@ class ParameterList;
 namespace plato::functional
 {
 /// @brief Returns `true` if all blocks in @a aMesh have a corresponding block definition in @a aParameterList.
-[[nodiscard]] bool affirm_input_mesh_blocks_match_mesh(const Teuchos::ParameterList& aParameterList,
-                                                       const Plato::Mesh& aMesh);
+/// @note The opposite does not have to be true, that each block in the input has a matching block in the mesh.
+[[nodiscard]] bool affirm_mesh_blocks_match_input(const Teuchos::ParameterList& aParameterList,
+                                                  const Plato::Mesh& aMesh);
 
 /// @brief Returns an error message for any validation errors found.
 [[nodiscard]] auto error_messages(const Teuchos::ParameterList& aParameterList, const Plato::Mesh& aMesh)
