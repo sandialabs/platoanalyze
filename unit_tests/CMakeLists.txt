@@ -42,7 +42,10 @@ Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
 Plato_add_test(Assembly AssemblyTests.cpp)
 Plato_add_test(NaturalBCsTests NaturalBCsTests.cpp)
 Plato_add_test(NaturalBCDataTests NaturalBCDataTests.cpp)
-Plato_add_test(SpatialDomainTests SpatialDomainTests.cpp)
+if( PLATOANALYZE_STK_ENABLED ) 
+  # This unit tester uses a test fixture that requires stk
+  Plato_add_test(SpatialDomainTests SpatialDomainTests.cpp)
+endif()
 
 if(ELLIPTIC)
 Plato_add_test(MultipointConstraint PlatoMultipointConstraintTests.cpp)
