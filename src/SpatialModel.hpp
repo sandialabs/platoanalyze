@@ -352,6 +352,7 @@ public:
 
     /** 
      *  \brief Returns whether or not to ignore element blocks that appear in the input, but not in the mesh.
+     *  \param aParameter Sublist starting from `Spatial Model`.
      */
     static auto ignoreMissingElementBlocks(const Teuchos::ParameterList& aParameterList) -> bool;
 
