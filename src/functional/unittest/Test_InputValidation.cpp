@@ -25,16 +25,19 @@ struct BoxMeshFixture
 constexpr auto kExpectSuccess = true;
 constexpr auto kExpectFailure = false;
 
-void test_affirm_input_mesh_blocks_match_mesh(const Plato::Mesh& aMesh,
-                                              const std::vector<std::string>& aBlockNames,
-                                              const bool aExpectSuccess,
-                                              Teuchos::FancyOStream& aOutStream,
-                                              bool& aSuccess)
+void test_affirm_mesh_blocks_match_input(const Plato::Mesh& aMesh,
+                                         const std::vector<std::string>& aBlockNames,
+                                         const bool aExpectSuccess,
+                                         Teuchos::FancyOStream& aOutStream,
+                                         bool& aSuccess)
 {
     const auto tParameterList =
         helmholtz_filter_parameter_list(filter::library::FilterParameters{}, kMeshName, aBlockNames);
-    TEUCHOS_TEST_EQUALITY(aExpectSuccess, affirm_input_mesh_blocks_match_mesh(tParameterList, aMesh), aOutStream,
-                          aSuccess);
+    TEUCHOS_TEST_EQUALITY(aExpectSuccess, affirm_mesh_blocks_match_input(tParameterList, aMesh), aOutStream, aSuccess);
+    if (aExpectSuccess != affirm_mesh_blocks_match_input(tParameterList, aMesh))
+    {
+        aOutStream << error_messages(tParameterList, aMesh) << "\n";
+    }
 }
 }  // namespace
 
@@ -44,13 +47,13 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshAl
     {
         const auto tBoxMeshFixture = BoxMeshFixture{};
         const auto tBlocks = tBoxMeshFixture.mMesh->GetElementBlockNames();
-        test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, kExpectSuccess, out, success);
+        test_affirm_mesh_blocks_match_input(tBoxMeshFixture.mMesh, tBlocks, kExpectSuccess, out, success);
     }
     // 2 blocks
     {
         const auto tTestFixture = TestMeshSetupTeardown{};
         const auto tBlocks = tTestFixture.mesh()->GetElementBlockNames();
-        test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocks, kExpectSuccess, out, success);
+        test_affirm_mesh_blocks_match_input(tTestFixture.mesh(), tBlocks, kExpectSuccess, out, success);
     }
 }
 
@@ -58,31 +61,37 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshAl
 {
     const auto tBoxMeshFixture = BoxMeshFixture{};
     const auto tBlocks = std::vector<std::string>{"allosaurus"};
-    test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, kExpectFailure, out, success);
+    test_affirm_mesh_blocks_match_input(tBoxMeshFixture.mMesh, tBlocks, kExpectFailure, out, success);
 }
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshBothValidAndInvalid)
 {
-    // 1 block
+    // 2 blocks in input, 1 block in mesh
     {
         const auto tBoxMeshFixture = BoxMeshFixture{};
         const auto tValidBlocks = tBoxMeshFixture.mMesh->GetElementBlockNames();
+        constexpr auto tExpectedNumberOfBlocks = 1U;
+        TEST_EQUALITY(tValidBlocks.size(), tExpectedNumberOfBlocks);
         const auto tBlocks = std::vector<std::string>{"deinosuchus", tValidBlocks.front()};
-        test_affirm_input_mesh_blocks_match_mesh(tBoxMeshFixture.mMesh, tBlocks, kExpectFailure, out, success);
+        test_affirm_mesh_blocks_match_input(tBoxMeshFixture.mMesh, tBlocks, kExpectSuccess, out, success);
     }
-    // 2 blocks, 1 valid, 1 invalid
+    // 2 blocks in input, 2 in mesh
     {
         const auto tTestFixture = TestMeshSetupTeardown{};
         const auto tValidBlocks = tTestFixture.mesh()->GetElementBlockNames();
+        constexpr auto tExpectedNumberOfBlocks = 2U;
+        TEST_EQUALITY(tValidBlocks.size(), tExpectedNumberOfBlocks);
         const auto tBlocks = std::vector<std::string>{"spinosaurus", tValidBlocks.front()};
-        test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocks, kExpectFailure, out, success);
+        test_affirm_mesh_blocks_match_input(tTestFixture.mesh(), tBlocks, kExpectFailure, out, success);
     }
-    // 3 blocks, 2 valid, 1 invalid
+    // 3 blocks in input, 1 in mesh
     {
         const auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", kMeshWidth);
         const auto tValidBlocks = tMesh->GetElementBlockNames();
-        const auto tBlocks = std::vector<std::string>{tValidBlocks.front(), tValidBlocks.back(), "diplodocus"};
-        test_affirm_input_mesh_blocks_match_mesh(tMesh, tBlocks, kExpectFailure, out, success);
+        constexpr auto tExpectedNumberOfBlocks = 1U;
+        TEST_EQUALITY(tValidBlocks.size(), tExpectedNumberOfBlocks);
+        const auto tBlocks = std::vector<std::string>{tValidBlocks.front(), tValidBlocks.front(), "diplodocus"};
+        test_affirm_mesh_blocks_match_input(tMesh, tBlocks, kExpectSuccess, out, success);
     }
 }
 
@@ -93,8 +102,7 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, AffirmInputMeshBlocksMatchMeshRe
     constexpr auto tExpectedSize = 2U;
     TEST_EQUALITY(tValidBlocks.size(), tExpectedSize);
     const auto tBlocksForParameterList = std::vector<std::string>{tValidBlocks.front(), tValidBlocks.front()};
-    test_affirm_input_mesh_blocks_match_mesh(tTestFixture.mesh(), tBlocksForParameterList, kExpectFailure, out,
-                                             success);
+    test_affirm_mesh_blocks_match_input(tTestFixture.mesh(), tBlocksForParameterList, kExpectFailure, out, success);
 }
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ErrorMessages)

@@ -10,6 +10,24 @@
 
 namespace Plato
 {
+namespace {
+auto block_names_as_string(const Plato::Mesh& aMesh) -> std::string {
+  const auto tBlockNames = aMesh->GetElementBlockNames();
+  auto tBlockNameStream = std::stringstream{};
+  std::copy(tBlockNames.cbegin(), tBlockNames.cend(), std::ostream_iterator<std::string>{tBlockNameStream, "\n"});
+  return tBlockNameStream.str();
+}
+
+auto error_message_for_mismatched_blocks(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aDomainParams)
+    -> std::string {
+  const auto tBlockName = SpatialDomain::elementBlockName(aDomainParams).value_or(std::string{"UNKNOWN"});
+  const auto tErrorMessage = "Element Block in the input file with name " + tBlockName +
+                             " has no matching block in the exodus mesh.\nBlock names in mesh: \n";
+  const auto tBlockNamesInMesh = block_names_as_string(aMesh);
+  return tErrorMessage + tBlockNamesInMesh;
+}
+}  // namespace
+
 SpatialDomain::SpatialDomain
 (      Plato::Mesh      aMesh,
        Plato::DataMap & aDataMap,
@@ -29,6 +47,24 @@ SpatialDomain::SpatialDomain
     mSpatialDomainName(std::move(aName))
 {
     this->initialize(aInputParams);
+}
+
+auto SpatialDomain::elementBlockExistsInMesh(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aInputParams)
+    -> bool {
+    if (const auto tElementBlockName = SpatialDomain::elementBlockName(aInputParams)) {
+      const auto tElementBlocksInMesh = aMesh->GetElementBlockNames();
+      return std::find(tElementBlocksInMesh.cbegin(), tElementBlocksInMesh.cend(), tElementBlockName.value()) !=
+             tElementBlocksInMesh.cend();
+    }
+    return false;
+}
+
+auto SpatialDomain::elementBlockName(const Teuchos::ParameterList& aInputParams) -> std::optional<std::string> {
+    constexpr auto tElementBlockTag = "Element Block";
+    if (aInputParams.isType<std::string>(tElementBlockTag)) {
+      return aInputParams.get<std::string>(tElementBlockTag);
+    }
+    return std::nullopt;
 }
 
 void
@@ -185,14 +221,30 @@ SpatialModel::SpatialModel(
                 ANALYZE_THROWERR("Parameter in 'Domains' parameter sublist within 'Spatial Model' parameter list not valid.  Expect lists only.");
             }
 
-            Teuchos::ParameterList &tDomainParams = tDomainsParams.sublist(tMyName);
-            Domains.push_back( { aMesh, aDataMap, tDomainParams, tMyName });
+            Teuchos::ParameterList& tDomainParams = tDomainsParams.sublist(tMyName);
+            if (SpatialDomain::elementBlockExistsInMesh(aMesh, tDomainParams))
+            {
+                Domains.emplace_back(aMesh, aDataMap, tDomainParams, tMyName);
+            }
+            else if(!ignoreMissingElementBlocks(tModelParams))
+            {
+                ANALYZE_THROWERR(error_message_for_mismatched_blocks(aMesh, tDomainParams));
+            }
         }
     }
     else
     {
         ANALYZE_THROWERR("Parsing 'Plato Problem'. Required 'Spatial Model' parameter list not found");
     }
+}
+
+auto SpatialModel::ignoreMissingElementBlocks(const Teuchos::ParameterList& aParameterList) -> bool {
+    constexpr auto tParameterName = "Ignore Missing Element Blocks";
+    if (aParameterList.isParameter(tParameterName)) {
+        return aParameterList.get<bool>(tParameterName);
+    }
+    constexpr auto tDefaultValue = false;
+    return tDefaultValue;
 }
 
 void 
