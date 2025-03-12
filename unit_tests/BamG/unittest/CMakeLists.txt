@@ -10,7 +10,7 @@ endif()
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/unit_tests/BamG)
 
-set(BamG_UnitTester_LIBS BamGlib Trilinos::all_selected_libs )
+set(BamG_UnitTester_LIBS BamGlib TeuchosCore::teuchoscore)
 add_executable(BamG_UnitTester ${BamG_UnitTester_SRCS})
 target_link_libraries(BamG_UnitTester ${BamG_UnitTester_LIBS})
 add_test(NAME BamG_UnitTester COMMAND ${CMAKE_BINARY_DIR}/unit_tests/BamG/unittest/BamG_UnitTester)

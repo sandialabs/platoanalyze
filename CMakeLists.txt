@@ -131,14 +131,14 @@ if (PLATOANALYZE_ENABLE_CUDA)
 ENDIF ()
 
 MESSAGE("-- CXX Flags being used in this build are : ${CMAKE_CXX_FLAGS}")
-if( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+if( ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" AND PLATOANALYZE_ENABLE_CUDA )
   # PA has several tests that are seg-faulting with O2, switch to O1
   STRING(REPLACE "O2" "O1" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-  MESSAGE(STATUS "CXX build specific flags : ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  MESSAGE(STATUS "Modifying CXX build specific flags : ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+elseif(${CMAKE_BUILD_TYPE} STREQUAL "Release" AND PLATOANALYZE_ENABLE_CUDA )
   # PA has several tests that are seg-faulting with O2, switch to O1
   STRING(REPLACE "O3" "O1" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
-  MESSAGE(STATUS "CXX build specific flags : ${CMAKE_CXX_FLAGS_RELEASE}")
+  MESSAGE(STATUS "Modifying CXX build specific flags : ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
 # disallow in-source builds
@@ -409,7 +409,9 @@ if (PLATOANALYZE_ENABLE_MPMD)
     find_package(ShyLU_NodeTacho REQUIRED)
     message("adding define: -DPLATO_TACHO")
     add_definitions(-DPLATO_TACHO)
-    set(PLATO_LIBS ${PLATO_LIBS} ${ShyLU_NodeTacho_LIBRARIES})
+    set(PLATO_LIBS ${PLATO_LIBS}
+                   $<$<BOOL:${PLATOANALYZE_ENABLE_CUDA}>:CUDA::cusparse> # This is a work-around for tacho not linking cuda properly.
+                   ${ShyLU_NodeTacho_LIBRARIES} )
   endif()
 
   option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
