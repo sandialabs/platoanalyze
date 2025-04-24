@@ -1,5 +1,5 @@
 #include <Teuchos_UnitTestHarness.hpp>
-#include <plato/filter/FilterInterface.hpp>
+#include <plato/filter/library/FilterInterface.hpp>
 
 #include "ParameterListUtilities.hpp"
 

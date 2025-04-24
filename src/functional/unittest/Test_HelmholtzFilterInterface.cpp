@@ -1,7 +1,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <iomanip>
-#include <plato/filter/FilterInterface.hpp>
+#include <plato/filter/library/FilterInterface.hpp>
 #include <random>
 
 #include "FunctionalInterfaceUtilities.hpp"

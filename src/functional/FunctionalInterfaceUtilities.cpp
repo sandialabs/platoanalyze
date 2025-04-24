@@ -4,7 +4,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <boost/functional/hash.hpp>
 #include <plato/analysis/AnalysisDomainMesh.hpp>
-#include <plato/filter/FilterInterface.hpp>
+#include <plato/filter/library/FilterInterface.hpp>
 
 #include "CrsMatrixUtils.hpp"
 #include "ParameterListUtilities.hpp"
