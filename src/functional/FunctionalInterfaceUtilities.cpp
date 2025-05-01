@@ -53,7 +53,11 @@ auto helmholtz_filter_parameter_list(const filter::library::FilterParameters& aF
         domain_sublist(tParameterList, tBlockName).set("Element Block", tBlockName);
         domain_sublist(tParameterList, tBlockName).set("Material Model", "material_1");
     }
-    parameters_sublist(tParameterList).set("Length Scale", aFilterParameters.mFilterRadius);
+    // The Helmholtz filter radius needs to be scaled by 1/(2*sqrt(3)) from what
+    // a typical kernel filter radius would be for it to be consistent from a user's point of view.
+    constexpr double tPhysicalScaleToHelmholtzScaleFactor = 2.0 * sqrt(3);
+    parameters_sublist(tParameterList)
+        .set("Length Scale", aFilterParameters.mFilterRadius / tPhysicalScaleToHelmholtzScaleFactor);
     parameters_sublist(tParameterList)
         .set("Surface Length Scale", aFilterParameters.mBoundaryStickingPenalty.value_or(-1.0));
     return tParameterList;
