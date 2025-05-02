@@ -34,7 +34,7 @@ void fill_with_transformed_indices(const Plato::ScalarVector tVectorOnDevice,
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ParameterList)
 {
     constexpr double tPhysicalFilterRadius = 42.0;
-    constexpr double tHelmholtzFilterRadius = helmholtz_radius_from_physical_radius(tPhysicalFilterRadius);
+    const double tHelmholtzFilterRadius = helmholtz_radius_from_physical_radius(tPhysicalFilterRadius);
     constexpr double tBoundaryStickingPenalty = 13.0;
     const auto tFilterParameters =
         filter::library::FilterParameters{/*.mFilterRadius=*/tPhysicalFilterRadius,

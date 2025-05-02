@@ -239,4 +239,10 @@ std::size_t number_of_analysis_field_variables(const plato::analysis::AnalysisDo
     return tMaxVectorIndex + 1;
 }
 
+const auto helmholtz_radius_from_physical_radius(const double aPhysicalRadius) -> double
+{
+    const auto tPhysicalScaleToHelmholtzScaleFactor = 2.0 * std::sqrt(3.0);
+    return aPhysicalRadius / tPhysicalScaleToHelmholtzScaleFactor;
+}
+
 }  // namespace plato::functional
