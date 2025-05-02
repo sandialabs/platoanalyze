@@ -107,7 +107,7 @@ std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScala
 
 [[nodiscard]] constexpr auto helmholtz_radius_from_physical_radius(const double aPhysicalRadius) -> double
 {
-    constexpr auto tPhysicalScaleToHelmholtzScaleFactor = 2.0 * std::sqrt(3.0);
+    const auto tPhysicalScaleToHelmholtzScaleFactor = 2.0 * std::sqrt(3.0);
     return aPhysicalRadius / tPhysicalScaleToHelmholtzScaleFactor;
 }
 
