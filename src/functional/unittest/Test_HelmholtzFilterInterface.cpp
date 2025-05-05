@@ -57,7 +57,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
         }
     };
 
-    const auto tFilterRadius = 0.26;
+    const auto tFilterRadius = 0.900666419935816;
     const auto tFilterParameters = plato::filter::library::FilterParameters{tFilterRadius};
     const auto tFilter = HelmholtzFilterInterface(tFilterParameters);
     // All blocks
@@ -109,7 +109,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, JacobianRegression)
         }
     };
 
-    const auto tFilterRadius = 0.26;
+    const auto tFilterRadius = 0.900666419935816;
     const auto tFilterParameters = plato::filter::library::FilterParameters{tFilterRadius};
     const auto tFilter = HelmholtzFilterInterface(tFilterParameters);
     // All blocks

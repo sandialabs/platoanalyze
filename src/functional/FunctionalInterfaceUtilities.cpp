@@ -53,7 +53,8 @@ auto helmholtz_filter_parameter_list(const filter::library::FilterParameters& aF
         domain_sublist(tParameterList, tBlockName).set("Element Block", tBlockName);
         domain_sublist(tParameterList, tBlockName).set("Material Model", "material_1");
     }
-    parameters_sublist(tParameterList).set("Length Scale", aFilterParameters.mFilterRadius);
+    parameters_sublist(tParameterList)
+        .set("Length Scale", helmholtz_radius_from_physical_radius(aFilterParameters.mFilterRadius));
     parameters_sublist(tParameterList)
         .set("Surface Length Scale", aFilterParameters.mBoundaryStickingPenalty.value_or(-1.0));
     return tParameterList;
@@ -236,6 +237,12 @@ std::size_t number_of_analysis_field_variables(const plato::analysis::AnalysisDo
         std::transform_reduce(aAnalysisDomainMesh.mBlockScalarField.cbegin(),
                               aAnalysisDomainMesh.mBlockScalarField.cend(), IndexType{0}, tMax, tBlockDensityVector);
     return tMaxVectorIndex + 1;
+}
+
+auto helmholtz_radius_from_physical_radius(const double aPhysicalRadius) -> const double
+{
+    const auto tPhysicalScaleToHelmholtzScaleFactor = 2.0 * std::sqrt(3.0);
+    return aPhysicalRadius / tPhysicalScaleToHelmholtzScaleFactor;
 }
 
 }  // namespace plato::functional

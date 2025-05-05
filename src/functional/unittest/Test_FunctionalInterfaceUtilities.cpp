@@ -33,17 +33,18 @@ void fill_with_transformed_indices(const Plato::ScalarVector tVectorOnDevice,
 
 TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ParameterList)
 {
-    constexpr double tFilterRadius = 42.0;
+    constexpr double tPhysicalFilterRadius = 42.0;
+    const double tHelmholtzFilterRadius = helmholtz_radius_from_physical_radius(tPhysicalFilterRadius);
     constexpr double tBoundaryStickingPenalty = 13.0;
     const auto tFilterParameters =
-        filter::library::FilterParameters{/*.mFilterRadius=*/tFilterRadius,
+        filter::library::FilterParameters{/*.mFilterRadius=*/tPhysicalFilterRadius,
                                           /*.mBoundaryStickingPenalty=*/tBoundaryStickingPenalty};
     constexpr auto tMeshName = std::string_view{"not-a-mesh.exo"};
     const Teuchos::ParameterList tParameterList = helmholtz_filter_parameter_list(tFilterParameters, tMeshName, {});
     TEST_EQUALITY(tParameterList.get<std::string>("Physics"), "Plato Driver");
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").get<std::string>("Physics"), "Helmholtz Filter");
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters").get<double>("Length Scale"),
-                  tFilterRadius);
+                  tHelmholtzFilterRadius);
     TEST_EQUALITY(tParameterList.sublist("Plato Problem").sublist("Parameters").get<double>("Surface Length Scale"),
                   tBoundaryStickingPenalty);
 }

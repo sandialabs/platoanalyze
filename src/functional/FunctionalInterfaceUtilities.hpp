@@ -105,6 +105,9 @@ void update_mesh_file_name(Teuchos::ParameterList& aParameterList, std::string_v
 /// @brief Returns a std::vector cøpy of the passed-in ScalarVector.
 std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector);
 
+/// @brief Converts a filter radius given in physical space to one in Helmholtz space.
+[[nodiscard]] auto helmholtz_radius_from_physical_radius(const double aPhysicalRadius) -> const double;
+
 }  // namespace plato::functional
 
 #endif
