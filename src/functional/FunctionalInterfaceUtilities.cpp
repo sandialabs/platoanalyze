@@ -60,6 +60,17 @@ auto helmholtz_filter_parameter_list(const filter::library::FilterParameters& aF
     return tParameterList;
 }
 
+auto sorted_map_vector(const std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>& aMap)
+    -> std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>
+{
+    auto tMapVector = std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>{};
+    tMapVector.reserve(tMapVector.size());
+    std::copy(aMap.begin(), aMap.end(), std::back_inserter(tMapVector));
+    std::sort(tMapVector.begin(), tMapVector.end(),
+              [](const auto& aLeft, const auto& aRight) { return aLeft.first < aRight.first; });
+    return tMapVector;
+}
+
 }  // namespace
 
 [[nodiscard]] std::string first_criterion_name(const Teuchos::ParameterList& aProblem)
@@ -135,6 +146,25 @@ std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScala
     std::copy(Kokkos::Experimental::cbegin(tHostVec), Kokkos::Experimental::cend(tHostVec),
               std::back_inserter(tReturnVec));
     return tReturnVec;
+}
+
+auto scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector,
+                                 const std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>& aNodeMap,
+                                 const unsigned int aDimensions) -> std::vector<double>
+{
+    const auto tHostVec = Kokkos::create_mirror_view(aScalarVector);
+    Kokkos::deep_copy(tHostVec, aScalarVector);
+    const auto tSortedMap = sorted_map_vector(aNodeMap);
+    auto tSortedVec = std::vector<double>(tHostVec.size());
+    auto tIndex = 0U;
+    for (const auto [tGlobalID, tLocalID] : tSortedMap)
+    {
+        for (unsigned int tDimensionIndex = 0U; tDimensionIndex < aDimensions; ++tDimensionIndex)
+        {
+            tSortedVec[tIndex++] = tHostVec[tLocalID * aDimensions + tDimensionIndex];
+        }
+    }
+    return tSortedVec;
 }
 
 std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalarVector,

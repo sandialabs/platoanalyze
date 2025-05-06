@@ -1,3 +1,4 @@
+#include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <numeric>
@@ -362,6 +363,51 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVector)
     for (size_t i = 0; i < tSize; ++i)
     {
         TEST_EQUALITY(tCopy[i], tHostVec[i]);
+    }
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVectorNonTrivialNodeMap)
+{
+    const auto tNodeMap = std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>{{10, 0}, {11, 1}, {2, 3}, {5, 2}};
+
+    const auto tSize = tNodeMap.size();
+    Plato::HostScalarVector tHostVec{"host_vec", tSize};
+    for (size_t i = 0; i < tSize; ++i)
+    {
+        tHostVec[i] = static_cast<double>(i);
+    }
+    Plato::ScalarVector tDeviceVec{"device_vec", tSize};
+    Kokkos::deep_copy(tDeviceVec, tHostVec);
+    constexpr auto tDimension = 1U;
+    const auto tResult = scalar_vector_to_std_vector(tDeviceVec, tNodeMap, tDimension);
+
+    const auto tExpected = std::vector{3.0, 2.0, 0.0, 1.0};
+    TEST_EQUALITY(tResult.size(), tExpected.size());
+    for (size_t i = 0; i < tSize; ++i)
+    {
+        TEST_EQUALITY(tResult[i], tExpected[i]);
+    }
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVectorNonTrivialNodeMap3D)
+{
+    const auto tNodeMap =
+        std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>{{7, 0}, {1, 1}, {8, 2}, {9, 3}, {3, 4}};
+    const auto tSize = tNodeMap.size();
+    constexpr auto tDimension = 3U;
+    auto tHostVec = Plato::HostScalarVector{"host_vec", tSize * tDimension};
+    const auto tTotalSize = tSize * tDimension;
+    std::iota(Kokkos::Experimental::begin(tHostVec), Kokkos::Experimental::end(tHostVec), 0.0);
+    Plato::ScalarVector tDeviceVec{"device_vec", tTotalSize};
+    Kokkos::deep_copy(tDeviceVec, tHostVec);
+
+    const auto tResult = scalar_vector_to_std_vector(tDeviceVec, tNodeMap, tDimension);
+
+    const auto tExpected = std::vector{3.0, 4.0, 5.0, 12.0, 13.0, 14.0, 0.0, 1.0, 2.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0};
+    TEST_EQUALITY(tResult.size(), tExpected.size());
+    for (size_t i = 0; i < tSize; ++i)
+    {
+        TEST_EQUALITY(tResult[i], tExpected[i]);
     }
 }
 

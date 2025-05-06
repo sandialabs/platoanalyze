@@ -108,6 +108,13 @@ std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScala
 /// @brief Converts a filter radius given in physical space to one in Helmholtz space.
 [[nodiscard]] auto helmholtz_radius_from_physical_radius(const double aPhysicalRadius) -> const double;
 
+/// @brief Returns a std::vector from @a aScalarVector, sorted by the node map in increasing order of global id.
+/// @param tDimension For data types (such as nodal coordinates) that have multiple components per node, this will copy
+///  the data assuming it's ordered as `[x0, y0, z0, x1, y1, z1, ...]`.
+auto scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector,
+                                 const std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>& aNodeMap,
+                                 const unsigned int tDimension) -> std::vector<double>;
+
 }  // namespace plato::functional
 
 #endif
