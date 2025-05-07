@@ -57,8 +57,9 @@ std::vector<double> AnalyzeCriterionInterface::gradient(const analysis::Analysis
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
 
     return aAnalysisDomainMesh.mBlockScalarField.empty()
-               ? functional::scalar_vector_to_std_vector(
-                     mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName))
+               ? functional::scalar_vector_to_std_vector_sorted_by_global_id(
+                     mFunctionalInterface.problem().criterionGradientX(tControl, tSolution, tCriterionName),
+                     mFunctionalInterface.mesh()->NodeMap(), mFunctionalInterface.mesh()->NumDimensions())
                : functional::design_variable_std_vector(
                      mFunctionalInterface.problem().criterionGradient(tControl, tSolution, tCriterionName),
                      aAnalysisDomainMesh, mFunctionalInterface.mesh());

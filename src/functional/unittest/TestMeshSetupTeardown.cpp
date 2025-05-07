@@ -30,23 +30,12 @@ std::vector<double> density_values(const std::vector<plato::analysis::ScalarFiel
     return tDensityValues;
 }
 
-auto test_mesh(const std::string_view aTextMeshInput, const std::filesystem::path& aMeshFilePath) -> Plato::Mesh
-{
-    Plato::TestHelpers::write_text_mesh(aTextMeshInput, aMeshFilePath);
-    return Plato::MeshFactory::create(aMeshFilePath);
-}
-
 }  // namespace
 
 Plato::Mesh test_mesh(const std::filesystem::path& aMeshFilePath)
 {
     Plato::TestHelpers::write_two_block_mesh(aMeshFilePath);
     return Plato::MeshFactory::create(aMeshFilePath.string());
-}
-
-TestMeshSetupTeardown::TestMeshSetupTeardown(const std::string_view aTextMeshInput)
-    : mMesh{test_mesh(aTextMeshInput, mTestMeshPath)}
-{
 }
 
 TestMeshSetupTeardown::~TestMeshSetupTeardown() { std::filesystem::remove(mTestMeshPath); }

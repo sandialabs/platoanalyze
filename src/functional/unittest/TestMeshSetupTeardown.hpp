@@ -16,8 +16,6 @@ Plato::Mesh test_mesh(const std::filesystem::path& aMeshFilePath);
 class TestMeshSetupTeardown
 {
    public:
-    TestMeshSetupTeardown() = default;
-    TestMeshSetupTeardown(std::string_view tTextMeshInput);
     ~TestMeshSetupTeardown();
 
     auto analysisDomainMeshAllDesignBlocks() const -> plato::analysis::AnalysisDomainMesh;
