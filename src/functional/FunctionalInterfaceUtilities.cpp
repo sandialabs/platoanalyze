@@ -134,13 +134,13 @@ auto scalar_vector_to_std_vector_sorted_by_global_id(
     const auto tHostVec = Kokkos::create_mirror_view(aScalarVector);
     Kokkos::deep_copy(tHostVec, aScalarVector);
     const auto tSortedMap = detail::sorted_map_vector(aNodeMap);
-    auto tSortedVec = std::vector<double>(tHostVec.size());
-    auto tIndex = 0U;
+    auto tSortedVec = std::vector<double>{};
+    tSortedVec.reserve(tHostVec.size());
     for (const auto [tGlobalID, tLocalID] : tSortedMap)
     {
         for (unsigned int tDimensionIndex = 0U; tDimensionIndex < aDimensions; ++tDimensionIndex)
         {
-            tSortedVec[tIndex++] = tHostVec[tLocalID * aDimensions + tDimensionIndex];
+            tSortedVec.push_back(tHostVec[tLocalID * aDimensions + tDimensionIndex]);
         }
     }
     return tSortedVec;
@@ -260,7 +260,7 @@ auto sorted_map_vector(const std::unordered_map<Plato::OrdinalType, Plato::Ordin
     -> std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>
 {
     auto tMapVector = std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>{};
-    tMapVector.reserve(tMapVector.size());
+    tMapVector.reserve(aMap.size());
     std::copy(aMap.begin(), aMap.end(), std::back_inserter(tMapVector));
     std::sort(tMapVector.begin(), tMapVector.end(),
               [](const auto& aLeft, const auto& aRight) { return aLeft.first < aRight.first; });
