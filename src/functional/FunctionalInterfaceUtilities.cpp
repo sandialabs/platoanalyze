@@ -126,15 +126,24 @@ std::size_t hash_current_design(const Plato::ScalarVector& aControl, const Plato
     return tSeed;
 }
 
-std::vector<double> scalar_vector_to_std_vector(const Plato::ScalarVector aScalarVector)
+auto scalar_vector_to_std_vector_sorted_by_global_id(
+    const Plato::ScalarVector aScalarVector,
+    const std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>& aNodeMap,
+    const unsigned int aDimensions) -> std::vector<double>
 {
     const auto tHostVec = Kokkos::create_mirror_view(aScalarVector);
     Kokkos::deep_copy(tHostVec, aScalarVector);
-    std::vector<double> tReturnVec;
-    tReturnVec.reserve(tHostVec.size());
-    std::copy(Kokkos::Experimental::cbegin(tHostVec), Kokkos::Experimental::cend(tHostVec),
-              std::back_inserter(tReturnVec));
-    return tReturnVec;
+    const auto tSortedMap = detail::sorted_map_vector(aNodeMap);
+    auto tSortedVec = std::vector<double>{};
+    tSortedVec.reserve(tHostVec.size());
+    for (const auto [tGlobalID, tLocalID] : tSortedMap)
+    {
+        for (unsigned int tDimensionIndex = 0U; tDimensionIndex < aDimensions; ++tDimensionIndex)
+        {
+            tSortedVec.push_back(tHostVec[tLocalID * aDimensions + tDimensionIndex]);
+        }
+    }
+    return tSortedVec;
 }
 
 std::vector<double> design_variable_std_vector(const Plato::ScalarVector aScalarVector,
@@ -244,5 +253,19 @@ auto helmholtz_radius_from_physical_radius(const double aPhysicalRadius) -> cons
     const auto tPhysicalScaleToHelmholtzScaleFactor = 2.0 * std::sqrt(3.0);
     return aPhysicalRadius / tPhysicalScaleToHelmholtzScaleFactor;
 }
+
+namespace detail
+{
+auto sorted_map_vector(const std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>& aMap)
+    -> std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>
+{
+    auto tMapVector = std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>{};
+    tMapVector.reserve(aMap.size());
+    std::copy(aMap.begin(), aMap.end(), std::back_inserter(tMapVector));
+    std::sort(tMapVector.begin(), tMapVector.end(),
+              [](const auto& aLeft, const auto& aRight) { return aLeft.first < aRight.first; });
+    return tMapVector;
+}
+}  // namespace detail
 
 }  // namespace plato::functional

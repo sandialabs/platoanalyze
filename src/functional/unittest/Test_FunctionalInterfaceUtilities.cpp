@@ -1,3 +1,4 @@
+#include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <numeric>
@@ -27,6 +28,28 @@ void fill_with_transformed_indices(const Plato::ScalarVector tVectorOnDevice,
         tVectorOnHost[tIndex] = aTransformFunction(tIndex);
     }
     Kokkos::deep_copy(tVectorOnDevice, tVectorOnHost);
+}
+
+auto iota_scalar_vector(const std::size_t aSize) -> Plato::ScalarVector
+{
+    const auto tHostVec = Plato::HostScalarVector{"host_vec", aSize};
+    std::iota(Kokkos::Experimental::begin(tHostVec), Kokkos::Experimental::end(tHostVec), 0.0);
+    const auto tDeviceVec = Plato::ScalarVector{"device_vec", aSize};
+    Kokkos::deep_copy(tDeviceVec, tHostVec);
+    return tDeviceVec;
+}
+
+template <typename Value>
+void test_equality_vectors(const std::vector<Value>& aVector1,
+                           const std::vector<Value>& aVector2,
+                           Teuchos::FancyOStream& aOutStream,
+                           bool& aSuccess)
+{
+    TEUCHOS_TEST_EQUALITY(aVector1.size(), aVector2.size(), aOutStream, aSuccess);
+    for (size_t i = 0; i < aVector1.size(); ++i)
+    {
+        TEUCHOS_TEST_EQUALITY(aVector1[i], aVector2[i], aOutStream, aSuccess);
+    }
 }
 
 }  // namespace
@@ -347,22 +370,56 @@ TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, NumberOfDesignVariables)
     }
 }
 
-TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVector)
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVectorTrivialNodeMap)
 {
-    constexpr auto tSize = 5;
-    Plato::HostScalarVector tHostVec{"host_vec", tSize};
-    for (size_t i = 0; i < tSize; ++i)
-    {
-        tHostVec[i] = i;
-    }
-    Plato::ScalarVector tDeviceVec{"device_vec", tSize};
-    Kokkos::deep_copy(tDeviceVec, tHostVec);
-    const std::vector<double> tCopy = scalar_vector_to_std_vector(tDeviceVec);
-    TEST_EQUALITY(tCopy.size(), tDeviceVec.size());
-    for (size_t i = 0; i < tSize; ++i)
-    {
-        TEST_EQUALITY(tCopy[i], tHostVec[i]);
-    }
+    const auto tNodeMap =
+        std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 4}};
+
+    constexpr auto tDimension = 1U;
+    const auto tCopy =
+        scalar_vector_to_std_vector_sorted_by_global_id(iota_scalar_vector(tNodeMap.size()), tNodeMap, tDimension);
+
+    const auto tExpected = std::vector{0.0, 1.0, 2.0, 3.0, 4.0};
+    test_equality_vectors(tCopy, tExpected, out, success);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVectorNonTrivialNodeMap)
+{
+    const auto tNodeMap = std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>{{10, 0}, {11, 1}, {2, 3}, {5, 2}};
+
+    constexpr auto tDimension = 1U;
+    const auto tResult =
+        scalar_vector_to_std_vector_sorted_by_global_id(iota_scalar_vector(tNodeMap.size()), tNodeMap, tDimension);
+
+    const auto tExpected = std::vector{3.0, 2.0, 0.0, 1.0};
+    test_equality_vectors(tResult, tExpected, out, success);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, ScalarVectorToStdVectorNonTrivialNodeMap3D)
+{
+    const auto tNodeMap =
+        std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>{{7, 0}, {1, 1}, {8, 2}, {9, 3}, {3, 4}};
+    constexpr auto tDimension = std::size_t{3U};
+    const auto tTotalSize = tNodeMap.size() * tDimension;
+    const auto tDeviceVec = iota_scalar_vector(tTotalSize);
+
+    const auto tResult = scalar_vector_to_std_vector_sorted_by_global_id(tDeviceVec, tNodeMap, tDimension);
+
+    const auto tExpected = std::vector{3.0, 4.0, 5.0, 12.0, 13.0, 14.0, 0.0, 1.0, 2.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0};
+    test_equality_vectors(tResult, tExpected, out, success);
+}
+
+TEUCHOS_UNIT_TEST(FunctionalInterfaceUtilities, SortedMapVector)
+{
+    const auto tExpected = std::vector<std::pair<Plato::OrdinalType, Plato::OrdinalType>>{
+        {1, 1}, {3, 4}, {7, 0}, {8, 2}, {9, 3},
+    };
+    auto tMap = std::unordered_map<Plato::OrdinalType, Plato::OrdinalType>{};
+    std::copy(tExpected.begin(), tExpected.end(), std::inserter(tMap, tMap.begin()));
+
+    const auto tSortedMapVector = detail::sorted_map_vector(tMap);
+
+    test_equality_vectors(tSortedMapVector, tExpected, out, success);
 }
 
 }  // namespace plato::functional::unittest
