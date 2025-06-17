@@ -11,13 +11,12 @@ namespace Contact
 template <typename EvaluationType>
 class AbstractSurfaceDisplacement
 {
-protected:
-    using InStateT  = typename EvaluationType::StateScalarType;  
-    using OutStateT   = typename EvaluationType::StateScalarType; 
+   protected:
+    using InStateT = typename EvaluationType::StateScalarType;
+    using OutStateT = typename EvaluationType::StateScalarType;
 
-public:
-    AbstractSurfaceDisplacement(Plato::Scalar aScale = 1.0) : mScale(aScale) 
-    {}
+   public:
+    AbstractSurfaceDisplacement(Plato::Scalar aScale = 1.0) : mScale(aScale) {}
 
     virtual ~AbstractSurfaceDisplacement() = default;
 
@@ -25,22 +24,18 @@ public:
 
     AbstractSurfaceDisplacement(AbstractSurfaceDisplacement&& aDisp) = delete;
 
-    AbstractSurfaceDisplacement&
-    operator=(const AbstractSurfaceDisplacement& aDisp) = delete;
+    AbstractSurfaceDisplacement& operator=(const AbstractSurfaceDisplacement& aDisp) = delete;
 
-    AbstractSurfaceDisplacement&
-    operator=(AbstractSurfaceDisplacement&& aDisp) = delete;
+    AbstractSurfaceDisplacement& operator=(AbstractSurfaceDisplacement&& aDisp) = delete;
 
-    virtual void
-    operator()
-    (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
-     const Plato::ScalarMultiVectorT<InStateT>             & aState,
-           Plato::ScalarArray3DT<OutStateT>                & aSurfaceDisp) const = 0;
+    virtual void operator()(const Plato::OrdinalVectorT<const Plato::OrdinalType>& aElementOrds,
+                            const Plato::ScalarMultiVectorT<InStateT>& aState,
+                            Plato::ScalarArray3DT<OutStateT>& aSurfaceDisp) const = 0;
 
-protected:
+   protected:
     Plato::Scalar mScale;
 };
 
-}
+}  // namespace Contact
 
-}
+}  // namespace Plato

@@ -14,7 +14,8 @@
 namespace Plato
 {
 
-/****************************************************************************//**
+/****************************************************************************/
+/**
  *
  * \brief Inline function used to compute the structural dynamics residual.
  *
@@ -32,15 +33,15 @@ namespace Plato
  *   complex displacement vector and \f$\bar{\{\mathbf{F}^{ext}\}}\f$ is the
  *   complex external force vector.
  *
-********************************************************************************/
-template<Plato::OrdinalType NumDofsPerNode, typename ResultScalarType>
-KOKKOS_INLINE_FUNCTION void
-structural_dynamics_cell_residual(const Plato::OrdinalType & aCellOrdinal,
-                                  const Plato::Scalar & aOmegaTimesOmega,
-                                  const Plato::ScalarMultiVectorT<ResultScalarType> & aElasticForces,
-                                  const Plato::ScalarMultiVectorT<ResultScalarType> & aDampingForces,
-                                  const Plato::ScalarMultiVectorT<ResultScalarType> & aInertialForces,
-                                  const Plato::ScalarMultiVectorT<ResultScalarType> & aResidual)
+ ********************************************************************************/
+template <Plato::OrdinalType NumDofsPerNode, typename ResultScalarType>
+KOKKOS_INLINE_FUNCTION void structural_dynamics_cell_residual(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::Scalar& aOmegaTimesOmega,
+    const Plato::ScalarMultiVectorT<ResultScalarType>& aElasticForces,
+    const Plato::ScalarMultiVectorT<ResultScalarType>& aDampingForces,
+    const Plato::ScalarMultiVectorT<ResultScalarType>& aInertialForces,
+    const Plato::ScalarMultiVectorT<ResultScalarType>& aResidual)
 {
     assert(aElasticForces.size() == aResidual.size());
     assert(aElasticForces.size() == aDampingForces.size());
@@ -48,13 +49,13 @@ structural_dynamics_cell_residual(const Plato::OrdinalType & aCellOrdinal,
     assert(aCellOrdinal >= static_cast<Plato::Scalar>(0.0));
     assert(aOmegaTimesOmega >= static_cast<Plato::Scalar>(0.0));
 
-    for(Plato::OrdinalType tIndex = 0; tIndex < NumDofsPerNode; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < NumDofsPerNode; tIndex++)
     {
-        aResidual(aCellOrdinal, tIndex) += aElasticForces(aCellOrdinal, tIndex) + aDampingForces(aCellOrdinal, tIndex)
-                - (aOmegaTimesOmega * aInertialForces(aCellOrdinal, tIndex));
+        aResidual(aCellOrdinal, tIndex) += aElasticForces(aCellOrdinal, tIndex) + aDampingForces(aCellOrdinal, tIndex) -
+                                           (aOmegaTimesOmega * aInertialForces(aCellOrdinal, tIndex));
     }
 }
 
-}// namespace Plato
+}  // namespace Plato
 
 #endif /* STRUCTURALDYNAMICSCELLRESIDUAL_HPP_ */

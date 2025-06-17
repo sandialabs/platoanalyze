@@ -6,10 +6,11 @@
 
 #pragma once
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <fstream>
 #include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 namespace Plato
 {
@@ -17,7 +18,8 @@ namespace Plato
 namespace io
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn inline void open_text_file
  *
  * \brief Open text file.
@@ -27,10 +29,7 @@ namespace io
  * \param [in/out] aTextFile text file macro
  *
  **********************************************************************************/
-inline void open_text_file
-(const std::string & aFileName,
- std::ofstream & aTextFile,
- bool aPrint = true)
+inline void open_text_file(const std::string &aFileName, std::ofstream &aTextFile, bool aPrint = true)
 {
     if (aPrint == false)
     {
@@ -40,7 +39,8 @@ inline void open_text_file
 }
 // function open_text_file
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn inline void close_text_file
  *
  * \brief Close text file.
@@ -49,9 +49,7 @@ inline void open_text_file
  * \param [in/out] aTextFile text file macro
  *
  **********************************************************************************/
-inline void close_text_file
-(std::ofstream & aTextFile,
- bool aPrint = true)
+inline void close_text_file(std::ofstream &aTextFile, bool aPrint = true)
 {
     if (aPrint == false)
     {
@@ -61,7 +59,8 @@ inline void close_text_file
 }
 // function close_text_file
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn inline void append_text_to_file
  *
  * \brief Append text to file.
@@ -71,10 +70,7 @@ inline void close_text_file
  * \param [in/out] aTextFile text file macro
  *
  **********************************************************************************/
-inline void append_text_to_file
-(const std::stringstream & aMsg,
- std::ofstream & aTextFile,
- bool aPrint = true)
+inline void append_text_to_file(const std::stringstream &aMsg, std::ofstream &aTextFile, bool aPrint = true)
 {
     if (aPrint == false)
     {
@@ -84,19 +80,20 @@ inline void append_text_to_file
 }
 // function append_text_to_file
 
-}
+}  // namespace io
 // namespace io
 
 namespace filesystem
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn exist
  *
  * \brief Return true if path exist; else, return false
  * \param [in] aPath directory/file path
  * \return boolean (true or false)
-**********************************************************************************/
+ **********************************************************************************/
 bool exist(const std::string &aPath)
 {
     struct stat tBuf;
@@ -105,25 +102,29 @@ bool exist(const std::string &aPath)
 }
 // function exist
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn exist
  *
  * \brief Delete file/directory if it exist
  * \param [in] aPath directory/file path
-**********************************************************************************/
+ **********************************************************************************/
 void remove(const std::string &aPath)
 {
-    if(Plato::filesystem::exist(aPath))
+    if (Plato::filesystem::exist(aPath))
     {
         auto tCommand = std::string("rm -rf ") + aPath;
         auto tOutput = std::system(tCommand.c_str());
-        if(false){ std::cout << std::to_string(tOutput) << "\n";}
+        if (false)
+        {
+            std::cout << std::to_string(tOutput) << "\n";
+        }
     }
 }
 // function remove
 
-}
+}  // namespace filesystem
 // namespace filesystem
 
-}
+}  // namespace Plato
 // namespace Plato

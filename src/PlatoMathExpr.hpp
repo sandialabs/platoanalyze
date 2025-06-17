@@ -54,32 +54,33 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Basic math expression evaluator
  *  This evaluator executes exclusively on the host.
  *  The function is of the form y = f(t) where y and t are doubles.
  *  The expression, f(t), is provided as a string argument to the constructor and
  *  parameters can be defined in the string argument, e.g., "pi=3.14159264; sin(pi*t)".
-**********************************************************************************/
+ **********************************************************************************/
 class MathExpr
 {
-  public:
-
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Constructor
-    **********************************************************************************/
+     **********************************************************************************/
     explicit MathExpr(std::string aExpression) : mExpression(aExpression)
     {
         mReader = Teuchos::rcp(Teuchos::MathExpr::new_calc_reader());
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Return f(aInVal)
      * \param aInVal input value
      * \return f(aInVal)
-    **********************************************************************************/
-    inline Plato::Scalar
-    value(Plato::Scalar aInVal) const
+     **********************************************************************************/
+    inline Plato::Scalar value(Plato::Scalar aInVal) const
     {
         Teuchos::any result_any;
         std::stringstream ss;
@@ -89,11 +90,10 @@ class MathExpr
         return result;
     }
 
-  private:
-
+   private:
     Teuchos::RCP<Teuchos::Reader> mReader;
     std::string mExpression;
 
-}; // class MathExpr
+};  // class MathExpr
 
-} // namespace Plato
+}  // namespace Plato

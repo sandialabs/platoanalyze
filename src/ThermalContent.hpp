@@ -10,14 +10,14 @@ namespace Plato
 
 /******************************************************************************/
 /*! Thermal content functor.
-  
+
     given a temperature value, compute the thermal content
 */
 /******************************************************************************/
-template<int SpatialDim>
+template <int SpatialDim>
 class ThermalContent
 {
-  private:
+   private:
     Plato::MaterialModelType mModelType;
 
     // in case functor is nonlinear
@@ -28,7 +28,7 @@ class ThermalContent
     Plato::Scalar mMassDensity;
     Plato::Scalar mSpecificHeat;
 
-  public:
+   public:
     ThermalContent(const Teuchos::RCP<Plato::MaterialModel<SpatialDim>> aMaterialModel)
     {
         mModelType = aMaterialModel->type();
@@ -36,75 +36,66 @@ class ThermalContent
         {
             mMassDensityFunctor = aMaterialModel->getScalarFunctor("Mass Density");
             mSpecificHeatFunctor = aMaterialModel->getScalarFunctor("Specific Heat");
-        } else
-        if (mModelType == Plato::MaterialModelType::Linear)
+        }
+        else if (mModelType == Plato::MaterialModelType::Linear)
         {
             mMassDensity = aMaterialModel->getScalarConstant("Mass Density");
             mSpecificHeat = aMaterialModel->getScalarConstant("Specific Heat");
         }
     }
 
-    template<typename TScalarType, typename TRateScalarType, typename TContentScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(
-        TContentScalarType & aContent,
-        TRateScalarType      aTemperatureRate,
-        TScalarType          aTemperature
-    ) const
+    template <typename TScalarType, typename TRateScalarType, typename TContentScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(TContentScalarType& aContent,
+                                           TRateScalarType aTemperatureRate,
+                                           TScalarType aTemperature) const
     {
-      // compute thermal content
-      //
-      if (mModelType == Plato::MaterialModelType::Linear)
-      {
-          aContent = aTemperatureRate*mMassDensity*mSpecificHeat;
-      }
-      else
-      if (mModelType == Plato::MaterialModelType::Nonlinear)
-      {
-          TScalarType tMassDensity = mMassDensityFunctor(aTemperature);
-          TScalarType tSpecificHeat = mSpecificHeatFunctor(aTemperature);
-          aContent = aTemperatureRate*tMassDensity*tSpecificHeat;
-      }
+        // compute thermal content
+        //
+        if (mModelType == Plato::MaterialModelType::Linear)
+        {
+            aContent = aTemperatureRate * mMassDensity * mSpecificHeat;
+        }
+        else if (mModelType == Plato::MaterialModelType::Nonlinear)
+        {
+            TScalarType tMassDensity = mMassDensityFunctor(aTemperature);
+            TScalarType tSpecificHeat = mSpecificHeatFunctor(aTemperature);
+            aContent = aTemperatureRate * tMassDensity * tSpecificHeat;
+        }
     }
 
-    template<typename TScalarType, typename TRateScalarType, typename TContentScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()( Plato::OrdinalType cellOrdinal,
-                Plato::ScalarVectorT<TContentScalarType> tcontent,
-                Plato::ScalarVectorT<TRateScalarType> temperature_rate,
-                Plato::ScalarVectorT<TScalarType> temperature) const {
+    template <typename TScalarType, typename TRateScalarType, typename TContentScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType cellOrdinal,
+                                           Plato::ScalarVectorT<TContentScalarType> tcontent,
+                                           Plato::ScalarVectorT<TRateScalarType> temperature_rate,
+                                           Plato::ScalarVectorT<TScalarType> temperature) const
+    {
+        // compute thermal content
+        //
 
-      // compute thermal content
-      //
-
-      TScalarType cellT = temperature(cellOrdinal);
-      TRateScalarType cellTRate = temperature_rate(cellOrdinal);
-      if (mModelType == Plato::MaterialModelType::Linear)
-      {
-          tcontent(cellOrdinal) = cellTRate*mMassDensity*mSpecificHeat;
-      } else
-      if (mModelType == Plato::MaterialModelType::Nonlinear)
-      {
-          TScalarType tMassDensity = mMassDensityFunctor(cellT);
-          TScalarType tSpecificHeat = mSpecificHeatFunctor(cellT);
-          tcontent(cellOrdinal) = cellTRate*tMassDensity*tSpecificHeat;
-      }
+        TScalarType cellT = temperature(cellOrdinal);
+        TRateScalarType cellTRate = temperature_rate(cellOrdinal);
+        if (mModelType == Plato::MaterialModelType::Linear)
+        {
+            tcontent(cellOrdinal) = cellTRate * mMassDensity * mSpecificHeat;
+        }
+        else if (mModelType == Plato::MaterialModelType::Nonlinear)
+        {
+            TScalarType tMassDensity = mMassDensityFunctor(cellT);
+            TScalarType tSpecificHeat = mSpecificHeatFunctor(cellT);
+            tcontent(cellOrdinal) = cellTRate * tMassDensity * tSpecificHeat;
+        }
     }
-    template<typename TRateScalarType, typename TContentScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(
-        TContentScalarType & tcontent,
-        TRateScalarType      temperature_rate
-    ) const {
+    template <typename TRateScalarType, typename TContentScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(TContentScalarType& tcontent, TRateScalarType temperature_rate) const
+    {
+        // compute thermal content
+        //
 
-      // compute thermal content
-      //
-
-      tcontent = temperature_rate*mMassDensity*mSpecificHeat;
+        tcontent = temperature_rate * mMassDensity * mSpecificHeat;
     }
 };
 // class ThermalContent
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif

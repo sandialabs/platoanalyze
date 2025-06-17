@@ -11,56 +11,56 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "SpatialModel.hpp"
 #include "AnalyzeMacros.hpp"
-#include "PlatoStaticsTypes.hpp"
 #include "MultipointConstraint.hpp"
+#include "PlatoStaticsTypes.hpp"
+#include "SpatialModel.hpp"
 
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Derived class for tie multipoint constraint
  *
-**********************************************************************************/
-template<typename ElementT>
+ **********************************************************************************/
+template <typename ElementT>
 class TieMultipointConstraint : public Plato::MultipointConstraint
 {
-public:
-    TieMultipointConstraint(
-      const Plato::SpatialModel & aSpatialModel,
-      const std::string         & aName, 
-            Teuchos::ParameterList    & aParam) :
-      Plato::MultipointConstraint(aName)
-/****************************************************************************/
-{
-    // parse RHS value
-    mValue = aParam.get<Plato::Scalar>("Value");
-
-    // parse child nodes
-    std::string tChildNodeSet = aParam.get<std::string>("Child");
-    auto tChildNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tChildNodeSet);
-    auto tNumberChildNodes = tChildNodeLids.size();
-    
-    // parse parent nodes
-    std::string tParentNodeSet = aParam.get<std::string>("Parent");
-    auto tParentNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tParentNodeSet);
-    auto tNumberParentNodes = tParentNodeLids.size();
-
-    // Check that the number of child and parent nodes match
-    if (tNumberChildNodes != tNumberParentNodes)
+   public:
+    TieMultipointConstraint(const Plato::SpatialModel& aSpatialModel,
+                            const std::string& aName,
+                            Teuchos::ParameterList& aParam)
+        : Plato::MultipointConstraint(aName)
+    /****************************************************************************/
     {
-        std::ostringstream tMsg;
-        tMsg << "CHILD AND PARENT NODESETS FOR TIE CONSTRAINT NOT OF EQUAL LENGTH. \n";
-        ANALYZE_THROWERR(tMsg.str())
+        // parse RHS value
+        mValue = aParam.get<Plato::Scalar>("Value");
+
+        // parse child nodes
+        std::string tChildNodeSet = aParam.get<std::string>("Child");
+        auto tChildNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tChildNodeSet);
+        auto tNumberChildNodes = tChildNodeLids.size();
+
+        // parse parent nodes
+        std::string tParentNodeSet = aParam.get<std::string>("Parent");
+        auto tParentNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tParentNodeSet);
+        auto tNumberParentNodes = tParentNodeLids.size();
+
+        // Check that the number of child and parent nodes match
+        if (tNumberChildNodes != tNumberParentNodes)
+        {
+            std::ostringstream tMsg;
+            tMsg << "CHILD AND PARENT NODESETS FOR TIE CONSTRAINT NOT OF EQUAL LENGTH. \n";
+            ANALYZE_THROWERR(tMsg.str())
+        }
+
+        // Fill in child and parent nodes
+        Kokkos::resize(mChildNodes, tNumberChildNodes);
+        Kokkos::resize(mParentNodes, tNumberParentNodes);
+
+        this->updateNodesets(tNumberChildNodes, tChildNodeLids, tParentNodeLids);
     }
-
-    // Fill in child and parent nodes
-    Kokkos::resize(mChildNodes, tNumberChildNodes);
-    Kokkos::resize(mParentNodes, tNumberParentNodes);
-
-    this->updateNodesets(tNumberChildNodes, tChildNodeLids, tParentNodeLids);
-}
 
     /*!
      \brief Get constraint matrix and RHS data.
@@ -71,12 +71,12 @@ public:
      \param offsetChild Starting location in rowMap/RHS where constrained nodes/values will be added.
      \param offsetNnz Starting location in columnIndices/entries where constraining nodes/coefficients will be added.
      */
-    void get(OrdinalVector & aMpcChildNodes,
-             OrdinalVector & aMpcParentNodes,
-             Plato::CrsMatrixType::RowMapVectorT & aMpcRowMap,
-             Plato::CrsMatrixType::OrdinalVectorT & aMpcColumnIndices,
-             Plato::CrsMatrixType::ScalarVectorT & aMpcEntries,
-             ScalarVector & aMpcValues,
+    void get(OrdinalVector& aMpcChildNodes,
+             OrdinalVector& aMpcParentNodes,
+             Plato::CrsMatrixType::RowMapVectorT& aMpcRowMap,
+             Plato::CrsMatrixType::OrdinalVectorT& aMpcColumnIndices,
+             Plato::CrsMatrixType::ScalarVectorT& aMpcEntries,
+             ScalarVector& aMpcValues,
              OrdinalType aOffsetChild,
              OrdinalType aOffsetParent,
              OrdinalType aOffsetNnz) override
@@ -95,26 +95,25 @@ public:
         auto tChildNodes = mChildNodes;
         auto tParentNodes = mParentNodes;
 
-        Kokkos::parallel_for("Tie constraint data", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumberChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
-        {
-            tMpcChildNodes(aOffsetChild + nodeOrdinal) = tChildNodes(nodeOrdinal); // child node ID
-            tMpcParentNodes(aOffsetParent + nodeOrdinal) = tParentNodes(nodeOrdinal); // parent node ID
+        Kokkos::parallel_for(
+            "Tie constraint data", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumberChildNodes),
+            KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal) {
+                tMpcChildNodes(aOffsetChild + nodeOrdinal) = tChildNodes(nodeOrdinal);     // child node ID
+                tMpcParentNodes(aOffsetParent + nodeOrdinal) = tParentNodes(nodeOrdinal);  // parent node ID
 
-            tRowMap(aOffsetChild + nodeOrdinal) = aOffsetChild + nodeOrdinal; // row map
-            tRowMap(aOffsetChild + nodeOrdinal + 1) = aOffsetChild + nodeOrdinal + 1; // row map
+                tRowMap(aOffsetChild + nodeOrdinal) = aOffsetChild + nodeOrdinal;          // row map
+                tRowMap(aOffsetChild + nodeOrdinal + 1) = aOffsetChild + nodeOrdinal + 1;  // row map
 
-            tColumnIndices(aOffsetNnz + nodeOrdinal) = aOffsetParent + nodeOrdinal; // column indices (local parent node ID)
-            tEntries(aOffsetNnz + nodeOrdinal) = 1.0; // entries (constraint coefficients)
+                tColumnIndices(aOffsetNnz + nodeOrdinal) =
+                    aOffsetParent + nodeOrdinal;           // column indices (local parent node ID)
+                tEntries(aOffsetNnz + nodeOrdinal) = 1.0;  // entries (constraint coefficients)
 
-            tValues(aOffsetChild + nodeOrdinal) = tValue; // constraint RHS
-
-        });
+                tValues(aOffsetChild + nodeOrdinal) = tValue;  // constraint RHS
+            });
     }
-    
+
     // ! Get number of nodes in the constrained nodeset.
-    void updateLengths(OrdinalType& lengthChild,
-                       OrdinalType& lengthParent,
-                       OrdinalType& lengthNnz) override
+    void updateLengths(OrdinalType& lengthChild, OrdinalType& lengthParent, OrdinalType& lengthNnz) override
     {
         auto tNumberChildNodes = mChildNodes.size();
         auto tNumberParentNodes = mParentNodes.size();
@@ -132,22 +131,22 @@ public:
         auto tChildNodes = mChildNodes;
         auto tParentNodes = mParentNodes;
 
-        Kokkos::parallel_for("Tie constraint data", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumberChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal)
-        {
-            tChildNodes(nodeOrdinal) = tChildNodeLids(nodeOrdinal); // child node ID
-            tParentNodes(nodeOrdinal) = tParentNodeLids(nodeOrdinal); // parent node ID
-        });
+        Kokkos::parallel_for(
+            "Tie constraint data", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumberChildNodes),
+            KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal) {
+                tChildNodes(nodeOrdinal) = tChildNodeLids(nodeOrdinal);    // child node ID
+                tParentNodes(nodeOrdinal) = tParentNodeLids(nodeOrdinal);  // parent node ID
+            });
     }
 
-private:
-    OrdinalVector    mParentNodes;
-    OrdinalVector    mChildNodes;
-    Plato::Scalar         mValue;
-
+   private:
+    OrdinalVector mParentNodes;
+    OrdinalVector mChildNodes;
+    Plato::Scalar mValue;
 };
 // class TieMultipointConstraint
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #endif

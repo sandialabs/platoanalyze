@@ -1,11 +1,11 @@
 #pragma once
 
+#include <Teuchos_ParameterList.hpp>
 #include <memory>
 
-#include "SpatialModel.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "SpatialModel.hpp"
 #include "hyperbolic/ScalarFunctionBase.hpp"
-#include <Teuchos_ParameterList.hpp>
 
 namespace Plato
 {
@@ -13,36 +13,37 @@ namespace Plato
 namespace Hyperbolic
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Scalar function base factory
  **********************************************************************************/
-template<typename PhysicsType>
+template <typename PhysicsType>
 class ScalarFunctionFactory
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Constructor
      **********************************************************************************/
-    ScalarFunctionFactory () {}
+    ScalarFunctionFactory() {}
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Create method
      * \param [in] aMesh mesh database
      * \param [in] aDataMap Plato Engine and Analyze data map
      * \param [in] aInputParams parameter input
      * \param [in] aFunctionName name of function in parameter list
      **********************************************************************************/
-    std::shared_ptr<Plato::Hyperbolic::ScalarFunctionBase>
-    create(
-        Plato::SpatialModel    & aSpatialModel,
-        Plato::DataMap         & aDataMap,
-        Teuchos::ParameterList & aInputParams,
-        std::string            & aFunctionName);
-}; // class ScalarFunctionFactory
+    std::shared_ptr<Plato::Hyperbolic::ScalarFunctionBase> create(Plato::SpatialModel& aSpatialModel,
+                                                                  Plato::DataMap& aDataMap,
+                                                                  Teuchos::ParameterList& aInputParams,
+                                                                  std::string& aFunctionName);
+};  // class ScalarFunctionFactory
 
-} // namespace Hyperbolic
+}  // namespace Hyperbolic
 
-} // namespace Plato
+}  // namespace Plato
 
 #include "BaseExpInstMacros.hpp"
 #include "hyperbolic/Mechanics.hpp"

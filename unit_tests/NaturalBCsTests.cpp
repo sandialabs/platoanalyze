@@ -1,19 +1,19 @@
-#include "NaturalBCs.hpp"
-#include "util/PlatoTestHelpers.hpp"
-#include "SpatialModel.hpp"
-#include "MechanicsElement.hpp"
-#include "Tet4.hpp"
-#include "Hex8.hpp"
-#include "WorksetBase.hpp"
-
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
+
+#include "Hex8.hpp"
+#include "MechanicsElement.hpp"
+#include "NaturalBCs.hpp"
+#include "SpatialModel.hpp"
+#include "Tet4.hpp"
+#include "WorksetBase.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 namespace
 {
 Teuchos::RCP<Teuchos::ParameterList> pressureBCParameters(const std::string& aBCXML)
 {
-    constexpr auto kProblemXML = 
+    constexpr auto kProblemXML =
         "<ParameterList name='Plato Problem'>\n"
         "  <ParameterList name='Spatial Model'>\n"
         "    <ParameterList name='Domains'>\n"
@@ -43,15 +43,13 @@ Teuchos::RCP<Teuchos::ParameterList> pressureBCParameters(const std::string& aBC
     return Teuchos::getParametersFromXmlString(std::string(kProblemXML) + aBCXML + std::string(kClosingXML));
 }
 
-template<typename BCType>
-void testBCDataConstruction(
-    Teuchos::ParameterList& aBCParameters,
-    Teuchos::FancyOStream &aOut, 
-    bool &aSuccess)
+template <typename BCType>
+void testBCDataConstruction(Teuchos::ParameterList& aBCParameters, Teuchos::FancyOStream& aOut, bool& aSuccess)
 {
     using ElementType = Plato::MechanicsElement<Plato::Tet4>;
     bool tCtorSuccess = true;
-    TEUCHOS_TEST_NOTHROW(Plato::NaturalBCs<ElementType>(aBCParameters.sublist("Natural Boundary Conditions")), aOut, tCtorSuccess);
+    TEUCHOS_TEST_NOTHROW(Plato::NaturalBCs<ElementType>(aBCParameters.sublist("Natural Boundary Conditions")), aOut,
+                         tCtorSuccess);
     Plato::NaturalBCs<ElementType> tTestBC(aBCParameters.sublist("Natural Boundary Conditions"));
 
     bool tSizeSuccess = true;
@@ -93,14 +91,14 @@ Plato::Scalar surfaceIntegralSum(Teuchos::ParameterList aInputParams)
     tTestBC.get(tSpatialModel, tState, tControl, tConfig, tResult, kScale, kTime);
 
     Plato::Scalar tSumResult = 0.0;
-    Kokkos::parallel_reduce(Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0,0},{tNumCells, tNumGlobalDofsPerCell}),
-    KOKKOS_LAMBDA(const Plato::OrdinalType aCellOrdinal, const Plato::OrdinalType aDofOrdinal, Plato::Scalar& tSumResult)
-    {
-        tSumResult += tResult(aCellOrdinal, aDofOrdinal);
-    }, tSumResult );
+    Kokkos::parallel_reduce(
+        Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumGlobalDofsPerCell}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType aCellOrdinal, const Plato::OrdinalType aDofOrdinal,
+                      Plato::Scalar& tSumResult) { tSumResult += tResult(aCellOrdinal, aDofOrdinal); },
+        tSumResult);
     return tSumResult;
 }
-}
+}  // namespace
 
 TEUCHOS_UNIT_TEST(NaturalBCsTests, UniformPressureConstructor)
 {
@@ -214,7 +212,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='string' value='x+'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
     // Bad "Variable" type
     {
@@ -226,7 +225,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='string' value='x+'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
     // Multiple valid types
     {
@@ -238,9 +238,10 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Value' type='double' value='1'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
-    // Bad "Value" value 
+    // Bad "Value" value
     {
         auto tInputParams = pressureBCParameters(
             "  <ParameterList  name='Natural Boundary Conditions'>\n"
@@ -250,11 +251,13 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='string' value='x+'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        // Ultimately, we want this to throw, but for strings not convertible to double, Teuchos will silently convert to 0. 
-        // Test this for now in case it changes.
+        // Ultimately, we want this to throw, but for strings not convertible to double, Teuchos will silently convert
+        // to 0. Test this for now in case it changes.
         TEST_NOTHROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")));
         // Test that a value of "hat" gives 0:
-        const double tValue = tInputParams->sublist("Natural Boundary Conditions").sublist("Pressure Boundary Condition").get<double>("Value");
+        const double tValue = tInputParams->sublist("Natural Boundary Conditions")
+                                  .sublist("Pressure Boundary Condition")
+                                  .get<double>("Value");
         TEST_EQUALITY(tValue, 0.0);
     }
     // Bad "Type" value
@@ -267,7 +270,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='string' value='x+'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
     // Bad "Type" type
     {
@@ -279,7 +283,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='string' value='x+'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
     // Bad "Sides" name
     {
@@ -291,9 +296,10 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Side' type='string' value='x'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
-    // Bad "Sides" type 
+    // Bad "Sides" type
     {
         auto tInputParams = pressureBCParameters(
             "  <ParameterList  name='Natural Boundary Conditions'>\n"
@@ -303,7 +309,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='double' value='42.0'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
     // Bad number of components
     {
@@ -315,7 +322,8 @@ TEUCHOS_UNIT_TEST(NaturalBCsTests, BadInput)
             "      <Parameter name='Sides' type='string' value='x+'/>\n"
             "    </ParameterList>\n"
             "  </ParameterList>\n");
-        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")), std::runtime_error);
+        TEST_THROW(Plato::NaturalBCs<ElementType>(tInputParams->sublist("Natural Boundary Conditions")),
+                   std::runtime_error);
     }
     // Bad nodal variable name
     {
@@ -345,11 +353,11 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, SurfaceIntegralSpatiallyVarying)
 
     const Plato::Scalar tSumResult = surfaceIntegralSum(*tInputParams);
 
-    // The boundary condition on the mesh is 10 + y + z, 
+    // The boundary condition on the mesh is 10 + y + z,
     // integrating this analytically over the face:
     // \[ \int_{-5}^5 \int_{-5}^5 10 + y + z \,dy \,dz \]
     // gives the answer of 1000
-    
+
     // test to see if the sum of the entries in tResult is
     // equal to the analytic integral
     TEST_FLOATING_EQUALITY(tSumResult, 1000, 1e-15);
@@ -361,14 +369,15 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, SurfaceIntegralSpatiallyVaryingLoad)
         "<ParameterList  name='Natural Boundary Conditions'>\n"
         "  <ParameterList  name='Load Boundary Condition'>\n"
         "    <Parameter name='Type' type='string' value='Variable load'/>\n"
-        "    <Parameter name='Variables' type='Array(string)' value='{surface_pressure, surface_pressure, surface_pressure}'/>\n"
+        "    <Parameter name='Variables' type='Array(string)' value='{surface_pressure, surface_pressure, "
+        "surface_pressure}'/>\n"
         "    <Parameter name='Sides' type='string' value='pressure_sideset'/>\n"
         "  </ParameterList>\n"
         "</ParameterList>\n");
 
     const Plato::Scalar tSumResult = surfaceIntegralSum(*tInputParams);
 
-    // The boundary condition on the mesh is 10 + y + z, 
+    // The boundary condition on the mesh is 10 + y + z,
     // integrating this analytically over the face:
     // \[ \int_{-5}^5 \int_{-5}^5 10 + y + z \,dy \,dz \]
     // gives the answer of 1000
@@ -389,7 +398,7 @@ TEUCHOS_UNIT_TEST(NaturalBCDataTests, SurfaceIntegralSpatiallyVaryingLoadWithZer
 
     const Plato::Scalar tSumResult = surfaceIntegralSum(*tInputParams);
 
-    // The boundary condition on the mesh is 10 + y + z, 
+    // The boundary condition on the mesh is 10 + y + z,
     // integrating this analytically over the face:
     // \[ \int_{-5}^5 \int_{-5}^5 10 + y + z \,dy \,dz \]
     // gives the answer of 1000

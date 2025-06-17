@@ -7,34 +7,31 @@
 #ifndef SRC_PLATO_FREQUENCYRESPONSEMISFIT_HPP_
 #define SRC_PLATO_FREQUENCYRESPONSEMISFIT_HPP_
 
-#include <vector>
-#include <string>
-#include <sstream>
-#include <algorithm>
-#include <stdexcept>
-
-#include "PlatoMesh.hpp"
-
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include <algorithm>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
-#include "ImplicitFunctors.hpp"
-
-#include "WorksetBase.hpp"
-#include "SimplexFadTypes.hpp"
-#include "elliptic/AbstractScalarFunction.hpp"
-#include "SimplexStructuralDynamics.hpp"
 #include "ComputeFrequencyResponseMisfit.hpp"
+#include "ImplicitFunctors.hpp"
+#include "PlatoMesh.hpp"
+#include "SimplexFadTypes.hpp"
+#include "SimplexStructuralDynamics.hpp"
+#include "WorksetBase.hpp"
+#include "elliptic/AbstractScalarFunction.hpp"
 
 namespace Plato
 {
 
-template<typename EvaluationType>
-class FrequencyResponseMisfit :
-        public Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim, EvaluationType::NumControls>,
-        public Plato::Elliptic::AbstractScalarFunction<EvaluationType>
+template <typename EvaluationType>
+class FrequencyResponseMisfit
+    : public Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim, EvaluationType::NumControls>,
+      public Plato::Elliptic::AbstractScalarFunction<EvaluationType>
 {
-private:
+   private:
     using Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>::mComplexSpaceDim;
     using Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>::mNumDofsPerCell;
     using Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>::mNumDofsPerNode;
@@ -53,18 +50,15 @@ private:
     using OrdinalFunctorT = Plato::VectorEntryOrdinal<EvaluationType::SpatialDim, mNumDofsPerNode>;
     OrdinalFunctorT mGlobalStateEntryOrdinal;
 
-public:
+   public:
     /*************************************************************************/
-    explicit
-    FrequencyResponseMisfit(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap           aDataMap,
-              Teuchos::ParameterList & aParamList
-    ) :
-        FunctionBaseType(aSpatialDomain, aDataMap, "Frequency Response Misfit"),
-        mExpStates(),
-        mTimeSteps(),
-        mGlobalStateEntryOrdinal(OrdinalFunctorT(aSpatialDomain.Mesh))
+    explicit FrequencyResponseMisfit(const Plato::SpatialDomain& aSpatialDomain,
+                                     Plato::DataMap aDataMap,
+                                     Teuchos::ParameterList& aParamList)
+        : FunctionBaseType(aSpatialDomain, aDataMap, "Frequency Response Misfit"),
+          mExpStates(),
+          mTimeSteps(),
+          mGlobalStateEntryOrdinal(OrdinalFunctorT(aSpatialDomain.Mesh))
     /*************************************************************************/
     {
         this->readTimeSteps(aParamList);
@@ -72,17 +66,14 @@ public:
     }
 
     /*************************************************************************/
-    explicit
-    FrequencyResponseMisfit(
-        const Plato::SpatialDomain       & aSpatialDomain,
-              Plato::DataMap               aDataMap,
-        const std::vector<Plato::Scalar> & aTimeSteps,
-        const Plato::ScalarMultiVector   & aExpStates
-    ) :
-        FunctionBaseType(aSpatialDomain, aDataMap, "Frequency Response Misfit"),
-        mExpStates(aExpStates),
-        mTimeSteps(aTimeSteps),
-        mGlobalStateEntryOrdinal(OrdinalFunctorT(&(aSpatialDomain.Mesh)))
+    explicit FrequencyResponseMisfit(const Plato::SpatialDomain& aSpatialDomain,
+                                     Plato::DataMap aDataMap,
+                                     const std::vector<Plato::Scalar>& aTimeSteps,
+                                     const Plato::ScalarMultiVector& aExpStates)
+        : FunctionBaseType(aSpatialDomain, aDataMap, "Frequency Response Misfit"),
+          mExpStates(aExpStates),
+          mTimeSteps(aTimeSteps),
+          mGlobalStateEntryOrdinal(OrdinalFunctorT(&(aSpatialDomain.Mesh)))
     /*************************************************************************/
     {
     }
@@ -92,73 +83,71 @@ public:
      * states, z denotes controls, K denotes the stiffness matrix and M denotes
      * the mass matrix.
      **************************************************************************/
-    void
-    evaluate(
-        const Plato::ScalarMultiVectorT <StateScalarType>   & aStates,
-        const Plato::ScalarMultiVectorT <ControlScalarType> & aControls,
-        const Plato::ScalarArray3DT     <ConfigScalarType>  & aConfig,
-              Plato::ScalarVectorT      <ResultScalarType>  & aResults,
-              Plato::Scalar aTimeStep = 0.0
-    ) const
+    void evaluate(const Plato::ScalarMultiVectorT<StateScalarType>& aStates,
+                  const Plato::ScalarMultiVectorT<ControlScalarType>& aControls,
+                  const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+                  Plato::ScalarVectorT<ResultScalarType>& aResults,
+                  Plato::Scalar aTimeStep = 0.0) const
     /**************************************************************************/
     {
         // Find input frequency argument in frequency array and return its index
         Plato::OrdinalType tIndex =
-                std::distance(mTimeSteps.begin(), std::find(mTimeSteps.begin(), mTimeSteps.end(), aTimeStep));
+            std::distance(mTimeSteps.begin(), std::find(mTimeSteps.begin(), mTimeSteps.end(), aTimeStep));
 
         // Get experimental measurements for this frequency and construct its workset
         auto tNumCells = aStates.extent(0);
         auto tMyExpStates = Kokkos::subview(mExpStates, tIndex, Kokkos::ALL());
         Plato::ScalarMultiVector tExpStatesWorkSet("ExpStatesWorkSet", tNumCells, mNumDofsPerCell);
-        Plato::workset_state_scalar_scalar<mNumDofsPerNode, mNumNodesPerCell>
-            (tNumCells, mGlobalStateEntryOrdinal, tMyExpStates, tExpStatesWorkSet);
+        Plato::workset_state_scalar_scalar<mNumDofsPerNode, mNumNodesPerCell>(tNumCells, mGlobalStateEntryOrdinal,
+                                                                              tMyExpStates, tExpStatesWorkSet);
         assert(tExpStatesWorkSet.size() == aStates.size());
 
         Plato::ComputeFrequencyResponseMisfit<EvaluationType::SpatialDim> tComputeMisfit;
-        Kokkos::parallel_for("Objective::FrequencyResponseMisfit", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-        {
-            tComputeMisfit(aCellOrdinal, tExpStatesWorkSet, aStates, aResults);
-        });
+        Kokkos::parallel_for(
+            "Objective::FrequencyResponseMisfit", Kokkos::RangePolicy<>(0, tNumCells),
+            KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+                tComputeMisfit(aCellOrdinal, tExpStatesWorkSet, aStates, aResults);
+            });
     }
 
     /**************************************************************************/
-    void readExperimentalData(Plato::Mesh aMesh, Teuchos::ParameterList & aParamList)
+    void readExperimentalData(Plato::Mesh aMesh, Teuchos::ParameterList& aParamList)
     /**************************************************************************/
     {
-        if(aParamList.isSublist("Experimental Data") == true)
+        if (aParamList.isSublist("Experimental Data") == true)
         {
             auto tExpDataParams = aParamList.sublist("Experimental Data");
             assert(tExpDataParams.isParameter("Names"));
             assert(tExpDataParams.isParameter("Index"));
-            if(tExpDataParams.isParameter("Names") == false)
+            if (tExpDataParams.isParameter("Names") == false)
             {
                 std::ostringstream tErrorMessage;
-                tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: "
-                        << __PRETTY_FUNCTION__ << ", LINE: " << __LINE__
-                        << ", MESSAGE: USER DID NOT DEFINE NAMES ARRAY INSIDE SUBLIST = EXPERIMENTAL DATA."
-                        << " CHECK INPUT FILE. **************\n\n";
+                tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__
+                              << ", FUNCTION: " << __PRETTY_FUNCTION__ << ", LINE: " << __LINE__
+                              << ", MESSAGE: USER DID NOT DEFINE NAMES ARRAY INSIDE SUBLIST = EXPERIMENTAL DATA."
+                              << " CHECK INPUT FILE. **************\n\n";
                 throw std::runtime_error(tErrorMessage.str().c_str());
             }
             auto tNames = tExpDataParams.get<Teuchos::Array<std::string>>("Names");
 
-            if(tExpDataParams.isParameter("Index") == false)
+            if (tExpDataParams.isParameter("Index") == false)
             {
                 std::ostringstream tErrorMessage;
-                tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: "
-                        << __PRETTY_FUNCTION__ << ", LINE: " << __LINE__
-                        << ", MESSAGE: USER DID NOT DEFINE INDEX ARRAY INSIDE SUBLIST = EXPERIMENTAL DATA."
-                        << " CHECK INPUT FILE. **************\n\n";
+                tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__
+                              << ", FUNCTION: " << __PRETTY_FUNCTION__ << ", LINE: " << __LINE__
+                              << ", MESSAGE: USER DID NOT DEFINE INDEX ARRAY INSIDE SUBLIST = EXPERIMENTAL DATA."
+                              << " CHECK INPUT FILE. **************\n\n";
                 throw std::runtime_error(tErrorMessage.str().c_str());
             }
             auto tIndices = tExpDataParams.get<Teuchos::Array<Plato::OrdinalType>>("Index");
 
-            if(tIndices.size() != tNames.size())
+            if (tIndices.size() != tNames.size())
             {
                 std::ostringstream tErrorMessage;
-                tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: "
-                        << __PRETTY_FUNCTION__ << ", LINE: " << __LINE__
-                        << ", MESSAGE: DIMENSION MISSMATCH. USER DEFINED INDEX AND NAMES ARRAYS IN SUBLIST = "
-                        << " EXPERIMENTAL DATA SHOULD HAVE THE SAME SIZE. CHECK INPUT FILE. **************\n\n";
+                tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__
+                              << ", FUNCTION: " << __PRETTY_FUNCTION__ << ", LINE: " << __LINE__
+                              << ", MESSAGE: DIMENSION MISSMATCH. USER DEFINED INDEX AND NAMES ARRAYS IN SUBLIST = "
+                              << " EXPERIMENTAL DATA SHOULD HAVE THE SAME SIZE. CHECK INPUT FILE. **************\n\n";
                 throw std::runtime_error(tErrorMessage.str().c_str());
             }
 
@@ -168,29 +157,31 @@ public:
         {
             std::ostringstream tErrorMessage;
             tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << ", MESSAGE: ARRAY WITH EXPERIMENTAL DATA FIELD NAMES WAS NOT DEFINED IN THE INPUT FILE."
-                    << " USER SHOULD PROVIDE EXPERIMENTAL DATA FIELD NAMES INFORMATION IN THE INPUT FILE. **************\n\n";
+                          << ", LINE: " << __LINE__
+                          << ", MESSAGE: ARRAY WITH EXPERIMENTAL DATA FIELD NAMES WAS NOT DEFINED IN THE INPUT FILE."
+                          << " USER SHOULD PROVIDE EXPERIMENTAL DATA FIELD NAMES INFORMATION IN THE INPUT FILE. "
+                             "**************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
     }
 
     /**************************************************************************/
     void readExperimentalFields(Plato::Mesh aMesh,
-                                const Teuchos::Array<std::string> & aNames,
-                                const Teuchos::Array<Plato::OrdinalType> & aIndices)
+                                const Teuchos::Array<std::string>& aNames,
+                                const Teuchos::Array<Plato::OrdinalType>& aIndices)
     /**************************************************************************/
     {
         const Plato::OrdinalType tNumInputExpFields = aNames.size();
         const Plato::OrdinalType tExpectedNumInputExpFields = mComplexSpaceDim * EvaluationType::SpatialDim;
-        if(tNumInputExpFields != tExpectedNumInputExpFields)
+        if (tNumInputExpFields != tExpectedNumInputExpFields)
         {
             std::ostringstream tErrorMessage;
             tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__ << ", MESSAGE: PLATO EXPECTED " << tExpectedNumInputExpFields
-                    << " EXPERIMENTAL DATA FIELDS. USER DEFINED " << tNumInputExpFields
-                    << " EXPERIMENTAL DATA FIELDS IN THE INPUT FILE. USER SHOULD DEFINE " << tExpectedNumInputExpFields
-                    << " EXPERIMENTAL DATA FIELD NAMES IN THE INPUT FILE. **************\n\n";
+                          << ", LINE: " << __LINE__ << ", MESSAGE: PLATO EXPECTED " << tExpectedNumInputExpFields
+                          << " EXPERIMENTAL DATA FIELDS. USER DEFINED " << tNumInputExpFields
+                          << " EXPERIMENTAL DATA FIELDS IN THE INPUT FILE. USER SHOULD DEFINE "
+                          << tExpectedNumInputExpFields
+                          << " EXPERIMENTAL DATA FIELD NAMES IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
         const Plato::OrdinalType tNumVertices = aMesh->NumNodes();
@@ -198,7 +189,7 @@ public:
         const Plato::OrdinalType tNumStates = tNumVertices * mNumDofsPerNode;
         mExpStates = Plato::ScalarMultiVector("ExpStates", tNumTimeSteps, tNumStates);
 
-        for(Plato::OrdinalType tFieldIndex = 0; tFieldIndex < tNumInputExpFields; tFieldIndex++)
+        for (Plato::OrdinalType tFieldIndex = 0; tFieldIndex < tNumInputExpFields; tFieldIndex++)
         {
             auto tExpStates = mExpStates;
             auto tNumDofsPerNode = mNumDofsPerNode;
@@ -212,20 +203,21 @@ public:
 
             auto tMyInputExpData = tReader->Read(tMyName, tMyTimeStep);
 
-            Kokkos::parallel_for("FRF_Objective::readFields", Kokkos::RangePolicy<>(0, tNumVertices), KOKKOS_LAMBDA(const Plato::OrdinalType & aOrdinal)
-            {
-                Plato::OrdinalType tStride = tNumDofsPerNode * aOrdinal;
-                tMyExpStates(tStride + tMyDof) = tMyInputExpData(aOrdinal);
-            });
+            Kokkos::parallel_for(
+                "FRF_Objective::readFields", Kokkos::RangePolicy<>(0, tNumVertices),
+                KOKKOS_LAMBDA(const Plato::OrdinalType& aOrdinal) {
+                    Plato::OrdinalType tStride = tNumDofsPerNode * aOrdinal;
+                    tMyExpStates(tStride + tMyDof) = tMyInputExpData(aOrdinal);
+                });
         }
     }
 
-private:
+   private:
     /**************************************************************************/
-    void readTimeSteps(Teuchos::ParameterList & aParamList)
+    void readTimeSteps(Teuchos::ParameterList& aParamList)
     /**************************************************************************/
     {
-        if(aParamList.isSublist("Frequency Steps") == true)
+        if (aParamList.isSublist("Frequency Steps") == true)
         {
             auto tFreqParams = aParamList.sublist("Frequency Steps");
             assert(tFreqParams.isParameter("Values"));
@@ -233,7 +225,7 @@ private:
 
             const Plato::OrdinalType tNumFrequencies = tFreqValues.size();
             mTimeSteps.resize(tNumFrequencies);
-            for(Plato::OrdinalType tIndex = 0; tIndex < tNumFrequencies; tIndex++)
+            for (Plato::OrdinalType tIndex = 0; tIndex < tNumFrequencies; tIndex++)
             {
                 mTimeSteps[tIndex] = tFreqValues[tIndex];
             }
@@ -242,14 +234,14 @@ private:
         {
             std::ostringstream tErrorMessage;
             tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__ << ", MESSAGE: FREQUENCY ARRAY WAS NOT DEFINED IN THE INPUT FILE."
-                    << " USER SHOULD PROVIDE FREQUENCY ARRAY INFORMATION IN THE INPUT FILE. **************\n\n";
+                          << ", LINE: " << __LINE__ << ", MESSAGE: FREQUENCY ARRAY WAS NOT DEFINED IN THE INPUT FILE."
+                          << " USER SHOULD PROVIDE FREQUENCY ARRAY INFORMATION IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
     }
 };
 // class FrequencyResponseMisfit
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* SRC_PLATO_FREQUENCYRESPONSEMISFIT_HPP_ */

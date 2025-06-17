@@ -1,6 +1,7 @@
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \brief Natural boundary condition type ENUM
-*******************************************************************************/
+ *******************************************************************************/
 
 #pragma once
 
@@ -19,10 +20,10 @@ enum struct Neumann
 };
 
 /// @return The boundary condition type corresponding to @a aType
-/// @throw std::runtime_error if @a aType does not match (case insensitive) 
+/// @throw std::runtime_error if @a aType does not match (case insensitive)
 ///  one of:
 ///  * uniform
 ///  * uniform pressure
 ///  * variable pressure
 Plato::Neumann naturalBoundaryCondition(const std::string& aType);
-}
+}  // namespace Plato

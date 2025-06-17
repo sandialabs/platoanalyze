@@ -41,16 +41,16 @@
 #ifndef ANALYZE_RUN_HPP
 #define ANALYZE_RUN_HPP
 
-#include "alg/ParallelComm.hpp"
 #include <Teuchos_ParameterList.hpp>
+
+#include "alg/ParallelComm.hpp"
 
 //----------------------------------------------------------------------------
 
-namespace Plato {
+namespace Plato
+{
 
-void run(
-    Teuchos::ParameterList& problem,
-    Comm::Machine           machine);
+void run(Teuchos::ParameterList& problem, Comm::Machine machine);
 }
 
 #endif /* #ifndef TESTHOST_HPP */

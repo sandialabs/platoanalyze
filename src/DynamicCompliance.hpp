@@ -7,38 +7,35 @@
 #ifndef DYNAMICCOMPLIANCE_HPP_
 #define DYNAMICCOMPLIANCE_HPP_
 
+#include <Teuchos_ParameterList.hpp>
 #include <memory>
 
-#include "PlatoMathTypes.hpp"
-
-#include <Teuchos_ParameterList.hpp>
-
-
-#include "StateValues.hpp"
 #include "ApplyPenalty.hpp"
-#include "ComplexStrain.hpp"
-#include "SimplexFadTypes.hpp"
 #include "ApplyProjection.hpp"
-#include "ImplicitFunctors.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "ComplexLinearStress.hpp"
-#include "ElasticModelFactory.hpp"
 #include "ComplexElasticEnergy.hpp"
 #include "ComplexInertialEnergy.hpp"
-#include "elliptic/AbstractScalarFunction.hpp"
-#include "LinearTetCubRuleDegreeOne.hpp"
-#include "SimplexStructuralDynamics.hpp"
+#include "ComplexLinearStress.hpp"
+#include "ComplexStrain.hpp"
+#include "ElasticModelFactory.hpp"
+#include "ImplicitFunctors.hpp"
 #include "IsotropicLinearElasticMaterial.hpp"
+#include "LinearTetCubRuleDegreeOne.hpp"
+#include "PlatoMathTypes.hpp"
+#include "PlatoStaticsTypes.hpp"
+#include "SimplexFadTypes.hpp"
+#include "SimplexStructuralDynamics.hpp"
+#include "StateValues.hpp"
+#include "elliptic/AbstractScalarFunction.hpp"
 
 namespace Plato
 {
 
-template<typename EvaluationType, class PenaltyFuncType, class ProjectionFuncType>
-class DynamicCompliance:
-        public Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim, EvaluationType::NumControls>,
-        public Plato::Elliptic::AbstractScalarFunction<EvaluationType>
+template <typename EvaluationType, class PenaltyFuncType, class ProjectionFuncType>
+class DynamicCompliance
+    : public Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim, EvaluationType::NumControls>,
+      public Plato::Elliptic::AbstractScalarFunction<EvaluationType>
 {
-private:
+   private:
     using Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>::mNumVoigtTerms;
     using Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>::mComplexSpaceDim;
     using Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>::mNumDofsPerNode;
@@ -55,7 +52,7 @@ private:
     using FunctionBaseType = Plato::Elliptic::AbstractScalarFunction<EvaluationType>;
     using CubatureType = Plato::LinearTetCubRuleDegreeOne<EvaluationType::SpatialDim>;
 
-private:
+   private:
     Plato::Scalar mDensity;
 
     PenaltyFuncType mPenaltyFunction;
@@ -66,22 +63,20 @@ private:
     Plato::Matrix<mNumVoigtTerms, mNumVoigtTerms> mCellStiffness;
     std::shared_ptr<Plato::LinearTetCubRuleDegreeOne<EvaluationType::SpatialDim>> mCubatureRule;
 
-public:
+   public:
     /**************************************************************************/
-    DynamicCompliance(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap, 
-              Teuchos::ParameterList & aProblemParams,
-              Teuchos::ParameterList & aPenaltyParams
-   ) :
-        FunctionBaseType(aSpatialDomain, aDataMap, "Dynamic Energy"),
-        mDensity(aProblemParams.get<Plato::Scalar>("Material Density", 1.0)),
-        mProjectionFunction(),
-        mPenaltyFunction(aPenaltyParams),
-        mApplyPenalty(mPenaltyFunction),
-        mApplyProjection(mProjectionFunction),
-        mCellStiffness(),
-        mCubatureRule(std::make_shared<CubatureType>())
+    DynamicCompliance(const Plato::SpatialDomain& aSpatialDomain,
+                      Plato::DataMap& aDataMap,
+                      Teuchos::ParameterList& aProblemParams,
+                      Teuchos::ParameterList& aPenaltyParams)
+        : FunctionBaseType(aSpatialDomain, aDataMap, "Dynamic Energy"),
+          mDensity(aProblemParams.get<Plato::Scalar>("Material Density", 1.0)),
+          mProjectionFunction(),
+          mPenaltyFunction(aPenaltyParams),
+          mApplyPenalty(mPenaltyFunction),
+          mApplyProjection(mProjectionFunction),
+          mCellStiffness(),
+          mCubatureRule(std::make_shared<CubatureType>())
     /**************************************************************************/
     {
         // Create material model and get stiffness
@@ -90,24 +85,21 @@ public:
         mCellStiffness = tMaterialModel->getStiffnessMatrix();
     }
     /**************************************************************************/
-    DynamicCompliance(
-        const Plato::SpatialDomain & aSpatialDomain,
-              Plato::DataMap       & aDataMap
-    ) :
-            FunctionBaseType(aSpatialDomain, aDataMap, "Dynamic Energy"),
-            mDensity(1.0),
-            mProjectionFunction(),
-            mPenaltyFunction(3.0, 0.0),
-            mApplyPenalty(mPenaltyFunction),
-            mApplyProjection(mProjectionFunction),
-            mCellStiffness(),
-            mCubatureRule(std::make_shared<CubatureType>())
+    DynamicCompliance(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+        : FunctionBaseType(aSpatialDomain, aDataMap, "Dynamic Energy"),
+          mDensity(1.0),
+          mProjectionFunction(),
+          mPenaltyFunction(3.0, 0.0),
+          mApplyPenalty(mPenaltyFunction),
+          mApplyProjection(mProjectionFunction),
+          mCellStiffness(),
+          mCubatureRule(std::make_shared<CubatureType>())
     /**************************************************************************/
     {
         // Create material model and get stiffness
         Teuchos::ParameterList tParamList;
-        tParamList.set < Plato::Scalar > ("Poissons Ratio", 1.0);
-        tParamList.set < Plato::Scalar > ("Youngs Modulus", 0.3);
+        tParamList.set<Plato::Scalar>("Poissons Ratio", 1.0);
+        tParamList.set<Plato::Scalar>("Youngs Modulus", 0.3);
         Plato::IsotropicLinearElasticMaterial<EvaluationType::SpatialDim> tDefaultMaterialModel(tParamList);
         mCellStiffness = tDefaultMaterialModel.getStiffnessMatrix();
     }
@@ -117,17 +109,16 @@ public:
      * states, z denotes controls, K denotes the stiffness matrix and M denotes
      * the mass matrix.
      **************************************************************************/
-    void
-    evaluate(
-        const Plato::ScalarMultiVectorT <StateScalarType>   & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType> & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType>  & aConfig,
-              Plato::ScalarVectorT      <ResultScalarType>  & aResult,
-              Plato::Scalar aTimeStep = 0.0) const
+    void evaluate(const Plato::ScalarMultiVectorT<StateScalarType>& aState,
+                  const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
+                  const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+                  Plato::ScalarVectorT<ResultScalarType>& aResult,
+                  Plato::Scalar aTimeStep = 0.0) const
     /**************************************************************************/
     {
         using StrainScalarType =
-        typename Plato::fad_type_t<Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>, StateScalarType, ConfigScalarType>;
+            typename Plato::fad_type_t<Plato::SimplexStructuralDynamics<EvaluationType::SpatialDim>, StateScalarType,
+                                       ConfigScalarType>;
 
         // Elastic forces functors
         Plato::ComplexElasticEnergy<mNumVoigtTerms> tComputeElasticEnergy;
@@ -144,46 +135,48 @@ public:
         Plato::ScalarVectorT<ConfigScalarType> tCellVolume("CellWeight", tNumCells);
         Plato::ScalarArray3DT<StrainScalarType> tCellStrain("CellStrain", tNumCells, mComplexSpaceDim, mNumVoigtTerms);
         Plato::ScalarArray3DT<ResultScalarType> tCellStress("CellStress", tNumCells, mComplexSpaceDim, mNumVoigtTerms);
-        Plato::ScalarArray3DT<ConfigScalarType> tCellGradient("Gradient", tNumCells, mNumNodesPerCell, EvaluationType::SpatialDim);
+        Plato::ScalarArray3DT<ConfigScalarType> tCellGradient("Gradient", tNumCells, mNumNodesPerCell,
+                                                              EvaluationType::SpatialDim);
 
         // Inertial forces containers
         Plato::ScalarVectorT<ResultScalarType> tElasticEnergy("ElasticEnergy", tNumCells);
         Plato::ScalarVectorT<ResultScalarType> tInertialEnergy("InertialEnergy", tNumCells);
         Plato::ScalarMultiVectorT<StateScalarType> tStateValues("StateValues", tNumCells, mNumDofsPerNode);
 
-        auto & tApplyPenalty = mApplyPenalty;
-        auto & tApplyProjection = mApplyProjection;
-        auto & tPenaltyFunction = mPenaltyFunction;
+        auto& tApplyPenalty = mApplyPenalty;
+        auto& tApplyProjection = mApplyProjection;
+        auto& tPenaltyFunction = mPenaltyFunction;
         auto tQuadratureWeight = mCubatureRule->getCubWeight();
         auto tBasisFunctions = mCubatureRule->getBasisFunctions();
-        Kokkos::parallel_for("Dynamic Compliance Calculation", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-        {
-            // Internal forces contribution
-            tComputeGradientWorkset(aCellOrdinal, tCellGradient, aConfig, tCellVolume);
-            tCellVolume(aCellOrdinal) *= tQuadratureWeight;
-            tComputeVoigtStrain(aCellOrdinal, aState, tCellGradient, tCellStrain);
-            tComputeVoigtStress(aCellOrdinal, tCellStrain, tCellStress);
+        Kokkos::parallel_for(
+            "Dynamic Compliance Calculation", Kokkos::RangePolicy<>(0, tNumCells),
+            KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+                // Internal forces contribution
+                tComputeGradientWorkset(aCellOrdinal, tCellGradient, aConfig, tCellVolume);
+                tCellVolume(aCellOrdinal) *= tQuadratureWeight;
+                tComputeVoigtStrain(aCellOrdinal, aState, tCellGradient, tCellStrain);
+                tComputeVoigtStress(aCellOrdinal, tCellStrain, tCellStress);
 
-            // Apply penalty to internal forces
-            ControlScalarType tCellDensity = tApplyProjection(aCellOrdinal, aControl);
-            tApplyPenalty(aCellOrdinal, tCellDensity, tCellStress);
-            tComputeElasticEnergy(aCellOrdinal, tCellStress, tCellStrain, tElasticEnergy);
-            tElasticEnergy(aCellOrdinal) *= tCellVolume(aCellOrdinal);
+                // Apply penalty to internal forces
+                ControlScalarType tCellDensity = tApplyProjection(aCellOrdinal, aControl);
+                tApplyPenalty(aCellOrdinal, tCellDensity, tCellStress);
+                tComputeElasticEnergy(aCellOrdinal, tCellStress, tCellStrain, tElasticEnergy);
+                tElasticEnergy(aCellOrdinal) *= tCellVolume(aCellOrdinal);
 
-            // Inertial forces contribution
-            tComputeStateValues(aCellOrdinal, tBasisFunctions, aState, tStateValues);
-            tComputeInertialEnergy(aCellOrdinal, tCellVolume, tStateValues, tInertialEnergy);
-            ControlScalarType tPenaltyValue = tPenaltyFunction(tCellDensity);
-            tInertialEnergy(aCellOrdinal) *= tPenaltyValue;
+                // Inertial forces contribution
+                tComputeStateValues(aCellOrdinal, tBasisFunctions, aState, tStateValues);
+                tComputeInertialEnergy(aCellOrdinal, tCellVolume, tStateValues, tInertialEnergy);
+                ControlScalarType tPenaltyValue = tPenaltyFunction(tCellDensity);
+                tInertialEnergy(aCellOrdinal) *= tPenaltyValue;
 
-            // Add inertial forces contribution
-            aResult(aCellOrdinal) = static_cast<Plato::Scalar>(0.5) *
-                ( tElasticEnergy(aCellOrdinal) + tInertialEnergy(aCellOrdinal) );
-        });
+                // Add inertial forces contribution
+                aResult(aCellOrdinal) =
+                    static_cast<Plato::Scalar>(0.5) * (tElasticEnergy(aCellOrdinal) + tInertialEnergy(aCellOrdinal));
+            });
     }
 };
 // class DynamicCompliance
 
-}//namespace Plato
+}  // namespace Plato
 
 #endif /* DYNAMICCOMPLIANCE_HPP_ */

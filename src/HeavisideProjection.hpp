@@ -14,7 +14,8 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Heaviside projection class.
  *
@@ -26,11 +27,12 @@ namespace Plato
  * where /f$\alpha = 1 - \rho/f$ and /f$\beta\geq{0}/f$ dictates the curvature
  * of the regularization.
  *
-**********************************************************************************/
+ **********************************************************************************/
 class HeavisideProjection
 {
-public:
-    /****************************************************************************//**
+   public:
+    /****************************************************************************/
+    /**
      *
      * \brief Constructor
      *
@@ -38,15 +40,11 @@ public:
      *
      * \param aBeta  dictates the curvature of the regularization
      *
-    *********************************************************************************/
-    explicit HeavisideProjection(Plato::Scalar aBeta = 10) :
-        mBeta(aBeta),
-        mExpBeta(std::exp(-aBeta))
-    {
-    }
+     *********************************************************************************/
+    explicit HeavisideProjection(Plato::Scalar aBeta = 10) : mBeta(aBeta), mExpBeta(std::exp(-aBeta)) {}
 
     //! Returns application of the Heaviside function projection to input scalar.
-    template<typename ScalarType>
+    template <typename ScalarType>
     KOKKOS_INLINE_FUNCTION ScalarType apply(ScalarType aInput) const
     {
         ScalarType tOneMinusRho = static_cast<Plato::Scalar>(1) - aInput;
@@ -57,18 +55,18 @@ public:
     }
 
     // ! Sets curvature parameter \beta.
-    KOKKOS_INLINE_FUNCTION void setCurvatureParameterBeta(const Plato::Scalar & aInput)
+    KOKKOS_INLINE_FUNCTION void setCurvatureParameterBeta(const Plato::Scalar& aInput)
     {
         mBeta = aInput;
         mExpBeta = std::exp(-aInput);
     }
 
-private:
+   private:
     Plato::Scalar mBeta;
     Plato::Scalar mExpBeta;
 };
 // class HeavisideProjection
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* HEAVISIDEPROJECTION_HPP_ */

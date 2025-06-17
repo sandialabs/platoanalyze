@@ -1,18 +1,18 @@
+#include "AmgXConfigs.hpp"
+
 #include <sstream>
 
-#include "AmgXConfigs.hpp"
 #include "AnalyzeMacros.hpp"
 
 namespace Plato
 {
-  std::string configurationString(std::string aConfigOption, Plato::Scalar aTolerance, int aMaxIters, bool aAbsTolType)
-  {
-      using namespace std;
-      std::ostringstream tStrStream;
-      if(aConfigOption == "eaf")
-      {
-          tStrStream <<
-               "{\
+std::string configurationString(std::string aConfigOption, Plato::Scalar aTolerance, int aMaxIters, bool aAbsTolType)
+{
+    using namespace std;
+    std::ostringstream tStrStream;
+    if (aConfigOption == "eaf")
+    {
+        tStrStream << "{\
                    \"config_version\": 2,\
                    \"solver\": {\
                        \"preconditioner\": {\
@@ -44,22 +44,23 @@ namespace Plato
                        \"obtain_timings\": 1,\
                        \"monitor_residual\": 1,\
                        \"convergence\": \"";
-                       if (aAbsTolType == false)
-                         tStrStream << "RELATIVE_INI_CORE";
-                       else if (aAbsTolType == true)
-                         tStrStream << "ABSOLUTE";
-                       tStrStream << "\", \
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
                        \"scope\": \"main\",\
-                       \"tolerance\": " << aTolerance << ",\
-                       \"max_iters\": " << aMaxIters << ",\
+                       \"tolerance\": "
+                   << aTolerance << ",\
+                       \"max_iters\": "
+                   << aMaxIters << ",\
                        \"norm\": \"L2\"\
                    }\
                }";
-      } else
-      if(aConfigOption == "default")
-      {
-          tStrStream <<
-             "{\
+    }
+    else if (aConfigOption == "default")
+    {
+        tStrStream << "{\
                 \"config_version\": 2,\
                 \"solver\": {\
                   \"preconditioner\": {\
@@ -96,21 +97,20 @@ namespace Plato
                   \"max_iters\": 1000,\
                   \"monitor_residual\": 1,\
                   \"convergence\": \"";
-                  if (aAbsTolType == false)
-                    tStrStream << "RELATIVE_INI_CORE";
-                  else if (aAbsTolType == true)
-                    tStrStream << "ABSOLUTE";
-                  tStrStream << "\", \
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
                   \"scope\": \"main\",\
                   \"tolerance\": 5.0e-08,\
                   \"norm\": \"L2\"\
               }\
           }";
-      } else
-      if(aConfigOption == "pcg_noprec")
-      {
-            tStrStream <<
-               "{\
+    }
+    else if (aConfigOption == "pcg_noprec")
+    {
+        tStrStream << "{\
                    \"config_version\": 2, \
                    \"solver\": {\
                        \"preconditioner\": {\
@@ -123,22 +123,23 @@ namespace Plato
                        \"obtain_timings\": 1, \
                        \"monitor_residual\": 1, \
                        \"convergence\": \"";
-                       if (aAbsTolType == false)
-                         tStrStream << "RELATIVE_INI_CORE";
-                       else if (aAbsTolType == true)
-                         tStrStream << "ABSOLUTE";
-                       tStrStream << "\", \
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
                        \"scope\": \"main\", \
-                       \"tolerance\": " << aTolerance << ", \
-                       \"max_iters\": " << aMaxIters << ", \
+                       \"tolerance\": "
+                   << aTolerance << ", \
+                       \"max_iters\": "
+                   << aMaxIters << ", \
                        \"norm\": \"L2\"\
                    }\
                }";
-      } else
-      if(aConfigOption == "pcg_v")
-      {
-            tStrStream <<
-               "{\
+    }
+    else if (aConfigOption == "pcg_v")
+    {
+        tStrStream << "{\
                    \"config_version\": 2, \
                    \"solver\": {\
                        \"preconditioner\": {\
@@ -164,24 +165,25 @@ namespace Plato
                        \"solver\": \"PCG\", \
                        \"print_solve_stats\": 1, \
                        \"obtain_timings\": 1, \
-                       \"max_iters\": " << aMaxIters << ", \
+                       \"max_iters\": "
+                   << aMaxIters << ", \
                        \"monitor_residual\": 1, \
                        \"convergence\": \"";
-                       if (aAbsTolType == false)
-                         tStrStream << "RELATIVE_INI_CORE";
-                       else if (aAbsTolType == true)
-                         tStrStream << "ABSOLUTE";
-                       tStrStream << "\", \
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
                        \"scope\": \"main\", \
-                       \"tolerance\": " << aTolerance << ", \
+                       \"tolerance\": "
+                   << aTolerance << ", \
                        \"norm\": \"L2\"\
                    }\
                }";
-      } else
-      if(aConfigOption == "pcg_w")
-      {
-            tStrStream <<
-               "{\
+    }
+    else if (aConfigOption == "pcg_w")
+    {
+        tStrStream << "{\
                    \"config_version\": 2, \
                    \"solver\": {\
                        \"preconditioner\": {\
@@ -207,24 +209,25 @@ namespace Plato
                        \"solver\": \"PCG\", \
                        \"print_solve_stats\": 1, \
                        \"obtain_timings\": 1, \
-                       \"max_iters\": " << aMaxIters << ", \
+                       \"max_iters\": "
+                   << aMaxIters << ", \
                        \"monitor_residual\": 1, \
                        \"convergence\": \"";
-                       if (aAbsTolType == false)
-                         tStrStream << "RELATIVE_INI_CORE";
-                       else if (aAbsTolType == true)
-                         tStrStream << "ABSOLUTE";
-                       tStrStream << "\", \
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
                        \"scope\": \"main\", \
-                       \"tolerance\": " << aTolerance << ", \
+                       \"tolerance\": "
+                   << aTolerance << ", \
                        \"norm\": \"L2\"\
                    }\
                }";
-      } else
-      if(aConfigOption == "pcg_f")
-      {
-            tStrStream <<
-               "{\
+    }
+    else if (aConfigOption == "pcg_f")
+    {
+        tStrStream << "{\
                    \"config_version\": 2, \
                    \"solver\": {\
                        \"preconditioner\": {\
@@ -250,24 +253,25 @@ namespace Plato
                        \"solver\": \"PCG\", \
                        \"print_solve_stats\": 1, \
                        \"obtain_timings\": 1, \
-                       \"max_iters\": " << aMaxIters << ", \
+                       \"max_iters\": "
+                   << aMaxIters << ", \
                        \"monitor_residual\": 1, \
                        \"convergence\": \"";
-                       if (aAbsTolType == false)
-                         tStrStream << "RELATIVE_INI_CORE";
-                       else if (aAbsTolType == true)
-                         tStrStream << "ABSOLUTE";
-                       tStrStream << "\", \
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
                        \"scope\": \"main\", \
-                       \"tolerance\": " << aTolerance << ", \
+                       \"tolerance\": "
+                   << aTolerance << ", \
                        \"norm\": \"L2\"\
                    }\
                }";
-      } else
-      if(aConfigOption == "agg_cheb4")
-      {
- 	    tStrStream <<
-            "{\
+    }
+    else if (aConfigOption == "agg_cheb4")
+    {
+        tStrStream << "{\
                 \"config_version\": 2, \
                 \"determinism_flag\": 1, \
                 \"solver\": {\
@@ -298,24 +302,26 @@ namespace Plato
                     \"scope\": \"main\", \
                     \"max_levels\": 1000, \
                     \"convergence\": \"";
-                    if (aAbsTolType == false)
-                      tStrStream << "RELATIVE_INI_CORE";
-                    else if (aAbsTolType == true)
-                      tStrStream << "ABSOLUTE";
-                    tStrStream << "\", \
-                    \"tolerance\": " << aTolerance << ",\
-                    \"max_iters\": " << aMaxIters << ",\
+        if (aAbsTolType == false)
+            tStrStream << "RELATIVE_INI_CORE";
+        else if (aAbsTolType == true)
+            tStrStream << "ABSOLUTE";
+        tStrStream << "\", \
+                    \"tolerance\": "
+                   << aTolerance << ",\
+                    \"max_iters\": "
+                   << aMaxIters << ",\
                     \"norm\": \"L2\",\
                     \"cycle\": \"V\"\
                 }\
             }\
             ";
-      }
-      else
-      {
-          ANALYZE_THROWERR("AMGX configuration string is not predefined.")
-      }
-      return tStrStream.str();
-  }
-
+    }
+    else
+    {
+        ANALYZE_THROWERR("AMGX configuration string is not predefined.")
+    }
+    return tStrStream.str();
 }
+
+}  // namespace Plato

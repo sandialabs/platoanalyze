@@ -6,10 +6,9 @@
 
 #pragma once
 
-#include "WorkSets.hpp"
-#include "SpatialModel.hpp"
 #include "ExpInstMacros.hpp"
-
+#include "SpatialModel.hpp"
+#include "WorkSets.hpp"
 #include "hyperbolic/fluids/SimplexFluids.hpp"
 #include "hyperbolic/fluids/SimplexFluidsFadTypes.hpp"
 
@@ -19,7 +18,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam PhysicsT    Physics type
  * \tparam EvaluationT Forward Automatic Differentiation (FAD) evaluation type
  *
@@ -27,57 +27,56 @@ namespace Fluids
  *
  * \brief Pure virtual base class for vector functions.
  ******************************************************************************/
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class AbstractVectorFunction
 {
-private:
+   private:
     using ResultT = typename EvaluationT::ResultScalarType;
 
-public:
-    AbstractVectorFunction(){}
+   public:
+    AbstractVectorFunction() {}
     virtual ~AbstractVectorFunction() = default;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn void evaluate
      * \brief Evaluate vector function within the domain.
      * \param [in] aWorkSets holds state and control worksets
      * \param [in/out] aResult   result workset
      ******************************************************************************/
-    virtual void evaluate
-    (const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResult) const = 0;
+    virtual void evaluate(const Plato::WorkSets& aWorkSets, Plato::ScalarMultiVectorT<ResultT>& aResult) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn void evaluateBoundary
-     * \brief Evaluate boundary forces, not related to any prescribed boundary force, 
+     * \brief Evaluate boundary forces, not related to any prescribed boundary force,
      *        resulting from applying integration by part to the residual equation.
      * \param [in]  aSpatialModel holds mesh and entity sets (e.g. node and side sets) metadata
      * \param [in]  aWorkSets     holds input worksets (e.g. states, control, etc)
      * \param [out] aResultWS     result/output workset
      ******************************************************************************/
-    virtual void evaluateBoundary
-    (const Plato::SpatialModel & aSpatialModel,
-     const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResult) const = 0;
+    virtual void evaluateBoundary(const Plato::SpatialModel& aSpatialModel,
+                                  const Plato::WorkSets& aWorkSets,
+                                  Plato::ScalarMultiVectorT<ResultT>& aResult) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn void evaluatePrescribed
      * \brief Evaluate vector function on prescribed boundaries.
      * \param [in]  aSpatialModel holds mesh and entity sets (e.g. node and side sets) metadata
      * \param [in]  aWorkSets     holds input worksets (e.g. states, control, etc)
      * \param [out] aResultWS     result/output workset
      ******************************************************************************/
-    virtual void evaluatePrescribed
-    (const Plato::SpatialModel & aSpatialModel,
-     const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResult) const = 0;
+    virtual void evaluatePrescribed(const Plato::SpatialModel& aSpatialModel,
+                                    const Plato::WorkSets& aWorkSets,
+                                    Plato::ScalarMultiVectorT<ResultT>& aResult) const = 0;
 };
 // class AbstractVectorFunction
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

@@ -10,29 +10,28 @@ namespace Stabilized
 
 /******************************************************************************/
 /*! Base class for two-field thermomechanics
-*/
+ */
 /******************************************************************************/
-template<typename TopoElementTypeT, Plato::OrdinalType NumControls = 1>
+template <typename TopoElementTypeT, Plato::OrdinalType NumControls = 1>
 class ThermomechanicsElement : public TopoElementTypeT, public ElementBase<TopoElementTypeT>
 {
-  public:
+   public:
+    using TopoElementTypeT::mNumGaussPoints;
     using TopoElementTypeT::mNumNodesPerCell;
     using TopoElementTypeT::mNumSpatialDims;
-    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
-    static constexpr Plato::OrdinalType mNumVoigtTerms = (mNumSpatialDims == 3) ? 6 :
-                                                        ((mNumSpatialDims == 2) ? 3 :
-                                                       (((mNumSpatialDims == 1) ? 1 : 0)));
+    static constexpr Plato::OrdinalType mNumVoigtTerms =
+        (mNumSpatialDims == 3) ? 6 : ((mNumSpatialDims == 2) ? 3 : (((mNumSpatialDims == 1) ? 1 : 0)));
 
     // degree-of-freedom attributes
-    static constexpr auto mNumControl        = NumControls;
+    static constexpr auto mNumControl = NumControls;
 
-    static constexpr auto mTDofOffset        = mNumSpatialDims + 1;
-    static constexpr auto mNumDofsPerNode    = mNumSpatialDims + 2;
+    static constexpr auto mTDofOffset = mNumSpatialDims + 1;
+    static constexpr auto mNumDofsPerNode = mNumSpatialDims + 2;
     static constexpr auto mPressureDofOffset = mNumSpatialDims;
-    static constexpr auto mNumDofsPerCell    = mNumDofsPerNode * mNumNodesPerCell;
+    static constexpr auto mNumDofsPerCell = mNumDofsPerNode * mNumNodesPerCell;
 
     // this physics can be used with VMS functionality in PA.  The
     // following defines the nodal state attributes required by VMS
@@ -41,10 +40,8 @@ class ThermomechanicsElement : public TopoElementTypeT, public ElementBase<TopoE
     static constexpr auto mNumNodeStatePerCell = mNumNodeStatePerNode * mNumNodesPerCell;
 
     static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
-
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP * mNumGaussPoints;
 };
 
-
-} // namespace Stabilized
-} // namespace Plato
+}  // namespace Stabilized
+}  // namespace Plato

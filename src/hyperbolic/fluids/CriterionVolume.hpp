@@ -6,14 +6,13 @@
 
 #pragma once
 
+#include "LinearTetCubRuleDegreeOne.hpp"
+#include "Plato_TopOptFunctors.hpp"
 #include "SpatialModel.hpp"
 #include "UtilsTeuchos.hpp"
-#include "Plato_TopOptFunctors.hpp"
-#include "LinearTetCubRuleDegreeOne.hpp"
-
+#include "hyperbolic/fluids/AbstractScalarFunction.hpp"
 #include "hyperbolic/fluids/SimplexFluids.hpp"
 #include "hyperbolic/fluids/SimplexFluidsFadTypes.hpp"
-#include "hyperbolic/fluids/AbstractScalarFunction.hpp"
 
 namespace Plato
 {
@@ -21,50 +20,49 @@ namespace Plato
 namespace Fluids
 {
 
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class CriterionVolume : public Plato::Fluids::AbstractScalarFunction<PhysicsT, EvaluationT>
 {
-private:
-    static constexpr auto mNumSpatialDims = PhysicsT::SimplexT::mNumSpatialDims; /*!< number of spatial dimensions */
+   private:
+    static constexpr auto mNumSpatialDims = PhysicsT::SimplexT::mNumSpatialDims;   /*!< number of spatial dimensions */
     static constexpr auto mNumNodesPerCell = PhysicsT::SimplexT::mNumNodesPerCell; /*!< number of nodes per cell */
 
     // set local FAD types
-    using ResultT  = typename EvaluationT::ResultScalarType; /*!< result FAD type */
-    using ConfigT  = typename EvaluationT::ConfigScalarType; /*!< configuration FAD type */
+    using ResultT = typename EvaluationT::ResultScalarType;   /*!< result FAD type */
+    using ConfigT = typename EvaluationT::ConfigScalarType;   /*!< configuration FAD type */
     using ControlT = typename EvaluationT::ControlScalarType; /*!< control FAD evaluation type */
 
     // set local typenames
-    using CubatureRule  = Plato::LinearTetCubRuleDegreeOne<mNumSpatialDims>; /*!< local short name for cubature rule class */
+    using CubatureRule =
+        Plato::LinearTetCubRuleDegreeOne<mNumSpatialDims>; /*!< local short name for cubature rule class */
 
-    Plato::DataMap& mDataMap; /*!< output database */
+    Plato::DataMap& mDataMap;                   /*!< output database */
     const Plato::SpatialDomain& mSpatialDomain; /*!< spatial domain metadata */
-    Plato::LinearTetCubRuleDegreeOne<PhysicsT::SimplexT::mNumSpatialDims> mCubatureRule; /*!< cubature integration rule */
-    
-    std::string mFuncName; /*!< scalar funciton name */
-    std::vector<std::string> mElemDomains; /*!< element blocks considered for volume caclulation */
-    Plato::Scalar mPenaltyExponent = 3.0; /*!< penalty exponent used for volume penalization */
+    Plato::LinearTetCubRuleDegreeOne<PhysicsT::SimplexT::mNumSpatialDims>
+        mCubatureRule; /*!< cubature integration rule */
 
-public:
-    /***************************************************************************//**
+    std::string mFuncName;                 /*!< scalar funciton name */
+    std::vector<std::string> mElemDomains; /*!< element blocks considered for volume caclulation */
+    Plato::Scalar mPenaltyExponent = 3.0;  /*!< penalty exponent used for volume penalization */
+
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aName    scalar function name
      * \param [in] aDomain  holds mesh and entity sets (e.g. node and side sets) metadata
      * \param [in] aDataMap holds output metadata
      * \param [in] aInputs  input file metadata
      ******************************************************************************/
-    CriterionVolume
-    (const std::string          & aName,
-     const Plato::SpatialDomain & aDomain,
-     Plato::DataMap             & aDataMap,
-     Teuchos::ParameterList     & aInputs) :
-        mDataMap(aDataMap),
-        mCubatureRule(CubatureRule()),
-        mSpatialDomain(aDomain),
-        mFuncName(aName)
+    CriterionVolume(const std::string& aName,
+                    const Plato::SpatialDomain& aDomain,
+                    Plato::DataMap& aDataMap,
+                    Teuchos::ParameterList& aInputs)
+        : mDataMap(aDataMap), mCubatureRule(CubatureRule()), mSpatialDomain(aDomain), mFuncName(aName)
     {
         auto tMyCriteria = aInputs.sublist("Criteria").sublist(aName);
         mElemDomains = Plato::teuchos::parse_array<std::string>("Domains", tMyCriteria);
-        if( mElemDomains.empty() )
+        if (mElemDomains.empty())
         {
             // default: all the element blocks will be used in the volume evaluation
             auto tMyBlockName = mSpatialDomain.getElementBlockName();
@@ -74,38 +72,40 @@ public:
         if (tMyCriteria.isSublist("Penalty Function"))
         {
             auto tPenaltyFuncList = tMyCriteria.sublist("Penalty Function");
-            if(tPenaltyFuncList.isParameter("Penalty Exponent"))
+            if (tPenaltyFuncList.isParameter("Penalty Exponent"))
             {
                 mPenaltyExponent = tPenaltyFuncList.get<Plato::Scalar>("Penalty Exponent");
             }
         }
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn std::string name
      * \brief Returns scalar function name
      * \return scalar function name
      ******************************************************************************/
     std::string name() const override { return mFuncName; }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn void evaluate
      * \brief Evaluate scalar function inside the computational domain \f$ \Omega \f$.
      * \param [in] aWorkSets holds state work sets initialized with correct FAD types
      * \param [in] aResult   1D output work set of size number of cells
      ******************************************************************************/
-    void evaluate(const Plato::WorkSets & aWorkSets, Plato::ScalarVectorT<ResultT> & aResult) const override
+    void evaluate(const Plato::WorkSets& aWorkSets, Plato::ScalarVectorT<ResultT>& aResult) const override
     {
         auto tMyBlockName = mSpatialDomain.getElementBlockName();
         auto tEvaluateDomain = std::find(mElemDomains.begin(), mElemDomains.end(), tMyBlockName) != mElemDomains.end();
-        if(tEvaluateDomain)
+        if (tEvaluateDomain)
         {
             // local functors
             Plato::ComputeCellVolume<mNumSpatialDims> tComputeCellVolume;
 
             // set local input worksets
             auto tConfigWS = Plato::metadata<Plato::ScalarArray3DT<ConfigT>>(aWorkSets.get("configuration"));
-            auto tControlWS  = Plato::metadata<Plato::ScalarMultiVectorT<ControlT>>(aWorkSets.get("control"));
+            auto tControlWS = Plato::metadata<Plato::ScalarMultiVectorT<ControlT>>(aWorkSets.get("control"));
 
             // transfer member data to device
             auto tPenaltyExponent = mPenaltyExponent;
@@ -113,32 +113,32 @@ public:
             auto tBasisFunctions = mCubatureRule.getBasisFunctions();
 
             auto tNumCells = mSpatialDomain.numCells();
-            Kokkos::parallel_for("volume", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-            {
-                ConfigT tCellVolume;
-                tComputeCellVolume(aCellOrdinal, tConfigWS, tCellVolume);
-                tCellVolume *= tCubatureWeight;
+            Kokkos::parallel_for(
+                "volume", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+                    ConfigT tCellVolume;
+                    tComputeCellVolume(aCellOrdinal, tConfigWS, tCellVolume);
+                    tCellVolume *= tCubatureWeight;
 
-                ControlT tDensity = Plato::cell_density<mNumNodesPerCell>(aCellOrdinal, tControlWS);
-                ControlT tPenalizedDensity = pow(tDensity, tPenaltyExponent);
-                aResult(aCellOrdinal) = tPenalizedDensity * tCellVolume;
-            });
+                    ControlT tDensity = Plato::cell_density<mNumNodesPerCell>(aCellOrdinal, tControlWS);
+                    ControlT tPenalizedDensity = pow(tDensity, tPenaltyExponent);
+                    aResult(aCellOrdinal) = tPenalizedDensity * tCellVolume;
+                });
         }
     }
 
-    void evaluateBoundary
-    (const Plato::SpatialModel & aSpatialModel, 
-     const Plato::WorkSets & aWorkSets, 
-     Plato::ScalarVectorT<ResultT> & aResult) 
-     const override
-    { return; }
+    void evaluateBoundary(const Plato::SpatialModel& aSpatialModel,
+                          const Plato::WorkSets& aWorkSets,
+                          Plato::ScalarVectorT<ResultT>& aResult) const override
+    {
+        return;
+    }
 };
 // class CriterionVolume
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

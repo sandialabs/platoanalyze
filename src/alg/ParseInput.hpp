@@ -39,17 +39,15 @@
 // Must be included first on Intel-Phi systems due to
 // redefinition of SEEK_SET in <mpi.h>.
 
-#include "alg/ParallelComm.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_Time.hpp>
 
+#include "alg/ParallelComm.hpp"
+
 //----------------------------------------------------------------------------
 
-namespace Plato {
-Teuchos::ParameterList input_file_parsing(
-    int argc, char **argv, Comm::Machine const &machine);
-void input_file_echo(
-    Teuchos::ParameterList &problem,
-    Teuchos::Time &         time_main,
-    Comm::Machine const &   machine);
+namespace Plato
+{
+Teuchos::ParameterList input_file_parsing(int argc, char **argv, Comm::Machine const &machine);
+void input_file_echo(Teuchos::ParameterList &problem, Teuchos::Time &time_main, Comm::Machine const &machine);
 }  // namespace Plato

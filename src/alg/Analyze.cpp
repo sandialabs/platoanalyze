@@ -40,57 +40,56 @@
 // redefinition of SEEK_SET in <mpi.h>.
 
 #include <Teuchos_ParameterList.hpp>
-#include <Teuchos_TimeMonitor.hpp>
 #include <Teuchos_Time.hpp>
+#include <Teuchos_TimeMonitor.hpp>
 #include <fstream>
 
+#include "PlatoMesh.hpp"
 #include "alg/ErrorHandling.hpp"
 #include "alg/ParallelComm.hpp"
 #include "alg/ParseInput.hpp"
 #include "alg/Run.hpp"
 
-#include "PlatoMesh.hpp"
-
 void printTimingResults()
 {
-  const std::string tTimerFilter = ""; //"Analyze:"; // Only timers beginning with this string get summarized.
-  const bool tAlwaysWriteLocal = false;
-  const bool tWriteGlobalStats = true;
-  const bool tWriteZeroTimers  = false;
-  std::ofstream tTimingOutputFileStream ("plato_analyze_timing_summary.txt", std::ofstream::out);
-  Teuchos::TimeMonitor::summarize(tTimingOutputFileStream, tAlwaysWriteLocal, tWriteGlobalStats, tWriteZeroTimers, 
-                                  Teuchos::ECounterSetOp::Intersection, tTimerFilter);
-  tTimingOutputFileStream.close();
+    const std::string tTimerFilter = "";  //"Analyze:"; // Only timers beginning with this string get summarized.
+    const bool tAlwaysWriteLocal = false;
+    const bool tWriteGlobalStats = true;
+    const bool tWriteZeroTimers = false;
+    std::ofstream tTimingOutputFileStream("plato_analyze_timing_summary.txt", std::ofstream::out);
+    Teuchos::TimeMonitor::summarize(tTimingOutputFileStream, tAlwaysWriteLocal, tWriteGlobalStats, tWriteZeroTimers,
+                                    Teuchos::ECounterSetOp::Intersection, tTimerFilter);
+    tTimingOutputFileStream.close();
 }
 
-int main(int aArgc, char** aArgv) {
-  Plato::enable_floating_point_exceptions();
+int main(int aArgc, char** aArgv)
+{
+    Plato::enable_floating_point_exceptions();
 
-  Plato::Comm::Machine tMachine(&aArgc, &aArgv);
+    Plato::Comm::Machine tMachine(&aArgc, &aArgv);
 
-  Kokkos::initialize(aArgc, aArgv);
+    Kokkos::initialize(aArgc, aArgv);
 
-  Plato::MeshFactory::initialize(aArgc, aArgv);
+    Plato::MeshFactory::initialize(aArgc, aArgv);
 
-  Teuchos::Time tTimeMng("Total Time", true);
+    Teuchos::Time tTimeMng("Total Time", true);
 
-  Teuchos::ParameterList tProblem =
-      Plato::input_file_parsing(aArgc, aArgv, tMachine);
+    Teuchos::ParameterList tProblem = Plato::input_file_parsing(aArgc, aArgv, tMachine);
 
-  bool tSuccess = true;
-  int tReturnCode = EXIT_SUCCESS;
+    bool tSuccess = true;
+    int tReturnCode = EXIT_SUCCESS;
 
-  try
-  {
-    Plato::run(tProblem, tMachine);
-  }
-  PLATO_CATCH_STATEMENTS(true, tSuccess);
+    try
+    {
+        Plato::run(tProblem, tMachine);
+    }
+    PLATO_CATCH_STATEMENTS(true, tSuccess);
 
-  if (!tSuccess) tReturnCode = EXIT_FAILURE;
+    if (!tSuccess) tReturnCode = EXIT_FAILURE;
 
-  printTimingResults();
+    printTimingResults();
 
-  Plato::MeshFactory::finalize();
+    Plato::MeshFactory::finalize();
 
-  return tReturnCode;
+    return tReturnCode;
 }

@@ -8,15 +8,15 @@ namespace Plato
 namespace Contact
 {
 
-template<typename EvaluationType>
+template <typename EvaluationType>
 class AbstractContactForce
 {
-protected:
-    using StateType  = typename EvaluationType::StateScalarType;  
-    using ConfigType = typename EvaluationType::ConfigScalarType; 
-    using ResultType = typename EvaluationType::ResultScalarType; 
+   protected:
+    using StateType = typename EvaluationType::StateScalarType;
+    using ConfigType = typename EvaluationType::ConfigScalarType;
+    using ResultType = typename EvaluationType::ResultScalarType;
 
-public:
+   public:
     AbstractContactForce() = default;
 
     virtual ~AbstractContactForce() = default;
@@ -25,21 +25,17 @@ public:
 
     AbstractContactForce(AbstractContactForce&& aForce) = delete;
 
-    AbstractContactForce&
-    operator=(const AbstractContactForce& aForce) = delete;
+    AbstractContactForce& operator=(const AbstractContactForce& aForce) = delete;
 
-    AbstractContactForce&
-    operator=(AbstractContactForce&& aForce) = delete;
+    AbstractContactForce& operator=(AbstractContactForce&& aForce) = delete;
 
-    virtual void
-    operator()
-    (const Plato::OrdinalVectorT<const Plato::OrdinalType> & aElementOrds,
-     const Plato::OrdinalVectorT<const Plato::OrdinalType> & aLocalNodeOrds,
-     const Plato::ScalarArray3DT<StateType>  & aState,
-     const Plato::ScalarArray3DT<ConfigType> & aConfig,
-           Plato::ScalarArray3DT<ResultType> & aResult) const = 0;
+    virtual void operator()(const Plato::OrdinalVectorT<const Plato::OrdinalType>& aElementOrds,
+                            const Plato::OrdinalVectorT<const Plato::OrdinalType>& aLocalNodeOrds,
+                            const Plato::ScalarArray3DT<StateType>& aState,
+                            const Plato::ScalarArray3DT<ConfigType>& aConfig,
+                            Plato::ScalarArray3DT<ResultType>& aResult) const = 0;
 };
 
-}
+}  // namespace Contact
 
-}
+}  // namespace Plato

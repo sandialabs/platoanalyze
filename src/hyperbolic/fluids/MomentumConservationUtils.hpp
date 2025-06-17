@@ -14,7 +14,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam SpaceDim spatial dimensions (integer)
  * \tparam ResultT   output work set Forward Automatic Differentiation (FAD) type
  * \tparam ControlT  control work set FAD type
@@ -37,18 +38,12 @@ namespace Fluids
  * \param [in/out] aResult     result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType SpaceDim,
- typename ResultT,
- typename ControlT,
- typename PrevVelT>
-KOKKOS_INLINE_FUNCTION void
-calculate_brinkman_forces
-(const Plato::OrdinalType & aCellOrdinal,
- const ControlT & aImpermeability,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVelGP,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType SpaceDim, typename ResultT, typename ControlT, typename PrevVelT>
+KOKKOS_INLINE_FUNCTION void calculate_brinkman_forces(const Plato::OrdinalType& aCellOrdinal,
+                                                      const ControlT& aImpermeability,
+                                                      const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVelGP,
+                                                      const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                      Plato::Scalar aMultiplier = 1.0)
 {
     for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
     {
@@ -57,7 +52,8 @@ calculate_brinkman_forces
 }
 // function calculate_brinkman_forces
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam SpaceDim spatial dimensions (integer)
  * \tparam ResultT   output work set Forward Automatic Differentiation (FAD) type
  * \tparam ControlT  control work set FAD type
@@ -81,19 +77,13 @@ calculate_brinkman_forces
  * \param [in/out] aResult    result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType SpaceDim,
- typename ResultT,
- typename ControlT,
- typename PrevTempT>
-KOKKOS_INLINE_FUNCTION void
-calculate_natural_convective_forces
-(const Plato::OrdinalType & aCellOrdinal,
- const ControlT & aPrTimesPr,
- const Plato::ScalarVector & aGrashofNum,
- const Plato::ScalarVectorT<PrevTempT> & aPrevTempGP,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType SpaceDim, typename ResultT, typename ControlT, typename PrevTempT>
+KOKKOS_INLINE_FUNCTION void calculate_natural_convective_forces(const Plato::OrdinalType& aCellOrdinal,
+                                                                const ControlT& aPrTimesPr,
+                                                                const Plato::ScalarVector& aGrashofNum,
+                                                                const Plato::ScalarVectorT<PrevTempT>& aPrevTempGP,
+                                                                const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                                Plato::Scalar aMultiplier = 1.0)
 {
     for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
     {
@@ -102,7 +92,8 @@ calculate_natural_convective_forces
 }
 // function calculate_natural_convective_forces
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes number of nodes in cell/element (integer)
  * \tparam SpaceDim spatial dimensions (integer)
  * \tparam ResultT  output work set Forward Automatic Differentiation (FAD) type
@@ -128,39 +119,38 @@ calculate_natural_convective_forces
  * \param [in/out] aResult    result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- Plato::OrdinalType SpaceDim,
- typename ResultT,
- typename ConfigT,
- typename ControlT,
- typename StrainT>
-KOKKOS_INLINE_FUNCTION void
-integrate_viscous_forces
-(const Plato::OrdinalType & aCellOrdinal,
- const ControlT & aPrandtlNumber,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarArray3DT<StrainT> & aStrainRate,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ResultT,
+          typename ConfigT,
+          typename ControlT,
+          typename StrainT>
+KOKKOS_INLINE_FUNCTION void integrate_viscous_forces(const Plato::OrdinalType& aCellOrdinal,
+                                                     const ControlT& aPrandtlNumber,
+                                                     const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                     const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                     const Plato::ScalarArray3DT<StrainT>& aStrainRate,
+                                                     const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                     Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDimI = 0; tDimI < SpaceDim; tDimI++)
+        for (Plato::OrdinalType tDimI = 0; tDimI < SpaceDim; tDimI++)
         {
             auto tDofIndex = (SpaceDim * tNode) + tDimI;
-            for(Plato::OrdinalType tDimJ = 0; tDimJ < SpaceDim; tDimJ++)
+            for (Plato::OrdinalType tDimJ = 0; tDimJ < SpaceDim; tDimJ++)
             {
-                aResult(aCellOrdinal, tDofIndex) += aMultiplier * aCellVolume(aCellOrdinal) * aGradient(aCellOrdinal, tNode, tDimJ)
-                    * ( static_cast<Plato::Scalar>(2.0) * aPrandtlNumber * aStrainRate(aCellOrdinal, tDimI, tDimJ) );
+                aResult(aCellOrdinal, tDofIndex) +=
+                    aMultiplier * aCellVolume(aCellOrdinal) * aGradient(aCellOrdinal, tNode, tDimJ) *
+                    (static_cast<Plato::Scalar>(2.0) * aPrandtlNumber * aStrainRate(aCellOrdinal, tDimI, tDimJ));
             }
         }
     }
 }
 // function integrate_viscous_forces
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes number of nodes in cell/element (integer)
  * \tparam SpaceDim spatial dimensions (integer)
  * \tparam ResultT  output work set Forward Automatic Differentiation (FAD) type
@@ -184,37 +174,36 @@ integrate_viscous_forces
  * \param [in/out] aResult  result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- Plato::OrdinalType SpaceDim,
- typename ResultT,
- typename ConfigT,
- typename PrevVelT>
-KOKKOS_INLINE_FUNCTION void
-calculate_advected_momentum_forces
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVelWS,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVelGP,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ResultT,
+          typename ConfigT,
+          typename PrevVelT>
+KOKKOS_INLINE_FUNCTION void calculate_advected_momentum_forces(const Plato::OrdinalType& aCellOrdinal,
+                                                               const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                               const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVelWS,
+                                                               const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVelGP,
+                                                               const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                               Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDimI = 0; tDimI < SpaceDim; tDimI++)
+        for (Plato::OrdinalType tDimI = 0; tDimI < SpaceDim; tDimI++)
         {
             auto tCellDofI = (SpaceDim * tNode) + tDimI;
-            for(Plato::OrdinalType tDimJ = 0; tDimJ < SpaceDim; tDimJ++)
+            for (Plato::OrdinalType tDimJ = 0; tDimJ < SpaceDim; tDimJ++)
             {
-                aResult(aCellOrdinal, tDimI) += aMultiplier * ( aPrevVelGP(aCellOrdinal, tDimJ) *
-                    ( aGradient(aCellOrdinal, tNode, tDimJ) * aPrevVelWS(aCellOrdinal, tCellDofI) ) );
+                aResult(aCellOrdinal, tDimI) +=
+                    aMultiplier * (aPrevVelGP(aCellOrdinal, tDimJ) *
+                                   (aGradient(aCellOrdinal, tNode, tDimJ) * aPrevVelWS(aCellOrdinal, tCellDofI)));
             }
         }
     }
 }
 // function calculate_advected_momentum_forces
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodesPerCell number of nodes per cell (integer)
  * \tparam ControlT        control work set Forward Automatic Differentiation (FAD) type
  *
@@ -235,24 +224,21 @@ calculate_advected_momentum_forces
  *
  * \return penalized physical parameter
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodesPerCell,
-typename ControlT>
-KOKKOS_INLINE_FUNCTION ControlT
-brinkman_penalization
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::Scalar      & aPhysicalParam,
- const Plato::Scalar      & aConvexityParam,
- const Plato::ScalarMultiVectorT<ControlT> & aControlWS)
+template <Plato::OrdinalType NumNodesPerCell, typename ControlT>
+KOKKOS_INLINE_FUNCTION ControlT brinkman_penalization(const Plato::OrdinalType& aCellOrdinal,
+                                                      const Plato::Scalar& aPhysicalParam,
+                                                      const Plato::Scalar& aConvexityParam,
+                                                      const Plato::ScalarMultiVectorT<ControlT>& aControlWS)
 {
     ControlT tDensity = Plato::cell_density<NumNodesPerCell>(aCellOrdinal, aControlWS);
-    ControlT tPenalizedPhysicalParam = aPhysicalParam * (static_cast<Plato::Scalar>(1.0) - tDensity)
-        / (static_cast<Plato::Scalar>(1.0) + (aConvexityParam * tDensity));
+    ControlT tPenalizedPhysicalParam = aPhysicalParam * (static_cast<Plato::Scalar>(1.0) - tDensity) /
+                                       (static_cast<Plato::Scalar>(1.0) + (aConvexityParam * tDensity));
     return tPenalizedPhysicalParam;
 }
 // function brinkman_penalization
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodesPerCell number of nodes per cell (integer)
  * \tparam NumSpaceDim     number of spatial dimensions (integer)
  * \tparam AViewTypeT      input view Forward Automatic Differentiation (FAD) type
@@ -273,39 +259,38 @@ brinkman_penalization
  * \param [in] aGradient    3D view with shape function's derivatives
  * \param [in] aStrainRate  3D view with element strain rate
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodesPerCell,
- Plato::OrdinalType NumSpaceDim,
- typename AViewTypeT,
- typename BViewTypeT,
- typename CViewTypeT>
-KOKKOS_INLINE_FUNCTION void
-strain_rate
-(const Plato::OrdinalType & aCellOrdinal,
- const AViewTypeT & aStateWS,
- const BViewTypeT & aGradient,
- const CViewTypeT & aStrainRate)
+template <Plato::OrdinalType NumNodesPerCell,
+          Plato::OrdinalType NumSpaceDim,
+          typename AViewTypeT,
+          typename BViewTypeT,
+          typename CViewTypeT>
+KOKKOS_INLINE_FUNCTION void strain_rate(const Plato::OrdinalType& aCellOrdinal,
+                                        const AViewTypeT& aStateWS,
+                                        const BViewTypeT& aGradient,
+                                        const CViewTypeT& aStrainRate)
 {
     // calculate strain rate for incompressible flows, which is defined as
     // \frac{1}{2}\left( \frac{\partial u_i}{\partial x_j} + \frac{\partial u_j}{\partial x_i} \right)
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodesPerCell; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodesPerCell; tNode++)
     {
-        for(Plato::OrdinalType tDimI = 0; tDimI < NumSpaceDim; tDimI++)
+        for (Plato::OrdinalType tDimI = 0; tDimI < NumSpaceDim; tDimI++)
         {
-            for(Plato::OrdinalType tDimJ = 0; tDimJ < NumSpaceDim; tDimJ++)
+            for (Plato::OrdinalType tDimJ = 0; tDimJ < NumSpaceDim; tDimJ++)
             {
                 auto tLocalDimI = tNode * NumSpaceDim + tDimI;
                 auto tLocalDimJ = tNode * NumSpaceDim + tDimJ;
-                aStrainRate(aCellOrdinal, tDimI, tDimJ) += static_cast<Plato::Scalar>(0.5) *
-                    ( ( aGradient(aCellOrdinal, tNode, tDimJ) * aStateWS(aCellOrdinal, tLocalDimI) )
-                    + ( aGradient(aCellOrdinal, tNode, tDimI) * aStateWS(aCellOrdinal, tLocalDimJ) ) );
+                aStrainRate(aCellOrdinal, tDimI, tDimJ) +=
+                    static_cast<Plato::Scalar>(0.5) *
+                    ((aGradient(aCellOrdinal, tNode, tDimJ) * aStateWS(aCellOrdinal, tLocalDimI)) +
+                     (aGradient(aCellOrdinal, tNode, tDimI) * aStateWS(aCellOrdinal, tLocalDimJ)));
             }
         }
     }
 }
 // function strain_rate
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes number of nodes in cell/element (integer)
  * \tparam SpaceDim   spatial dimensions (integer)
  * \tparam ResultT    output Forward Automatic Differentiation (FAD) type
@@ -318,8 +303,8 @@ strain_rate
  * \brief Integrate stabilizing momentum forces, defined as
  *
  * \f[
- *   \alpha\int_{\Omega} \left( \frac{\partial w_i^h}{\partial\bar{x}_k}\bar{u}^n_k \right) \hat{S}^n_{\bar{u}_i}\, d\Omega
- * \f]
+ *   \alpha\int_{\Omega} \left( \frac{\partial w_i^h}{\partial\bar{x}_k}\bar{u}^n_k \right) \hat{S}^n_{\bar{u}_i}\,
+ *d\Omega \f]
  *
  * where \f$\alpha\f$ denotes a scalar multiplier, \f$ u_k^n \f$ is the k-th
  * component of the velocity field at time step n, \f$ x_i \f$ is the i-th
@@ -334,39 +319,41 @@ strain_rate
  * \param [in/out] aResult     result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- Plato::OrdinalType SpaceDim,
- typename ResultT,
- typename ConfigT,
- typename PrevVelT,
- typename StabilityT>
-KOKKOS_INLINE_FUNCTION void
-integrate_stabilizing_vector_force
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVelGP,
- const Plato::ScalarMultiVectorT<StabilityT> & aStabilization,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ResultT,
+          typename ConfigT,
+          typename PrevVelT,
+          typename StabilityT>
+KOKKOS_INLINE_FUNCTION void integrate_stabilizing_vector_force(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+    const Plato::ScalarArray3DT<ConfigT>& aGradient,
+    const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVelGP,
+    const Plato::ScalarMultiVectorT<StabilityT>& aStabilization,
+    const Plato::ScalarMultiVectorT<ResultT>& aResult,
+    Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDimI = 0; tDimI < SpaceDim; tDimI++)
+        for (Plato::OrdinalType tDimI = 0; tDimI < SpaceDim; tDimI++)
         {
             auto tLocalCellDof = (SpaceDim * tNode) + tDimI;
-            for(Plato::OrdinalType tDimK = 0; tDimK < SpaceDim; tDimK++)
+            for (Plato::OrdinalType tDimK = 0; tDimK < SpaceDim; tDimK++)
             {
-                aResult(aCellOrdinal, tLocalCellDof) += aMultiplier * ( aGradient(aCellOrdinal, tNode, tDimK) *
-                    ( aPrevVelGP(aCellOrdinal, tDimK) * aStabilization(aCellOrdinal, tDimI) ) ) * aCellVolume(aCellOrdinal);
+                aResult(aCellOrdinal, tLocalCellDof) +=
+                    aMultiplier *
+                    (aGradient(aCellOrdinal, tNode, tDimK) *
+                     (aPrevVelGP(aCellOrdinal, tDimK) * aStabilization(aCellOrdinal, tDimI))) *
+                    aCellVolume(aCellOrdinal);
             }
         }
     }
 }
 // function integrate_stabilizing_vector_force
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodesPerCell number of nodes in cell/element (integer)
  * \tparam NumDofsPerNode  number of degrees of freedom per node (integer)
  * \tparam ResultT         output work set Forward Automatic Differentiation (FAD) type
@@ -390,35 +377,32 @@ integrate_stabilizing_vector_force
  * \param [in/out] aResult     result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodesPerCell,
- Plato::OrdinalType NumDofsPerNode,
- typename ResultT,
- typename ConfigT,
- typename FieldT>
-KOKKOS_INLINE_FUNCTION
-void integrate_vector_field
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVector & aBasisFunctions,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarMultiVectorT<FieldT> & aField,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodesPerCell,
+          Plato::OrdinalType NumDofsPerNode,
+          typename ResultT,
+          typename ConfigT,
+          typename FieldT>
+KOKKOS_INLINE_FUNCTION void integrate_vector_field(const Plato::OrdinalType& aCellOrdinal,
+                                                   const Plato::ScalarVector& aBasisFunctions,
+                                                   const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                   const Plato::ScalarMultiVectorT<FieldT>& aField,
+                                                   const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                   Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodesPerCell; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodesPerCell; tNode++)
     {
-        for(Plato::OrdinalType tDof = 0; tDof < NumDofsPerNode; tDof++)
+        for (Plato::OrdinalType tDof = 0; tDof < NumDofsPerNode; tDof++)
         {
             auto tLocalCellDof = (NumDofsPerNode * tNode) + tDof;
-            aResult(aCellOrdinal, tLocalCellDof) += aMultiplier * aCellVolume(aCellOrdinal) *
-                aBasisFunctions(tNode) * aField(aCellOrdinal, tDof);
+            aResult(aCellOrdinal, tLocalCellDof) +=
+                aMultiplier * aCellVolume(aCellOrdinal) * aBasisFunctions(tNode) * aField(aCellOrdinal, tDof);
         }
     }
 }
 // function integrate_vector_field
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato

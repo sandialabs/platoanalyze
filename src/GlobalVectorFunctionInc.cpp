@@ -17,4 +17,3 @@ template class Plato::GlobalVectorFunctionInc<Plato::InfinitesimalStrainPlastici
 #ifdef PLATOANALYZE_3D
 template class Plato::GlobalVectorFunctionInc<Plato::InfinitesimalStrainPlasticity<3>>;
 #endif
-

@@ -1,44 +1,43 @@
 #ifndef PLATO_THERMAL_HPP
 #define PLATO_THERMAL_HPP
 
-#include "parabolic/AbstractVectorFunction.hpp"
 #include "parabolic/AbstractScalarFunction.hpp"
+#include "parabolic/AbstractVectorFunction.hpp"
 
 #ifdef PLATO_PARABOLIC
-  #include "parabolic/HeatEquationResidual.hpp"
-  #include "parabolic/InternalThermalEnergy.hpp"
-  #include "parabolic/TemperatureAverage.hpp"
+#include "parabolic/HeatEquationResidual.hpp"
+#include "parabolic/InternalThermalEnergy.hpp"
+#include "parabolic/TemperatureAverage.hpp"
 #endif
 
-#include "elliptic/AbstractVectorFunction.hpp"
-#include "elliptic/AbstractScalarFunction.hpp"
-#include "elliptic/ThermostaticResidual.hpp"
-#include "elliptic/InternalThermalEnergy.hpp"
-#include "elliptic/FluxPNorm.hpp"
-
 #include "MakeFunctions.hpp"
+#include "elliptic/AbstractScalarFunction.hpp"
+#include "elliptic/AbstractVectorFunction.hpp"
+#include "elliptic/FluxPNorm.hpp"
+#include "elliptic/InternalThermalEnergy.hpp"
+#include "elliptic/ThermostaticResidual.hpp"
 
-namespace Plato {
+namespace Plato
+{
 
-namespace ThermalFactory {
+namespace ThermalFactory
+{
 /******************************************************************************/
-struct FunctionFactory{
-/******************************************************************************/
+struct FunctionFactory
+{
+    /******************************************************************************/
     template <typename EvaluationType>
-    std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<EvaluationType>>
-    createVectorFunction(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              std::string              aPDE
-    )
+    std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<EvaluationType>> createVectorFunction(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aProblemParams,
+        std::string aPDE)
     {
-
         auto tLowerPDE = Plato::tolower(aPDE);
-        if(tLowerPDE == "elliptic")
+        if (tLowerPDE == "elliptic")
         {
-            return Plato::makeVectorFunction<EvaluationType, Plato::Elliptic::ThermostaticResidual>
-                     (aSpatialDomain, aDataMap, aProblemParams, aPDE);
+            return Plato::makeVectorFunction<EvaluationType, Plato::Elliptic::ThermostaticResidual>(
+                aSpatialDomain, aDataMap, aProblemParams, aPDE);
         }
         else
         {
@@ -47,20 +46,18 @@ struct FunctionFactory{
     }
 
     template <typename EvaluationType>
-    std::shared_ptr<Plato::Parabolic::AbstractVectorFunction<EvaluationType>>
-    createVectorFunctionParabolic(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              std::string              aPDE
-    )
+    std::shared_ptr<Plato::Parabolic::AbstractVectorFunction<EvaluationType>> createVectorFunctionParabolic(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aProblemParams,
+        std::string aPDE)
     {
 #ifdef PLATO_PARABOLIC
         auto tLowerPDE = Plato::tolower(aPDE);
-        if(tLowerPDE == "parabolic")
+        if (tLowerPDE == "parabolic")
         {
-            return Plato::makeVectorFunction<EvaluationType, Plato::Parabolic::HeatEquationResidual>
-                     (aSpatialDomain, aDataMap, aProblemParams, aPDE);
+            return Plato::makeVectorFunction<EvaluationType, Plato::Parabolic::HeatEquationResidual>(
+                aSpatialDomain, aDataMap, aProblemParams, aPDE);
         }
         else
         {
@@ -72,25 +69,23 @@ struct FunctionFactory{
     }
 
     template <typename EvaluationType>
-    std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<EvaluationType>>
-    createScalarFunction( 
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              std::string              aFuncType,
-              std::string              aFuncName
-    )
+    std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<EvaluationType>> createScalarFunction(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aProblemParams,
+        std::string aFuncType,
+        std::string aFuncName)
     {
         auto tLowerFuncType = Plato::tolower(aFuncType);
-        if(tLowerFuncType == "internal thermal energy")
+        if (tLowerFuncType == "internal thermal energy")
         {
-            return Plato::makeScalarFunction<EvaluationType, Plato::Elliptic::InternalThermalEnergy>
-                (aSpatialDomain, aDataMap, aProblemParams, aFuncName);
-        } else
-        if( tLowerFuncType == "flux p-norm" )
+            return Plato::makeScalarFunction<EvaluationType, Plato::Elliptic::InternalThermalEnergy>(
+                aSpatialDomain, aDataMap, aProblemParams, aFuncName);
+        }
+        else if (tLowerFuncType == "flux p-norm")
         {
-            return Plato::makeScalarFunction<EvaluationType, Plato::Elliptic::FluxPNorm>
-                (aSpatialDomain, aDataMap, aProblemParams, aFuncName);
+            return Plato::makeScalarFunction<EvaluationType, Plato::Elliptic::FluxPNorm>(aSpatialDomain, aDataMap,
+                                                                                         aProblemParams, aFuncName);
         }
         else
         {
@@ -99,27 +94,24 @@ struct FunctionFactory{
     }
 
     template <typename EvaluationType>
-    std::shared_ptr<Plato::Parabolic::AbstractScalarFunction<EvaluationType>>
-    createScalarFunctionParabolic( 
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              std::string              aFuncType,
-              std::string              aFuncName
-    )
+    std::shared_ptr<Plato::Parabolic::AbstractScalarFunction<EvaluationType>> createScalarFunctionParabolic(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aProblemParams,
+        std::string aFuncType,
+        std::string aFuncName)
     {
 #ifdef PLATO_PARABOLIC
         auto tLowerFuncType = Plato::tolower(aFuncType);
-        if(tLowerFuncType == "internal thermal energy")
+        if (tLowerFuncType == "internal thermal energy")
         {
-            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::InternalThermalEnergy>
-                (aSpatialDomain, aDataMap, aProblemParams, aFuncName);
+            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::InternalThermalEnergy>(
+                aSpatialDomain, aDataMap, aProblemParams, aFuncName);
         }
-        else
-        if( tLowerFuncType == "temperature average" )
+        else if (tLowerFuncType == "temperature average")
         {
-            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::TemperatureAverage>
-                (aSpatialDomain, aDataMap, aProblemParams, aFuncName);
+            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::TemperatureAverage>(
+                aSpatialDomain, aDataMap, aProblemParams, aFuncName);
         }
         else
         {
@@ -131,25 +123,26 @@ struct FunctionFactory{
     }
 };
 
-} // namespace ThermalFactory
+}  // namespace ThermalFactory
 
-} // namespace Plato
+}  // namespace Plato
 
 #include "ThermalElement.hpp"
 
 namespace Plato
 {
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Concrete class for use as the Physics template argument in
  *        Plato::Elliptic::Problem
-**********************************************************************************/
+ **********************************************************************************/
 template <typename TopoElementType>
 class Thermal
 {
-public:
+   public:
     typedef Plato::ThermalFactory::FunctionFactory FunctionFactory;
     using ElementType = ThermalElement<TopoElementType>;
 };
-} //namespace Plato
+}  // namespace Plato
 
 #endif

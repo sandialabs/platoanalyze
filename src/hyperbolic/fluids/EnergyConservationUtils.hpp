@@ -14,7 +14,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes  number of nodes
  * \tparam SpaceDim  spatial dimensions
  * \tparam ConfigT   configuration Forward Automatic Differentiation (FAD) type
@@ -34,34 +35,32 @@ namespace Fluids
  * \param [in\out] aResult  output/result workset
  *
  ******************************************************************************/
-template<Plato::OrdinalType NumNodes,
-         Plato::OrdinalType SpaceDim,
-         typename ConfigT,
-         typename PrevVelT,
-         typename PrevTempT,
-         typename ResultT>
-KOKKOS_INLINE_FUNCTION void
-calculate_convective_forces
-(const Plato::OrdinalType & aCellOrdinals,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVelGP,
- const Plato::ScalarMultiVectorT<PrevTempT> & aPrevTemp,
- const Plato::ScalarVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ConfigT,
+          typename PrevVelT,
+          typename PrevTempT,
+          typename ResultT>
+KOKKOS_INLINE_FUNCTION void calculate_convective_forces(const Plato::OrdinalType& aCellOrdinals,
+                                                        const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                        const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVelGP,
+                                                        const Plato::ScalarMultiVectorT<PrevTempT>& aPrevTemp,
+                                                        const Plato::ScalarVectorT<ResultT>& aResult,
+                                                        Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
-            aResult(aCellOrdinals) += aMultiplier * aPrevVelGP(aCellOrdinals, tDim)
-                * ( aGradient(aCellOrdinals, tNode, tDim) * aPrevTemp(aCellOrdinals, tNode) );
+            aResult(aCellOrdinals) += aMultiplier * aPrevVelGP(aCellOrdinals, tDim) *
+                                      (aGradient(aCellOrdinals, tNode, tDim) * aPrevTemp(aCellOrdinals, tNode));
         }
     }
 }
 // function calculate_convective_forces
 
-
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes  number of nodes
  * \tparam SpaceDim  spatial dimensions
  * \tparam ConfigT   configuration Forward Automatic Differentiation (FAD) type
@@ -85,30 +84,24 @@ calculate_convective_forces
  * \param [in\out] aResult     output/result workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- typename ConfigT,
- typename SourceT,
- typename ResultT,
- typename ScalarT>
-KOKKOS_INLINE_FUNCTION void
-integrate_scalar_field
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVector & aBasisFunctions,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarVectorT<SourceT> & aField,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- const ScalarT & aMultiplier)
+template <Plato::OrdinalType NumNodes, typename ConfigT, typename SourceT, typename ResultT, typename ScalarT>
+KOKKOS_INLINE_FUNCTION void integrate_scalar_field(const Plato::OrdinalType& aCellOrdinal,
+                                                   const Plato::ScalarVector& aBasisFunctions,
+                                                   const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                   const Plato::ScalarVectorT<SourceT>& aField,
+                                                   const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                   const ScalarT& aMultiplier)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        aResult(aCellOrdinal, tNode) += aMultiplier * aBasisFunctions(tNode) *
-            aField(aCellOrdinal) * aCellVolume(aCellOrdinal);
+        aResult(aCellOrdinal, tNode) +=
+            aMultiplier * aBasisFunctions(tNode) * aField(aCellOrdinal) * aCellVolume(aCellOrdinal);
     }
 }
 // function integrate_scalar_field
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes  number of nodes
  * \tparam SpaceDim  spatial dimensions
  * \tparam ConfigT   configuration Forward Automatic Differentiation (FAD) type
@@ -132,35 +125,32 @@ integrate_scalar_field
  * \param [in\out] aResult  output/result workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- Plato::OrdinalType SpaceDim,
- typename ConfigT,
- typename FluxT,
- typename ResultT,
- typename ScalarT>
-KOKKOS_INLINE_FUNCTION void
-calculate_flux_divergence
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarMultiVectorT<FluxT> & aFlux,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- const ScalarT & aMultiplier)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ConfigT,
+          typename FluxT,
+          typename ResultT,
+          typename ScalarT>
+KOKKOS_INLINE_FUNCTION void calculate_flux_divergence(const Plato::OrdinalType& aCellOrdinal,
+                                                      const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                      const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                      const Plato::ScalarMultiVectorT<FluxT>& aFlux,
+                                                      const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                      const ScalarT& aMultiplier)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
             aResult(aCellOrdinal, tNode) += aMultiplier * aCellVolume(aCellOrdinal) *
-                ( aGradient(aCellOrdinal, tNode, tDim) * aFlux(aCellOrdinal, tDim) );
+                                            (aGradient(aCellOrdinal, tNode, tDim) * aFlux(aCellOrdinal, tDim));
         }
     }
 }
 // function calculate_flux_divergence
 
-
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes number of nodes
  * \tparam SpaceDim spatial dimensions
  * \tparam FluxT    flux FAD type
@@ -181,22 +171,15 @@ calculate_flux_divergence
  * \param [in\out] aFlux output/result workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- Plato::OrdinalType SpaceDim,
- typename FluxT,
- typename ConfigT,
- typename StateT>
-KOKKOS_INLINE_FUNCTION void
-calculate_flux
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<StateT> & aScalarField,
- const Plato::ScalarMultiVectorT<FluxT> & aFlux)
+template <Plato::OrdinalType NumNodes, Plato::OrdinalType SpaceDim, typename FluxT, typename ConfigT, typename StateT>
+KOKKOS_INLINE_FUNCTION void calculate_flux(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                           const Plato::ScalarMultiVectorT<StateT>& aScalarField,
+                                           const Plato::ScalarMultiVectorT<FluxT>& aFlux)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
             aFlux(aCellOrdinal, tDim) += aGradient(aCellOrdinal, tNode, tDim) * aScalarField(aCellOrdinal, tNode);
         }
@@ -204,8 +187,8 @@ calculate_flux
 }
 // function calculate_flux
 
-
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodesPerCell number of nodes per cell/element (integer)
  * \tparam ControlT control Forward Automatic Differentiation (FAD) evaluation type
  *
@@ -223,26 +206,23 @@ calculate_flux
  *
  * \return penalized thermal diffusivity ratio
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodesPerCell,
- typename ControlT>
+template <Plato::OrdinalType NumNodesPerCell, typename ControlT>
 KOKKOS_INLINE_FUNCTION ControlT
-penalized_effective_thermal_property
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::Scalar & aEffectiveThermalProperty,
- const Plato::Scalar & aPenaltyExponent,
- const Plato::ScalarMultiVectorT<ControlT> & aControl)
+penalized_effective_thermal_property(const Plato::OrdinalType& aCellOrdinal,
+                                     const Plato::Scalar& aEffectiveThermalProperty,
+                                     const Plato::Scalar& aPenaltyExponent,
+                                     const Plato::ScalarMultiVectorT<ControlT>& aControl)
 {
     ControlT tDensity = Plato::cell_density<NumNodesPerCell>(aCellOrdinal, aControl);
     ControlT tPenalizedDensity = pow(tDensity, aPenaltyExponent);
-    ControlT tPenalizedThermalProperty = (static_cast<Plato::Scalar>(1.0) - tPenalizedDensity) + (tPenalizedDensity * aEffectiveThermalProperty);
+    ControlT tPenalizedThermalProperty =
+        (static_cast<Plato::Scalar>(1.0) - tPenalizedDensity) + (tPenalizedDensity * aEffectiveThermalProperty);
     return tPenalizedThermalProperty;
 }
 // function penalized_effective_thermal_property
 
-
-
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodesPerCell number of nodes per cell/element (integer)
  * \tparam ControlT control Forward Automatic Differentiation (FAD) evaluation type
  *
@@ -258,15 +238,11 @@ penalized_effective_thermal_property
  *
  * \return penalized heat source constant
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodesPerCell,
- typename ControlT>
-KOKKOS_INLINE_FUNCTION ControlT
-penalize_heat_source_constant
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::Scalar & aConstant,
- const Plato::Scalar & aPenalty,
- const Plato::ScalarMultiVectorT<ControlT> & aControl)
+template <Plato::OrdinalType NumNodesPerCell, typename ControlT>
+KOKKOS_INLINE_FUNCTION ControlT penalize_heat_source_constant(const Plato::OrdinalType& aCellOrdinal,
+                                                              const Plato::Scalar& aConstant,
+                                                              const Plato::Scalar& aPenalty,
+                                                              const Plato::ScalarMultiVectorT<ControlT>& aControl)
 {
     ControlT tDensity = Plato::cell_density<NumNodesPerCell>(aCellOrdinal, aControl);
     ControlT tPenalizedDensity = pow(tDensity, aPenalty);
@@ -275,7 +251,8 @@ penalize_heat_source_constant
 }
 // function penalize_heat_source_constant
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes number of nodes per cell/element (integer)
  * \tparam SpaceDim spatial dimensions (integer)
  * \tparam ResultT  result Forward Automatic Differentiation (FAD) evaluation type
@@ -297,37 +274,36 @@ penalize_heat_source_constant
  * \param [in/out] aResult  result/output workset
  *
  ******************************************************************************/
-template
-<Plato::OrdinalType NumNodes,
- Plato::OrdinalType SpaceDim,
- typename ResultT,
- typename ConfigT,
- typename PrevVelT,
- typename StabT,
- typename ScalarT>
-KOKKOS_INLINE_FUNCTION void
-integrate_stabilizing_scalar_forces
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVelGP,
- const Plato::ScalarVectorT<StabT> & aStabForce,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- const ScalarT & aMultiplier)
- {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ResultT,
+          typename ConfigT,
+          typename PrevVelT,
+          typename StabT,
+          typename ScalarT>
+KOKKOS_INLINE_FUNCTION void integrate_stabilizing_scalar_forces(const Plato::OrdinalType& aCellOrdinal,
+                                                                const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                                const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                                const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVelGP,
+                                                                const Plato::ScalarVectorT<StabT>& aStabForce,
+                                                                const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                                const ScalarT& aMultiplier)
+{
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDimK = 0; tDimK < SpaceDim; tDimK++)
+        for (Plato::OrdinalType tDimK = 0; tDimK < SpaceDim; tDimK++)
         {
-            aResult(aCellOrdinal, tNode) += aMultiplier * ( ( aGradient(aCellOrdinal, tNode, tDimK) *
-                aPrevVelGP(aCellOrdinal, tDimK) ) * aStabForce(aCellOrdinal) ) * aCellVolume(aCellOrdinal);
+            aResult(aCellOrdinal, tNode) +=
+                aMultiplier *
+                ((aGradient(aCellOrdinal, tNode, tDimK) * aPrevVelGP(aCellOrdinal, tDimK)) * aStabForce(aCellOrdinal)) *
+                aCellVolume(aCellOrdinal);
         }
     }
- }
+}
 // function integrate_stabilizing_scalar_forces
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato

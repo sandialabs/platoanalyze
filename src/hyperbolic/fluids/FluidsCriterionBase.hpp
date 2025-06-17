@@ -14,7 +14,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \class CriterionBase
  *
  * This pure virtual class provides the template for a scalar functions of the form:
@@ -28,28 +29,29 @@ namespace Fluids
  ******************************************************************************/
 class CriterionBase
 {
-public:
+   public:
     virtual ~CriterionBase() = default;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn std::string name
      * \brief Return scalar function name.
      * \return scalar function name
      ******************************************************************************/
     virtual std::string name() const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn Plato::Scalar value
      * \brief Return scalar function value.
      * \param [in] aControls control variables workset
      * \param [in] aPrimal   primal state database
      * \return scalar function value
      ******************************************************************************/
-    virtual Plato::Scalar value
-    (const Plato::ScalarVector & aControls,
-     const Plato::Primal & aPrimal) const = 0;
+    virtual Plato::Scalar value(const Plato::ScalarVector& aControls, const Plato::Primal& aPrimal) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn Plato::ScalarVector gradientConfig
      * \brief Return scalar function derivative with respect to the configuration variables.
      *
@@ -58,11 +60,11 @@ public:
      *
      * \return scalar function derivative with respect to the configuration variables
      ******************************************************************************/
-    virtual Plato::ScalarVector gradientConfig
-    (const Plato::ScalarVector & aControls,
-     const Plato::Primal & aPrimal) const = 0;
+    virtual Plato::ScalarVector gradientConfig(const Plato::ScalarVector& aControls,
+                                               const Plato::Primal& aPrimal) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn Plato::ScalarVector gradientControl
      * \brief Return scalar function derivative with respect to the control variables.
      *
@@ -71,11 +73,11 @@ public:
      *
      * \return scalar function derivative with respect to the control variables
      ******************************************************************************/
-    virtual Plato::ScalarVector gradientControl
-    (const Plato::ScalarVector & aControls,
-     const Plato::Primal & aPrimal) const = 0;
+    virtual Plato::ScalarVector gradientControl(const Plato::ScalarVector& aControls,
+                                                const Plato::Primal& aPrimal) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn Plato::ScalarVector gradientCurrentPress
      * \brief Return scalar function derivative with respect to the current pressure.
      *
@@ -84,11 +86,11 @@ public:
      *
      * \return scalar function derivative with respect to the current pressure
      ******************************************************************************/
-    virtual Plato::ScalarVector gradientCurrentPress
-    (const Plato::ScalarVector & aControls,
-     const Plato::Primal & aPrimal) const = 0;
+    virtual Plato::ScalarVector gradientCurrentPress(const Plato::ScalarVector& aControls,
+                                                     const Plato::Primal& aPrimal) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn Plato::ScalarVector gradientCurrentTemp
      * \brief Return scalar function derivative with respect to the current temperature.
      *
@@ -97,11 +99,11 @@ public:
      *
      * \return scalar function derivative with respect to the current temperature
      ******************************************************************************/
-    virtual Plato::ScalarVector gradientCurrentTemp
-    (const Plato::ScalarVector & aControls,
-     const Plato::Primal & aPrimal) const = 0;
+    virtual Plato::ScalarVector gradientCurrentTemp(const Plato::ScalarVector& aControls,
+                                                    const Plato::Primal& aPrimal) const = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn Plato::ScalarVector gradientCurrentVel
      * \brief Return scalar function derivative with respect to the current velocity.
      *
@@ -110,14 +112,13 @@ public:
      *
      * \return scalar function derivative with respect to the current velocity
      ******************************************************************************/
-    virtual Plato::ScalarVector gradientCurrentVel
-    (const Plato::ScalarVector & aControls,
-     const Plato::Primal & aPrimal) const = 0;
+    virtual Plato::ScalarVector gradientCurrentVel(const Plato::ScalarVector& aControls,
+                                                   const Plato::Primal& aPrimal) const = 0;
 };
 // class CriterionBase
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato

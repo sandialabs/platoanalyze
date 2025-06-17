@@ -2,7 +2,7 @@
 
 namespace Plato
 {
-namespace 
+namespace
 {
 std::string errorMessage(const std::string& aParameterName, const std::string& aBCName, const std::string& aError)
 {
@@ -11,13 +11,14 @@ std::string errorMessage(const std::string& aParameterName, const std::string& a
          << "Parameter Sublist: '" << aBCName << "' " << aError;
     return tMsg.str();
 }
-}
+}  // namespace
 
-std::string getStringDataAndAffirmExists(
-    const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName)
+std::string getStringDataAndAffirmExists(const std::string& aParameterName,
+                                         const Teuchos::ParameterList& aSublist,
+                                         const std::string& aBCName)
 {
     affirmExists(aParameterName, aSublist, aBCName);
-    if(aSublist.isType<std::string>(aParameterName))
+    if (aSublist.isType<std::string>(aParameterName))
     {
         return aSublist.get<std::string>(aParameterName);
     }
@@ -27,12 +28,11 @@ std::string getStringDataAndAffirmExists(
     }
 }
 
-void affirmExists(
-    const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName)
+void affirmExists(const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName)
 {
-    if(!aSublist.isParameter(aParameterName))
+    if (!aSublist.isParameter(aParameterName))
     {
         ANALYZE_THROWERR(errorMessage(aParameterName, aBCName, "is NOT defined.").c_str())
     }
 }
-}
+}  // namespace Plato

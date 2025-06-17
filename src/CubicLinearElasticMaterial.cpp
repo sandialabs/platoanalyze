@@ -9,34 +9,34 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Linear elastic cubic material model constructor. - 1D
-**********************************************************************************/
-template<>
-Plato::CubicLinearElasticMaterial<1>::
-CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList) :
-    Plato::LinearElasticMaterial<1>(paramList)
+ **********************************************************************************/
+template <>
+Plato::CubicLinearElasticMaterial<1>::CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList)
+    : Plato::LinearElasticMaterial<1>(paramList)
 {
     Plato::Scalar tC11 = paramList.get<Plato::Scalar>("C11");
     mCellStiffness(0, 0) = tC11;
 
-    if(paramList.isType<Plato::Scalar>("Pressure Scaling"))
+    if (paramList.isType<Plato::Scalar>("Pressure Scaling"))
     {
         mPressureScaling = paramList.get<Plato::Scalar>("Pressure Scaling");
     }
-    if(paramList.isType<Plato::Scalar>("Mass Density"))
+    if (paramList.isType<Plato::Scalar>("Mass Density"))
     {
         mCellDensity = paramList.get<Plato::Scalar>("Mass Density");
     }
 }
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Linear elastic cubic material model constructor. - 2D
-**********************************************************************************/
-template<>
-Plato::CubicLinearElasticMaterial<2>::
-CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList) :
-    Plato::LinearElasticMaterial<2>(paramList)
+ **********************************************************************************/
+template <>
+Plato::CubicLinearElasticMaterial<2>::CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList)
+    : Plato::LinearElasticMaterial<2>(paramList)
 {
     Plato::Scalar tC11 = paramList.get<Plato::Scalar>("C11");
     Plato::Scalar tC12 = paramList.get<Plato::Scalar>("C12");
@@ -48,23 +48,23 @@ CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList) :
     mCellStiffness(1, 1) = tC11;
     mCellStiffness(2, 2) = tC44;
 
-    if(paramList.isType<Plato::Scalar>("Pressure Scaling"))
+    if (paramList.isType<Plato::Scalar>("Pressure Scaling"))
     {
         mPressureScaling = paramList.get<Plato::Scalar>("Pressure Scaling");
     }
-    if(paramList.isType<Plato::Scalar>("Mass Density"))
+    if (paramList.isType<Plato::Scalar>("Mass Density"))
     {
         mCellDensity = paramList.get<Plato::Scalar>("Mass Density");
     }
 }
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Linear elastic cubic material model constructor. - 3D
-**********************************************************************************/
-template<>
-Plato::CubicLinearElasticMaterial<3>::
-CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList) :
-    Plato::LinearElasticMaterial<3>(paramList)
+ **********************************************************************************/
+template <>
+Plato::CubicLinearElasticMaterial<3>::CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList)
+    : Plato::LinearElasticMaterial<3>(paramList)
 {
     Plato::Scalar tC11 = paramList.get<Plato::Scalar>("C11");
     Plato::Scalar tC12 = paramList.get<Plato::Scalar>("C12");
@@ -83,15 +83,15 @@ CubicLinearElasticMaterial(const Teuchos::ParameterList& paramList) :
     mCellStiffness(4, 4) = tC44;
     mCellStiffness(5, 5) = tC44;
 
-    if(paramList.isType<Plato::Scalar>("Pressure Scaling"))
+    if (paramList.isType<Plato::Scalar>("Pressure Scaling"))
     {
         mPressureScaling = paramList.get<Plato::Scalar>("Pressure Scaling");
     }
-    if(paramList.isType<Plato::Scalar>("Mass Density"))
+    if (paramList.isType<Plato::Scalar>("Mass Density"))
     {
         mCellDensity = paramList.get<Plato::Scalar>("Mass Density");
     }
 }
 
-}
+}  // namespace Plato
 // namespace Plato

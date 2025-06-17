@@ -7,31 +7,34 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Functor for computing the row sum of a given matrix
  **********************************************************************************/
 class RowSum
 {
-private:
+   private:
     const typename Plato::CrsMatrixType::RowMapVectorT mRowMap;
     const typename Plato::CrsMatrixType::ScalarVectorT mEntries;
     const Plato::OrdinalType mNumDofsPerNode_I;
     const Plato::OrdinalType mNumDofsPerNode_J;
 
-public:
-    /**********************************************************************//**
+   public:
+    /**********************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aMatrix Matrix for witch the row sum will be computed
      **************************************************************************/
-    RowSum(Teuchos::RCP<Plato::CrsMatrixType> aMatrix) :
-            mRowMap(aMatrix->rowMap()),
-            mEntries(aMatrix->entries()),
-            mNumDofsPerNode_I(aMatrix->numRowsPerBlock()),
-            mNumDofsPerNode_J(aMatrix->numColsPerBlock())
+    RowSum(Teuchos::RCP<Plato::CrsMatrixType> aMatrix)
+        : mRowMap(aMatrix->rowMap()),
+          mEntries(aMatrix->entries()),
+          mNumDofsPerNode_I(aMatrix->numRowsPerBlock()),
+          mNumDofsPerNode_J(aMatrix->numColsPerBlock())
     {
     }
 
-    /**********************************************************************//**
+    /**********************************************************************/
+    /**
      * \brief Functor
      * \param [in]  blockRowOrdinal Ordinal for the row for which the sum is to be computed
      * \param [out] aRowSum Row sum vector (assumed initialized to zero)
@@ -47,18 +50,17 @@ public:
 
         OrdinalType tTotalBlockSize = mNumDofsPerNode_I * mNumDofsPerNode_J;
 
-        for(OrdinalType tColNodeOrd = tRowStart; tColNodeOrd < tRowEnd; tColNodeOrd++)
+        for (OrdinalType tColNodeOrd = tRowStart; tColNodeOrd < tRowEnd; tColNodeOrd++)
         {
-
             OrdinalType tEntryOrdinalOffset = tTotalBlockSize * tColNodeOrd;
 
             // for each row in this block
-            for(OrdinalType tIdim = 0; tIdim < mNumDofsPerNode_I; tIdim++)
+            for (OrdinalType tIdim = 0; tIdim < mNumDofsPerNode_I; tIdim++)
             {
                 // for each col in this block
                 OrdinalType tVectorOrdinal = aBlockRowOrdinal * mNumDofsPerNode_I + tIdim;
                 OrdinalType tMatrixOrdinal = tEntryOrdinalOffset + mNumDofsPerNode_J * tIdim;
-                for(OrdinalType tJdim = 0; tJdim < mNumDofsPerNode_J; tJdim++)
+                for (OrdinalType tJdim = 0; tJdim < mNumDofsPerNode_J; tJdim++)
                 {
                     aRowSum(tVectorOrdinal) += mEntries(tMatrixOrdinal + tJdim);
                 }
@@ -67,15 +69,16 @@ public:
     }
 };
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Functor for computing the weighted inverse
  **********************************************************************************/
-template<Plato::OrdinalType NumDofsPerNode_I, Plato::OrdinalType NumDofsPerNode_J = NumDofsPerNode_I>
+template <Plato::OrdinalType NumDofsPerNode_I, Plato::OrdinalType NumDofsPerNode_J = NumDofsPerNode_I>
 class InverseWeight
 {
-
-public:
-    /**********************************************************************//**
+   public:
+    /**********************************************************************/
+    /**
      * \brief Functor
      * \param [in]  blockRowOrdinal Ordinal for the row for which the sum is to be computed
      * \param [in]  Row sum vector, R
@@ -87,13 +90,13 @@ public:
      **************************************************************************/
     KOKKOS_INLINE_FUNCTION
     void operator()(Plato::OrdinalType aBlockRowOrdinal,
-		    Plato::ScalarVector aRowSum,
-		    Plato::ScalarVector aRHS,
-		    Plato::ScalarVector aLHS,
-		    Plato::Scalar aScale = 1.0) const
+                    Plato::ScalarVector aRowSum,
+                    Plato::ScalarVector aRHS,
+                    Plato::ScalarVector aLHS,
+                    Plato::Scalar aScale = 1.0) const
     {
         // for each row in this block
-        for(Plato::OrdinalType tIdim = 0; tIdim < NumDofsPerNode_I; tIdim++)
+        for (Plato::OrdinalType tIdim = 0; tIdim < NumDofsPerNode_I; tIdim++)
         {
             // for each col in this block
             Plato::OrdinalType tVectorOrdinal = aBlockRowOrdinal * NumDofsPerNode_I + tIdim;
@@ -102,31 +105,34 @@ public:
     }
 };
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Functor for computing the row sum of a given matrix
  **********************************************************************************/
 class DiagonalInverseMultiply
 {
-private:
+   private:
     const typename Plato::CrsMatrixType::RowMapVectorT mRowMap;
     const typename Plato::CrsMatrixType::ScalarVectorT mEntries;
     const Plato::OrdinalType mNumDofsPerNode_I;
     const Plato::OrdinalType mNumDofsPerNode_J;
 
-public:
-    /**********************************************************************//**
+   public:
+    /**********************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aMatrix Matrix to witch the inverse diagonal multiply will be applied
      **************************************************************************/
-    DiagonalInverseMultiply(Teuchos::RCP<Plato::CrsMatrixType> aMatrix) :
-            mRowMap(aMatrix->rowMap()),
-            mEntries(aMatrix->entries()),
-            mNumDofsPerNode_I(aMatrix->numRowsPerBlock()),
-            mNumDofsPerNode_J(aMatrix->numColsPerBlock())
+    DiagonalInverseMultiply(Teuchos::RCP<Plato::CrsMatrixType> aMatrix)
+        : mRowMap(aMatrix->rowMap()),
+          mEntries(aMatrix->entries()),
+          mNumDofsPerNode_I(aMatrix->numRowsPerBlock()),
+          mNumDofsPerNode_J(aMatrix->numColsPerBlock())
     {
     }
 
-    /**********************************************************************//**
+    /**********************************************************************/
+    /**
      * \brief Functor
      * \param [in]  blockRowOrdinal Ordinal for the block row to which the inverse diagonal multiply is applied
      * \param [out] aDiagonals Vector of diagonal entries
@@ -140,18 +146,17 @@ public:
 
         Plato::OrdinalType tTotalBlockSize = mNumDofsPerNode_I * mNumDofsPerNode_J;
 
-        for(Plato::OrdinalType tColNodeOrd = tRowStart; tColNodeOrd < tRowEnd; tColNodeOrd++)
+        for (Plato::OrdinalType tColNodeOrd = tRowStart; tColNodeOrd < tRowEnd; tColNodeOrd++)
         {
-
             Plato::OrdinalType tEntryOrdinalOffset = tTotalBlockSize * tColNodeOrd;
 
             // for each row in this block
-            for(Plato::OrdinalType tIdim = 0; tIdim < mNumDofsPerNode_I; tIdim++)
+            for (Plato::OrdinalType tIdim = 0; tIdim < mNumDofsPerNode_I; tIdim++)
             {
                 // for each col in this block
                 Plato::OrdinalType tVectorOrdinal = aBlockRowOrdinal * mNumDofsPerNode_I + tIdim;
                 Plato::OrdinalType tMatrixOrdinal = tEntryOrdinalOffset + mNumDofsPerNode_J * tIdim;
-                for(Plato::OrdinalType tJdim = 0; tJdim < mNumDofsPerNode_J; tJdim++)
+                for (Plato::OrdinalType tJdim = 0; tJdim < mNumDofsPerNode_J; tJdim++)
                 {
                     mEntries(tMatrixOrdinal + tJdim) /= aDiagonals(tVectorOrdinal);
                 }
@@ -160,5 +165,5 @@ public:
     }
 };
 
-}
+}  // namespace Plato
 // namespace Plato

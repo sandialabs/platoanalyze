@@ -6,36 +6,33 @@
 
 #pragma once
 
-#include "WorkSets.hpp"
 #include "ExpInstMacros.hpp"
-
+#include "WorkSets.hpp"
 #include "hyperbolic/SimplexFluids.hpp"
 #include "hyperbolic/SimplexFluidsFadTypes.hpp"
 
 namespace Plato
 {
 
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class AbstractVolumetricSource
 {
-private:
+   private:
     // set local ad type
     using ResultT = typename EvaluationT::ResultScalarType; /*!< result FAD evaluation type */
 
-public:
+   public:
     virtual std::string type() const = 0;
-    
+
     virtual std::string name() const = 0;
 
-    virtual void evaluate
-    (const Plato::WorkSets &aWorkSets, 
-     Plato::ScalarMultiVectorT<ResultT> & aResultWS,
-     Plato::Scalar aMultiplier = 1.0) 
-     const = 0;
+    virtual void evaluate(const Plato::WorkSets &aWorkSets,
+                          Plato::ScalarMultiVectorT<ResultT> &aResultWS,
+                          Plato::Scalar aMultiplier = 1.0) const = 0;
 };
 // class AbstractVolumetricSource
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

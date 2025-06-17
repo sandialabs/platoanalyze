@@ -1,55 +1,59 @@
-#include "util/PlatoTestHelpers.hpp"
-
-#include <Teuchos_UnitTestHarness.hpp>
-#include <sstream>
-#include <fstream>
 #include <stdio.h>
 
-#include "Tet4.hpp"
-#include "ElementBase.hpp"
+#include <Teuchos_UnitTestHarness.hpp>
+#include <fstream>
+#include <sstream>
 
-#include "Plato_InputData.hpp"
+#include "ElementBase.hpp"
 #include "Plato_Exceptions.hpp"
+#include "Plato_InputData.hpp"
 #include "Plato_Parser.hpp"
+#include "Tet4.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 #define MAKE_PUBLIC
 #include "Plato_MeshMap.hpp"
 
-namespace PlatoTestMeshMap {
+namespace PlatoTestMeshMap
+{
 
-namespace {
+namespace
+{
 namespace pth = Plato::TestHelpers;
 using SparseMatrix = Plato::Geometry::MeshMap<Plato::Scalar>::SparseMatrix;
 
-/***************************************************************************//**
-* \brief Convert sparse matrix to full matrix
-*******************************************************************************/
-std::vector<std::vector<Plato::Scalar>> to_full(const SparseMatrix &aInMatrix) {
-  using OrdinalType = Plato::Geometry::MeshMap<Plato::Scalar>::OrdinalT;
-  using Plato::Scalar;
+/***************************************************************************/
+/**
+ * \brief Convert sparse matrix to full matrix
+ *******************************************************************************/
+std::vector<std::vector<Plato::Scalar>> to_full(const SparseMatrix& aInMatrix)
+{
+    using OrdinalType = Plato::Geometry::MeshMap<Plato::Scalar>::OrdinalT;
+    using Plato::Scalar;
 
-  std::vector<std::vector<Scalar>> retMatrix(
-      aInMatrix.mNumRows, std::vector<Scalar>(aInMatrix.mNumCols, 0.0));
+    std::vector<std::vector<Scalar>> retMatrix(aInMatrix.mNumRows, std::vector<Scalar>(aInMatrix.mNumCols, 0.0));
 
-  const auto tRowMap = pth::get(aInMatrix.mRowMap);
-  const auto tColMap = pth::get(aInMatrix.mColMap);
-  const auto tValues = pth::get(aInMatrix.mEntries);
+    const auto tRowMap = pth::get(aInMatrix.mRowMap);
+    const auto tColMap = pth::get(aInMatrix.mColMap);
+    const auto tValues = pth::get(aInMatrix.mEntries);
 
-  const auto tNumRows = aInMatrix.mNumRows;
-  for (OrdinalType iRowIndex = 0; iRowIndex < tNumRows; iRowIndex++) {
-    const auto tFrom = tRowMap(iRowIndex);
-    const auto tTo = tRowMap(iRowIndex + 1);
-    for (auto iEntryIndex = tFrom; iEntryIndex < tTo; iEntryIndex++) {
-      const auto iColIndex = tColMap(iEntryIndex);
-      retMatrix[iRowIndex][iColIndex] = tValues(iEntryIndex);
+    const auto tNumRows = aInMatrix.mNumRows;
+    for (OrdinalType iRowIndex = 0; iRowIndex < tNumRows; iRowIndex++)
+    {
+        const auto tFrom = tRowMap(iRowIndex);
+        const auto tTo = tRowMap(iRowIndex + 1);
+        for (auto iEntryIndex = tFrom; iEntryIndex < tTo; iEntryIndex++)
+        {
+            const auto iColIndex = tColMap(iEntryIndex);
+            retMatrix[iRowIndex][iColIndex] = tValues(iEntryIndex);
+        }
     }
-  }
-  return retMatrix;
+    return retMatrix;
 }
 
 using ExecSpace = Kokkos::DefaultExecutionSpace;
 using MemSpace = typename ExecSpace::memory_space;
-} // namespace
+}  // namespace
 
 /******************************************************************************/
 /*!
@@ -71,12 +75,11 @@ using MemSpace = typename ExecSpace::memory_space;
     N(x)_I = {1/4, 1/4, 1/4, 1/4};
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Tet4)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Tet4)
+{
     // create mesh
     //
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     // create GetBasis functor
@@ -92,40 +95,40 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
-        Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal) {
+            Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
+            Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
 
-        // compute element centroid
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-            for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
+            // compute element centroid
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
             {
-                tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim)
-                                / ElementType::mNumNodesPerCell;
+                auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+                for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+                {
+                    tInPoint(iDim) +=
+                        tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim) / ElementType::mNumNodesPerCell;
+                }
             }
-        }
 
-        tGetBasis(aOrdinal, tInPoint, tElemBases);
+            tGetBasis(aOrdinal, tInPoint, tElemBases);
 
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            tBases(iVert, aOrdinal) = tElemBases(iVert);
-        }
-    });
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
+            {
+                tBases(iVert, aOrdinal) = tElemBases(iVert);
+            }
+        });
 
     double tol_double = 1e-14;
     auto tBases_host = pth::get(tBases);
-    for(int iElem=0; iElem<tNElems; iElem++)
+    for (int iElem = 0; iElem < tNElems; iElem++)
     {
-        for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
+        for (int iNode = 0; iNode < (ElementType::mNumNodesPerCell); iNode++)
         {
-            TEST_FLOATING_EQUALITY(tBases_host(iNode, iElem), 1.0/4.0, tol_double);
+            TEST_FLOATING_EQUALITY(tBases_host(iNode, iElem), 1.0 / 4.0, tol_double);
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -147,12 +150,11 @@ using MemSpace = typename ExecSpace::memory_space;
     N(x)_I = {-1/8, -1/8, -1/8, -1/8, 1/4, 1/4, 1/4, 1/4, 1/4, 1/4};
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Tet10)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Tet10)
+{
     // create mesh
     //
-    constexpr int cMeshWidth=3;
+    constexpr int cMeshWidth = 3;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET10", cMeshWidth);
 
     // create GetBasis functor
@@ -168,44 +170,44 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
-        Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal) {
+            Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
+            Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
 
-        // compute element centroid
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-            for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
+            // compute element centroid
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
             {
-                tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim)
-                                / ElementType::mNumNodesPerCell;
+                auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+                for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+                {
+                    tInPoint(iDim) +=
+                        tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim) / ElementType::mNumNodesPerCell;
+                }
             }
-        }
 
-        tGetBasis(aOrdinal, tInPoint, tElemBases);
+            tGetBasis(aOrdinal, tInPoint, tElemBases);
 
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            tBases(iVert, aOrdinal) = tElemBases(iVert);
-        }
-    });
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
+            {
+                tBases(iVert, aOrdinal) = tElemBases(iVert);
+            }
+        });
 
-    auto oe = Plato::Scalar(1)/8;
-    auto of = Plato::Scalar(1)/4;
+    auto oe = Plato::Scalar(1) / 8;
+    auto of = Plato::Scalar(1) / 4;
     std::vector<Plato::Scalar> tBases_gold = {-oe, -oe, -oe, -oe, of, of, of, of, of, of};
 
     double tol_double = 1e-14;
     auto tBases_host = pth::get(tBases);
-    for(int iElem=0; iElem<tNElems; iElem++)
+    for (int iElem = 0; iElem < tNElems; iElem++)
     {
-        for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
+        for (int iNode = 0; iNode < (ElementType::mNumNodesPerCell); iNode++)
         {
             TEST_FLOATING_EQUALITY(tBases_host(iNode, iElem), tBases_gold[iNode], tol_double);
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -228,12 +230,11 @@ using MemSpace = typename ExecSpace::memory_space;
     N(x)_I = {27/64, 9/64, 3/64, 9/64, 9/64, 3/64, 1/64, 3/64};
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Hex8)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Hex8)
+{
     // create mesh
     //
-    constexpr int cMeshWidth=3;
+    constexpr int cMeshWidth = 3;
     auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", cMeshWidth);
 
     // create GetBasis functor
@@ -249,52 +250,51 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
-        Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal) {
+            Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
+            Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
 
-        // compute the point halfway between the element centroid and node 0 of the element
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-            for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
+            // compute the point halfway between the element centroid and node 0 of the element
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
             {
-                tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim)
-                                / ElementType::mNumNodesPerCell;
+                auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+                for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+                {
+                    tInPoint(iDim) +=
+                        tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim) / ElementType::mNumNodesPerCell;
+                }
             }
-        }
-        int iVert = 0;
-        auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-        for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
-        {
-            tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim);
-            tInPoint(iDim) /= 2;
-        }
+            int iVert = 0;
+            auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+            for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+            {
+                tInPoint(iDim) += tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim);
+                tInPoint(iDim) /= 2;
+            }
 
-        tGetBasis(aOrdinal, tInPoint, tElemBases);
+            tGetBasis(aOrdinal, tInPoint, tElemBases);
 
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            tBases(iVert, aOrdinal) = tElemBases(iVert);
-        }
-    });
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
+            {
+                tBases(iVert, aOrdinal) = tElemBases(iVert);
+            }
+        });
 
-    std::vector<Plato::Scalar> tBases_gold = {
-        Plato::Scalar(27)/64, Plato::Scalar(9)/64, Plato::Scalar(3)/64, Plato::Scalar(9)/64,
-        Plato::Scalar(9)/64, Plato::Scalar(3)/64, Plato::Scalar(1)/64, Plato::Scalar(3)/64
-    };
+    std::vector<Plato::Scalar> tBases_gold = {Plato::Scalar(27) / 64, Plato::Scalar(9) / 64, Plato::Scalar(3) / 64,
+                                              Plato::Scalar(9) / 64,  Plato::Scalar(9) / 64, Plato::Scalar(3) / 64,
+                                              Plato::Scalar(1) / 64,  Plato::Scalar(3) / 64};
 
     double tol_double = 1e-14;
     auto tBases_host = pth::get(tBases);
-    for(int iElem=0; iElem<tNElems; iElem++)
+    for (int iElem = 0; iElem < tNElems; iElem++)
     {
-        for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
+        for (int iNode = 0; iNode < (ElementType::mNumNodesPerCell); iNode++)
         {
             TEST_FLOATING_EQUALITY(tBases_host(iNode, iElem), tBases_gold[iNode], tol_double);
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -317,12 +317,11 @@ using MemSpace = typename ExecSpace::memory_space;
     N(x)_I = {27/64, 9/64, 3/64, 9/64, 9/64, 3/64, 1/64, 3/64};
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Quad4)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Quad4)
+{
     // create mesh
     //
-    constexpr int cMeshWidth=3;
+    constexpr int cMeshWidth = 3;
     auto tMesh = Plato::TestHelpers::get_box_mesh("QUAD4", cMeshWidth);
 
     // create GetBasis functor
@@ -338,51 +337,50 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
-        Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal) {
+            Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
+            Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
 
-        // compute the point halfway between the element centroid and node 0 of the element
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-            for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
+            // compute the point halfway between the element centroid and node 0 of the element
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
             {
-                tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim)
-                                / ElementType::mNumNodesPerCell;
+                auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+                for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+                {
+                    tInPoint(iDim) +=
+                        tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim) / ElementType::mNumNodesPerCell;
+                }
             }
-        }
-        int iVert = 0;
-        auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-        for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
-        {
-            tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim);
-            tInPoint(iDim) /= 2;
-        }
+            int iVert = 0;
+            auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+            for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+            {
+                tInPoint(iDim) += tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim);
+                tInPoint(iDim) /= 2;
+            }
 
-        tGetBasis(aOrdinal, tInPoint, tElemBases);
+            tGetBasis(aOrdinal, tInPoint, tElemBases);
 
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            tBases(iVert, aOrdinal) = tElemBases(iVert);
-        }
-    });
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
+            {
+                tBases(iVert, aOrdinal) = tElemBases(iVert);
+            }
+        });
 
-    std::vector<Plato::Scalar> tBases_gold = {
-        Plato::Scalar(9)/16, Plato::Scalar(3)/16, Plato::Scalar(1)/16, Plato::Scalar(3)/16
-    };
+    std::vector<Plato::Scalar> tBases_gold = {Plato::Scalar(9) / 16, Plato::Scalar(3) / 16, Plato::Scalar(1) / 16,
+                                              Plato::Scalar(3) / 16};
 
     double tol_double = 1e-14;
     auto tBases_host = pth::get(tBases);
-    for(int iElem=0; iElem<tNElems; iElem++)
+    for (int iElem = 0; iElem < tNElems; iElem++)
     {
-        for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
+        for (int iNode = 0; iNode < (ElementType::mNumNodesPerCell); iNode++)
         {
             TEST_FLOATING_EQUALITY(tBases_host(iNode, iElem), tBases_gold[iNode], tol_double);
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -405,15 +403,14 @@ using MemSpace = typename ExecSpace::memory_space;
     N(x)_I = {27/512, -9/512,  3/512, -9/512, -9/512,  3/512, -1/512,  3/512, 27/256,
               -9/256, -9/256, 27/256, 27/256, -9/256,  3/256, -9/256, -9/256,  3/256,
                3/256, -9/256, 27/64,  27/128, -9/128, 27/128, -9/128, 27/128, -9/128};
-              
+
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Hex27)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, GetBasis_Hex27)
+{
     // create mesh
     //
-    constexpr int cMeshWidth=3;
+    constexpr int cMeshWidth = 3;
     auto tMesh = Plato::TestHelpers::get_box_mesh("HEX27", cMeshWidth);
 
     // create GetBasis functor
@@ -429,60 +426,56 @@ using MemSpace = typename ExecSpace::memory_space;
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
-        Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNElems), KOKKOS_LAMBDA(int aOrdinal) {
+            Plato::Array<ElementType::mNumNodesPerCell, Plato::Scalar> tElemBases(0.0);
+            Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
 
-        // compute the point halfway between the element centroid and node 0 of the element
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-            for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
+            // compute the point halfway between the element centroid and node 0 of the element
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
             {
-                tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim)
-                                / ElementType::mNumNodesPerCell;
+                auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+                for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+                {
+                    tInPoint(iDim) +=
+                        tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim) / ElementType::mNumNodesPerCell;
+                }
             }
-        }
-        int iVert = 0;
-        auto iVertOrdinal = tCells2Nodes(aOrdinal*ElementType::mNumNodesPerCell+iVert);
-        for(int iDim=0; iDim<ElementType::mNumSpatialDims; iDim++)
-        {
-            tInPoint(iDim) += tCoords(iVertOrdinal*ElementType::mNumSpatialDims+iDim);
-            tInPoint(iDim) /= 2;
-        }
+            int iVert = 0;
+            auto iVertOrdinal = tCells2Nodes(aOrdinal * ElementType::mNumNodesPerCell + iVert);
+            for (int iDim = 0; iDim < ElementType::mNumSpatialDims; iDim++)
+            {
+                tInPoint(iDim) += tCoords(iVertOrdinal * ElementType::mNumSpatialDims + iDim);
+                tInPoint(iDim) /= 2;
+            }
 
-        tGetBasis(aOrdinal, tInPoint, tElemBases);
+            tGetBasis(aOrdinal, tInPoint, tElemBases);
 
-        for(int iVert=0; iVert<(ElementType::mNumNodesPerCell); iVert++)
-        {
-            tBases(iVert, aOrdinal) = tElemBases(iVert);
-        }
-    });
+            for (int iVert = 0; iVert < (ElementType::mNumNodesPerCell); iVert++)
+            {
+                tBases(iVert, aOrdinal) = tElemBases(iVert);
+            }
+        });
 
     std::vector<Plato::Scalar> tBases_gold = {
-      Plato::Scalar(27)/512, Plato::Scalar(-9)/512, Plato::Scalar( 3)/512,
-      Plato::Scalar(-9)/512, Plato::Scalar(-9)/512, Plato::Scalar( 3)/512,
-      Plato::Scalar(-1)/512, Plato::Scalar( 3)/512, Plato::Scalar(27)/256,
-      Plato::Scalar(-9)/256, Plato::Scalar(-9)/256, Plato::Scalar(27)/256,
-      Plato::Scalar(27)/256, Plato::Scalar(-9)/256, Plato::Scalar( 3)/256,
-      Plato::Scalar(-9)/256, Plato::Scalar(-9)/256, Plato::Scalar( 3)/256,
-      Plato::Scalar( 3)/256, Plato::Scalar(-9)/256, Plato::Scalar(27)/64,
-      Plato::Scalar(27)/128, Plato::Scalar(-9)/128, Plato::Scalar(27)/128,
-      Plato::Scalar(-9)/128, Plato::Scalar(27)/128, Plato::Scalar(-9)/128
-    };
+        Plato::Scalar(27) / 512, Plato::Scalar(-9) / 512, Plato::Scalar(3) / 512,  Plato::Scalar(-9) / 512,
+        Plato::Scalar(-9) / 512, Plato::Scalar(3) / 512,  Plato::Scalar(-1) / 512, Plato::Scalar(3) / 512,
+        Plato::Scalar(27) / 256, Plato::Scalar(-9) / 256, Plato::Scalar(-9) / 256, Plato::Scalar(27) / 256,
+        Plato::Scalar(27) / 256, Plato::Scalar(-9) / 256, Plato::Scalar(3) / 256,  Plato::Scalar(-9) / 256,
+        Plato::Scalar(-9) / 256, Plato::Scalar(3) / 256,  Plato::Scalar(3) / 256,  Plato::Scalar(-9) / 256,
+        Plato::Scalar(27) / 64,  Plato::Scalar(27) / 128, Plato::Scalar(-9) / 128, Plato::Scalar(27) / 128,
+        Plato::Scalar(-9) / 128, Plato::Scalar(27) / 128, Plato::Scalar(-9) / 128};
 
     double tol_double = 1e-14;
     auto tBases_host = pth::get(tBases);
-    for(int iElem=0; iElem<tNElems; iElem++)
+    for (int iElem = 0; iElem < tNElems; iElem++)
     {
-        for(int iNode=0; iNode<(ElementType::mNumNodesPerCell); iNode++)
+        for (int iNode = 0; iNode < (ElementType::mNumNodesPerCell); iNode++)
         {
             TEST_FLOATING_EQUALITY(tBases_host(iNode, iElem), tBases_gold[iNode], tol_double);
         }
     }
-  }
-
+}
 
 /******************************************************************************/
 /*!
@@ -491,9 +484,8 @@ using MemSpace = typename ExecSpace::memory_space;
   test passes if points are mirrored correctly
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryPlane)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryPlane)
+{
     // create input for SymmetryPlane
     //
     double rx = 0.1, ry = 0.2, rz = 0.3;
@@ -534,16 +526,19 @@ using MemSpace = typename ExecSpace::memory_space;
     double p0_X = 0.0, p0_Y = 0.0, p0_Z = 0.0;
     double p1_X = 0.0, p1_Y = 0.0, p1_Z = 0.5;
 
-    tXin_host(0,0) = p0_X; tXin_host(1,0) = p0_Y; tXin_host(2,0) = p0_Z;
-    tXin_host(0,1) = p1_X; tXin_host(1,1) = p1_Y; tXin_host(2,1) = p1_Z;
+    tXin_host(0, 0) = p0_X;
+    tXin_host(1, 0) = p0_Y;
+    tXin_host(2, 0) = p0_Z;
+    tXin_host(0, 1) = p1_X;
+    tXin_host(1, 1) = p1_Y;
+    tXin_host(2, 1) = p1_Z;
     Kokkos::deep_copy(tXin, tXin_host);
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        tMathMap(aOrdinal, tXin, tXout);
-    });
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNumVals),
+        KOKKOS_LAMBDA(int aOrdinal) { tMathMap(aOrdinal, tXin, tXout); });
 
     // test results
     //
@@ -551,13 +546,13 @@ using MemSpace = typename ExecSpace::memory_space;
     Kokkos::deep_copy(tXout_host, tXout);
 
     double tol_double = 1e-14;
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p0_X, /*Result=*/ tXout_host(0,0), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p0_Y, /*Result=*/ tXout_host(1,0), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p0_Z-2.0*(p0_Z-rz)*nz, /*Result=*/ tXout_host(2,0), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p1_X, /*Result=*/ tXout_host(0,1), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p1_Y, /*Result=*/ tXout_host(1,1), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p1_Z, /*Result=*/ tXout_host(2,1), tol_double);
-  }
+    TEST_FLOATING_EQUALITY(/*Gold=*/p0_X, /*Result=*/tXout_host(0, 0), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p0_Y, /*Result=*/tXout_host(1, 0), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p0_Z - 2.0 * (p0_Z - rz) * nz, /*Result=*/tXout_host(2, 0), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p1_X, /*Result=*/tXout_host(0, 1), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p1_Y, /*Result=*/tXout_host(1, 1), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p1_Z, /*Result=*/tXout_host(2, 1), tol_double);
+}
 
 /******************************************************************************/
 /*!
@@ -566,9 +561,8 @@ using MemSpace = typename ExecSpace::memory_space;
   test passes if points are translated correctly
 */
 /******************************************************************************/
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, Translation)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, Translation)
+{
     // create input for Translation
     //
     double tx = 0.0, ty = 1.0, tz = 0.0;
@@ -603,17 +597,20 @@ using MemSpace = typename ExecSpace::memory_space;
     double p0_X = 0.3, p0_Y = 0.0, p0_Z = 1.0;
     double p1_X = 0.8, p1_Y = 0.5, p1_Z = 5.9;
 
-    tXin_host(0,0) = p0_X; tXin_host(1,0) = p0_Y; tXin_host(2,0) = p0_Z;
-    tXin_host(0,1) = p1_X; tXin_host(1,1) = p1_Y; tXin_host(2,1) = p1_Z;
+    tXin_host(0, 0) = p0_X;
+    tXin_host(1, 0) = p0_Y;
+    tXin_host(2, 0) = p0_Z;
+    tXin_host(0, 1) = p1_X;
+    tXin_host(1, 1) = p1_Y;
+    tXin_host(2, 1) = p1_Z;
 
     Kokkos::deep_copy(tXin, tXin_host);
 
     // map from input to output
     //
-    Kokkos::parallel_for("compute", Kokkos::RangePolicy<int>(0, tNumVals), KOKKOS_LAMBDA(int aOrdinal)
-    {
-        tMathMap(aOrdinal, tXin, tXout);
-    });
+    Kokkos::parallel_for(
+        "compute", Kokkos::RangePolicy<int>(0, tNumVals),
+        KOKKOS_LAMBDA(int aOrdinal) { tMathMap(aOrdinal, tXin, tXout); });
 
     // test results
     //
@@ -621,13 +618,13 @@ using MemSpace = typename ExecSpace::memory_space;
     Kokkos::deep_copy(tXout_host, tXout);
 
     double tol_double = 1e-14;
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p0_X+tx, /*Result=*/ tXout_host(0,0), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p0_Y+ty, /*Result=*/ tXout_host(1,0), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p0_Z+tz, /*Result=*/ tXout_host(2,0), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p1_X+tx, /*Result=*/ tXout_host(0,1), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p1_Y+ty, /*Result=*/ tXout_host(1,1), tol_double);
-    TEST_FLOATING_EQUALITY(/*Gold=*/ p1_Z+tz, /*Result=*/ tXout_host(2,1), tol_double);
-  }
+    TEST_FLOATING_EQUALITY(/*Gold=*/p0_X + tx, /*Result=*/tXout_host(0, 0), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p0_Y + ty, /*Result=*/tXout_host(1, 0), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p0_Z + tz, /*Result=*/tXout_host(2, 0), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p1_X + tx, /*Result=*/tXout_host(0, 1), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p1_Y + ty, /*Result=*/tXout_host(1, 1), tol_double);
+    TEST_FLOATING_EQUALITY(/*Gold=*/p1_Z + tz, /*Result=*/tXout_host(2, 1), tol_double);
+}
 
 /******************************************************************************/
 /*!
@@ -647,9 +644,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap_Tet10)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap_Tet10)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.0, rz = 0.5;
@@ -680,7 +676,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -692,10 +688,9 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
-    {
-        tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
-    });
+    Kokkos::parallel_for(
+        "compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts),
+        KOKKOS_LAMBDA(OrdinalType iVertOrdinal) { tInField(iVertOrdinal) = tCoords(iVertOrdinal * tDim + 2); });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -707,27 +702,25 @@ using MemSpace = typename ExecSpace::memory_space;
     Kokkos::deep_copy(tInField_host, tInField);
 
     double tol_double = 1e-12;
-    for(OrdinalType i=0; i<tNVerts; i++)
+    for (OrdinalType i = 0; i < tNVerts; i++)
     {
-        if(tInField_host(i) > 1e-15)
+        if (tInField_host(i) > 1e-15)
         {
-            if(tInField_host(i) < rz )
+            if (tInField_host(i) < rz)
             {
-                TEST_FLOATING_EQUALITY(2*rz-tInField_host(i), tOutField_host(i), tol_double);
+                TEST_FLOATING_EQUALITY(2 * rz - tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) > rz )
+            else if (tInField_host(i) > rz)
             {
                 TEST_FLOATING_EQUALITY(tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) == 0.0 )
+            else if (tInField_host(i) == 0.0)
             {
                 TEST_ASSERT(tOutField_host(i) == 0.0);
             }
         }
     }
-  }
+}
 /******************************************************************************/
 /*!
   \brief Enforce symmetry on a linear field on an asymmetric tet mesh.
@@ -746,9 +739,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.0, rz = 0.5;
@@ -779,7 +771,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -791,10 +783,9 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
-    {
-        tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
-    });
+    Kokkos::parallel_for(
+        "compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts),
+        KOKKOS_LAMBDA(OrdinalType iVertOrdinal) { tInField(iVertOrdinal) = tCoords(iVertOrdinal * tDim + 2); });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -806,27 +797,25 @@ using MemSpace = typename ExecSpace::memory_space;
     Kokkos::deep_copy(tInField_host, tInField);
 
     double tol_double = 1e-12;
-    for(OrdinalType i=0; i<tNVerts; i++)
+    for (OrdinalType i = 0; i < tNVerts; i++)
     {
-        if(tInField_host(i) > 1e-15)
+        if (tInField_host(i) > 1e-15)
         {
-            if(tInField_host(i) < rz )
+            if (tInField_host(i) < rz)
             {
-                TEST_FLOATING_EQUALITY(2*rz-tInField_host(i), tOutField_host(i), tol_double);
+                TEST_FLOATING_EQUALITY(2 * rz - tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) > rz )
+            else if (tInField_host(i) > rz)
             {
                 TEST_FLOATING_EQUALITY(tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) == 0.0 )
+            else if (tInField_host(i) == 0.0)
             {
                 TEST_ASSERT(tOutField_host(i) == 0.0);
             }
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -846,9 +835,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap_Hex8)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap_Hex8)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.0, rz = 0.5;
@@ -879,7 +867,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -891,10 +879,9 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
-    {
-        tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+2);
-    });
+    Kokkos::parallel_for(
+        "compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts),
+        KOKKOS_LAMBDA(OrdinalType iVertOrdinal) { tInField(iVertOrdinal) = tCoords(iVertOrdinal * tDim + 2); });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -906,27 +893,25 @@ using MemSpace = typename ExecSpace::memory_space;
     Kokkos::deep_copy(tInField_host, tInField);
 
     double tol_double = 1e-12;
-    for(OrdinalType i=0; i<tNVerts; i++)
+    for (OrdinalType i = 0; i < tNVerts; i++)
     {
-        if(tInField_host(i) > 1e-15)
+        if (tInField_host(i) > 1e-15)
         {
-            if(tInField_host(i) < rz )
+            if (tInField_host(i) < rz)
             {
-                TEST_FLOATING_EQUALITY(2*rz-tInField_host(i), tOutField_host(i), tol_double);
+                TEST_FLOATING_EQUALITY(2 * rz - tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) > rz )
+            else if (tInField_host(i) > rz)
             {
                 TEST_FLOATING_EQUALITY(tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) == 0.0 )
+            else if (tInField_host(i) == 0.0)
             {
                 TEST_ASSERT(tOutField_host(i) == 0.0);
             }
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -946,9 +931,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap_Quad4)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMap_Quad4)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.5;
@@ -977,7 +961,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("QUAD4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -989,10 +973,9 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("not symmetric", tNVerts);
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    Kokkos::parallel_for("compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts), KOKKOS_LAMBDA(OrdinalType iVertOrdinal)
-    {
-        tInField(iVertOrdinal) = tCoords(iVertOrdinal*tDim+1);
-    });
+    Kokkos::parallel_for(
+        "compute field", Kokkos::RangePolicy<OrdinalType>(0, tNVerts),
+        KOKKOS_LAMBDA(OrdinalType iVertOrdinal) { tInField(iVertOrdinal) = tCoords(iVertOrdinal * tDim + 1); });
 
     Kokkos::View<double*, MemSpace> tOutField("symmetric", tNVerts);
     tMeshMap->apply(tInField, tOutField);
@@ -1004,27 +987,25 @@ using MemSpace = typename ExecSpace::memory_space;
     Kokkos::deep_copy(tInField_host, tInField);
 
     double tol_double = 1e-12;
-    for(OrdinalType i=0; i<tNVerts; i++)
+    for (OrdinalType i = 0; i < tNVerts; i++)
     {
-        if(tInField_host(i) > 1e-15)
+        if (tInField_host(i) > 1e-15)
         {
-            if(tInField_host(i) < ry )
+            if (tInField_host(i) < ry)
             {
-                TEST_FLOATING_EQUALITY(2*ry-tInField_host(i), tOutField_host(i), tol_double);
+                TEST_FLOATING_EQUALITY(2 * ry - tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) > ry )
+            else if (tInField_host(i) > ry)
             {
                 TEST_FLOATING_EQUALITY(tInField_host(i), tOutField_host(i), tol_double);
             }
-            else
-            if(tInField_host(i) == 0.0 )
+            else if (tInField_host(i) == 0.0)
             {
                 TEST_ASSERT(tOutField_host(i) == 0.0);
             }
         }
     }
-  }
+}
 /******************************************************************************/
 /*!
   \brief Enforce symmetry on a uniform field on an asymmetric tet mesh.
@@ -1042,9 +1023,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.0, rz = 0.5;
@@ -1079,7 +1059,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -1103,11 +1083,11 @@ using MemSpace = typename ExecSpace::memory_space;
 
     double tol_double = 1e-12;
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    for(OrdinalType i=0; i<tNVerts; i++)
+    for (OrdinalType i = 0; i < tNVerts; i++)
     {
         TEST_FLOATING_EQUALITY(1.0, tOutField_host(i), tol_double);
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -1129,9 +1109,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter_Hex8)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter_Hex8)
+{
     // create input for MeshMap
     //
     double rx = 0.5, ry = 0.0, rz = 0.0;
@@ -1166,7 +1145,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -1181,20 +1160,19 @@ using MemSpace = typename ExecSpace::memory_space;
 
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("uniform", tNumNodes);
-    Kokkos::parallel_for("set field", Kokkos::RangePolicy<int>(0, tNumElements),
-    KOKKOS_LAMBDA(int elemOrdinal)
-    {
-      bool tIntersected=false;
-      for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
-      {
-        if(tCoords(tNumDim*tConnect(elemOrdinal*tNumNPE+iNode)) >= 0.5) tIntersected = true;
-      }
-      if(tIntersected)
-      for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
-      {
-        tInField(tConnect(elemOrdinal*tNumNPE+iNode)) = 1.0;
-      }
-    });
+    Kokkos::parallel_for(
+        "set field", Kokkos::RangePolicy<int>(0, tNumElements), KOKKOS_LAMBDA(int elemOrdinal) {
+            bool tIntersected = false;
+            for (Plato::OrdinalType iNode = 0; iNode < tNumNPE; iNode++)
+            {
+                if (tCoords(tNumDim * tConnect(elemOrdinal * tNumNPE + iNode)) >= 0.5) tIntersected = true;
+            }
+            if (tIntersected)
+                for (Plato::OrdinalType iNode = 0; iNode < tNumNPE; iNode++)
+                {
+                    tInField(tConnect(elemOrdinal * tNumNPE + iNode)) = 1.0;
+                }
+        });
 
     Kokkos::View<double*, MemSpace> tOutField("also uniform", tNumNodes);
 
@@ -1208,11 +1186,11 @@ using MemSpace = typename ExecSpace::memory_space;
 
     double tol_double = 1e-12;
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    for(OrdinalType i=0; i<tNumNodes; i++)
+    for (OrdinalType i = 0; i < tNumNodes; i++)
     {
         TEST_FLOATING_EQUALITY(1.0, tOutField_host(i), tol_double);
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -1234,9 +1212,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter_Quad4)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter_Quad4)
+{
     // create input for MeshMap
     //
     double rx = 0.5, ry = 0.0;
@@ -1269,7 +1246,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("QUAD4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -1284,20 +1261,19 @@ using MemSpace = typename ExecSpace::memory_space;
 
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("uniform", tNumNodes);
-    Kokkos::parallel_for("set field", Kokkos::RangePolicy<int>(0, tNumElements),
-    KOKKOS_LAMBDA(int elemOrdinal)
-    {
-      bool tIntersected=false;
-      for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
-      {
-        if(tCoords(tNumDim*tConnect(elemOrdinal*tNumNPE+iNode)) >= 0.5) tIntersected = true;
-      }
-      if(tIntersected)
-      for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
-      {
-        tInField(tConnect(elemOrdinal*tNumNPE+iNode)) = 1.0;
-      }
-    });
+    Kokkos::parallel_for(
+        "set field", Kokkos::RangePolicy<int>(0, tNumElements), KOKKOS_LAMBDA(int elemOrdinal) {
+            bool tIntersected = false;
+            for (Plato::OrdinalType iNode = 0; iNode < tNumNPE; iNode++)
+            {
+                if (tCoords(tNumDim * tConnect(elemOrdinal * tNumNPE + iNode)) >= 0.5) tIntersected = true;
+            }
+            if (tIntersected)
+                for (Plato::OrdinalType iNode = 0; iNode < tNumNPE; iNode++)
+                {
+                    tInField(tConnect(elemOrdinal * tNumNPE + iNode)) = 1.0;
+                }
+        });
 
     Kokkos::View<double*, MemSpace> tOutField("also uniform", tNumNodes);
 
@@ -1311,11 +1287,11 @@ using MemSpace = typename ExecSpace::memory_space;
 
     double tol_double = 1e-12;
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    for(OrdinalType i=0; i<tNumNodes; i++)
+    for (OrdinalType i = 0; i < tNumNodes; i++)
     {
         TEST_FLOATING_EQUALITY(1.0, tOutField_host(i), tol_double);
     }
-  }
+}
 /******************************************************************************/
 /*!
   \brief Enforce symmetry on a uniform field on an asymmetric tet mesh.
@@ -1336,9 +1312,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter_Tet4)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, SymmetryMeshMapWFilter_Tet4)
+{
     // create input for MeshMap
     //
     double rx = 0.5, ry = 0.0, rz = 0.0;
@@ -1373,7 +1348,7 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
@@ -1388,20 +1363,19 @@ using MemSpace = typename ExecSpace::memory_space;
 
     auto tDim = tMesh->NumDimensions();
     Kokkos::View<double*, MemSpace> tInField("uniform", tNumNodes);
-    Kokkos::parallel_for("set field", Kokkos::RangePolicy<int>(0, tNumElements),
-    KOKKOS_LAMBDA(int elemOrdinal)
-    {
-      bool tIntersected=false;
-      for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
-      {
-        if(tCoords(tNumDim*tConnect(elemOrdinal*tNumNPE+iNode)) >= 0.5) tIntersected = true;
-      }
-      if(tIntersected)
-      for(Plato::OrdinalType iNode=0; iNode<tNumNPE; iNode++)
-      {
-        tInField(tConnect(elemOrdinal*tNumNPE+iNode)) = 1.0;
-      }
-    });
+    Kokkos::parallel_for(
+        "set field", Kokkos::RangePolicy<int>(0, tNumElements), KOKKOS_LAMBDA(int elemOrdinal) {
+            bool tIntersected = false;
+            for (Plato::OrdinalType iNode = 0; iNode < tNumNPE; iNode++)
+            {
+                if (tCoords(tNumDim * tConnect(elemOrdinal * tNumNPE + iNode)) >= 0.5) tIntersected = true;
+            }
+            if (tIntersected)
+                for (Plato::OrdinalType iNode = 0; iNode < tNumNPE; iNode++)
+                {
+                    tInField(tConnect(elemOrdinal * tNumNPE + iNode)) = 1.0;
+                }
+        });
 
     Kokkos::View<double*, MemSpace> tOutField("also uniform", tNumNodes);
 
@@ -1415,11 +1389,11 @@ using MemSpace = typename ExecSpace::memory_space;
 
     double tol_double = 1e-12;
     using OrdinalType = typename Kokkos::View<double*, MemSpace>::size_type;
-    for(OrdinalType i=0; i<tNumNodes; i++)
+    for (OrdinalType i = 0; i < tNumNodes; i++)
     {
         TEST_FLOATING_EQUALITY(1.0, tOutField_host(i), tol_double);
     }
-  }
+}
 /******************************************************************************/
 /*!
   \brief Test createTranspose() function in Plato::MeshMap.
@@ -1439,9 +1413,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, TransposeMatrix)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, TransposeMatrix)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.0, rz = 0.5;
@@ -1476,37 +1449,36 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
 
-    auto tMatrix  = to_full(tMeshMap->mMatrix);
+    auto tMatrix = to_full(tMeshMap->mMatrix);
     auto tMatrixT = to_full(tMeshMap->mMatrixT);
 
     double tol_double = 1e-12;
-    for(int i=0; i<tMatrix.size(); i++)
+    for (int i = 0; i < tMatrix.size(); i++)
     {
-        for(int j=0; j<tMatrix[i].size(); j++)
+        for (int j = 0; j < tMatrix[i].size(); j++)
         {
             TEST_FLOATING_EQUALITY(tMatrix[i][j], tMatrixT[j][i], tol_double);
         }
     }
 
-    auto tFilter  = to_full(*(tMeshMap->mFilter));
+    auto tFilter = to_full(*(tMeshMap->mFilter));
     auto tFilterT = to_full(*(tMeshMap->mFilterT));
 
     std::vector<Plato::Scalar> tRowSum(tFilter.size());
-    for(int i=0; i<tFilter.size(); i++)
+    for (int i = 0; i < tFilter.size(); i++)
     {
         tRowSum[i] = 0.0;
-        for(int j=0; j<tFilter[i].size(); j++)
+        for (int j = 0; j < tFilter[i].size(); j++)
         {
             tRowSum[i] += tFilter[i][j];
             TEST_FLOATING_EQUALITY(tFilter[i][j], tFilterT[j][i], tol_double);
-            if( tFilter[i][j] != 0.0 )
-                TEST_ASSERT(tFilter[j][i] != 0.0);
+            if (tFilter[i][j] != 0.0) TEST_ASSERT(tFilter[j][i] != 0.0);
         }
         TEST_FLOATING_EQUALITY(tRowSum[i], 1.0, tol_double);
     }
@@ -1514,14 +1486,14 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tMatrixTT = tMeshMap->createTranspose(tMeshMap->mMatrixT);
     auto tMatrixTTF = to_full(tMatrixTT);
 
-    for(int i=0; i<tMatrix.size(); i++)
+    for (int i = 0; i < tMatrix.size(); i++)
     {
-        for(int j=0; j<tMatrix[i].size(); j++)
+        for (int j = 0; j < tMatrix[i].size(); j++)
         {
             TEST_FLOATING_EQUALITY(tMatrix[i][j], tMatrixTTF[i][j], tol_double);
         }
     }
-  }
+}
 
 /******************************************************************************/
 /*!
@@ -1542,9 +1514,8 @@ using MemSpace = typename ExecSpace::memory_space;
 */
 /******************************************************************************/
 
-  TEUCHOS_UNIT_TEST(PlatoTestMeshMap, TransposeMatrix_Tet10)
-  {
-
+TEUCHOS_UNIT_TEST(PlatoTestMeshMap, TransposeMatrix_Tet10)
+{
     // create input for MeshMap
     //
     double rx = 0.0, ry = 0.0, rz = 0.5;
@@ -1579,37 +1550,36 @@ using MemSpace = typename ExecSpace::memory_space;
     //
     auto tMeshMapParams = tInputData.get<Plato::InputData>("MeshMap");
 
-    constexpr int cMeshWidth=5;
+    constexpr int cMeshWidth = 5;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET10", cMeshWidth);
 
     Plato::Geometry::MeshMapFactory<double> tMeshMapFactory;
     auto tMeshMap = tMeshMapFactory.create(tMesh, tMeshMapParams);
 
-    auto tMatrix  = to_full(tMeshMap->mMatrix);
+    auto tMatrix = to_full(tMeshMap->mMatrix);
     auto tMatrixT = to_full(tMeshMap->mMatrixT);
 
     double tol_double = 1e-12;
-    for(int i=0; i<tMatrix.size(); i++)
+    for (int i = 0; i < tMatrix.size(); i++)
     {
-        for(int j=0; j<tMatrix[i].size(); j++)
+        for (int j = 0; j < tMatrix[i].size(); j++)
         {
             TEST_FLOATING_EQUALITY(tMatrix[i][j], tMatrixT[j][i], tol_double);
         }
     }
 
-    auto tFilter  = to_full(*(tMeshMap->mFilter));
+    auto tFilter = to_full(*(tMeshMap->mFilter));
     auto tFilterT = to_full(*(tMeshMap->mFilterT));
 
     std::vector<Plato::Scalar> tRowSum(tFilter.size());
-    for(int i=0; i<tFilter.size(); i++)
+    for (int i = 0; i < tFilter.size(); i++)
     {
         tRowSum[i] = 0.0;
-        for(int j=0; j<tFilter[i].size(); j++)
+        for (int j = 0; j < tFilter[i].size(); j++)
         {
             tRowSum[i] += tFilter[i][j];
             TEST_FLOATING_EQUALITY(tFilter[i][j], tFilterT[j][i], tol_double);
-            if( tFilter[i][j] != 0.0 )
-                TEST_ASSERT(tFilter[j][i] != 0.0);
+            if (tFilter[i][j] != 0.0) TEST_ASSERT(tFilter[j][i] != 0.0);
         }
         TEST_FLOATING_EQUALITY(tRowSum[i], 1.0, tol_double);
     }
@@ -1617,13 +1587,13 @@ using MemSpace = typename ExecSpace::memory_space;
     auto tMatrixTT = tMeshMap->createTranspose(tMeshMap->mMatrixT);
     auto tMatrixTTF = to_full(tMatrixTT);
 
-    for(int i=0; i<tMatrix.size(); i++)
+    for (int i = 0; i < tMatrix.size(); i++)
     {
-        for(int j=0; j<tMatrix[i].size(); j++)
+        for (int j = 0; j < tMatrix[i].size(); j++)
         {
             TEST_FLOATING_EQUALITY(tMatrix[i][j], tMatrixTTF[i][j], tol_double);
         }
     }
-  }
+}
 
-} // namespace PlatoTestMeshMap
+}  // namespace PlatoTestMeshMap

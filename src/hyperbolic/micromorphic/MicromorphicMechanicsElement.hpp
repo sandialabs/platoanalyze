@@ -8,40 +8,34 @@ namespace Plato
 namespace Hyperbolic
 {
 
-template<typename TopoElementTypeT, Plato::OrdinalType NumControls = 1>
+template <typename TopoElementTypeT, Plato::OrdinalType NumControls = 1>
 class MicromorphicMechanicsElement : public TopoElementTypeT, public ElementBase<TopoElementTypeT>
 {
-  public:
+   public:
+    using TopoElementTypeT::mNumGaussPoints;
     using TopoElementTypeT::mNumNodesPerCell;
     using TopoElementTypeT::mNumNodesPerFace;
     using TopoElementTypeT::mNumSpatialDims;
-    using TopoElementTypeT::mNumGaussPoints;
 
     using TopoElementType = TopoElementTypeT;
 
-    static constexpr Plato::OrdinalType mNumFullTerms    = (mNumSpatialDims == 3) ? 9 :
-                                             ((mNumSpatialDims == 2) ? 4 :
-                                            (((mNumSpatialDims == 1) ? 1 : 0)));
-    static constexpr Plato::OrdinalType mNumVoigtTerms   = (mNumSpatialDims == 3) ? 6 :
-                                             ((mNumSpatialDims == 2) ? 3 :
-                                            (((mNumSpatialDims == 1) ? 1 : 0)));
-    static constexpr Plato::OrdinalType mNumSkwTerms     = (mNumSpatialDims == 3) ? 3 :
-                                             ((mNumSpatialDims == 2) ? 1 :
-                                            (((mNumSpatialDims == 1) ? 1 : 0)));
+    static constexpr Plato::OrdinalType mNumFullTerms =
+        (mNumSpatialDims == 3) ? 9 : ((mNumSpatialDims == 2) ? 4 : (((mNumSpatialDims == 1) ? 1 : 0)));
+    static constexpr Plato::OrdinalType mNumVoigtTerms =
+        (mNumSpatialDims == 3) ? 6 : ((mNumSpatialDims == 2) ? 3 : (((mNumSpatialDims == 1) ? 1 : 0)));
+    static constexpr Plato::OrdinalType mNumSkwTerms =
+        (mNumSpatialDims == 3) ? 3 : ((mNumSpatialDims == 2) ? 1 : (((mNumSpatialDims == 1) ? 1 : 0)));
 
-    static constexpr Plato::OrdinalType mNumDofsPerNode  = mNumSpatialDims + mNumFullTerms;
-    static constexpr Plato::OrdinalType mNumDofsPerCell  = mNumDofsPerNode*mNumNodesPerCell;
+    static constexpr Plato::OrdinalType mNumDofsPerNode = mNumSpatialDims + mNumFullTerms;
+    static constexpr Plato::OrdinalType mNumDofsPerCell = mNumDofsPerNode * mNumNodesPerCell;
 
     static constexpr Plato::OrdinalType mNumControl = NumControls;
 
     static constexpr Plato::OrdinalType mNumNodeStatePerNode = 0;
     static constexpr Plato::OrdinalType mNumLocalStatesPerGP = 0;
-    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP*mNumGaussPoints;
-
-
+    static constexpr Plato::OrdinalType mNumLocalDofsPerCell = mNumLocalStatesPerGP * mNumGaussPoints;
 };
 
-} 
+}  // namespace Hyperbolic
 
-} 
-
+}  // namespace Plato

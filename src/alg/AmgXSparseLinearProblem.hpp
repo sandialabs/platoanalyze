@@ -1,6 +1,6 @@
 //
 //  AmgXSparseLinearProblem.hpp
-//  
+//
 //
 //  Created by Roberts, Nathan V on 8/8/17.
 //
@@ -15,16 +15,16 @@
 #include <Teuchos_DefaultMpiComm.hpp>
 #endif
 
-#include "alg/CrsLinearProblem.hpp"
-#include "alg/AmgXConfigs.hpp"
-#include <PlatoTypes.hpp>
-#include "AnalyzeMacros.hpp"
-
 #include <amgx_c.h>
-#include <sstream>
-#include <fstream>
 
+#include <PlatoTypes.hpp>
 #include <cassert>
+#include <fstream>
+#include <sstream>
+
+#include "AnalyzeMacros.hpp"
+#include "alg/AmgXConfigs.hpp"
+#include "alg/CrsLinearProblem.hpp"
 
 namespace Plato
 {
@@ -38,11 +38,11 @@ inline std::string get_config_string(bool aUseAbsoluteTolerance = false, Plato::
 
     std::ifstream tInputFile;
     tInputFile.open("amgx.json", std::ifstream::in);
-    if(tInputFile)
+    if (tInputFile)
     {
         std::string tLine;
         std::stringstream tConfig;
-        while(std::getline(tInputFile, tLine))
+        while (std::getline(tInputFile, tLine))
         {
             std::istringstream tInputStringStream(tLine);
             tConfig << tInputStringStream.str();
@@ -58,13 +58,13 @@ inline std::string get_config_string(bool aUseAbsoluteTolerance = false, Plato::
 }
 // function get_config_string
 
-template<class Ordinal, Plato::OrdinalType BlockSize = 1>
+template <class Ordinal, Plato::OrdinalType BlockSize = 1>
 class AmgXSparseLinearProblem : public CrsLinearProblem<Ordinal>
 {
+   public:
+    typedef Kokkos::View<Scalar *, MemSpace> Vector;
 
-public:
-    typedef Kokkos::View<Scalar*, MemSpace> Vector;
-private:
+   private:
     typedef Plato::OrdinalType RowMapEntryType;
     typedef CrsMatrix<Ordinal> Matrix;
 
@@ -80,9 +80,9 @@ private:
 
     bool mHaveInitialized = false;
 
-    Vector mSolution; // will want to copy here (from mLHS) in solve()...
+    Vector mSolution;  // will want to copy here (from mLHS) in solve()...
 
-public:
+   public:
     static void initializeAMGX()
     {
         AMGX_SAFE_CALL(AMGX_initialize());
@@ -90,9 +90,11 @@ public:
         AMGX_SAFE_CALL(AMGX_install_signal_handler());
     }
 
-    AmgXSparseLinearProblem(const Matrix aA, Vector aX, const Vector aB,
-                            std::string const& aSolverConfigString = configurationString("pcg_noprec")) :
-            CrsLinearProblem<Ordinal>(aA, aX, aB)
+    AmgXSparseLinearProblem(const Matrix aA,
+                            Vector aX,
+                            const Vector aB,
+                            std::string const &aSolverConfigString = configurationString("pcg_noprec"))
+        : CrsLinearProblem<Ordinal>(aA, aX, aB)
     {
         check_inputs(aA, aX, aB);
 
@@ -102,7 +104,7 @@ public:
         MPI_Comm tMPI_COMM = MPI_COMM_SELF;
         Plato::OrdinalType tNumDevices = 1;
         Plato::OrdinalType tDevices[1];
-        //it is critical to specify the current device, which is not always zero
+        // it is critical to specify the current device, which is not always zero
         cudaGetDevice(&tDevices[0]);
         AMGX_resources_create(&mResources, mSolverConfigurations, &tMPI_COMM, tNumDevices, tDevices);
         AMGX_matrix_create(&mMatrix, mResources, AMGX_mode_dDDI);
@@ -128,7 +130,7 @@ public:
         Kokkos::Profiling::popRegion();
     }
 
-    void initializeSolver() // TODO: add mechanism for setting options
+    void initializeSolver()  // TODO: add mechanism for setting options
     {
         this->initializePreconditioner();
     }
@@ -152,22 +154,15 @@ public:
         AMGX_vector_upload(mRHS, aRHS.size() / BlockSize, BlockSize, aRHS.data());
     }
 
-    void uploadMatrix(const Matrix & aMatrix, const Ordinal & aNumEquations)
+    void uploadMatrix(const Matrix &aMatrix, const Ordinal &aNumEquations)
     {
         const void *tData = aMatrix.entries().data();
-        const void *tDiagData = nullptr; // no exterior diagonal
+        const void *tDiagData = nullptr;  // no exterior diagonal
         const Plato::OrdinalType *tRowPtrs = aMatrix.rowMap().data();
         const Plato::OrdinalType *tColIndices = aMatrix.columnIndices().data();
         const Ordinal tNumNonZeros = aMatrix.columnIndices().size();
-        AMGX_matrix_upload_all(mMatrix,
-                               aNumEquations / BlockSize,
-                               tNumNonZeros,
-                               BlockSize,
-                               BlockSize,
-                               tRowPtrs,
-                               tColIndices,
-                               tData,
-                               tDiagData);
+        AMGX_matrix_upload_all(mMatrix, aNumEquations / BlockSize, tNumNonZeros, BlockSize, BlockSize, tRowPtrs,
+                               tColIndices, tData, tDiagData);
     }
 
     void setTolerance(Plato::Scalar aTolerance)
@@ -183,7 +178,7 @@ public:
     {
         using namespace std;
 
-        if(!mHaveInitialized)
+        if (!mHaveInitialized)
         {
             this->initializeSolver();
             mHaveInitialized = true;
@@ -235,25 +230,27 @@ public:
         auto tNumNonZero = Plato::OrdinalType(tColIndices.extent(0));
         assert(Plato::OrdinalType(aMatrix.entries().extent(0)) == tNumNonZero * BlockSize * BlockSize);
         assert(cudaSuccess == cudaDeviceSynchronize());
-        Kokkos::parallel_for("check_inputs", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumBlocks), KOKKOS_LAMBDA(Plato::OrdinalType aBlockIndex)
-        {
-            auto tBegin = tRowMap(aBlockIndex);
-            assert(0 <= tBegin);
-            auto tEnd = tRowMap(aBlockIndex + 1);
-            assert(tBegin <= tEnd);
-            if (aBlockIndex == tNumBlocks - 1) assert(tEnd == tNumNonZero);
-            else assert(tEnd < tNumNonZero);
-            for (Plato::OrdinalType tIJ = tBegin; tIJ < tEnd; ++tIJ)
-            {
-                auto tJ = tColIndices(tIJ);
-                assert(0 <= tJ);
-                assert(tJ < tNumBlocks);
-            }
-        });
+        Kokkos::parallel_for(
+            "check_inputs", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumBlocks),
+            KOKKOS_LAMBDA(Plato::OrdinalType aBlockIndex) {
+                auto tBegin = tRowMap(aBlockIndex);
+                assert(0 <= tBegin);
+                auto tEnd = tRowMap(aBlockIndex + 1);
+                assert(tBegin <= tEnd);
+                if (aBlockIndex == tNumBlocks - 1)
+                    assert(tEnd == tNumNonZero);
+                else
+                    assert(tEnd < tNumNonZero);
+                for (Plato::OrdinalType tIJ = tBegin; tIJ < tEnd; ++tIJ)
+                {
+                    auto tJ = tColIndices(tIJ);
+                    assert(0 <= tJ);
+                    assert(tJ < tNumBlocks);
+                }
+            });
         assert(cudaSuccess == cudaDeviceSynchronize());
     }
-
 };
-}
+}  // namespace Plato
 
 #endif /* AmgXSparseLinearProblem_h */

@@ -9,10 +9,10 @@
 
 #include <Teuchos_RCPDecl.hpp>
 
-#include "Solutions.hpp"
 #include "AnalyzeMacros.hpp"
 #include "InputDataUtils.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "Solutions.hpp"
 
 namespace Plato
 {
@@ -21,168 +21,147 @@ struct partial
 {
     enum derivative_t
     {
-        CONTROL = 0, STATE = 1, CONFIGURATION = 2,
+        CONTROL = 0,
+        STATE = 1,
+        CONFIGURATION = 2,
     };
 };
 // end struct partial
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Abstract interface for a PLATO problem
-**********************************************************************************/
+ **********************************************************************************/
 class AbstractProblem
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief PLATO abstract problem destructor
-    **********************************************************************************/
+     **********************************************************************************/
     virtual ~AbstractProblem() = default;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief PLATO abstract problem constructor
-    **********************************************************************************/
+     **********************************************************************************/
     AbstractProblem() {}
 
-    AbstractProblem(
-      Plato::Mesh              aMesh,
-      Teuchos::ParameterList & aProblemParams
-    )
+    AbstractProblem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams)
     {
-      readInputData(aProblemParams, mDataMap, aMesh);
+        readInputData(aProblemParams, mDataMap, aMesh);
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Output solution to visualization file.
      * \param [in] aFilename output file name
-    **********************************************************************************/
+     **********************************************************************************/
     virtual void output(const std::string& aFilename) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Update physics-based parameters within optimization iterations
      * \param [in] aControl 1D container of control variables
      * \param [in] aSolution solution database
-    **********************************************************************************/
-    virtual void
-    updateProblem(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution
-    )=0;
+     **********************************************************************************/
+    virtual void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Solve system of equations
      * \param [in] aControl 1D view of control variables
      * \return 2D view of state variables
-    **********************************************************************************/
-    virtual Plato::Solutions
-    solution(
-        const Plato::ScalarVector & aControl
-    )=0;
+     **********************************************************************************/
+    virtual Plato::Solutions solution(const Plato::ScalarVector& aControl) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Is criterion independent of the solution state?
      * \param [in] aName Name of criterion.
-    **********************************************************************************/
-    virtual bool
-    criterionIsLinear(
-        const std::string & aName
-    ){ return false; }
+     **********************************************************************************/
+    virtual bool criterionIsLinear(const std::string& aName) { return false; }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate criterion function
      * \param [in] aControl 1D view of control variables
      * \param [in] aName Name of criterion.
      * \return criterion function value
-    **********************************************************************************/
-    virtual Plato::Scalar
-    criterionValue(
-        const Plato::ScalarVector & aControl,
-        const std::string         & aName
-    )=0;
+     **********************************************************************************/
+    virtual Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate criterion function
      * \param [in] aControl 1D view of control variables
      * \param [in] aSolution solution database
      * \param [in] aName Name of criterion.
      * \return criterion function value
-    **********************************************************************************/
-    virtual Plato::Scalar
-    criterionValue(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-        const std::string         & aName
-    )=0;
+     **********************************************************************************/
+    virtual Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
+                                         const Plato::Solutions& aSolution,
+                                         const std::string& aName) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate criterion partial derivative wrt control variables
      * \param [in] aControl 1D view of control variables
      * \param [in] aName Name of criterion.
      * \return 1D view - criterion partial derivative wrt control variables
-    **********************************************************************************/
-    virtual Plato::ScalarVector
-    criterionGradient(
-        const Plato::ScalarVector & aControl,
-        const std::string         & aName
-    )=0;
+     **********************************************************************************/
+    virtual Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate criterion partial derivative wrt configuration variables
      * \param [in] aControl 1D view of control variables
      * \param [in] aName Name of criterion.
      * \return 1D view - criterion partial derivative wrt configuration variables
-    **********************************************************************************/
-    virtual Plato::ScalarVector
-    criterionGradientX(
-        const Plato::ScalarVector & aControl,
-        const std::string         & aName
-    )=0;
+     **********************************************************************************/
+    virtual Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate criterion gradient wrt control variables
      * \param [in] aControl 1D view of control variables
      * \param [in] aSolution solution database
      * \param [in] aName Name of criterion.
      * \return 1D view - criterion gradient wrt control variables
-    **********************************************************************************/
-    virtual Plato::ScalarVector
-    criterionGradient(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-        const std::string         & aName
-    )=0;
+     **********************************************************************************/
+    virtual Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
+                                                  const Plato::Solutions& aSolution,
+                                                  const std::string& aName) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate criterion gradient wrt configuration variables
      * \param [in] aControl 1D view of control variables
      * \param [in] aSolution solution database
      * \param [in] aName Name of criterion.
      * \return 1D view - criterion gradient wrt configuration variables
-    **********************************************************************************/
-    virtual Plato::ScalarVector
-    criterionGradientX(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-        const std::string         & aName
-    )=0;
+     **********************************************************************************/
+    virtual Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
+                                                   const Plato::Solutions& aSolution,
+                                                   const std::string& aName) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \fn const Plato::DataMap getDataMap
      * \brief Return constant reference to Plato output database.
      * \return constant reference to Plato output database
      **********************************************************************************/
     Plato::DataMap mDataMap;
-    decltype(mDataMap)& getDataMap()
-    {
-        return mDataMap;
-    }
+    decltype(mDataMap)& getDataMap() { return mDataMap; }
 
     /******************************************************************************/ /**
-    * \brief Return solution database.
-    * \return solution database
-    **********************************************************************************/
+                                                                                      * \brief Return solution database.
+                                                                                      * \return solution database
+                                                                                      **********************************************************************************/
     virtual Plato::Solutions getSolution() const = 0;
 };
 // end class AbstractProblem
 
-}// end namespace Plato
+}  // end namespace Plato
 
 #endif /* PLATOABSTRACTPROBLEM_HPP_ */

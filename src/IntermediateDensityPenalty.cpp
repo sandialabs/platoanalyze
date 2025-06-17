@@ -3,7 +3,6 @@
 #ifdef PLATOANALYZE_USE_EXPLICIT_INSTANTIATION
 
 #include "IntermediateDensityPenalty_def.hpp"
-
 #include "MechanicsElement.hpp"
 #include "elliptic/ExpInstMacros.hpp"
 

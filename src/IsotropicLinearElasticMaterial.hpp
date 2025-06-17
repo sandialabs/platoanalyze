@@ -11,34 +11,37 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Derived class for isotropic linear elastic material model
  *
  * \tparam SpatialDim spatial dimensions, options 1D, 2D, and 3D
  *
-**********************************************************************************/
-template<Plato::OrdinalType SpatialDim>
+ **********************************************************************************/
+template <Plato::OrdinalType SpatialDim>
 class IsotropicLinearElasticMaterial : public LinearElasticMaterial<SpatialDim>
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Linear elastic isotropic material model constructor.
      * \param [in] aParamList input parameter list
-    **********************************************************************************/
+     **********************************************************************************/
     IsotropicLinearElasticMaterial(const Teuchos::ParameterList& aParamList);
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Linear elastic isotropic material model constructor.
      * \param [in] aYoungsModulus Young's Modulus
      * \param [in] aPoissonsRatio Poisson's Modulus
-    **********************************************************************************/
-    IsotropicLinearElasticMaterial(const Plato::Scalar & aYoungsModulus, const Plato::Scalar & aPoissonsRatio);
+     **********************************************************************************/
+    IsotropicLinearElasticMaterial(const Plato::Scalar& aYoungsModulus, const Plato::Scalar& aPoissonsRatio);
 
-private:
+   private:
     Plato::Scalar mPoissonsRatio; /*!< Poisson's Ratio */
     Plato::Scalar mYoungsModulus; /*!< Young's Modulus */
 };
 // class IsotropicLinearElasticMaterial
 
-}
+}  // namespace Plato
 // namespace Plato

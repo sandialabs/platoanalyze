@@ -20,4 +20,3 @@ template class Plato::PlasticityProblem<Plato::InfinitesimalStrainThermoPlastici
 template class Plato::PlasticityProblem<Plato::InfinitesimalStrainPlasticity<3>>;
 template class Plato::PlasticityProblem<Plato::InfinitesimalStrainThermoPlasticity<3>>;
 #endif
-
