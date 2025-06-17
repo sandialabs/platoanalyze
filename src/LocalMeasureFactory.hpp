@@ -1,38 +1,37 @@
 #pragma once
 
+#include <Teuchos_ParameterList.hpp>
 #include <memory>
 
-#include "SimplexFadTypes.hpp"
 #include "AnalyzeMacros.hpp"
-
-#include "VonMisesLocalMeasure.hpp"
+#include "SimplexFadTypes.hpp"
 #include "TensileEnergyDensityLocalMeasure.hpp"
-#include <Teuchos_ParameterList.hpp>
+#include "VonMisesLocalMeasure.hpp"
 
 namespace Plato
 {
 
 /**********************************************************************************/
-template<typename EvaluationType, typename SimplexPhysics>
+template <typename EvaluationType, typename SimplexPhysics>
 class LocalMeasureFactory
 {
-/**********************************************************************************/
-public:
-    LocalMeasureFactory (){}
-    std::shared_ptr<Plato::AbstractLocalMeasure<EvaluationType, SimplexPhysics>> 
-    create(Teuchos::ParameterList& aInputParams, const std::string & aFuncName)
+    /**********************************************************************************/
+   public:
+    LocalMeasureFactory() {}
+    std::shared_ptr<Plato::AbstractLocalMeasure<EvaluationType, SimplexPhysics>> create(
+        Teuchos::ParameterList& aInputParams, const std::string& aFuncName)
     {
         auto tFunctionSpecs = aInputParams.sublist(aFuncName);
         auto tLocalMeasure = tFunctionSpecs.get<std::string>("Local Measure", "VonMises");
 
-        if(tLocalMeasure == "VonMises")
+        if (tLocalMeasure == "VonMises")
         {
             return std::make_shared<VonMisesLocalMeasure<EvaluationType, SimplexPhysics>>(aInputParams, "VonMises");
         }
-        else if(tLocalMeasure == "TensileEnergyDensity")
+        else if (tLocalMeasure == "TensileEnergyDensity")
         {
-            return std::make_shared<TensileEnergyDensityLocalMeasure<EvaluationType, SimplexPhysics>>
-                                                             (aInputParams, "TensileEnergyDensity");
+            return std::make_shared<TensileEnergyDensityLocalMeasure<EvaluationType, SimplexPhysics>>(
+                aInputParams, "TensileEnergyDensity");
         }
         else
         {
@@ -42,8 +41,8 @@ public:
 };
 // class LocalMeasureFactory
 
-}
-//namespace Plato
+}  // namespace Plato
+// namespace Plato
 
 #include "SimplexMechanics.hpp"
 

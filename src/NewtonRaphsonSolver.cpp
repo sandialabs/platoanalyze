@@ -20,4 +20,3 @@ template class Plato::NewtonRaphsonSolver<Plato::InfinitesimalStrainThermoPlasti
 template class Plato::NewtonRaphsonSolver<Plato::InfinitesimalStrainPlasticity<3>>;
 template class Plato::NewtonRaphsonSolver<Plato::InfinitesimalStrainThermoPlasticity<3>>;
 #endif
-

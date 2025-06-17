@@ -1,60 +1,55 @@
 /*
  *  StructuralDynamicsTest.cpp
- *  
+ *
  *   Created on: May 15, 2018
  **/
 
-#include <iostream>
+#include <Teuchos_XMLParameterListHelpers.hpp>
 #include <fstream>
+#include <iostream>
 
-#include "util/PlatoTestHelpers.hpp"
- 
+#include "ImplicitFunctors.hpp"
 #include "Mechanics.hpp"
+#include "StructuralDynamics.hpp"
+#include "Teuchos_UnitTestHarness.hpp"
 #include "WorksetBase.hpp"
 #include "elliptic/VectorFunction.hpp"
-#include "ImplicitFunctors.hpp"
-#include "StructuralDynamics.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
-#include "Teuchos_UnitTestHarness.hpp"
-#include <Teuchos_XMLParameterListHelpers.hpp>
-
-    // create material model
-    //
-    Teuchos::RCP<Teuchos::ParameterList> tParamList =
-      Teuchos::getParametersFromXmlString(
-      "<ParameterList name='Plato Problem'>                                           \n"
-      "  <ParameterList name='Spatial Model'>                                         \n"
-      "    <ParameterList name='Domains'>                                             \n"
-      "      <ParameterList name='Design Volume'>                                     \n"
-      "        <Parameter name='Element Block' type='string' value='body'/>           \n"
-      "        <Parameter name='Material Model' type='string' value='Unobtainium'/>   \n"
-      "      </ParameterList>                                                         \n"
-      "    </ParameterList>                                                           \n"
-      "  </ParameterList>                                                             \n"
-      "  <Parameter name='PDE Constraint' type='string' value='Elastostatics'/>       \n"
-      "  <Parameter name='Objective' type='string' value='My Internal Elastic Energy'/> \n"
-      "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                    \n"
-      "  <ParameterList name='Elastostatics'>                                         \n"
-      "    <ParameterList name='Penalty Function'>                                    \n"
-      "      <Parameter name='Exponent' type='double' value='1.0'/>                   \n"
-      "      <Parameter name='Type' type='string' value='SIMP'/>                      \n"
-      "    </ParameterList>                                                           \n"
-      "  </ParameterList>                                                             \n"
-      "  <ParameterList name='My Internal Elastic Energy'>                            \n"
-      "    <Parameter name='Type' type='string' value='Scalar Function'/>             \n"
-      "    <Parameter name='Scalar Function Type' type='string' value='Internal Elastic Energy'/>  \n"
-      "  </ParameterList>                                                             \n"
-      "  <ParameterList name='Material Models'>                                       \n"
-      "    <ParameterList name='Unobtainium'>                                         \n"
-      "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
-      "        <Parameter name='Poissons Ratio' type='double' value='0.3'/>           \n"
-      "        <Parameter name='Youngs Modulus' type='double' value='1.0e6'/>         \n"
-      "      </ParameterList>                                                         \n"
-      "    </ParameterList>                                                           \n"
-      "  </ParameterList>                                                             \n"
-      "</ParameterList>                                                               \n"
-    );
- 
+// create material model
+//
+Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
+    "<ParameterList name='Plato Problem'>                                           \n"
+    "  <ParameterList name='Spatial Model'>                                         \n"
+    "    <ParameterList name='Domains'>                                             \n"
+    "      <ParameterList name='Design Volume'>                                     \n"
+    "        <Parameter name='Element Block' type='string' value='body'/>           \n"
+    "        <Parameter name='Material Model' type='string' value='Unobtainium'/>   \n"
+    "      </ParameterList>                                                         \n"
+    "    </ParameterList>                                                           \n"
+    "  </ParameterList>                                                             \n"
+    "  <Parameter name='PDE Constraint' type='string' value='Elastostatics'/>       \n"
+    "  <Parameter name='Objective' type='string' value='My Internal Elastic Energy'/> \n"
+    "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                    \n"
+    "  <ParameterList name='Elastostatics'>                                         \n"
+    "    <ParameterList name='Penalty Function'>                                    \n"
+    "      <Parameter name='Exponent' type='double' value='1.0'/>                   \n"
+    "      <Parameter name='Type' type='string' value='SIMP'/>                      \n"
+    "    </ParameterList>                                                           \n"
+    "  </ParameterList>                                                             \n"
+    "  <ParameterList name='My Internal Elastic Energy'>                            \n"
+    "    <Parameter name='Type' type='string' value='Scalar Function'/>             \n"
+    "    <Parameter name='Scalar Function Type' type='string' value='Internal Elastic Energy'/>  \n"
+    "  </ParameterList>                                                             \n"
+    "  <ParameterList name='Material Models'>                                       \n"
+    "    <ParameterList name='Unobtainium'>                                         \n"
+    "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
+    "        <Parameter name='Poissons Ratio' type='double' value='0.3'/>           \n"
+    "        <Parameter name='Youngs Modulus' type='double' value='1.0e6'/>         \n"
+    "      </ParameterList>                                                         \n"
+    "    </ParameterList>                                                           \n"
+    "  </ParameterList>                                                             \n"
+    "</ParameterList>                                                               \n");
 
 namespace PlatoUnitTests
 {
@@ -71,7 +66,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ComputeStateWorkset)
     using JacobianU = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::Jacobian;
     using JacobianX = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientX;
     using JacobianZ = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientZ;
-    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
+    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType,
+                                               ResidualT::ConfigScalarType>;
 
     // ALLOCATE ELASTOSTATICS RESIDUAL
 
@@ -84,37 +80,39 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ComputeStateWorkset)
     Plato::Elliptic::VectorFunction<Plato::Mechanics<tSpaceDim>> tElastostatics(tSpatialModel, tDataMap);
 
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<ResidualT>> tResidual;
-    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<JacobianU>> tJacobianState;
-    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     tElastostatics.setEvaluator(tResidual, tJacobianState, tOnlyDomain.getDomainName());
 
     // SET PROBLEM-RELATED DIMENSIONS
     Plato::OrdinalType tNumCells = tMesh->NumElements();
     Plato::OrdinalType tNumVertices = tMesh->NumNodes();
     Plato::OrdinalType tTotalNumDofs = tNumVertices * tSpaceDim;
-    
+
     // ALLOCATE STATES VECTOR FOR ELASTODYNAMICS EXAMPLE
     Plato::ScalarVector tStateReal("Real States", tTotalNumDofs);
     Plato::ScalarVector tStateImag("Imag States", tTotalNumDofs);
     auto tHostStateReal = Kokkos::create_mirror(tStateReal);
     auto tHostStateImag = Kokkos::create_mirror(tStateImag);
-    for(Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
     {
         tHostStateReal(tIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
         tHostStateImag(tIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
     }
     Kokkos::deep_copy(tStateReal, tHostStateReal);
     Kokkos::deep_copy(tStateImag, tHostStateImag);
-    
+
     // ALLOCATE STATE WORKSET FOR ELASTODYNAMICS EXAMPLE
     Plato::OrdinalType tNumNodesPerCell = tSpaceDim + static_cast<Plato::OrdinalType>(1);
     Plato::OrdinalType tNumDofsPerCell = tSpaceDim * tNumNodesPerCell;
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tStateRealWS("Real States Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tStateRealWS("Real States Workset", tNumCells,
+                                                                       tNumDofsPerCell);
     tElastostatics.worksetState(tStateReal, tStateRealWS);
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tStateImagWS("Imag States Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tStateImagWS("Imag States Workset", tNumCells,
+                                                                       tNumDofsPerCell);
     tElastostatics.worksetState(tStateImag, tStateImagWS);
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
@@ -122,17 +120,19 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ComputeStateWorkset)
     using SD_JacobianU = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Jacobian;
     using SD_JacobianX = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientX;
     using SD_JacobianZ = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientZ;
-    using SD_StrainT = typename
-        Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
+    using SD_StrainT = typename Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType,
+                                                  ResidualT::ConfigScalarType>;
 
-    // ALLOCATE ELASTODYNAMICS RESIDUAL 
+    // ALLOCATE ELASTODYNAMICS RESIDUAL
     Plato::Elliptic::VectorFunction<Plato::StructuralDynamics<tSpaceDim>> tElastodynamics(tSpatialModel, tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_ResidualT>> tResidualSD;
-    tResidualSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tResidualSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_JacobianU>> tJacobianStateSD;
-    tJacobianStateSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tJacobianStateSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     tElastodynamics.setEvaluator(tResidualSD, tJacobianStateSD, tOnlyDomain.getDomainName());
 
     tTotalNumDofs = static_cast<Plato::OrdinalType>(2) * tNumVertices * tSpaceDim;
@@ -143,19 +143,20 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ComputeStateWorkset)
     auto tHostComplexStates = Kokkos::create_mirror(tComplexStates);
     const Plato::OrdinalType tNumRealDofs = tNumVertices * tSpaceDim;
     const Plato::OrdinalType tNumDofsPerNode = static_cast<Plato::OrdinalType>(2) * tSpaceDim;
-    for(Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
     {
-        Plato::OrdinalType tMyRealIndex = (tIndex % tSpaceDim)
-            + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        Plato::OrdinalType tMyRealIndex =
+            (tIndex % tSpaceDim) + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyRealIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
-        Plato::OrdinalType tMyImagIndex = (tIndex % tSpaceDim) + tSpaceDim
-            + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        Plato::OrdinalType tMyImagIndex =
+            (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyImagIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
     }
     Kokkos::deep_copy(tComplexStates, tHostComplexStates);
 
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
-    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells,
+                                                                              tNumDofsPerCell);
     tElastodynamics.worksetState(tComplexStates, tComplexStatesWS);
 
     // TEST WORKSET OUTPUTS
@@ -168,16 +169,19 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ComputeStateWorkset)
 
     const Plato::Scalar tTolerance = 1e-6;
     const Plato::OrdinalType tNumRealDofsPerCell = tSpaceDim * tNumNodesPerCell;
-    for(Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
+    for (Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
     {
-        for(Plato::OrdinalType tDofIndex = 0; tDofIndex < tNumRealDofsPerCell; tDofIndex++)
+        for (Plato::OrdinalType tDofIndex = 0; tDofIndex < tNumRealDofsPerCell; tDofIndex++)
         {
-            Plato::OrdinalType tMyRealIndex = (tDofIndex % tSpaceDim)
-                + (static_cast<Plato::OrdinalType>(tDofIndex/tSpaceDim) * tNumDofsPerNode);
-            TEST_FLOATING_EQUALITY(tHostComplexStatesWS(tCellIndex, tMyRealIndex), tHostStateRealWS(tCellIndex, tDofIndex), tTolerance);
-            Plato::OrdinalType tMyImagIndex = (tDofIndex % tSpaceDim) + tSpaceDim
-                + (static_cast<Plato::OrdinalType>(tDofIndex/tSpaceDim) * tNumDofsPerNode);
-            TEST_FLOATING_EQUALITY(tHostComplexStatesWS(tCellIndex, tMyImagIndex), tHostStateImagWS(tCellIndex, tDofIndex), tTolerance);
+            Plato::OrdinalType tMyRealIndex =
+                (tDofIndex % tSpaceDim) + (static_cast<Plato::OrdinalType>(tDofIndex / tSpaceDim) * tNumDofsPerNode);
+            TEST_FLOATING_EQUALITY(tHostComplexStatesWS(tCellIndex, tMyRealIndex),
+                                   tHostStateRealWS(tCellIndex, tDofIndex), tTolerance);
+            Plato::OrdinalType tMyImagIndex =
+                (tDofIndex % tSpaceDim) + tSpaceDim +
+                (static_cast<Plato::OrdinalType>(tDofIndex / tSpaceDim) * tNumDofsPerNode);
+            TEST_FLOATING_EQUALITY(tHostComplexStatesWS(tCellIndex, tMyImagIndex),
+                                   tHostStateImagWS(tCellIndex, tDofIndex), tTolerance);
         }
     }
 }
@@ -194,8 +198,9 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
     using JacobianU = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::Jacobian;
     using JacobianX = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientX;
     using JacobianZ = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientZ;
-    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
-    
+    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType,
+                                               ResidualT::ConfigScalarType>;
+
     // ALLOCATE ELASTOSTATICS VECTOR FUNCTION
 
     Plato::SpatialModel tSpatialModel(tMesh, *tParamList);
@@ -207,11 +212,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
 
     // ALLOCATE ELASTOSTATICS RESIDUAL
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<ResidualT>> tResidual;
-    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<JacobianU>> tJacobianState;
-    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     tElastostatics.setEvaluator(tResidual, tJacobianState, tOnlyDomain.getDomainName());
 
     // SET PROBLEM-RELATED DIMENSIONS
@@ -227,58 +232,64 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
     auto tHostRealStates = Kokkos::create_mirror(tRealStates);
     Plato::ScalarVector tImagStates("Imag LinearStates", tTotalNumDofs);
     auto tHostImagStates = Kokkos::create_mirror(tImagStates);
-    for(Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
     {
         tHostRealStates(tIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
         tHostImagStates(tIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
-    }    
+    }
     Kokkos::deep_copy(tRealStates, tHostRealStates);
     Kokkos::deep_copy(tImagStates, tHostImagStates);
 
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
     Plato::OrdinalType tNumNodesPerCell = tSpaceDim + static_cast<Plato::OrdinalType>(1);
     Plato::OrdinalType tNumDofsPerCell = tSpaceDim * tNumNodesPerCell;
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tRealStatesWS("Real LinearStates Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tRealStatesWS("Real LinearStates Workset", tNumCells,
+                                                                        tNumDofsPerCell);
     tElastostatics.worksetState(tRealStates, tRealStatesWS);
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tImagStatesWS("Imag LinearStates Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tImagStatesWS("Imag LinearStates Workset", tNumCells,
+                                                                        tNumDofsPerCell);
     tElastostatics.worksetState(tImagStates, tImagStatesWS);
 
     // ALLOCATE COMMON DATA STRUCTURES FOR ELASTOSTATICS AND ELASTODYNAMICS EXAMPLES
     Plato::ComputeGradientWorkset<tSpaceDim> tComputeGradient;
     Plato::ScalarVectorT<ResidualT::ConfigScalarType> tCellVolume("Cell Volume", tNumCells);
     Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tGradient("Gradient", tNumCells, tNumNodesPerCell, tSpaceDim);
-    Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("Configuration Workset", tNumCells, tNumNodesPerCell, tSpaceDim);
+    Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("Configuration Workset", tNumCells, tNumNodesPerCell,
+                                                                 tSpaceDim);
     tElastostatics.worksetConfig(tConfigWS);
 
-    // COMPUTE LINEAR STRAINS 
+    // COMPUTE LINEAR STRAINS
     Plato::Strain<tSpaceDim> tComputeLinearStrain;
     const Plato::OrdinalType tNumVoigtTerms = 6;
     Plato::ScalarMultiVectorT<StrainT> tRealLinearStrain("RealLinearStrain", tNumCells, tNumVoigtTerms);
     Plato::ScalarMultiVectorT<StrainT> tImagLinearStrain("ImagLinearStrain", tNumCells, tNumVoigtTerms);
-    Kokkos::parallel_for("UnitTest::LinearStrains", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
-        // compute strain
-        tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
-        tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
-    });
+    Kokkos::parallel_for(
+        "UnitTest::LinearStrains", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+            // compute strain
+            tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
+            tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
+        });
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
     using SD_ResidualT = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Residual;
     using SD_JacobianU = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Jacobian;
     using SD_JacobianX = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientX;
     using SD_JacobianZ = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientZ;
-    using SD_StrainT = typename
-        Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
-    
+    using SD_StrainT = typename Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType,
+                                                  ResidualT::ConfigScalarType>;
+
     // ALLOCATE ELASTODYNAMICS VECTOR FUNCTION
     Plato::Elliptic::VectorFunction<Plato::StructuralDynamics<tSpaceDim>> tElastodynamics(tSpatialModel, tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_ResidualT>> tResidualSD;
-    tResidualSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tResidualSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_JacobianU>> tJacobianStateSD;
-    tJacobianStateSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tJacobianStateSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     tElastodynamics.setEvaluator(tResidualSD, tJacobianStateSD, tOnlyDomain.getDomainName());
 
     // ALLOCATE STATE VECTOR FOR ELASTODYNAMICS EXAMPLE
@@ -291,32 +302,35 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
     auto tHostComplexStates = Kokkos::create_mirror(tComplexStates);
     const Plato::OrdinalType tNumRealDofs = tNumVertices * tSpaceDim;
     const Plato::OrdinalType tNumDofsPerNode = static_cast<Plato::OrdinalType>(2) * tSpaceDim;
-    for(Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
     {
-        Plato::OrdinalType tMyIndex = (tIndex % tSpaceDim)
-            + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        Plato::OrdinalType tMyIndex =
+            (tIndex % tSpaceDim) + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
-        tMyIndex = (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        tMyIndex =
+            (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
     }
     Kokkos::deep_copy(tComplexStates, tHostComplexStates);
-    
+
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
-    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells,
+                                                                              tNumDofsPerCell);
     tElastodynamics.worksetState(tComplexStates, tComplexStatesWS);
-    
+
     // COMPUTE COMPLEX STRAINS
     const Plato::OrdinalType tCOMPLEX_SPACE_DIM = 2;
     Plato::ComplexStrain<tSpaceDim, tNumDofsPerNode> tComputeComplexStrain;
     Plato::ScalarArray3DT<StrainT> tComplexStrain("ComplexStrain", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
 
-    Kokkos::parallel_for("UnitTest::ComplexStrain", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        tCellVolume(aCellOrdinal) = 0.0;
-        tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
-        // compute strain
-        tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
-    });
+    Kokkos::parallel_for(
+        "UnitTest::ComplexStrain", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+            tCellVolume(aCellOrdinal) = 0.0;
+            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+            // compute strain
+            tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
+        });
 
     // TEST OUTPUTS: LINEAR STRAINS AND COMPLEX STRAINS SHOULD BE EQUAL
     auto tHostRealLinearStrain = Kokkos::create_mirror(tRealLinearStrain);
@@ -325,16 +339,18 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStrainsToComplexStrains)
     Kokkos::deep_copy(tHostImagLinearStrain, tImagLinearStrain);
     auto tHostComplexStrain = Kokkos::create_mirror(tComplexStrain);
     Kokkos::deep_copy(tHostComplexStrain, tComplexStrain);
-    
+
     const Plato::Scalar tTolerance = 1e-6;
-    for(Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
+    for (Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
     {
-        for(Plato::OrdinalType tVoigtIndex = 0; tVoigtIndex < tNumVoigtTerms; tVoigtIndex++)
+        for (Plato::OrdinalType tVoigtIndex = 0; tVoigtIndex < tNumVoigtTerms; tVoigtIndex++)
         {
             Plato::OrdinalType tCOMPLEX_SPACE_INDEX = 0;
-            TEST_FLOATING_EQUALITY(tHostComplexStrain(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex), tHostRealLinearStrain(tCellIndex, tVoigtIndex), tTolerance);
+            TEST_FLOATING_EQUALITY(tHostComplexStrain(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex),
+                                   tHostRealLinearStrain(tCellIndex, tVoigtIndex), tTolerance);
             tCOMPLEX_SPACE_INDEX = 1;
-            TEST_FLOATING_EQUALITY(tHostComplexStrain(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex), tHostImagLinearStrain(tCellIndex, tVoigtIndex), tTolerance);
+            TEST_FLOATING_EQUALITY(tHostComplexStrain(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex),
+                                   tHostImagLinearStrain(tCellIndex, tVoigtIndex), tTolerance);
         }
     }
 }
@@ -354,7 +370,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     using JacobianU = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::Jacobian;
     using JacobianX = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientX;
     using JacobianZ = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientZ;
-    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
+    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType,
+                                               ResidualT::ConfigScalarType>;
 
     // ALLOCATE ELASTOSTATICS RESIDUAL
 
@@ -367,13 +384,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     Plato::Elliptic::VectorFunction<Plato::Mechanics<tSpaceDim>> tElastostatics(tSpatialModel, tDataMap);
 
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<ResidualT>> tResidual;
-    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<JacobianU>> tJacobianState;
-    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     tElastostatics.setEvaluator(tResidual, tJacobianState, tOnlyDomain.getDomainName());
-    
+
     // SET PROBLEM-RELATED DIMENSIONS
     Plato::OrdinalType tNumCells = tMesh->NumElements();
     TEST_EQUALITY(tNumCells, static_cast<Plato::OrdinalType>(6));
@@ -387,7 +404,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     auto tHostRealStates = Kokkos::create_mirror(tRealStates);
     Plato::ScalarVector tImagStates("Imag LinearStates", tTotalNumDofs);
     auto tHostImagStates = Kokkos::create_mirror(tImagStates);
-    for(Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
     {
         tHostRealStates(tIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
         tHostImagStates(tIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
@@ -398,16 +415,19 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
     Plato::OrdinalType tNumNodesPerCell = tSpaceDim + static_cast<Plato::OrdinalType>(1);
     Plato::OrdinalType tNumDofsPerCell = tSpaceDim * tNumNodesPerCell;
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tRealStatesWS("Real LinearStates Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tRealStatesWS("Real LinearStates Workset", tNumCells,
+                                                                        tNumDofsPerCell);
     tElastostatics.worksetState(tRealStates, tRealStatesWS);
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tImagStatesWS("Imag LinearStates Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tImagStatesWS("Imag LinearStates Workset", tNumCells,
+                                                                        tNumDofsPerCell);
     tElastostatics.worksetState(tImagStates, tImagStatesWS);
 
     // ALLOCATE COMMON DATA STRUCTURES FOR ELASTOSTATICS AND ELASTODYNAMICS EXAMPLES
     Plato::ComputeGradientWorkset<tSpaceDim> tComputeGradient;
     Plato::ScalarVectorT<ResidualT::ConfigScalarType> tCellVolume("Cell Volume", tNumCells);
     Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tGradient("Gradient", tNumCells, tNumNodesPerCell, tSpaceDim);
-    Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("Configuration Workset", tNumCells, tNumNodesPerCell, tSpaceDim);
+    Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("Configuration Workset", tNumCells, tNumNodesPerCell,
+                                                                 tSpaceDim);
     tElastostatics.worksetConfig(tConfigWS);
 
     // COMPUTE LINEAR STRESS
@@ -416,43 +436,47 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     Plato::Strain<tSpaceDim> tComputeLinearStrain;
     Plato::IsotropicLinearElasticMaterial<tSpaceDim> tMaterialModel(tYoungModulus, tPoissonRatio);
     auto tStiffnessMatrix = tMaterialModel.getStiffnessMatrix();
-    Plato::LinearStress<Plato::ResidualTypes<SimplexPhysics>,
-                        SimplexPhysics> tComputeLinearStress(tStiffnessMatrix);
+    Plato::LinearStress<Plato::ResidualTypes<SimplexPhysics>, SimplexPhysics> tComputeLinearStress(tStiffnessMatrix);
 
     const Plato::OrdinalType tNumVoigtTerms = 6;
     Plato::ScalarMultiVectorT<StrainT> tRealLinearStrain("RealLinearStrain", tNumCells, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealLinearStress("RealLinearStress", tNumCells, tNumVoigtTerms);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealLinearStress("RealLinearStress", tNumCells,
+                                                                             tNumVoigtTerms);
     Plato::ScalarMultiVectorT<StrainT> tImagLinearStrain("ImagLinearStrain", tNumCells, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagLinearStress("ImagLinearStress", tNumCells, tNumVoigtTerms);
-    Kokkos::parallel_for("UnitTest::LinearStress", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagLinearStress("ImagLinearStress", tNumCells,
+                                                                             tNumVoigtTerms);
+    Kokkos::parallel_for(
+        "UnitTest::LinearStress", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
 
-        // compute strain
-        tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
-        tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
+            // compute strain
+            tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
+            tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
 
-        // compute stress
-        tComputeLinearStress(aCellOrdinal, tRealLinearStress, tRealLinearStrain);
-        tComputeLinearStress(aCellOrdinal, tImagLinearStress, tImagLinearStrain);
-    });
+            // compute stress
+            tComputeLinearStress(aCellOrdinal, tRealLinearStress, tRealLinearStrain);
+            tComputeLinearStress(aCellOrdinal, tImagLinearStress, tImagLinearStrain);
+        });
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
     using SD_ResidualT = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Residual;
     using SD_JacobianU = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Jacobian;
     using SD_JacobianX = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientX;
     using SD_JacobianZ = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientZ;
-    using SD_StrainT = typename
-        Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
+    using SD_StrainT = typename Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType,
+                                                  ResidualT::ConfigScalarType>;
 
     // ALLOCATE ELASTODYNAMICS VECTOR FUNCTION
     Plato::Elliptic::VectorFunction<Plato::StructuralDynamics<tSpaceDim>> tElastodynamics(tSpatialModel, tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_ResidualT>> tResidualSD;
-    tResidualSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tResidualSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_JacobianU>> tJacobianStateSD;
-    tJacobianStateSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tJacobianStateSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     tElastodynamics.setEvaluator(tResidualSD, tJacobianStateSD, tOnlyDomain.getDomainName());
 
     // ALLOCATE STATE VECTOR FOR ELASTODYNAMICS EXAMPLE
@@ -465,38 +489,40 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     auto tHostComplexStates = Kokkos::create_mirror(tComplexStates);
     const Plato::OrdinalType tNumRealDofs = tNumVertices * tSpaceDim;
     const Plato::OrdinalType tNumDofsPerNode = static_cast<Plato::OrdinalType>(2) * tSpaceDim;
-    for(Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
     {
-        Plato::OrdinalType tMyIndex = (tIndex % tSpaceDim)
-            + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        Plato::OrdinalType tMyIndex =
+            (tIndex % tSpaceDim) + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
-        tMyIndex = (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        tMyIndex =
+            (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
     }
     Kokkos::deep_copy(tComplexStates, tHostComplexStates);
 
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
-    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells,
+                                                                              tNumDofsPerCell);
     tElastodynamics.worksetState(tComplexStates, tComplexStatesWS);
 
     // COMPUTE COMPLEX STRESSES
     const Plato::OrdinalType tCOMPLEX_SPACE_DIM = 2;
     Plato::ComplexStrain<tSpaceDim, tNumDofsPerNode> tComputeComplexStrain;
     Plato::ComplexLinearStress<tSpaceDim, tNumVoigtTerms> tComputeComplexStress(tStiffnessMatrix);
-    Plato::ScalarArray3DT<StrainT>
-        tComplexStrain("ComplexStrain", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
-    Plato::ScalarArray3DT<ResidualT::ResultScalarType>
-        tComplexStress("ComplexStress", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
+    Plato::ScalarArray3DT<StrainT> tComplexStrain("ComplexStrain", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
+    Plato::ScalarArray3DT<ResidualT::ResultScalarType> tComplexStress("ComplexStress", tNumCells, tCOMPLEX_SPACE_DIM,
+                                                                      tNumVoigtTerms);
 
-    Kokkos::parallel_for("UnitTest::ComplexStress", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        tCellVolume(aCellOrdinal) = 0.0;
-        tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
-        // compute strain
-        tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
-        // compute stress
-        tComputeComplexStress(aCellOrdinal, tComplexStrain, tComplexStress);
-    });
+    Kokkos::parallel_for(
+        "UnitTest::ComplexStress", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+            tCellVolume(aCellOrdinal) = 0.0;
+            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+            // compute strain
+            tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
+            // compute stress
+            tComputeComplexStress(aCellOrdinal, tComplexStrain, tComplexStress);
+        });
 
     // TEST OUTPUTS: LINEAR STRESSES AND COMPLEX STRESSES SHOULD BE EQUAL
     auto tHostRealLinearStress = Kokkos::create_mirror(tRealLinearStress);
@@ -507,14 +533,16 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearStressToComplexStress)
     Kokkos::deep_copy(tHostComplexStress, tComplexStress);
 
     const Plato::Scalar tTolerance = 1e-6;
-    for(Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
+    for (Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
     {
-        for(Plato::OrdinalType tVoigtIndex = 0; tVoigtIndex < tNumVoigtTerms; tVoigtIndex++)
+        for (Plato::OrdinalType tVoigtIndex = 0; tVoigtIndex < tNumVoigtTerms; tVoigtIndex++)
         {
             Plato::OrdinalType tCOMPLEX_SPACE_INDEX = 0;
-            TEST_FLOATING_EQUALITY(tHostComplexStress(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex), tHostRealLinearStress(tCellIndex, tVoigtIndex), tTolerance);
+            TEST_FLOATING_EQUALITY(tHostComplexStress(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex),
+                                   tHostRealLinearStress(tCellIndex, tVoigtIndex), tTolerance);
             tCOMPLEX_SPACE_INDEX = 1;
-            TEST_FLOATING_EQUALITY(tHostComplexStress(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex), tHostImagLinearStress(tCellIndex, tVoigtIndex), tTolerance);
+            TEST_FLOATING_EQUALITY(tHostComplexStress(tCellIndex, tCOMPLEX_SPACE_INDEX, tVoigtIndex),
+                                   tHostImagLinearStress(tCellIndex, tVoigtIndex), tTolerance);
         }
     }
 }
@@ -534,7 +562,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     using JacobianU = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::Jacobian;
     using JacobianX = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientX;
     using JacobianZ = typename Plato::Evaluation<typename Plato::Mechanics<tSpaceDim>::SimplexT>::GradientZ;
-    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
+    using StrainT = typename Plato::fad_type_t<Plato::Mechanics<tSpaceDim>, ResidualT::StateScalarType,
+                                               ResidualT::ConfigScalarType>;
 
     // ALLOCATE ELASTOSTATICS RESIDUAL
 
@@ -545,13 +574,13 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     // ALLOCATE ELASTOSTATICS VECTOR FUNCTION
     Plato::DataMap tDataMap;
     Plato::Elliptic::VectorFunction<Plato::Mechanics<tSpaceDim>> tElastostatics(tSpatialModel, tDataMap);
-    
+
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<ResidualT>> tResidual;
-    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tResidual = std::make_shared<Plato::Elliptic::ElastostaticResidual<ResidualT, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<JacobianU>> tJacobianState;
-    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>
-        (tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
+    tJacobianState = std::make_shared<Plato::Elliptic::ElastostaticResidual<JacobianU, Plato::MSIMP>>(
+        tOnlyDomain, tDataMap, *tParamList, tParamList->sublist("Elastostatics"));
     tElastostatics.setEvaluator(tResidual, tJacobianState, tOnlyDomain.getDomainName());
 
     // SET PROBLEM-RELATED DIMENSIONS
@@ -567,7 +596,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     auto tHostRealStates = Kokkos::create_mirror(tRealStates);
     Plato::ScalarVector tImagStates("Imag LinearStates", tTotalNumDofs);
     auto tHostImagStates = Kokkos::create_mirror(tImagStates);
-    for(Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tTotalNumDofs; tIndex++)
     {
         tHostRealStates(tIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
         tHostImagStates(tIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
@@ -578,9 +607,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
     Plato::OrdinalType tNumNodesPerCell = tSpaceDim + static_cast<Plato::OrdinalType>(1);
     Plato::OrdinalType tNumDofsPerCell = tSpaceDim * tNumNodesPerCell;
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tRealStatesWS("Real LinearStates Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tRealStatesWS("Real LinearStates Workset", tNumCells,
+                                                                        tNumDofsPerCell);
     tElastostatics.worksetState(tRealStates, tRealStatesWS);
-    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tImagStatesWS("Imag LinearStates Workset", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::StateScalarType> tImagStatesWS("Imag LinearStates Workset", tNumCells,
+                                                                        tNumDofsPerCell);
     tElastostatics.worksetState(tImagStates, tImagStatesWS);
 
     // ALLOCATE COMMON DATA STRUCTURES FOR ELASTOSTATICS AND ELASTODYNAMICS EXAMPLES
@@ -588,7 +619,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     Plato::LinearTetCubRuleDegreeOne<tSpaceDim> tCubatureRule;
     Plato::ScalarVectorT<ResidualT::ConfigScalarType> tCellVolume("Cell Volume", tNumCells);
     Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tGradient("Gradient", tNumCells, tNumNodesPerCell, tSpaceDim);
-    Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("Configuration Workset", tNumCells, tNumNodesPerCell, tSpaceDim);
+    Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("Configuration Workset", tNumCells, tNumNodesPerCell,
+                                                                 tSpaceDim);
     tElastostatics.worksetConfig(tConfigWS);
 
     // COMPUTE LINEAR ELASTIC FORCES
@@ -598,50 +630,56 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     Plato::StressDivergence<tSpaceDim> tComputeElasticForces;
     Plato::IsotropicLinearElasticMaterial<tSpaceDim> tMaterialModel(tYoungModulus, tPoissonRatio);
     auto tStiffnessMatrix = tMaterialModel.getStiffnessMatrix();
-    Plato::LinearStress<Plato::ResidualTypes<SimplexPhysics>,
-                        SimplexPhysics> tComputeLinearStress(tStiffnessMatrix);
+    Plato::LinearStress<Plato::ResidualTypes<SimplexPhysics>, SimplexPhysics> tComputeLinearStress(tStiffnessMatrix);
 
     const Plato::OrdinalType tNumVoigtTerms = 6;
     Plato::ScalarMultiVectorT<StrainT> tRealLinearStrain("RealLinearStrain", tNumCells, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealLinearStress("RealLinearStress", tNumCells, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealElasticForces("RealElasticForces", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealLinearStress("RealLinearStress", tNumCells,
+                                                                             tNumVoigtTerms);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tRealElasticForces("RealElasticForces", tNumCells,
+                                                                              tNumDofsPerCell);
     Plato::ScalarMultiVectorT<StrainT> tImagLinearStrain("ImagLinearStrain", tNumCells, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagLinearStress("ImagLinearStress", tNumCells, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagElasticForces("ImagElasticForces", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagLinearStress("ImagLinearStress", tNumCells,
+                                                                             tNumVoigtTerms);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tImagElasticForces("ImagElasticForces", tNumCells,
+                                                                              tNumDofsPerCell);
 
     auto tQuadratureWeight = tCubatureRule.getCubWeight();
-    Kokkos::parallel_for("UnitTest::ElasticForces", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        tCellVolume(aCellOrdinal) = 0.0;
-        tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
-        tCellVolume(aCellOrdinal) *= tQuadratureWeight;
-        // compute strain
-        tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
-        tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
-        // compute stress
-        tComputeLinearStress(aCellOrdinal, tRealLinearStress, tRealLinearStrain);
-        tComputeLinearStress(aCellOrdinal, tImagLinearStress, tImagLinearStrain);
-        // compute elastic forces
-        tComputeElasticForces(aCellOrdinal, tRealElasticForces, tRealLinearStress, tGradient, tCellVolume);
-        tComputeElasticForces(aCellOrdinal, tImagElasticForces, tImagLinearStress, tGradient, tCellVolume);
-    });
+    Kokkos::parallel_for(
+        "UnitTest::ElasticForces", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+            tCellVolume(aCellOrdinal) = 0.0;
+            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+            tCellVolume(aCellOrdinal) *= tQuadratureWeight;
+            // compute strain
+            tComputeLinearStrain(aCellOrdinal, tRealLinearStrain, tRealStatesWS, tGradient);
+            tComputeLinearStrain(aCellOrdinal, tImagLinearStrain, tImagStatesWS, tGradient);
+            // compute stress
+            tComputeLinearStress(aCellOrdinal, tRealLinearStress, tRealLinearStrain);
+            tComputeLinearStress(aCellOrdinal, tImagLinearStress, tImagLinearStrain);
+            // compute elastic forces
+            tComputeElasticForces(aCellOrdinal, tRealElasticForces, tRealLinearStress, tGradient, tCellVolume);
+            tComputeElasticForces(aCellOrdinal, tImagElasticForces, tImagLinearStress, tGradient, tCellVolume);
+        });
 
     // ******************** SET ELASTODYNAMICS' EVALUATION TYPES FOR UNIT TEST ********************
     using SD_ResidualT = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Residual;
     using SD_JacobianU = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::Jacobian;
     using SD_JacobianX = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientX;
     using SD_JacobianZ = typename Plato::Evaluation<typename Plato::StructuralDynamics<tSpaceDim>::SimplexT>::GradientZ;
-    using SD_StrainT = typename
-        Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType, ResidualT::ConfigScalarType>;
+    using SD_StrainT = typename Plato::fad_type_t<Plato::StructuralDynamics<tSpaceDim>, ResidualT::StateScalarType,
+                                                  ResidualT::ConfigScalarType>;
 
     // ALLOCATE ELASTODYNAMICS VECTOR FUNCTION
     Plato::Elliptic::VectorFunction<Plato::StructuralDynamics<tSpaceDim>> tElastodynamics(tSpatialModel, tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_ResidualT>> tResidualSD;
-    tResidualSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tResidualSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_ResidualT, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<SD_JacobianU>> tJacobianStateSD;
-    tJacobianStateSD = std::make_shared<Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>
-        (tOnlyDomain, tDataMap);
+    tJacobianStateSD = std::make_shared<
+        Plato::StructuralDynamicsResidual<SD_JacobianU, Plato::MSIMP, Plato::HyperbolicTangentProjection>>(tOnlyDomain,
+                                                                                                           tDataMap);
     tElastodynamics.setEvaluator(tResidualSD, tJacobianStateSD, tOnlyDomain.getDomainName());
 
     // ALLOCATE STATE VECTOR FOR ELASTODYNAMICS EXAMPLE
@@ -654,18 +692,20 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     auto tHostComplexStates = Kokkos::create_mirror(tComplexStates);
     const Plato::OrdinalType tNumRealDofs = tNumVertices * tSpaceDim;
     const Plato::OrdinalType tNumDofsPerNode = static_cast<Plato::OrdinalType>(2) * tSpaceDim;
-    for(Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
+    for (Plato::OrdinalType tIndex = 0; tIndex < tNumRealDofs; tIndex++)
     {
-        Plato::OrdinalType tMyIndex = (tIndex % tSpaceDim)
-            + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        Plato::OrdinalType tMyIndex =
+            (tIndex % tSpaceDim) + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyIndex) = static_cast<Plato::Scalar>(1e-3) * static_cast<Plato::Scalar>(tIndex);
-        tMyIndex = (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex/tSpaceDim) * tNumDofsPerNode);
+        tMyIndex =
+            (tIndex % tSpaceDim) + tSpaceDim + (static_cast<Plato::OrdinalType>(tIndex / tSpaceDim) * tNumDofsPerNode);
         tHostComplexStates(tMyIndex) = static_cast<Plato::Scalar>(2e-3) * static_cast<Plato::Scalar>(tIndex);
     }
     Kokkos::deep_copy(tComplexStates, tHostComplexStates);
 
     // ALLOCATE STATE WORKSET FOR ELASTOSTATICS EXAMPLE
-    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells, tNumDofsPerCell);
+    Plato::ScalarMultiVectorT<SD_ResidualT::StateScalarType> tComplexStatesWS("ComplexStatesWS", tNumCells,
+                                                                              tNumDofsPerCell);
     tElastodynamics.worksetState(tComplexStates, tComplexStatesWS);
 
     // COMPUTE COMPLEX ELASTIC FORCES
@@ -673,25 +713,25 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
     Plato::ComplexStrain<tSpaceDim, tNumDofsPerNode> tComputeComplexStrain;
     Plato::ComplexLinearStress<tSpaceDim, tNumVoigtTerms> tComputeComplexStress(tStiffnessMatrix);
     Plato::ComplexStressDivergence<tSpaceDim, tNumDofsPerNode> tComputeComplexElasticForces;
-    Plato::ScalarArray3DT<StrainT>
-        tComplexStrain("ComplexStrain", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
-    Plato::ScalarArray3DT<ResidualT::ResultScalarType>
-        tComplexStress("ComplexStress", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
-    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType>
-        tComplexElasticForces("ComplexElasticForces", tNumCells, tNumDofsPerCell);
+    Plato::ScalarArray3DT<StrainT> tComplexStrain("ComplexStrain", tNumCells, tCOMPLEX_SPACE_DIM, tNumVoigtTerms);
+    Plato::ScalarArray3DT<ResidualT::ResultScalarType> tComplexStress("ComplexStress", tNumCells, tCOMPLEX_SPACE_DIM,
+                                                                      tNumVoigtTerms);
+    Plato::ScalarMultiVectorT<ResidualT::ResultScalarType> tComplexElasticForces("ComplexElasticForces", tNumCells,
+                                                                                 tNumDofsPerCell);
 
-    Kokkos::parallel_for("UnitTest::ComplexElasticForces", Kokkos::RangePolicy<>(0,tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-    {
-        tCellVolume(aCellOrdinal) = 0.0;
-        tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
-        tCellVolume(aCellOrdinal) *= tQuadratureWeight;
-        // compute strain
-        tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
-        // compute stress
-        tComputeComplexStress(aCellOrdinal, tComplexStrain, tComplexStress);
-        // compute elastic forces
-        tComputeComplexElasticForces(aCellOrdinal, tCellVolume, tGradient, tComplexStress, tComplexElasticForces);
-    });
+    Kokkos::parallel_for(
+        "UnitTest::ComplexElasticForces", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+            tCellVolume(aCellOrdinal) = 0.0;
+            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+            tCellVolume(aCellOrdinal) *= tQuadratureWeight;
+            // compute strain
+            tComputeComplexStrain(aCellOrdinal, tComplexStatesWS, tGradient, tComplexStrain);
+            // compute stress
+            tComputeComplexStress(aCellOrdinal, tComplexStrain, tComplexStress);
+            // compute elastic forces
+            tComputeComplexElasticForces(aCellOrdinal, tCellVolume, tGradient, tComplexStress, tComplexElasticForces);
+        });
 
     // TEST OUTPUTS: LINEAR AND COMPLEX ELASTIC FORCES SHOULD BE EQUAL
     auto tHostRealElasticForces = Kokkos::create_mirror(tRealElasticForces);
@@ -703,18 +743,20 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, CompareLinearElasticForcesToComplexElas
 
     const Plato::Scalar tTolerance = 1e-6;
     const Plato::OrdinalType tRealNumDofsPerCell = tSpaceDim * tNumNodesPerCell;
-    for(Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
+    for (Plato::OrdinalType tCellIndex = 0; tCellIndex < tNumCells; tCellIndex++)
     {
-        for(Plato::OrdinalType tDofIndex = 0; tDofIndex < tRealNumDofsPerCell; tDofIndex++)
+        for (Plato::OrdinalType tDofIndex = 0; tDofIndex < tRealNumDofsPerCell; tDofIndex++)
         {
-            Plato::OrdinalType tMyIndex = (tDofIndex % tSpaceDim)
-                    + (static_cast<Plato::OrdinalType>(tDofIndex/tSpaceDim) * tNumDofsPerNode);
-            TEST_FLOATING_EQUALITY(tHostComplexElasticForces(tCellIndex, tMyIndex), tHostRealElasticForces(tCellIndex, tDofIndex), tTolerance);
-            tMyIndex = (tDofIndex % tSpaceDim) + tSpaceDim
-                    + (static_cast<Plato::OrdinalType>(tDofIndex/tSpaceDim) * tNumDofsPerNode);
-            TEST_FLOATING_EQUALITY(tHostComplexElasticForces(tCellIndex, tMyIndex), tHostImagElasticForces(tCellIndex, tDofIndex), tTolerance);
+            Plato::OrdinalType tMyIndex =
+                (tDofIndex % tSpaceDim) + (static_cast<Plato::OrdinalType>(tDofIndex / tSpaceDim) * tNumDofsPerNode);
+            TEST_FLOATING_EQUALITY(tHostComplexElasticForces(tCellIndex, tMyIndex),
+                                   tHostRealElasticForces(tCellIndex, tDofIndex), tTolerance);
+            tMyIndex = (tDofIndex % tSpaceDim) + tSpaceDim +
+                       (static_cast<Plato::OrdinalType>(tDofIndex / tSpaceDim) * tNumDofsPerNode);
+            TEST_FLOATING_EQUALITY(tHostComplexElasticForces(tCellIndex, tMyIndex),
+                                   tHostImagElasticForces(tCellIndex, tDofIndex), tTolerance);
         }
     }
 }
 
-} // namespace PlatoUnitTests
+}  // namespace PlatoUnitTests

@@ -7,25 +7,23 @@
 #ifndef STRUCTURALDYNAMICSPROBLEM_HPP_
 #define STRUCTURALDYNAMICSPROBLEM_HPP_
 
-#include <memory>
-#include <vector>
-#include <sstream>
-
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include <memory>
+#include <sstream>
+#include <vector>
 
+#include "ApplyConstraints.hpp"
 #include "BLAS1.hpp"
-#include "Solutions.hpp"
 #include "EssentialBCs.hpp"
 #include "ImplicitFunctors.hpp"
-#include "ApplyConstraints.hpp"
-
-#include "geometric/GeometryScalarFunction.hpp"
+#include "PlatoAbstractProblem.hpp"
+#include "PlatoStaticsTypes.hpp"
+#include "SimplexStructuralDynamics.hpp"
+#include "Solutions.hpp"
 #include "elliptic/PhysicsScalarFunction.hpp"
 #include "elliptic/VectorFunction.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "PlatoAbstractProblem.hpp"
-#include "SimplexStructuralDynamics.hpp"
+#include "geometric/GeometryScalarFunction.hpp"
 
 #ifdef HAVE_AMGX
 #include "alg/AmgXSparseLinearProblem.hpp"
@@ -34,10 +32,10 @@
 namespace Plato
 {
 
-template<typename SimplexPhysics>
-class StructuralDynamicsProblem: public AbstractProblem
+template <typename SimplexPhysics>
+class StructuralDynamicsProblem : public AbstractProblem
 {
-private:
+   private:
     static constexpr Plato::OrdinalType mSpatialDim = SimplexPhysics::mNumSpatialDims;
     static constexpr Plato::OrdinalType mNumDofsPerNode = SimplexPhysics::mNumDofsPerNode;
 
@@ -71,69 +69,73 @@ private:
 
     std::string mPhysics; /*!< simulated physics */
 
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      *
      * \brief Constructor
      * \param aMesh mesh data base
      * \param aParamList parameter list with input data
      *
-    **********************************************************************************/
-    StructuralDynamicsProblem(Plato::Mesh aMesh, Teuchos::ParameterList & aParamList) :
-            mNumStates(aMesh->NumNodes() * mNumDofsPerNode),
-            mNumConfig(aMesh->NumNodes() * mSpatialDim),
-            mNumControls(aMesh->NumNodes()),
-            mNumIterationsAmgX(1000),
-            mResidual("Residual", mNumStates),
-            mGradState("GradState", mNumStates),
-            mGradConfig("GradConfig", mNumConfig),
-            mGradControl("GradControl", mNumControls),
-            mExternalForce("BoundaryLoads", mNumStates),
-            mFreqArray(),
-            mJacobian(Teuchos::null),
-            mEquality(nullptr),
-            mObjective(nullptr),
-            mConstraint(nullptr),
-            mAdjointProb(nullptr),
-            mPhysics(aParamList.get<std::string>("Physics"))
+     **********************************************************************************/
+    StructuralDynamicsProblem(Plato::Mesh aMesh, Teuchos::ParameterList& aParamList)
+        : mNumStates(aMesh->NumNodes() * mNumDofsPerNode),
+          mNumConfig(aMesh->NumNodes() * mSpatialDim),
+          mNumControls(aMesh->NumNodes()),
+          mNumIterationsAmgX(1000),
+          mResidual("Residual", mNumStates),
+          mGradState("GradState", mNumStates),
+          mGradConfig("GradConfig", mNumConfig),
+          mGradControl("GradControl", mNumControls),
+          mExternalForce("BoundaryLoads", mNumStates),
+          mFreqArray(),
+          mJacobian(Teuchos::null),
+          mEquality(nullptr),
+          mObjective(nullptr),
+          mConstraint(nullptr),
+          mAdjointProb(nullptr),
+          mPhysics(aParamList.get<std::string>("Physics"))
     {
         this->initialize(aMesh, aParamList);
         this->readFrequencyArray(aParamList);
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      *
      * \brief Constructor
      * \param aMesh mesh data base
      * \param aEquality equality constraint vector function
      *
-    **********************************************************************************/
-    StructuralDynamicsProblem(Plato::Mesh aMesh, std::shared_ptr<Plato::Elliptic::VectorFunction<SimplexPhysics>> & aEquality) :
-            mNumStates(aMesh->NumNodes() * mNumDofsPerNode),
-            mNumConfig(aMesh->NumNodes() * mSpatialDim),
-            mNumControls(aMesh->NumNodes()),
-            mNumIterationsAmgX(1000),
-            mResidual("Residual", mNumStates),
-            mGradState("GradState", mNumStates),
-            mGradConfig("GradConfig", mNumConfig),
-            mGradControl("GradControl", mNumControls),
-            mExternalForce("ExternalForce", mNumStates),
-            mFreqArray(),
-            mJacobian(Teuchos::null),
-            mEquality(aEquality),
-            mObjective(nullptr),
-            mConstraint(nullptr),
-            mAdjointProb(nullptr)
+     **********************************************************************************/
+    StructuralDynamicsProblem(Plato::Mesh aMesh,
+                              std::shared_ptr<Plato::Elliptic::VectorFunction<SimplexPhysics>>& aEquality)
+        : mNumStates(aMesh->NumNodes() * mNumDofsPerNode),
+          mNumConfig(aMesh->NumNodes() * mSpatialDim),
+          mNumControls(aMesh->NumNodes()),
+          mNumIterationsAmgX(1000),
+          mResidual("Residual", mNumStates),
+          mGradState("GradState", mNumStates),
+          mGradConfig("GradConfig", mNumConfig),
+          mGradControl("GradControl", mNumControls),
+          mExternalForce("ExternalForce", mNumStates),
+          mFreqArray(),
+          mJacobian(Teuchos::null),
+          mEquality(aEquality),
+          mObjective(nullptr),
+          mConstraint(nullptr),
+          mAdjointProb(nullptr)
     {
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      *
      * \brief Set array of angular frequencies and allocate state container
      *
      * \param[in] aInput angular frequencies
      *
-    **********************************************************************************/
+     **********************************************************************************/
     void setFrequencyArray(const std::vector<Plato::Scalar>& aInput)
     {
         assert(aInput.size() > static_cast<size_t>(0));
@@ -141,16 +143,16 @@ public:
         mGlobalState = Plato::ScalarMultiVector("States", mFreqArray.size(), mNumStates);
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      *
      * \brief Set essential boundary conditions
      *
      * \param[in] aBcDofs degrees of freedom associated with essential boundary conditions
      * \param[in] aBcValues values associated with essential boundary conditions
      *
-    **********************************************************************************/
-    void setEssentialBoundaryConditions(const Plato::OrdinalVector & aBcDofs,
-                                        const Plato::ScalarVector & aBcValues)
+     **********************************************************************************/
+    void setEssentialBoundaryConditions(const Plato::OrdinalVector& aBcDofs, const Plato::ScalarVector& aBcValues)
     {
         assert(aBcDofs.size() > 0);
         assert(aBcValues.size() > 0);
@@ -160,46 +162,45 @@ public:
         Kokkos::deep_copy(mBcValues, aBcValues);
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      *
      * \brief Set external force vector
      *
      * \param[in] aInput external force vector
      *
-    **********************************************************************************/
-    void setExternalForce(const Plato::ScalarVector & aInput)
+     **********************************************************************************/
+    void setExternalForce(const Plato::ScalarVector& aInput)
     {
         assert(static_cast<Plato::OrdinalType>(aInput.size()) == mNumStates);
         assert(static_cast<Plato::OrdinalType>(mExternalForce.size()) == mNumStates);
         Kokkos::deep_copy(mExternalForce, aInput);
     }
 
-    /******************************************************************************//**
-    * 
-    * \brief Set maximum number of AmgX solver iterations.
-    * @ param [in] aInput number of iterations 
-    *
-    **********************************************************************************/
-    void setMaxNumIterationsAmgX(const Plato::OrdinalType& aInput)
-    {
-        mNumIterationsAmgX = aInput;   
-    }
+    /******************************************************************************/
+    /**
+     *
+     * \brief Set maximum number of AmgX solver iterations.
+     * @ param [in] aInput number of iterations
+     *
+     **********************************************************************************/
+    void setMaxNumIterationsAmgX(const Plato::OrdinalType& aInput) { mNumIterationsAmgX = aInput; }
 
     void output(const std::string& aFilepath) override { return; }
-    
-    /******************************************************************************//**
+
+    /******************************************************************************/
+    /**
      * \brief Update physics-based parameters within optimization iterations
      * \param [in] aGlobalState 2D container of state variables
      * \param [in] aControl 1D container of control variables
-    **********************************************************************************/
-    void updateProblem(const Plato::ScalarVector & aControl, const Plato::Solutions & aSolution) override
-    { return; }
+     **********************************************************************************/
+    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override { return; }
 
     /******************************************************************************/
-    void applyConstraints(const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix, const Plato::ScalarVector & aVector)
+    void applyConstraints(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix, const Plato::ScalarVector& aVector)
     /******************************************************************************/
     {
-        if(mJacobian->isBlockMatrix())
+        if (mJacobian->isBlockMatrix())
         {
             Plato::applyBlockConstraints<mNumDofsPerNode>(aMatrix, aVector, mBcDofs, mBcValues);
         }
@@ -210,24 +211,26 @@ public:
     }
 
     /******************************************************************************/
-    void applyBoundaryLoads(const Plato::ScalarVector & aForce)
+    void applyBoundaryLoads(const Plato::ScalarVector& aForce)
     /******************************************************************************/
     {
         auto tBoundaryLoads = mExternalForce;
         auto tTotalNumDofs = aForce.size();
-        Kokkos::parallel_for("add boundary loads", Kokkos::RangePolicy<>(0, tTotalNumDofs), KOKKOS_LAMBDA(const Plato::OrdinalType & aDofOrdinal){
-            aForce(aDofOrdinal) += tBoundaryLoads(aDofOrdinal);
-        });
+        Kokkos::parallel_for(
+            "add boundary loads", Kokkos::RangePolicy<>(0, tTotalNumDofs),
+            KOKKOS_LAMBDA(const Plato::OrdinalType& aDofOrdinal) {
+                aForce(aDofOrdinal) += tBoundaryLoads(aDofOrdinal);
+            });
     }
 
     /******************************************************************************/
-    Plato::Solutions solution(const Plato::ScalarVector & aControl)
+    Plato::Solutions solution(const Plato::ScalarVector& aControl)
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
         const Plato::OrdinalType tNumFreqs = mFreqArray.size();
-        for(Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
+        for (Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
         {
             assert(mResidual.size() == mNumStates);
             auto tMyStatesSubView = Kokkos::subview(mGlobalState, tFreqIndex, Kokkos::ALL());
@@ -254,18 +257,19 @@ public:
     }
 
     /******************************************************************************/
-    Plato::Scalar objectiveValue(const Plato::ScalarVector & aControl) override
+    Plato::Scalar objectiveValue(const Plato::ScalarVector& aControl) override
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
-        if(mObjective == nullptr)
+        if (mObjective == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: OBJECTIVE VALUE REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: OBJECTIVE VALUE REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -277,22 +281,22 @@ public:
     }
 
     /******************************************************************************/
-    Plato::Scalar
-    objectiveValue(const Plato::ScalarVector & aControl, const Plato::Solutions & aSolution) override
+    Plato::Scalar objectiveValue(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override
     /******************************************************************************/
     {
-        if(aSolution.empty())
+        if (aSolution.empty())
         {
             ANALYZE_THROWERR("SOLUTION DATABASE IS EMPTY.")
         }
 
-        if(mObjective == nullptr)
+        if (mObjective == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: OBJECTIVE VALUE REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: OBJECTIVE VALUE REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -302,18 +306,19 @@ public:
     }
 
     /******************************************************************************/
-    Plato::Scalar constraintValue(const Plato::ScalarVector & aControl) override
+    Plato::Scalar constraintValue(const Plato::ScalarVector& aControl) override
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
-        if(mConstraint == nullptr)
+        if (mConstraint == nullptr)
         {
             std::ostringstream tErrorMessage;
             tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: CONSTRAINT VALUE REQUESTED BUT CONSTRAINT PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE CONSTRAINT FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+                          << ", LINE: " << __LINE__
+                          << "\nMESSAGE: CONSTRAINT VALUE REQUESTED BUT CONSTRAINT PTR WAS NOT DEFINED BY THE USER.\n"
+                          << "USER SHOULD MAKE SURE THAT THE CONSTRAINT FUNCTION IS DEFINED IN THE INPUT FILE. "
+                             "**************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -323,18 +328,19 @@ public:
     }
 
     /******************************************************************************/
-    Plato::ScalarVector objectiveGradient(const Plato::ScalarVector & aControl) override
+    Plato::ScalarVector objectiveGradient(const Plato::ScalarVector& aControl) override
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
-        if(mObjective == nullptr)
+        if (mObjective == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: OBJECTIVE GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: OBJECTIVE GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -344,22 +350,23 @@ public:
     }
 
     /******************************************************************************/
-    Plato::ScalarVector objectiveGradient(const Plato::ScalarVector & aControl, const Plato::Solutions & aSolution)
+    Plato::ScalarVector objectiveGradient(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution)
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
-        if(aSolution.empty())
+        if (aSolution.empty())
         {
             ANALYZE_THROWERR("SOLUTION DATABASE IS EMPTY")
         }
 
-        if(mObjective == nullptr)
+        if (mObjective == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: OBJECTIVE GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: OBJECTIVE GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -367,17 +374,19 @@ public:
         Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), mGradState);
         Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), mGradControl);
         const Plato::OrdinalType tNumFreqs = mFreqArray.size();
-        for(Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
+        for (Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
         {
             auto tMyFrequency = mFreqArray[tFreqIndex];
             auto tMyStatesSubView = Kokkos::subview(tGlobalState, tFreqIndex, Kokkos::ALL());
             assert(tMyStatesSubView.size() == mNumStates);
 
             auto tPartialObjectiveWrtState = mObjective->gradient_u(aSolution, aControl, tFreqIndex, tMyFrequency);
-            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtState, static_cast<Plato::Scalar>(1.0), mGradState);
+            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtState,
+                                 static_cast<Plato::Scalar>(1.0), mGradState);
 
             auto tPartialObjectiveWrtControl = mObjective->gradient_z(aSolution, aControl, tMyFrequency);
-            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtControl, static_cast<Plato::Scalar>(1.0), mGradControl);
+            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtControl,
+                                 static_cast<Plato::Scalar>(1.0), mGradControl);
         }
 
         auto tGlobalState = aSolution.get("State");
@@ -388,18 +397,20 @@ public:
     }
 
     /******************************************************************************/
-    Plato::ScalarVector objectiveGradientX(const Plato::ScalarVector & aControl) override
+    Plato::ScalarVector objectiveGradientX(const Plato::ScalarVector& aControl) override
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
-        if(mObjective == nullptr)
+        if (mObjective == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: OBJECTIVE CONFIGURATION GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: OBJECTIVE CONFIGURATION GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE "
+                   "USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -409,30 +420,31 @@ public:
     }
 
     /******************************************************************************/
-    Plato::ScalarVector
-    objectiveGradientX(const Plato::ScalarVector & aControl, const Plato::Solutions & aSolution)
+    Plato::ScalarVector objectiveGradientX(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution)
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
-        if(aSolution.empty())
+        if (aSolution.empty())
         {
             ANALYZE_THROWERR("SOLUTION DATABASE IS EMPTY")
         }
 
-        if(mObjective == nullptr)
+        if (mObjective == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: OBJECTIVE CONFIGURATION GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: OBJECTIVE CONFIGURATION GRADIENT REQUESTED BUT OBJECTIVE PTR WAS NOT DEFINED BY THE "
+                   "USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE OBJECTIVE FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
         Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), mGradState);
         Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), mGradConfig);
         const Plato::OrdinalType tNumFreqs = mFreqArray.size();
-        for(Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
+        for (Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
         {
             auto tMyFrequency = mFreqArray[tFreqIndex];
 
@@ -440,11 +452,13 @@ public:
             auto tMyStatesSubView = Kokkos::subview(tGlobalState, tFreqIndex, Kokkos::ALL());
             assert(tMyStatesSubView.size() == mNumStates);
             auto tPartialObjectiveWrtConfig = mObjective->gradient_x(aSolution, aControl, tMyFrequency);
-            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtConfig, static_cast<Plato::Scalar>(1.0), mGradConfig);
+            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtConfig,
+                                 static_cast<Plato::Scalar>(1.0), mGradConfig);
 
             // Compute partial derivative of objective function wrt state for this time step
             auto tPartialObjectiveWrtState = mObjective->gradient_u(aSolution, aControl, tFreqIndex, tMyFrequency);
-            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtState, static_cast<Plato::Scalar>(1.0), mGradState);
+            Plato::blas1::update(static_cast<Plato::Scalar>(1.0), tPartialObjectiveWrtState,
+                                 static_cast<Plato::Scalar>(1.0), mGradState);
         }
 
         auto tGlobalState = aSolution.get("State");
@@ -455,18 +469,20 @@ public:
     }
 
     /******************************************************************************/
-    Plato::ScalarVector constraintGradient(const Plato::ScalarVector & aControl) override
+    Plato::ScalarVector constraintGradient(const Plato::ScalarVector& aControl) override
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
-        if(mConstraint == nullptr)
+        if (mConstraint == nullptr)
         {
             std::ostringstream tErrorMessage;
-            tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: CONSTRAINT GRADIENT REQUESTED BUT CONSTRAINT PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE CONSTRAINT FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+            tErrorMessage
+                << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
+                << ", LINE: " << __LINE__
+                << "\nMESSAGE: CONSTRAINT GRADIENT REQUESTED BUT CONSTRAINT PTR WAS NOT DEFINED BY THE USER.\n"
+                << "USER SHOULD MAKE SURE THAT THE CONSTRAINT FUNCTION IS DEFINED IN THE INPUT FILE. "
+                   "**************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
@@ -474,54 +490,60 @@ public:
     }
 
     /******************************************************************************/
-    Plato::ScalarVector constraintGradientX(const Plato::ScalarVector & aControl) override
+    Plato::ScalarVector constraintGradientX(const Plato::ScalarVector& aControl) override
     /******************************************************************************/
     {
         assert(aControl.size() == mNumControls);
 
-        if(mConstraint == nullptr)
+        if (mConstraint == nullptr)
         {
             std::ostringstream tErrorMessage;
             tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__
-                    << "\nMESSAGE: CONSTRAINT CONFIGURATION GRADIENT REQUESTED BUT CONSTRAINT PTR WAS NOT DEFINED BY THE USER.\n"
-                    << "USER SHOULD MAKE SURE THAT THE CONSTRAINT FUNCTION IS DEFINED IN THE INPUT FILE. **************\n\n";
+                          << ", LINE: " << __LINE__
+                          << "\nMESSAGE: CONSTRAINT CONFIGURATION GRADIENT REQUESTED BUT CONSTRAINT PTR WAS NOT "
+                             "DEFINED BY THE USER.\n"
+                          << "USER SHOULD MAKE SURE THAT THE CONSTRAINT FUNCTION IS DEFINED IN THE INPUT FILE. "
+                             "**************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
 
         return mConstraint->gradient_x(aControl);
     }
 
-private:
+   private:
     /******************************************************************************/
     void initialize(Plato::Mesh aMesh, Teuchos::ParameterList& aParamList)
     /******************************************************************************/
     {
         auto tEqualityName = aParamList.get<std::string>("PDE Constraint");
-        mEquality = std::make_shared<Plato::Elliptic::VectorFunction<SimplexPhysics>>(aMesh, mDataMap, aParamList, tEqualityName);
+        mEquality = std::make_shared<Plato::Elliptic::VectorFunction<SimplexPhysics>>(aMesh, mDataMap, aParamList,
+                                                                                      tEqualityName);
 
-        if(aParamList.isType<std::string>("Constraint"))
+        if (aParamList.isType<std::string>("Constraint"))
         {
             std::string tConstraintName = aParamList.get<std::string>("Constraint");
-            mConstraint = std::make_shared<Plato::Geometric::GeometryScalarFunction<SimplexPhysics>>(aMesh, mDataMap, aParamList, tConstraintName);
+            mConstraint = std::make_shared<Plato::Geometric::GeometryScalarFunction<SimplexPhysics>>(
+                aMesh, mDataMap, aParamList, tConstraintName);
         }
 
-        if(aParamList.isType<std::string>("Objective"))
+        if (aParamList.isType<std::string>("Objective"))
         {
             std::string tObjectiveName = aParamList.get<std::string>("Objective");
-            mObjective = std::make_shared<Plato::Elliptic::PhysicsScalarFunction<SimplexPhysics>>(aMesh, mDataMap, aParamList, tObjectiveName);
+            mObjective = std::make_shared<Plato::Elliptic::PhysicsScalarFunction<SimplexPhysics>>(
+                aMesh, mDataMap, aParamList, tObjectiveName);
 
             auto tLength = mEquality->size();
             mMyAdjoint = Plato::ScalarMultiVector("MyAdjoint", 1, tLength);
 
             std::string tAdjointName = "StructuralDynamics Adjoint";
-            mAdjointProb = std::make_shared<Plato::Elliptic::VectorFunction<SimplexPhysics>>(aMeshs, mDataMap, aParamList, tAdjointName);
+            mAdjointProb = std::make_shared<Plato::Elliptic::VectorFunction<SimplexPhysics>>(aMeshs, mDataMap,
+                                                                                             aParamList, tAdjointName);
         }
 
         // Parse essential boundary conditions (i.e. Dirichlet)
         //
-        Plato::EssentialBCs<SimplexPhysics>
-            tEssentialBoundaryConditions(aParamList.sublist("Essential Boundary Conditions",false), aMesh);
+        Plato::EssentialBCs<SimplexPhysics> tEssentialBoundaryConditions(
+            aParamList.sublist("Essential Boundary Conditions", false), aMesh);
         tEssentialBoundaryConditions.get(mBcDofs, mBcValues);
     }
 
@@ -529,11 +551,11 @@ private:
     void readFrequencyArray(Teuchos::ParameterList& aParamList)
     /******************************************************************************/
     {
-        if(aParamList.isSublist("Frequency Steps") == true)
+        if (aParamList.isSublist("Frequency Steps") == true)
         {
             auto tFreqParams = aParamList.sublist("Frequency Steps");
             assert(tFreqParams.isParameter("Values"));
-            auto tFreqValues = tFreqParams.get < Teuchos::Array < Plato::Scalar >> ("Values");
+            auto tFreqValues = tFreqParams.get<Teuchos::Array<Plato::Scalar>>("Values");
 
             const Plato::OrdinalType tNumFrequencies = tFreqValues.size();
             mFreqArray.resize(tNumFrequencies);
@@ -542,7 +564,7 @@ private:
             assert(mEquality->size() == mNumStates);
             mGlobalState = Plato::ScalarMultiVector("States", tNumFrequencies, mNumStates);
 
-            for(Plato::OrdinalType tIndex = 0; tIndex < tNumFrequencies; tIndex++)
+            for (Plato::OrdinalType tIndex = 0; tIndex < tNumFrequencies; tIndex++)
             {
                 mFreqArray[tIndex] = tFreqValues[tIndex];
             }
@@ -551,20 +573,22 @@ private:
         {
             std::ostringstream tErrorMessage;
             tErrorMessage << "\n\n************** ERROR IN FILE: " << __FILE__ << ", FUNCTION: " << __PRETTY_FUNCTION__
-                    << ", LINE: " << __LINE__ << "\nMESSAGE: FREQUENCY STEPS SUBLIST IS NOT DEFINED IN THE INPUT FILE.\n"
-                    << "\nUSER SHOULD DEFINE FREQUENCY STEPS SUBLIST IN THE INPUT FILE. **************\n\n";
+                          << ", LINE: " << __LINE__
+                          << "\nMESSAGE: FREQUENCY STEPS SUBLIST IS NOT DEFINED IN THE INPUT FILE.\n"
+                          << "\nUSER SHOULD DEFINE FREQUENCY STEPS SUBLIST IN THE INPUT FILE. **************\n\n";
             throw std::runtime_error(tErrorMessage.str().c_str());
         }
     }
 
     /******************************************************************************/
-    Teuchos::RCP<Plato::CrsMatrixType> computePartialResidualWrtDesignVar(const Plato::partial::derivative_t & aWhichType,
-                                                                          const Plato::ScalarVector & aGlobalState,
-                                                                          const Plato::ScalarVector & aControl,
-                                                                          const Plato::Scalar & aTimeStep)
+    Teuchos::RCP<Plato::CrsMatrixType> computePartialResidualWrtDesignVar(
+        const Plato::partial::derivative_t& aWhichType,
+        const Plato::ScalarVector& aGlobalState,
+        const Plato::ScalarVector& aControl,
+        const Plato::Scalar& aTimeStep)
     /******************************************************************************/
     {
-        switch(aWhichType)
+        switch (aWhichType)
         {
             case Plato::partial::STATE:
             {
@@ -583,14 +607,14 @@ private:
     }
 
     /******************************************************************************/
-    void addResidualContribution(const Plato::partial::derivative_t & aWhichPartial,
-                                 const Plato::ScalarVector & aControl,
-                                 const Plato::ScalarMultiVector & aGlobalState,
-                                 Plato::ScalarVector & aOutput)
+    void addResidualContribution(const Plato::partial::derivative_t& aWhichPartial,
+                                 const Plato::ScalarVector& aControl,
+                                 const Plato::ScalarMultiVector& aGlobalState,
+                                 Plato::ScalarVector& aOutput)
     /******************************************************************************/
     {
         const Plato::OrdinalType tNumFreqs = mFreqArray.size();
-        for(Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
+        for (Plato::OrdinalType tFreqIndex = 0; tFreqIndex < tNumFreqs; tFreqIndex++)
         {
             // compute dgdu: partial of PDE wrt state
             auto tMyFrequency = mFreqArray[tFreqIndex];
@@ -603,7 +627,7 @@ private:
             Plato::ScalarVector tAdjoint = Kokkos::subview(mMyAdjoint, tTIME_STEP_INDEX, Kokkos::ALL());
             Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tAdjoint);
 #ifdef HAVE_AMGX
-            using AmgXLinearProblem = Plato::AmgXSparseLinearProblem< Plato::OrdinalType, mNumDofsPerNode>;
+            using AmgXLinearProblem = Plato::AmgXSparseLinearProblem<Plato::OrdinalType, mNumDofsPerNode>;
             auto tConfigString = Plato::get_config_string();
             auto tSolver = std::make_shared<AmgXLinearProblem>(*mJacobian, tAdjoint, mGradState, tConfigString);
             tSolver->solve();
@@ -611,7 +635,7 @@ private:
 
             // compute dgdz: partial of PDE wrt design variable.
             auto tPartialWrtDesignVar =
-                    this->computePartialResidualWrtDesignVar(aWhichPartial, tMyStatesSubView, aControl, tMyFrequency);
+                this->computePartialResidualWrtDesignVar(aWhichPartial, tMyStatesSubView, aControl, tMyFrequency);
 
             // compute dfdz + dgdz . adjoint
             Plato::MatrixTimesVectorPlusVector(tPartialWrtDesignVar, tAdjoint, aOutput);
@@ -620,6 +644,6 @@ private:
 };
 // class StructuralDynamicsProblem
 
-}// namespace Plato
+}  // namespace Plato
 
 #endif /* STRUCTURALDYNAMICSPROBLEM_HPP_ */

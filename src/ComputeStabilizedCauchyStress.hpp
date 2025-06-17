@@ -11,7 +11,8 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \tparam SpaceDim number of spatial dimensions
  *
@@ -24,45 +25,45 @@ namespace Plato
  * Here, \f$ \epsilon_{ij} \f$ is the strain tensor, \f$ \mu \f$ is the shear modulus,
  * \f$ \epsilon_{kk} \f$ is the trace of the strain tensor, and K is the bulk modulus.
  *
-**********************************************************************************/
-template<Plato::OrdinalType SpaceDim>
+ **********************************************************************************/
+template <Plato::OrdinalType SpaceDim>
 class ComputeStabilizedCauchyStress
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Functor constructor
-    **********************************************************************************/
-    ComputeStabilizedCauchyStress(){}
+     **********************************************************************************/
+    ComputeStabilizedCauchyStress() {}
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Compute the Cauchy stress tensor:
      *
      * \param [in]  aCellOrdinal           cell/element index
      * \param [in]  aPressure              pressure
      * \param [in]  aDeviatoricStress      deviatoric stress
      * \param [out] aStress                Cauchy stress tensor
-    **********************************************************************************/
-    template<typename PressureT, typename DevStressT, typename StressT>
-    KOKKOS_INLINE_FUNCTION
-    void operator()
-    (const Plato::OrdinalType & aCellOrdinal,
-     const Plato::ScalarVectorT<PressureT> & aPressure,
-     const Plato::ScalarMultiVectorT<DevStressT> & aDeviatoricStress,
-     const Plato::ScalarMultiVectorT<StressT> & aStress) const;
+     **********************************************************************************/
+    template <typename PressureT, typename DevStressT, typename StressT>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarVectorT<PressureT>& aPressure,
+                                           const Plato::ScalarMultiVectorT<DevStressT>& aDeviatoricStress,
+                                           const Plato::ScalarMultiVectorT<StressT>& aStress) const;
 };
 // class ComputeCauchyStress
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Compute the Cauchy stress for 3D
-**********************************************************************************/
-template<>
-template<typename PressureT, typename DevStressT, typename StressT>
-KOKKOS_INLINE_FUNCTION void
-ComputeStabilizedCauchyStress<3>::operator()
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVectorT<PressureT> & aPressure,
- const Plato::ScalarMultiVectorT<DevStressT> & aDeviatoricStress,
- const Plato::ScalarMultiVectorT<StressT> & aStress) const
+ **********************************************************************************/
+template <>
+template <typename PressureT, typename DevStressT, typename StressT>
+KOKKOS_INLINE_FUNCTION void ComputeStabilizedCauchyStress<3>::operator()(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarVectorT<PressureT>& aPressure,
+    const Plato::ScalarMultiVectorT<DevStressT>& aDeviatoricStress,
+    const Plato::ScalarMultiVectorT<StressT>& aStress) const
 {
     // add pressure stress to normal components
     aStress(aCellOrdinal, 0) = aDeviatoricStress(aCellOrdinal, 0) + aPressure(aCellOrdinal);
@@ -75,17 +76,17 @@ ComputeStabilizedCauchyStress<3>::operator()
     aStress(aCellOrdinal, 5) = aDeviatoricStress(aCellOrdinal, 5);
 }
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Compute the Cauchy stress for 2D - Plane strain
-**********************************************************************************/
-template<>
-template<typename PressureT, typename DevStressT, typename StressT>
-KOKKOS_INLINE_FUNCTION void
-ComputeStabilizedCauchyStress<2>::operator()
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVectorT<PressureT> & aPressure,
- const Plato::ScalarMultiVectorT<DevStressT> & aDeviatoricStress,
- const Plato::ScalarMultiVectorT<StressT> & aStress) const
+ **********************************************************************************/
+template <>
+template <typename PressureT, typename DevStressT, typename StressT>
+KOKKOS_INLINE_FUNCTION void ComputeStabilizedCauchyStress<2>::operator()(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarVectorT<PressureT>& aPressure,
+    const Plato::ScalarMultiVectorT<DevStressT>& aDeviatoricStress,
+    const Plato::ScalarMultiVectorT<StressT>& aStress) const
 {
     // add pressure stress to normal components
     aStress(aCellOrdinal, 0) = aDeviatoricStress(aCellOrdinal, 0) + aPressure(aCellOrdinal);
@@ -96,5 +97,5 @@ ComputeStabilizedCauchyStress<2>::operator()
     aStress(aCellOrdinal, 2) = aDeviatoricStress(aCellOrdinal, 2);
 }
 
-}
+}  // namespace Plato
 // namespace Plato

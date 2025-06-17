@@ -1,18 +1,17 @@
 #pragma once
 
-#include "material/Rank4VoigtFunctor.hpp"
-
 #include <Teuchos_ParameterList.hpp>
+
+#include "material/Rank4VoigtFunctor.hpp"
 
 namespace Plato
 {
 
-template<int SpatialDim>
+template <int SpatialDim>
 class IsotropicStiffnessFunctor : public Rank4VoigtFunctor<SpatialDim>
 {
-public:
+   public:
     IsotropicStiffnessFunctor(const Teuchos::ParameterList& aParams);
-
 };
 
-}
+}  // namespace Plato

@@ -11,27 +11,30 @@
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *  \class MetaDataBase
  *  \brief Plato metadata pure virtual base class.
  ******************************************************************************/
 class MetaDataBase
 {
-public:
+   public:
     virtual ~MetaDataBase() = default;
 };
 // class MetaDataBase
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam Type metadata type
  * \class MetaData
  * \brief Plato metadata derived class.
  ******************************************************************************/
-template<class Type>
+template <class Type>
 class MetaData : public MetaDataBase
 {
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param aData metadata
      ******************************************************************************/
@@ -41,7 +44,8 @@ public:
 };
 // class MetaData
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam Type metadata type
  *
  * \fn inline Type metadata
@@ -51,12 +55,12 @@ public:
  * \param aInput shared pointer of Plato metadata
  * \return Type data
  ******************************************************************************/
-template<class Type>
-inline Type metadata(const std::shared_ptr<Plato::MetaDataBase> & aInput)
+template <class Type>
+inline Type metadata(const std::shared_ptr<Plato::MetaDataBase> &aInput)
 {
-    return (dynamic_cast<Plato::MetaData<Type>&>(aInput.operator*()).mData);
+    return (dynamic_cast<Plato::MetaData<Type> &>(aInput.operator*()).mData);
 }
 // function metadata
 
-}
+}  // namespace Plato
 // namespace Plato

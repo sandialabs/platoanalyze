@@ -1,9 +1,8 @@
 #pragma once
 
-#include "WorkSets.hpp"
-#include "SpatialModel.hpp"
 #include "ExpInstMacros.hpp"
-
+#include "SpatialModel.hpp"
+#include "WorkSets.hpp"
 #include "hyperbolic/fluids/SimplexFluids.hpp"
 #include "hyperbolic/fluids/SimplexFluidsFadTypes.hpp"
 
@@ -13,7 +12,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam PhysicsT    physics type
  * \tparam EvaluationT Forward Automatic Differentiation (FAD) evaluation type
  *
@@ -21,26 +21,28 @@ namespace Fluids
  *
  * \brief Base pure virtual class for Plato scalar functions.
  ******************************************************************************/
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class AbstractScalarFunction
 {
-private:
+   private:
     using ResultT = typename EvaluationT::ResultScalarType; /*!< result FAD type */
 
-public:
-    AbstractScalarFunction(){}
+   public:
+    AbstractScalarFunction() {}
     virtual ~AbstractScalarFunction() = default;
 
     virtual std::string name() const = 0;
-    virtual void evaluate(const Plato::WorkSets & aWorkSets, Plato::ScalarVectorT<ResultT> & aResult) const = 0;
-    virtual void evaluateBoundary(const Plato::SpatialModel & aSpatialModel, const Plato::WorkSets & aWorkSets, Plato::ScalarVectorT<ResultT> & aResult) const = 0;
+    virtual void evaluate(const Plato::WorkSets& aWorkSets, Plato::ScalarVectorT<ResultT>& aResult) const = 0;
+    virtual void evaluateBoundary(const Plato::SpatialModel& aSpatialModel,
+                                  const Plato::WorkSets& aWorkSets,
+                                  Plato::ScalarVectorT<ResultT>& aResult) const = 0;
 };
 // class AbstractScalarFunction
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

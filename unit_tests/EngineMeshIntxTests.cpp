@@ -4,22 +4,17 @@
  *  Created on: Nov 17, 2021
  */
 
-
-#include "util/PlatoTestHelpers.hpp"
-#include "Teuchos_UnitTestHarness.hpp"
+#include <string>
 
 #include "EngineMesh.hpp"
 #include "EngineMeshIO.hpp"
+#include "Teuchos_UnitTestHarness.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
-#include <string>
-
-std::vector<Plato::Scalar>
-getSetProjection(
-    const Plato::EngineMesh  & aMesh,
-          std::string          aSetName,
-          Plato::OrdinalType   aDim,
-          Plato::Scalar        aValue
-)
+std::vector<Plato::Scalar> getSetProjection(const Plato::EngineMesh& aMesh,
+                                            std::string aSetName,
+                                            Plato::OrdinalType aDim,
+                                            Plato::Scalar aValue)
 {
     std::vector<Plato::Scalar> tReturn;
 
@@ -34,9 +29,9 @@ getSetProjection(
     auto tHostData = Kokkos::create_mirror_view(tNodeOrds);
     Kokkos::deep_copy(tHostData, tNodeOrds);
 
-    for( int i=0; i<tHostData.size(); i++)
+    for (int i = 0; i < tHostData.size(); i++)
     {
-        tReturn.push_back(tHostCoords(cSpaceDim*tHostData(i) + aDim) - aValue);
+        tReturn.push_back(tHostCoords(cSpaceDim * tHostData(i) + aDim) - aValue);
     }
     return tReturn;
 }
@@ -44,7 +39,7 @@ getSetProjection(
 template <typename T>
 bool are_equal(T aVector1, T aVector2)
 {
-    if( aVector1.size() != aVector2.size() )
+    if (aVector1.size() != aVector2.size())
     {
         return false;
     }
@@ -57,9 +52,9 @@ bool are_equal(T aVector1, T aVector2)
 
     bool tIsSame = true;
     auto tNumEntries = aVector1.size();
-    for( decltype(tNumEntries) iEntry=0; iEntry<tNumEntries; iEntry++ )
+    for (decltype(tNumEntries) iEntry = 0; iEntry < tNumEntries; iEntry++)
     {
-        tIsSame = tIsSame && (tHostVector1(iEntry) == tHostVector2(iEntry) );
+        tIsSame = tIsSame && (tHostVector1(iEntry) == tHostVector2(iEntry));
     }
 
     return tIsSame;
@@ -69,7 +64,7 @@ const Plato::Scalar cTol = 1e-9;
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Tet4)
 {
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", /*tMeshIntervals=*/2);
 
     std::vector<std::string> tExcludeNames;
 
@@ -78,16 +73,14 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Tet4)
         auto tHost = Kokkos::create_mirror_view(tSideSetElements);
         Kokkos::deep_copy(tHost, tSideSetElements);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          2,   3,  1,  0,  4,  5,  8,  9,  7, 10,  8,  9, 14, 13, 12, 17,
-          20, 19, 20, 21, 13, 12, 19, 18, 27, 24, 28, 29, 33, 34, 32, 33,
-          36, 41, 44, 45, 37, 36, 43, 42, 28, 29, 34, 35, 40, 41, 46, 47
-        };
+        std::vector<Plato::OrdinalType> tGold = {2,  3,  1,  0,  4,  5,  8,  9,  7,  10, 8,  9,  14, 13, 12, 17,
+                                                 20, 19, 20, 21, 13, 12, 19, 18, 27, 24, 28, 29, 33, 34, 32, 33,
+                                                 36, 41, 44, 45, 37, 36, 43, 42, 28, 29, 34, 35, 40, 41, 46, 47};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 
     auto tSideSetFaces = tMesh->GetSideSetFacesComplement(tExcludeNames);
@@ -95,22 +88,20 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Tet4)
         auto tHost = Kokkos::create_mirror_view(tSideSetFaces);
         Kokkos::deep_copy(tHost, tSideSetFaces);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 3, 3, 3, 3,
-          3, 3, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1,
-          3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-        };
+        std::vector<Plato::OrdinalType> tGold = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 3, 3, 3, 3,
+                                                 3, 3, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 1, 1,
+                                                 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 }
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Tet4)
 {
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", /*tMeshIntervals=*/2);
 
     std::vector<std::string> tExcludeNames;
     tExcludeNames.push_back("z+");
@@ -120,16 +111,14 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Tet4)
         auto tHost = Kokkos::create_mirror_view(tSideSetElements);
         Kokkos::deep_copy(tHost, tSideSetElements);
 
-        std::vector<Plato::OrdinalType> tGold = {
-           0,  1,  2,  3,  4,  5,  7,  8,  9, 10, 12, 12, 13, 13, 14, 17,
-          18, 19, 19, 20, 24, 27, 28, 28, 29, 29, 33, 34, 34, 35, 36, 36,
-          37, 40, 41, 41, 42, 43, 46, 47
-        };
+        std::vector<Plato::OrdinalType> tGold = {0,  1,  2,  3,  4,  5,  7,  8,  9,  10, 12, 12, 13, 13,
+                                                 14, 17, 18, 19, 19, 20, 24, 27, 28, 28, 29, 29, 33, 34,
+                                                 34, 35, 36, 36, 37, 40, 41, 41, 42, 43, 46, 47};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 
     auto tSideSetFaces = tMesh->GetSideSetFacesComplement(tExcludeNames);
@@ -137,22 +126,19 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Tet4)
         auto tHost = Kokkos::create_mirror_view(tSideSetFaces);
         Kokkos::deep_copy(tHost, tSideSetFaces);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 3, 3, 3,
-          1, 1, 3, 3, 3, 3, 1, 3, 1, 3, 3, 1, 3, 1, 1, 3,
-          1, 1, 1, 3, 1, 1, 1, 1
-        };
+        std::vector<Plato::OrdinalType> tGold = {3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 3, 1, 3, 3, 3, 1, 1, 3, 3,
+                                                 3, 3, 1, 3, 1, 3, 3, 1, 3, 1, 1, 3, 1, 1, 1, 3, 1, 1, 1, 1};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 }
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Hex8)
 {
-    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", /*tMeshIntervals=*/2);
 
     std::vector<std::string> tExcludeNames;
     tExcludeNames.push_back("z+");
@@ -162,15 +148,12 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Hex8)
         auto tHost = Kokkos::create_mirror_view(tSideSetElements);
         Kokkos::deep_copy(tHost, tSideSetElements);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          0, 0, 0, 1, 1, 2, 2, 2, 3, 3,
-          4, 4, 4, 5, 5, 6, 6, 6, 7, 7
-        };
+        std::vector<Plato::OrdinalType> tGold = {0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 5, 5, 6, 6, 6, 7, 7};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 
     auto tSideSetFaces = tMesh->GetSideSetFacesComplement(tExcludeNames);
@@ -178,21 +161,18 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceComplement_Hex8)
         auto tHost = Kokkos::create_mirror_view(tSideSetFaces);
         Kokkos::deep_copy(tHost, tSideSetFaces);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          0, 3, 4, 0, 3, 2, 3, 4, 2, 3,
-          0, 1, 4, 0, 1, 1, 2, 4, 1, 2
-        };
+        std::vector<Plato::OrdinalType> tGold = {0, 3, 4, 0, 3, 2, 3, 4, 2, 3, 0, 1, 4, 0, 1, 1, 2, 4, 1, 2};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 }
 
 TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Hex8)
 {
-    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", /*tMeshIntervals=*/ 2);
+    auto tMesh = Plato::TestHelpers::get_box_mesh("HEX8", /*tMeshIntervals=*/2);
 
     std::vector<std::string> tExcludeNames;
 
@@ -201,15 +181,13 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Hex8)
         auto tHost = Kokkos::create_mirror_view(tSideSetElements);
         Kokkos::deep_copy(tHost, tSideSetElements);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 2, 3,
-          4, 4, 5, 5, 6, 7, 6, 7, 4, 5, 6, 7
-        };
+        std::vector<Plato::OrdinalType> tGold = {0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 2, 3,
+                                                 4, 4, 5, 5, 6, 7, 6, 7, 4, 5, 6, 7};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 
     auto tSideSetFaces = tMesh->GetSideSetFacesComplement(tExcludeNames);
@@ -217,15 +195,13 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, CreateSurfaceMesh_Hex8)
         auto tHost = Kokkos::create_mirror_view(tSideSetFaces);
         Kokkos::deep_copy(tHost, tSideSetFaces);
 
-        std::vector<Plato::OrdinalType> tGold = {
-          3, 0, 4, 3, 0, 5, 3, 4, 3, 5, 2, 2,
-          0, 4, 0, 5, 4, 5, 2, 2, 1, 1, 1, 1
-        };
+        std::vector<Plato::OrdinalType> tGold = {3, 0, 4, 3, 0, 5, 3, 4, 3, 5, 2, 2,
+                                                 0, 4, 0, 5, 4, 5, 2, 2, 1, 1, 1, 1};
 
-        for(unsigned int iVal=0; iVal<tGold.size(); iVal++)
+        for (unsigned int iVal = 0; iVal < tGold.size(); iVal++)
         {
             TEST_ASSERT(tHost[iVal] == tGold[iVal]);
-        } 
+        }
     }
 }
 
@@ -241,15 +217,15 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadTet4Mesh)
 
     // verify node locations on x-
     auto tVals = getSetProjection(tMesh, "x-", 0, -0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on x+
     tVals = getSetProjection(tMesh, "x+", 0, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on y+
     tVals = getSetProjection(tMesh, "y+", 1, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // mesh has a single block names 'block_1'.  verify.
     auto tBlockNames = tMesh.GetElementBlockNames();
@@ -260,7 +236,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadTet4Mesh)
     auto tLocalElementIDs = tMesh.GetLocalElementIDs(tBlockNames[0]);
     auto tHostData = Kokkos::create_mirror_view(tLocalElementIDs);
     Kokkos::deep_copy(tHostData, tLocalElementIDs);
-    for(Plato::OrdinalType iElem=0; iElem<tMesh.NumElements(); iElem++)
+    for (Plato::OrdinalType iElem = 0; iElem < tMesh.NumElements(); iElem++)
     {
         TEST_ASSERT(tHostData(iElem) == iElem);
     }
@@ -296,15 +272,15 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadTet10Mesh)
 
     // verify node locations on x-
     auto tVals = getSetProjection(tMesh, "x-", 0, -0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on x+
     tVals = getSetProjection(tMesh, "x+", 0, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on y+
     tVals = getSetProjection(tMesh, "y+", 1, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // mesh has a single block names 'block_1'.  verify.
     auto tBlockNames = tMesh.GetElementBlockNames();
@@ -315,7 +291,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadTet10Mesh)
     auto tLocalElementIDs = tMesh.GetLocalElementIDs(tBlockNames[0]);
     auto tHostData = Kokkos::create_mirror_view(tLocalElementIDs);
     Kokkos::deep_copy(tHostData, tLocalElementIDs);
-    for(Plato::OrdinalType iElem=0; iElem<tMesh.NumElements(); iElem++)
+    for (Plato::OrdinalType iElem = 0; iElem < tMesh.NumElements(); iElem++)
     {
         TEST_ASSERT(tHostData(iElem) == iElem);
     }
@@ -351,15 +327,15 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadHex8Mesh)
 
     // verify node locations on x-
     auto tVals = getSetProjection(tMesh, "x-", 0, -0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on x+
     tVals = getSetProjection(tMesh, "x+", 0, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on y+
     tVals = getSetProjection(tMesh, "y+", 1, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // mesh has a single block names 'block_1'.  verify.
     auto tBlockNames = tMesh.GetElementBlockNames();
@@ -370,7 +346,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadHex8Mesh)
     auto tLocalElementIDs = tMesh.GetLocalElementIDs(tBlockNames[0]);
     auto tHostData = Kokkos::create_mirror_view(tLocalElementIDs);
     Kokkos::deep_copy(tHostData, tLocalElementIDs);
-    for(Plato::OrdinalType iElem=0; iElem<tMesh.NumElements(); iElem++)
+    for (Plato::OrdinalType iElem = 0; iElem < tMesh.NumElements(); iElem++)
     {
         TEST_ASSERT(tHostData(iElem) == iElem);
     }
@@ -406,15 +382,15 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadHex20Mesh)
 
     // verify node locations on x-
     auto tVals = getSetProjection(tMesh, "x-", 0, -0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on x+
     tVals = getSetProjection(tMesh, "x+", 0, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on y+
     tVals = getSetProjection(tMesh, "y+", 1, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // mesh has a single block names 'block_1'.  verify.
     auto tBlockNames = tMesh.GetElementBlockNames();
@@ -425,7 +401,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadHex20Mesh)
     auto tLocalElementIDs = tMesh.GetLocalElementIDs(tBlockNames[0]);
     auto tHostData = Kokkos::create_mirror_view(tLocalElementIDs);
     Kokkos::deep_copy(tHostData, tLocalElementIDs);
-    for(Plato::OrdinalType iElem=0; iElem<tMesh.NumElements(); iElem++)
+    for (Plato::OrdinalType iElem = 0; iElem < tMesh.NumElements(); iElem++)
     {
         TEST_ASSERT(tHostData(iElem) == iElem);
     }
@@ -461,15 +437,15 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadHex27Mesh)
 
     // verify node locations on x-
     auto tVals = getSetProjection(tMesh, "x-", 0, -0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on x+
     tVals = getSetProjection(tMesh, "x+", 0, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // verify node locations on y+
     tVals = getSetProjection(tMesh, "y+", 1, 0.5);
-    for( auto tVal : tVals ) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
+    for (auto tVal : tVals) TEST_FLOATING_EQUALITY(fabs(tVal), 0.0, cTol);
 
     // mesh has a single block names 'block_1'.  verify.
     auto tBlockNames = tMesh.GetElementBlockNames();
@@ -480,7 +456,7 @@ TEUCHOS_UNIT_TEST(EngineMeshIntxTests, ReadHex27Mesh)
     auto tLocalElementIDs = tMesh.GetLocalElementIDs(tBlockNames[0]);
     auto tHostData = Kokkos::create_mirror_view(tLocalElementIDs);
     Kokkos::deep_copy(tHostData, tLocalElementIDs);
-    for(Plato::OrdinalType iElem=0; iElem<tMesh.NumElements(); iElem++)
+    for (Plato::OrdinalType iElem = 0; iElem < tMesh.NumElements(); iElem++)
     {
         TEST_ASSERT(tHostData(iElem) == iElem);
     }
@@ -520,19 +496,19 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadTet4Mesh)
     tWrite.AddNodeData("testNodalField", tDataOut);
 
     // write node field
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     // create reader
     Plato::EngineMeshIO tRead(tOutFileName, tMesh, "read");
 
     // read node field
-    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/ 0);
+    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/0);
 
     // compare node field
     TEST_ASSERT(are_equal(tDataOut, tDataIn));
 
     // check that attempting to read a non-existent node field throws a signal.
-    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/ 0), std::exception);
+    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/0), std::exception);
 }
 
 TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadTet10Mesh)
@@ -551,19 +527,19 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadTet10Mesh)
     tWrite.AddNodeData("testNodalField", tDataOut);
 
     // write node field
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     // create reader
     Plato::EngineMeshIO tRead(tOutFileName, tMesh, "read");
 
     // read node field
-    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/ 0);
+    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/0);
 
     // compare node field
     TEST_ASSERT(are_equal(tDataOut, tDataIn));
 
     // check that attempting to read a non-existent node field throws a signal.
-    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/ 0), std::exception);
+    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/0), std::exception);
 }
 
 TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadHex8Mesh)
@@ -582,19 +558,19 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadHex8Mesh)
     tWrite.AddNodeData("testNodalField", tDataOut);
 
     // write node field
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     // create reader
     Plato::EngineMeshIO tRead(tOutFileName, tMesh, "read");
 
     // read node field
-    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/ 0);
+    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/0);
 
     // compare node field
     TEST_ASSERT(are_equal(tDataOut, tDataIn));
 
     // check that attempting to read a non-existent node field throws a signal.
-    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/ 0), std::exception);
+    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/0), std::exception);
 }
 
 TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadHex20Mesh)
@@ -613,19 +589,19 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadHex20Mesh)
     tWrite.AddNodeData("testNodalField", tDataOut);
 
     // write node field
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     // create reader
     Plato::EngineMeshIO tRead(tOutFileName, tMesh, "read");
 
     // read node field
-    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/ 0);
+    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/0);
 
     // compare node field
     TEST_ASSERT(are_equal(tDataOut, tDataIn));
 
     // check that attempting to read a non-existent node field throws a signal.
-    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/ 0), std::exception);
+    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/0), std::exception);
 }
 
 TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadHex27Mesh)
@@ -644,19 +620,19 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteReadHex27Mesh)
     tWrite.AddNodeData("testNodalField", tDataOut);
 
     // write node field
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     // create reader
     Plato::EngineMeshIO tRead(tOutFileName, tMesh, "read");
 
     // read node field
-    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/ 0);
+    auto tDataIn = tRead.ReadNodeData("testNodalField", /*stepIndex=*/0);
 
     // compare node field
     TEST_ASSERT(are_equal(tDataOut, tDataIn));
 
     // check that attempting to read a non-existent node field throws a signal.
-    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/ 0), std::exception);
+    TEST_THROW(tRead.ReadNodeData("nonExistentVar", /*stepIndex=*/0), std::exception);
 }
 
 TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet4ScalarField)
@@ -673,23 +649,23 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet4ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
-    {
-        Plato::Scalar tDistance = 0.0;
-        for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
-        {
-            auto tComp = tCoordinates(cSpaceDim*tNodeOrdinal + tDim);
-            tDistance += tComp*tComp;
-        }
-        tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
-        tNodalScalarField(tNodeOrdinal) = tDistance;
-    });
+    Kokkos::parallel_for(
+        "loop on nodes", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal) {
+            Plato::Scalar tDistance = 0.0;
+            for (Plato::OrdinalType tDim = 0; tDim < cSpaceDim; tDim++)
+            {
+                auto tComp = tCoordinates(cSpaceDim * tNodeOrdinal + tDim);
+                tDistance += tComp * tComp;
+            }
+            tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
+            tNodalScalarField(tNodeOrdinal) = tDistance;
+        });
 
     // write field
     std::string tOutFileName = "unit_cube_tet4_scalarField_out.exo";
     Plato::EngineMeshIO tWrite(tOutFileName, tMesh, "write");
     tWrite.AddNodeData("testNodalScalarField", tNodalScalarField);
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     int tStatus = std::system("exodiff unit_cube_tet4_scalarField_out.exo unit_cube_tet4_scalarField_gold.exo");
     TEST_ASSERT(tStatus == 0);
@@ -709,23 +685,23 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteTet10ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
-    {
-        Plato::Scalar tDistance = 0.0;
-        for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
-        {
-            auto tComp = tCoordinates(cSpaceDim*tNodeOrdinal + tDim);
-            tDistance += tComp*tComp;
-        }
-        tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
-        tNodalScalarField(tNodeOrdinal) = tDistance;
-    });
+    Kokkos::parallel_for(
+        "loop on nodes", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal) {
+            Plato::Scalar tDistance = 0.0;
+            for (Plato::OrdinalType tDim = 0; tDim < cSpaceDim; tDim++)
+            {
+                auto tComp = tCoordinates(cSpaceDim * tNodeOrdinal + tDim);
+                tDistance += tComp * tComp;
+            }
+            tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
+            tNodalScalarField(tNodeOrdinal) = tDistance;
+        });
 
     // write field
     std::string tOutFileName = "unit_cube_tet10_scalarField_out.exo";
     Plato::EngineMeshIO tWrite(tOutFileName, tMesh, "write");
     tWrite.AddNodeData("testNodalScalarField", tNodalScalarField);
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     int tStatus = std::system("exodiff unit_cube_tet10_scalarField_out.exo unit_cube_tet10_scalarField_gold.exo");
     TEST_ASSERT(tStatus == 0);
@@ -745,23 +721,23 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex8ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
-    {
-        Plato::Scalar tDistance = 0.0;
-        for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
-        {
-            auto tComp = tCoordinates(cSpaceDim*tNodeOrdinal + tDim);
-            tDistance += tComp*tComp;
-        }
-        tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
-        tNodalScalarField(tNodeOrdinal) = tDistance;
-    });
+    Kokkos::parallel_for(
+        "loop on nodes", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal) {
+            Plato::Scalar tDistance = 0.0;
+            for (Plato::OrdinalType tDim = 0; tDim < cSpaceDim; tDim++)
+            {
+                auto tComp = tCoordinates(cSpaceDim * tNodeOrdinal + tDim);
+                tDistance += tComp * tComp;
+            }
+            tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
+            tNodalScalarField(tNodeOrdinal) = tDistance;
+        });
 
     // write field
     std::string tOutFileName = "unit_cube_hex8_scalarField_out.exo";
     Plato::EngineMeshIO tWrite(tOutFileName, tMesh, "write");
     tWrite.AddNodeData("testNodalScalarField", tNodalScalarField);
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     int tStatus = std::system("exodiff unit_cube_hex8_scalarField_out.exo unit_cube_hex8_scalarField_gold.exo");
     TEST_ASSERT(tStatus == 0);
@@ -781,23 +757,23 @@ TEUCHOS_UNIT_TEST(EngineWriterIntxTests, WriteHex20ScalarField)
 
     // compute distance of each node from origin
     auto tCoordinates = tMesh.Coordinates();
-    Kokkos::parallel_for("loop on nodes", Kokkos::RangePolicy<>(0,tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal)
-    {
-        Plato::Scalar tDistance = 0.0;
-        for(Plato::OrdinalType tDim=0; tDim<cSpaceDim; tDim++)
-        {
-            auto tComp = tCoordinates(cSpaceDim*tNodeOrdinal + tDim);
-            tDistance += tComp*tComp;
-        }
-        tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
-        tNodalScalarField(tNodeOrdinal) = tDistance;
-    });
+    Kokkos::parallel_for(
+        "loop on nodes", Kokkos::RangePolicy<>(0, tNumNodes), KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal) {
+            Plato::Scalar tDistance = 0.0;
+            for (Plato::OrdinalType tDim = 0; tDim < cSpaceDim; tDim++)
+            {
+                auto tComp = tCoordinates(cSpaceDim * tNodeOrdinal + tDim);
+                tDistance += tComp * tComp;
+            }
+            tDistance = (tDistance > 0.0) ? sqrt(tDistance) : 0.0;
+            tNodalScalarField(tNodeOrdinal) = tDistance;
+        });
 
     // write field
     std::string tOutFileName = "unit_cube_hex20_scalarField_out.exo";
     Plato::EngineMeshIO tWrite(tOutFileName, tMesh, "write");
     tWrite.AddNodeData("testNodalScalarField", tNodalScalarField);
-    tWrite.Write(/*stepIndex=*/ 0, /*timeValue=*/ 1.0);
+    tWrite.Write(/*stepIndex=*/0, /*timeValue=*/1.0);
 
     int tStatus = std::system("exodiff unit_cube_hex20_scalarField_out.exo unit_cube_hex20_scalarField_gold.exo");
     TEST_ASSERT(tStatus == 0);

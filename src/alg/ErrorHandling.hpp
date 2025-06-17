@@ -54,12 +54,11 @@
        "Processor:"<<comm::rank(machine)<<" Failed to find nearest id:("
        <<e.id().first<<":"<<e.id().second<<":"<<e.proc()<<")\n");
 */
-#define PLATO_THROW_IF(condition, message)                                     \
-  TEUCHOS_TEST_FOR_EXCEPTION(condition, std::logic_error, message)
-#define PLATO_CATCH_STATEMENTS(verbose, success)                               \
-  TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success)
+#define PLATO_THROW_IF(condition, message) TEUCHOS_TEST_FOR_EXCEPTION(condition, std::logic_error, message)
+#define PLATO_CATCH_STATEMENTS(verbose, success) TEUCHOS_STANDARD_CATCH_STATEMENTS(verbose, std::cerr, success)
 
-namespace Plato {
+namespace Plato
+{
 inline void enable_floating_point_exceptions();
 }
 
@@ -67,19 +66,21 @@ inline void enable_floating_point_exceptions();
 #ifdef PLATOANALYZE_USE_GNU_FPE
 #define _GNU_SOURCE 1
 #include <fenv.h>
-inline void Plato::enable_floating_point_exceptions() {
-  feclearexcept(FE_ALL_EXCEPT);
-  // FE_INEXACT inexact result: rounding was necessary to store the result of an earlier floating-point operation
-  // sounds like the above would happen in almost any floating point operation involving non-whole numbers ???
-  // As for underflow, there are plenty of cases where we will have things like ((a + eps) - (a)) -> eps,
-  // where eps can be arbitrarily close to zero (usually it would have been zero with infinite precision).
-  feenableexcept(FE_ALL_EXCEPT - FE_INEXACT - FE_UNDERFLOW);
+inline void Plato::enable_floating_point_exceptions()
+{
+    feclearexcept(FE_ALL_EXCEPT);
+    // FE_INEXACT inexact result: rounding was necessary to store the result of an earlier floating-point operation
+    // sounds like the above would happen in almost any floating point operation involving non-whole numbers ???
+    // As for underflow, there are plenty of cases where we will have things like ((a + eps) - (a)) -> eps,
+    // where eps can be arbitrarily close to zero (usually it would have been zero with infinite precision).
+    feenableexcept(FE_ALL_EXCEPT - FE_INEXACT - FE_UNDERFLOW);
 }
 #else  // not GCC, fall back on XMM intrinsics
 #include <xmmintrin.h>
 // Intel system
-inline void Plato::enable_floating_point_exceptions() {
-  _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
+inline void Plato::enable_floating_point_exceptions()
+{
+    _MM_SET_EXCEPTION_MASK(_MM_GET_EXCEPTION_MASK() & ~_MM_MASK_INVALID);
 }
 #endif
 #else  // don't check FPE

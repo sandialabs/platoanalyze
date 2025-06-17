@@ -14,52 +14,41 @@ namespace Plato
 namespace Fluids
 {
 
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class ThermalSources
 {
-private:
+   private:
     // set local ad type
     using ResultT = typename EvaluationT::ResultScalarType; /*!< result FAD evaluation type */
 
     // set local member data
-    std::vector<std::shared_ptr<Plato::AbstractVolumetricSource<PhysicsT, EvaluationT>>> mSources;  /*!< volumetric source list */
+    std::vector<std::shared_ptr<Plato::AbstractVolumetricSource<PhysicsT, EvaluationT>>>
+        mSources; /*!< volumetric source list */
 
-public:
-    ThermalSources() : 
-        mSources()
-    {}
+   public:
+    ThermalSources() : mSources() {}
 
-    const decltype(mSources)& 
-    sources() const
-    {
-        return mSources;
-    }
+    const decltype(mSources) &sources() const { return mSources; }
 
-    bool empty() const
-    {
-        return mSources.empty(); 
-    }
+    bool empty() const { return mSources.empty(); }
 
-    void initializeThermalSources
-    (const Plato::SpatialDomain & aDomain,
-     Plato::DataMap             & aDataMap,
-     Teuchos::ParameterList     & aInputs)
+    void initializeThermalSources(const Plato::SpatialDomain &aDomain,
+                                  Plato::DataMap &aDataMap,
+                                  Teuchos::ParameterList &aInputs)
     {
         this->allocateThermalSources(aDomain, aDataMap, aInputs);
     }
 
-    void initializeStabilizedThermalSources
-    (const Plato::SpatialDomain & aDomain,
-     Plato::DataMap             & aDataMap,
-     Teuchos::ParameterList     & aInputs)
+    void initializeStabilizedThermalSources(const Plato::SpatialDomain &aDomain,
+                                            Plato::DataMap &aDataMap,
+                                            Teuchos::ParameterList &aInputs)
     {
         this->allocateStabilizedThermalSources(aDomain, aDataMap, aInputs);
     }
 
-    void evaluate
-    (const Plato::WorkSets & aWorkSets, 
-     Plato::ScalarMultiVectorT<ResultT> &aResultWS,
-     Plato::Scalar aMultiplier = 1.0) const
+    void evaluate(const Plato::WorkSets &aWorkSets,
+                  Plato::ScalarMultiVectorT<ResultT> &aResultWS,
+                  Plato::Scalar aMultiplier = 1.0) const
     {
         for (const auto &tSource : mSources)
         {
@@ -67,74 +56,80 @@ public:
         }
     }
 
-private:
-    void allocateThermalSources
-    (const Plato::SpatialDomain & aDomain,
-     Plato::DataMap             & aDataMap,
-     Teuchos::ParameterList     & aInputs)
+   private:
+    void allocateThermalSources(const Plato::SpatialDomain &aDomain,
+                                Plato::DataMap &aDataMap,
+                                Teuchos::ParameterList &aInputs)
     {
-        if( aInputs.isSublist("Thermal Sources") )
+        if (aInputs.isSublist("Thermal Sources"))
         {
             auto tThermalSourcesParamList = aInputs.sublist("Thermal Sources");
-            for (Teuchos::ParameterList::ConstIterator tItr = tThermalSourcesParamList.begin(); tItr != tThermalSourcesParamList.end(); ++tItr)
+            for (Teuchos::ParameterList::ConstIterator tItr = tThermalSourcesParamList.begin();
+                 tItr != tThermalSourcesParamList.end(); ++tItr)
             {
                 const Teuchos::ParameterEntry &tEntry = tThermalSourcesParamList.entry(tItr);
-                if ( !tEntry.isList() )
+                if (!tEntry.isList())
                 {
                     ANALYZE_THROWERR("Parameter in 'Thermal Sources' block not valid. Expects a Parameter List only.")
                 }
 
                 std::string tName = tThermalSourcesParamList.name(tItr);
-                if(tThermalSourcesParamList.isSublist(tName) == false)
+                if (tThermalSourcesParamList.isSublist(tName) == false)
                 {
-                    ANALYZE_THROWERR(std::string("Parameter Sublist '") + tName.c_str() + "' is NOT defined in 'Thermal Sources' block.")
+                    ANALYZE_THROWERR(std::string("Parameter Sublist '") + tName.c_str() +
+                                     "' is NOT defined in 'Thermal Sources' block.")
                 }
                 Teuchos::ParameterList &tSubList = tThermalSourcesParamList.sublist(tName);
 
-                if(tSubList.isParameter("Type") == false)
+                if (tSubList.isParameter("Type") == false)
                 {
-                    ANALYZE_THROWERR(std::string("'Type' Keyword in Parameter Sublist '") + tName.c_str() + "' is NOT defined.")
+                    ANALYZE_THROWERR(std::string("'Type' Keyword in Parameter Sublist '") + tName.c_str() +
+                                     "' is NOT defined.")
                 }
 
                 auto tFuncType = tSubList.get<std::string>("Type");
                 Plato::Fluids::ThermalSourceFactory tFactory;
-                auto tSource = tFactory.template createThermalSource<PhysicsT, EvaluationT>(tFuncType, tName, aDomain, aDataMap, aInputs);
+                auto tSource = tFactory.template createThermalSource<PhysicsT, EvaluationT>(tFuncType, tName, aDomain,
+                                                                                            aDataMap, aInputs);
                 mSources.push_back(tSource);
             }
         }
     }
 
-    void allocateStabilizedThermalSources
-    (const Plato::SpatialDomain & aDomain,
-     Plato::DataMap             & aDataMap,
-     Teuchos::ParameterList     & aInputs)
+    void allocateStabilizedThermalSources(const Plato::SpatialDomain &aDomain,
+                                          Plato::DataMap &aDataMap,
+                                          Teuchos::ParameterList &aInputs)
     {
-        if( aInputs.isSublist("Thermal Sources") )
+        if (aInputs.isSublist("Thermal Sources"))
         {
             auto tThermalSourcesParamList = aInputs.sublist("Thermal Sources");
-            for (Teuchos::ParameterList::ConstIterator tItr = tThermalSourcesParamList.begin(); tItr != tThermalSourcesParamList.end(); ++tItr)
+            for (Teuchos::ParameterList::ConstIterator tItr = tThermalSourcesParamList.begin();
+                 tItr != tThermalSourcesParamList.end(); ++tItr)
             {
                 const Teuchos::ParameterEntry &tEntry = tThermalSourcesParamList.entry(tItr);
-                if ( !tEntry.isList() )
+                if (!tEntry.isList())
                 {
                     ANALYZE_THROWERR("Parameter in 'Thermal Sources' block not valid. Expects a Parameter List only.")
                 }
 
                 std::string tName = tThermalSourcesParamList.name(tItr);
-                if(tThermalSourcesParamList.isSublist(tName) == false)
+                if (tThermalSourcesParamList.isSublist(tName) == false)
                 {
-                    ANALYZE_THROWERR(std::string("Parameter Sublist '") + tName.c_str() + "' is NOT defined in 'Thermal Sources' block.")
+                    ANALYZE_THROWERR(std::string("Parameter Sublist '") + tName.c_str() +
+                                     "' is NOT defined in 'Thermal Sources' block.")
                 }
                 Teuchos::ParameterList &tSubList = tThermalSourcesParamList.sublist(tName);
 
-                if(tSubList.isParameter("Type") == false)
+                if (tSubList.isParameter("Type") == false)
                 {
-                    ANALYZE_THROWERR(std::string("'Type' Keyword in Parameter Sublist '") + tName.c_str() + "' is NOT defined.")
+                    ANALYZE_THROWERR(std::string("'Type' Keyword in Parameter Sublist '") + tName.c_str() +
+                                     "' is NOT defined.")
                 }
 
                 auto tFuncType = tSubList.get<std::string>("Type");
                 Plato::Fluids::ThermalSourceFactory tFactory;
-                auto tSource = tFactory.template createStabilizedThermalSource<PhysicsT, EvaluationT>(tFuncType, tName, aDomain, aDataMap, aInputs);
+                auto tSource = tFactory.template createStabilizedThermalSource<PhysicsT, EvaluationT>(
+                    tFuncType, tName, aDomain, aDataMap, aInputs);
                 mSources.push_back(tSource);
             }
         }
@@ -142,10 +137,10 @@ private:
 };
 // class ThermalSources
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

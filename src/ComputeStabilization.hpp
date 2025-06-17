@@ -11,7 +11,8 @@
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Compute stabilization term, defined as:
  *
@@ -24,29 +25,29 @@ namespace Plato
  *
  * \tparam SpaceDim spatial dimensions
  *
-*******************************************************************************/
-template<Plato::OrdinalType SpaceDim>
+ *******************************************************************************/
+template <Plato::OrdinalType SpaceDim>
 class ComputeStabilization
 {
-private:
-    Plato::Scalar mTwoOverThree;         /*!< 2/3 constant - avoids repeated calculation */
-    Plato::Scalar mPressureScaling;      /*!< pressure scaling term */
-    Plato::Scalar mElasticShearModulus;  /*!< elastic shear modulus */
+   private:
+    Plato::Scalar mTwoOverThree;        /*!< 2/3 constant - avoids repeated calculation */
+    Plato::Scalar mPressureScaling;     /*!< pressure scaling term */
+    Plato::Scalar mElasticShearModulus; /*!< elastic shear modulus */
 
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aScaling       multiplier used to improve the system of equations condition number
      * \param [in] aShearModulus  elastic shear modulus
-    *******************************************************************************/
-    explicit ComputeStabilization(const Plato::Scalar & aScaling, const Plato::Scalar & aShearModulus) :
-        mTwoOverThree(2.0/3.0),
-        mPressureScaling(aScaling),
-        mElasticShearModulus(aShearModulus)
+     *******************************************************************************/
+    explicit ComputeStabilization(const Plato::Scalar &aScaling, const Plato::Scalar &aShearModulus)
+        : mTwoOverThree(2.0 / 3.0), mPressureScaling(aScaling), mElasticShearModulus(aShearModulus)
     {
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Compute stabilization term
      *
      * \tparam ConfigT        POD type for 1-D Kokkos::View
@@ -60,18 +61,18 @@ public:
      * \param [in] aProjectedPressureGrad projected pressure gradient
      * \param [in/out] aStabilization     stabilization term
      *
-    *******************************************************************************/
-    template<typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(const Plato::OrdinalType &aCellOrdinal,
-               const Plato::ScalarVectorT<ConfigT> & aCellVolume,
-               const Plato::ScalarMultiVectorT<PressGradT> &aPressureGrad,
-               const Plato::ScalarMultiVectorT<ProjPressGradT> &aProjectedPressureGrad,
-               const Plato::ScalarMultiVectorT<ResultT> &aStabilization) const;
+     *******************************************************************************/
+    template <typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType &aCellOrdinal,
+                                           const Plato::ScalarVectorT<ConfigT> &aCellVolume,
+                                           const Plato::ScalarMultiVectorT<PressGradT> &aPressureGrad,
+                                           const Plato::ScalarMultiVectorT<ProjPressGradT> &aProjectedPressureGrad,
+                                           const Plato::ScalarMultiVectorT<ResultT> &aStabilization) const;
 };
 // class ComputeStabilization
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Specialization for 3-D applications
  *
@@ -86,28 +87,33 @@ public:
  * \param [in] aProjectedPressureGrad projected pressure gradient
  * \param [in/out] aStabilization     stabilization term
  *
-*******************************************************************************/
-template<>
-template<typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
-KOKKOS_INLINE_FUNCTION void
-ComputeStabilization<3>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                    const Plato::ScalarVectorT<ConfigT> & aCellVolume,
-                                    const Plato::ScalarMultiVectorT<PressGradT> & aPressureGrad,
-                                    const Plato::ScalarMultiVectorT<ProjPressGradT> & aProjectedPressureGrad,
-                                    const Plato::ScalarMultiVectorT<ResultT> & aStabilization) const
+ *******************************************************************************/
+template <>
+template <typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
+KOKKOS_INLINE_FUNCTION void ComputeStabilization<3>::operator()(
+    const Plato::OrdinalType &aCellOrdinal,
+    const Plato::ScalarVectorT<ConfigT> &aCellVolume,
+    const Plato::ScalarMultiVectorT<PressGradT> &aPressureGrad,
+    const Plato::ScalarMultiVectorT<ProjPressGradT> &aProjectedPressureGrad,
+    const Plato::ScalarMultiVectorT<ResultT> &aStabilization) const
 {
-    ConfigT tTau = pow(aCellVolume(aCellOrdinal), mTwoOverThree) / (static_cast<Plato::Scalar>(2.0) * mElasticShearModulus);
-    aStabilization(aCellOrdinal, 0) = mPressureScaling * tTau
-        * ((mPressureScaling * aPressureGrad(aCellOrdinal, 0)) - aProjectedPressureGrad(aCellOrdinal, 0));
+    ConfigT tTau =
+        pow(aCellVolume(aCellOrdinal), mTwoOverThree) / (static_cast<Plato::Scalar>(2.0) * mElasticShearModulus);
+    aStabilization(aCellOrdinal, 0) =
+        mPressureScaling * tTau *
+        ((mPressureScaling * aPressureGrad(aCellOrdinal, 0)) - aProjectedPressureGrad(aCellOrdinal, 0));
 
-    aStabilization(aCellOrdinal, 1) = mPressureScaling * tTau
-        * ((mPressureScaling * aPressureGrad(aCellOrdinal, 1)) - aProjectedPressureGrad(aCellOrdinal, 1));
+    aStabilization(aCellOrdinal, 1) =
+        mPressureScaling * tTau *
+        ((mPressureScaling * aPressureGrad(aCellOrdinal, 1)) - aProjectedPressureGrad(aCellOrdinal, 1));
 
-    aStabilization(aCellOrdinal, 2) = mPressureScaling * tTau
-        * ((mPressureScaling * aPressureGrad(aCellOrdinal, 2)) - aProjectedPressureGrad(aCellOrdinal, 2));
+    aStabilization(aCellOrdinal, 2) =
+        mPressureScaling * tTau *
+        ((mPressureScaling * aPressureGrad(aCellOrdinal, 2)) - aProjectedPressureGrad(aCellOrdinal, 2));
 }
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Specialization for 2-D applications
  *
@@ -122,25 +128,29 @@ ComputeStabilization<3>::operator()(const Plato::OrdinalType & aCellOrdinal,
  * \param [in] aProjectedPressureGrad projected pressure gradient
  * \param [in/out] aStabilization     stabilization term
  *
-*******************************************************************************/
-template<>
-template<typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
-KOKKOS_INLINE_FUNCTION void
-ComputeStabilization<2>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                    const Plato::ScalarVectorT<ConfigT> & aCellVolume,
-                                    const Plato::ScalarMultiVectorT<PressGradT> & aPressureGrad,
-                                    const Plato::ScalarMultiVectorT<ProjPressGradT> & aProjectedPressureGrad,
-                                    const Plato::ScalarMultiVectorT<ResultT> & aStabilization) const
+ *******************************************************************************/
+template <>
+template <typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
+KOKKOS_INLINE_FUNCTION void ComputeStabilization<2>::operator()(
+    const Plato::OrdinalType &aCellOrdinal,
+    const Plato::ScalarVectorT<ConfigT> &aCellVolume,
+    const Plato::ScalarMultiVectorT<PressGradT> &aPressureGrad,
+    const Plato::ScalarMultiVectorT<ProjPressGradT> &aProjectedPressureGrad,
+    const Plato::ScalarMultiVectorT<ResultT> &aStabilization) const
 {
-    ConfigT tTau = pow(aCellVolume(aCellOrdinal), mTwoOverThree) / (static_cast<Plato::Scalar>(2.0) * mElasticShearModulus);
-    aStabilization(aCellOrdinal, 0) = mPressureScaling * tTau
-        * (mPressureScaling * aPressureGrad(aCellOrdinal, 0) - aProjectedPressureGrad(aCellOrdinal, 0));
+    ConfigT tTau =
+        pow(aCellVolume(aCellOrdinal), mTwoOverThree) / (static_cast<Plato::Scalar>(2.0) * mElasticShearModulus);
+    aStabilization(aCellOrdinal, 0) =
+        mPressureScaling * tTau *
+        (mPressureScaling * aPressureGrad(aCellOrdinal, 0) - aProjectedPressureGrad(aCellOrdinal, 0));
 
-    aStabilization(aCellOrdinal, 1) = mPressureScaling * tTau
-        * (mPressureScaling * aPressureGrad(aCellOrdinal, 1) - aProjectedPressureGrad(aCellOrdinal, 1));
+    aStabilization(aCellOrdinal, 1) =
+        mPressureScaling * tTau *
+        (mPressureScaling * aPressureGrad(aCellOrdinal, 1) - aProjectedPressureGrad(aCellOrdinal, 1));
 }
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Specialization for 1-D applications
  *
@@ -155,20 +165,22 @@ ComputeStabilization<2>::operator()(const Plato::OrdinalType & aCellOrdinal,
  * \param [in] aProjectedPressureGrad projected pressure gradient
  * \param [in/out] aStabilization     stabilization term
  *
-*******************************************************************************/
-template<>
-template<typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
-KOKKOS_INLINE_FUNCTION void
-ComputeStabilization<1>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                    const Plato::ScalarVectorT<ConfigT> & aCellVolume,
-                                    const Plato::ScalarMultiVectorT<PressGradT> & aPressureGrad,
-                                    const Plato::ScalarMultiVectorT<ProjPressGradT> & aProjectedPressureGrad,
-                                    const Plato::ScalarMultiVectorT<ResultT> & aStabilization) const
+ *******************************************************************************/
+template <>
+template <typename ConfigT, typename PressGradT, typename ProjPressGradT, typename ResultT>
+KOKKOS_INLINE_FUNCTION void ComputeStabilization<1>::operator()(
+    const Plato::OrdinalType &aCellOrdinal,
+    const Plato::ScalarVectorT<ConfigT> &aCellVolume,
+    const Plato::ScalarMultiVectorT<PressGradT> &aPressureGrad,
+    const Plato::ScalarMultiVectorT<ProjPressGradT> &aProjectedPressureGrad,
+    const Plato::ScalarMultiVectorT<ResultT> &aStabilization) const
 {
-    ConfigT tTau = pow(aCellVolume(aCellOrdinal), mTwoOverThree) / (static_cast<Plato::Scalar>(2.0) * mElasticShearModulus);
-    aStabilization(aCellOrdinal, 0) = mPressureScaling * tTau
-        * (mPressureScaling * aPressureGrad(aCellOrdinal, 0) - aProjectedPressureGrad(aCellOrdinal, 0));
+    ConfigT tTau =
+        pow(aCellVolume(aCellOrdinal), mTwoOverThree) / (static_cast<Plato::Scalar>(2.0) * mElasticShearModulus);
+    aStabilization(aCellOrdinal, 0) =
+        mPressureScaling * tTau *
+        (mPressureScaling * aPressureGrad(aCellOrdinal, 0) - aProjectedPressureGrad(aCellOrdinal, 0));
 }
 
-}
+}  // namespace Plato
 // namespace Plato

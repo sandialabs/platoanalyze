@@ -22,31 +22,28 @@ namespace Plato
 
  */
 /******************************************************************************/
-template<class ProjectionFunction>
+template <class ProjectionFunction>
 class ApplyProjection
 {
-public:
-
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
-    *******************************************************************************/
-    ApplyProjection() :
-            mProjectionFunction()
-    {
-    }
-    
-    /***************************************************************************//**
+     *******************************************************************************/
+    ApplyProjection() : mProjectionFunction() {}
+
+    /***************************************************************************/
+    /**
      * \brief Constructor
      *
      * \param [in] aProjectionFunction type of projection function
-    *******************************************************************************/
-    explicit ApplyProjection(const ProjectionFunction & aProjectionFunction) :
-            mProjectionFunction(aProjectionFunction)
+     *******************************************************************************/
+    explicit ApplyProjection(const ProjectionFunction& aProjectionFunction) : mProjectionFunction(aProjectionFunction)
     {
     }
 
-
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Apply projection operator to element density.
      *
      * \tparam WeightScalarType forward automatic differentiation type
@@ -54,15 +51,14 @@ public:
      * \param [in] aCellOrdinal element index
      * \param [in] aControl     side sets database
      * \return element density
-    *******************************************************************************/
-    template<typename WeightScalarType>
-    KOKKOS_INLINE_FUNCTION WeightScalarType
-    operator()(const Plato::OrdinalType & aCellOrdinal,
-               const Plato::ScalarMultiVectorT<WeightScalarType> & aControl) const
+     *******************************************************************************/
+    template <typename WeightScalarType>
+    KOKKOS_INLINE_FUNCTION WeightScalarType operator()(
+        const Plato::OrdinalType& aCellOrdinal, const Plato::ScalarMultiVectorT<WeightScalarType>& aControl) const
     {
         WeightScalarType tCellDensity = 0.0;
         const Plato::OrdinalType tRangePolicy = aControl.extent(1);
-        for(Plato::OrdinalType tIndex = 0; tIndex < tRangePolicy; tIndex++)
+        for (Plato::OrdinalType tIndex = 0; tIndex < tRangePolicy; tIndex++)
         {
             tCellDensity += aControl(aCellOrdinal, tIndex);
         }
@@ -72,12 +68,12 @@ public:
         return (tCellDensity);
     }
 
-private:
+   private:
     ProjectionFunction mProjectionFunction; /*!< projection function */
 };
 // class ApplyProjection
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #endif /* APPLYPROJECTION_HPP_ */

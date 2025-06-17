@@ -1,63 +1,61 @@
 #ifndef PLATOTESTHELPERS_HPP_
 #define PLATOTESTHELPERS_HPP_
 
-#include "PlatoMesh.hpp"
-#include "PlatoStaticsTypes.hpp"
-
 #include <BamG.hpp>
-
 #include <Teuchos_RCP.hpp>
-#include "Teuchos_ParameterList.hpp"
-
 #include <string>
 #include <vector>
 
-namespace Plato {
-namespace TestHelpers {
-/******************************************************************************//**
+#include "PlatoMesh.hpp"
+#include "PlatoStaticsTypes.hpp"
+#include "Teuchos_ParameterList.hpp"
+
+namespace Plato
+{
+namespace TestHelpers
+{
+/******************************************************************************/
+/**
  * \brief get view from device
  *
  * \param[in] aView data on device
  * @returns Mirror on host
-**********************************************************************************/
-template <typename ViewType> 
-typename ViewType::HostMirror get(ViewType aView) {
-  using RetType = typename ViewType::HostMirror;
-  RetType tView = Kokkos::create_mirror(aView);
-  Kokkos::deep_copy(tView, aView);
-  return tView;
+ **********************************************************************************/
+template <typename ViewType>
+typename ViewType::HostMirror get(ViewType aView)
+{
+    using RetType = typename ViewType::HostMirror;
+    RetType tView = Kokkos::create_mirror(aView);
+    Kokkos::deep_copy(tView, aView);
+    return tView;
 }
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief create device view from std::vector
  *
- * \param[in] aVector 
+ * \param[in] aVector
  * @returns Mirror on device
-**********************************************************************************/
+ **********************************************************************************/
 template <typename ScalarT>
-Plato::ScalarVectorT<ScalarT> 
-create_device_view(std::vector<ScalarT> & aVector)
+Plato::ScalarVectorT<ScalarT> create_device_view(std::vector<ScalarT>& aVector)
 {
-    Kokkos::View<ScalarT*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tHostView(aVector.data(),aVector.size());
-    return Kokkos::create_mirror_view_and_copy( Kokkos::DefaultExecutionSpace(), tHostView);
+    Kokkos::View<ScalarT*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tHostView(aVector.data(), aVector.size());
+    return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
 
 /******************************************************************************/
 /*! Return a 2D view with specified control values.
-*/
-void
-setControlWS
-(std::vector<std::vector<Plato::Scalar>>& aValues,
- Plato::ScalarMultiVectorT<Plato::Scalar>& aControl);
+ */
+void setControlWS(std::vector<std::vector<Plato::Scalar>>& aValues, Plato::ScalarMultiVectorT<Plato::Scalar>& aControl);
 
 /******************************************************************************/
 /*! Return a box (cube) along with the spec used to generate it.
 /*! @sa get_box_mesh
 */
-auto get_box_mesh_with_spec(
-    const std::string& aMeshType, 
-    Plato::OrdinalType aMeshIntervals,
-    const std::string& aFileName = "BamG_unit_test_mesh.exo") 
+auto get_box_mesh_with_spec(const std::string& aMeshType,
+                            Plato::OrdinalType aMeshIntervals,
+                            const std::string& aFileName = "BamG_unit_test_mesh.exo")
     -> std::tuple<Plato::Mesh, BamG::MeshSpec>;
 
 /******************************************************************************/
@@ -69,11 +67,9 @@ auto get_box_mesh_with_spec(
  * named 'x+' for the positive x face, 'x+y-' for the positive x negative y edge,
  * and 'x-y+z-' for the negative x positive y negative z vertex, etc.
  */
-Plato::Mesh
- get_box_mesh(
-    std::string        aMeshType,
-    Plato::OrdinalType aMeshIntervals,
-    std::string        aFileName = "BamG_unit_test_mesh.exo");
+Plato::Mesh get_box_mesh(std::string aMeshType,
+                         Plato::OrdinalType aMeshIntervals,
+                         std::string aFileName = "BamG_unit_test_mesh.exo");
 
 /******************************************************************************/
 /*! Return a box (cube) mesh.
@@ -85,17 +81,16 @@ Plato::Mesh
  * named 'x+' for the positive x face, 'x+y-' for the positive x negative y edge,
  * and 'x-y+z-' for the negative x positive y negative z vertex, etc.
  */
-Plato::Mesh
- get_box_mesh(
-    std::string        aMeshType,
-    Plato::Scalar      aMeshWidthX,
-    Plato::OrdinalType aMeshIntervalsX,
-    Plato::Scalar      aMeshWidthY=1.0,
-    Plato::OrdinalType aMeshIntervalsY=1,
-    Plato::Scalar      aMeshWidthZ=1.0,
-    Plato::OrdinalType aMeshIntervalsZ=1);
+Plato::Mesh get_box_mesh(std::string aMeshType,
+                         Plato::Scalar aMeshWidthX,
+                         Plato::OrdinalType aMeshIntervalsX,
+                         Plato::Scalar aMeshWidthY = 1.0,
+                         Plato::OrdinalType aMeshIntervalsY = 1,
+                         Plato::Scalar aMeshWidthZ = 1.0,
+                         Plato::OrdinalType aMeshIntervalsZ = 1);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Set Dirichlet boundary condition values for specified degree of freedom.
  *   Specialized for 2-D applications
  *
@@ -108,13 +103,14 @@ Plato::Mesh
  *
  **********************************************************************************/
 void set_dof_value_in_vector_on_boundary_2D(Plato::Mesh aMesh,
-                                            const std::string & aBoundaryID,
-                                            const Plato::ScalarVector & aDofValues,
-                                            const Plato::OrdinalType & aDofStride,
-                                            const Plato::OrdinalType & aDofToSet,
-                                            const Plato::Scalar & aSetValue);
+                                            const std::string& aBoundaryID,
+                                            const Plato::ScalarVector& aDofValues,
+                                            const Plato::OrdinalType& aDofStride,
+                                            const Plato::OrdinalType& aDofToSet,
+                                            const Plato::Scalar& aSetValue);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Set Dirichlet boundary condition values for specified degree of freedom.
  *   Specialized for 3-D applications.
  *
@@ -127,13 +123,14 @@ void set_dof_value_in_vector_on_boundary_2D(Plato::Mesh aMesh,
  *
  **********************************************************************************/
 void set_dof_value_in_vector_on_boundary_3D(Plato::Mesh aMesh,
-                                            const std::string & aBoundaryID,
-                                            const Plato::ScalarVector & aDofValues,
-                                            const Plato::OrdinalType & aDofStride,
-                                            const Plato::OrdinalType & aDofToSet,
-                                            const Plato::Scalar & aSetValue);
+                                            const std::string& aBoundaryID,
+                                            const Plato::ScalarVector& aDofValues,
+                                            const Plato::OrdinalType& aDofStride,
+                                            const Plato::OrdinalType& aDofToSet,
+                                            const Plato::Scalar& aSetValue);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Return list of Dirichlet degree of freedom indices, specialized for 2-D applications.
  *
  * \param [in] aMesh       finite element mesh
@@ -144,14 +141,13 @@ void set_dof_value_in_vector_on_boundary_3D(Plato::Mesh aMesh,
  * \return list of Dirichlet indices
  *
  **********************************************************************************/
-Plato::OrdinalVector
-get_dirichlet_indices_on_boundary_2D(
-          Plato::Mesh          aMesh,
-    const std::string        & aBoundaryID,
-    const Plato::OrdinalType & aDofStride,
-    const Plato::OrdinalType & aDofToSet);
+Plato::OrdinalVector get_dirichlet_indices_on_boundary_2D(Plato::Mesh aMesh,
+                                                          const std::string& aBoundaryID,
+                                                          const Plato::OrdinalType& aDofStride,
+                                                          const Plato::OrdinalType& aDofToSet);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Return list of Dirichlet degree of freedom indices, specialized for 3-D applications.
  *
  * \param [in]     aMesh       finite element mesh
@@ -162,14 +158,13 @@ get_dirichlet_indices_on_boundary_2D(
  * \return list of Dirichlet indices
  *
  **********************************************************************************/
-Plato::OrdinalVector
-get_dirichlet_indices_on_boundary_3D(
-          Plato::Mesh          aMesh,
-    const std::string        & aBoundaryID,
-    const Plato::OrdinalType & aDofStride,
-    const Plato::OrdinalType & aDofToSet);
+Plato::OrdinalVector get_dirichlet_indices_on_boundary_3D(Plato::Mesh aMesh,
+                                                          const std::string& aBoundaryID,
+                                                          const Plato::OrdinalType& aDofStride,
+                                                          const Plato::OrdinalType& aDofToSet);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief set value for this Dirichlet boundary condition index
  *
  * \param [in] aDofValues vector of Dirichlet boundary condition values
@@ -178,21 +173,21 @@ get_dirichlet_indices_on_boundary_3D(
  * \param [in] aSetValue  value to set
  *
  **********************************************************************************/
-void set_dof_value_in_vector(const Plato::ScalarVector & aDofValues,
-                             const Plato::OrdinalType & aDofStride,
-                             const Plato::OrdinalType & aDofToSet,
-                             const Plato::Scalar & aSetValue);
+void set_dof_value_in_vector(const Plato::ScalarVector& aDofValues,
+                             const Plato::OrdinalType& aDofStride,
+                             const Plato::OrdinalType& aDofToSet,
+                             const Plato::Scalar& aSetValue);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Expands compressed row sparse matrix to a full (non-sparse) representation
  **********************************************************************************/
-std::vector<std::vector<Plato::Scalar>>
-to_full( Teuchos::RCP<Plato::CrsMatrixType> aInMatrix );
+std::vector<std::vector<Plato::Scalar>> to_full(Teuchos::RCP<Plato::CrsMatrixType> aInMatrix);
 
 const Teuchos::RCP<Teuchos::ParameterList> getParameterListForHelmholtzTest();
 const Teuchos::RCP<Teuchos::ParameterList> getSolverParametersForHelmholtzTest();
 
-} // namespace TestHelpers
-} // namespace Plato
+}  // namespace TestHelpers
+}  // namespace Plato
 
 #endif /* PLATOTESTHELPERS_HPP_ */

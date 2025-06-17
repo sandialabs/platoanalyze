@@ -5,6 +5,7 @@
 #endif
 
 #include <stdio.h>
+
 #include <Teuchos_ParameterList.hpp>
 
 #include "PlatoStaticsTypes.hpp"
@@ -12,9 +13,10 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Heaviside penalty model model class
-**********************************************************************************/
+ **********************************************************************************/
 class Heaviside
 {
     Plato::Scalar mPenaltyParam;              /*!< penalty parameter */
@@ -23,27 +25,29 @@ class Heaviside
     Plato::Scalar mUpperBoundOnPenaltyParam;  /*!< continuation parameter: upper bound on penalty parameter */
     Plato::Scalar mAdditiveContinuationValue; /*!< additive continuation parameter */
 
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Default Heaviside model constructor
      * \param [in] aPenalty   penalty parameter (default = 1.0)
      * \param [in] aRegLength regularization length (default = 1.0)
      * \param [in] aMinValue  minimum Ersatz material constant (default = 0.0)
-    **********************************************************************************/
-    Heaviside(Plato::Scalar aPenalty = 1.0, Plato::Scalar aRegLength = 1.0, Plato::Scalar aMinValue = 0.0) :
-            mPenaltyParam(aPenalty),
-            mRegLength(aRegLength),
-            mMinValue(aMinValue),
-            mUpperBoundOnPenaltyParam(3.0),
-            mAdditiveContinuationValue(0.1)
+     **********************************************************************************/
+    Heaviside(Plato::Scalar aPenalty = 1.0, Plato::Scalar aRegLength = 1.0, Plato::Scalar aMinValue = 0.0)
+        : mPenaltyParam(aPenalty),
+          mRegLength(aRegLength),
+          mMinValue(aMinValue),
+          mUpperBoundOnPenaltyParam(3.0),
+          mAdditiveContinuationValue(0.1)
     {
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Heaviside model constructor
      * \param [in] aParamList parameter list
-    **********************************************************************************/
-    Heaviside(Teuchos::ParameterList & aParamList)
+     **********************************************************************************/
+    Heaviside(Teuchos::ParameterList& aParamList)
     {
         mPenaltyParam = aParamList.get<Plato::Scalar>("Exponent", 1.0);
         mRegLength = aParamList.get<Plato::Scalar>("Regularization Length", 1.0);
@@ -52,9 +56,10 @@ public:
         mUpperBoundOnPenaltyParam = aParamList.get<Plato::Scalar>("Penalty Exponent Upper Bound", 1.0);
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Update penalty model parameters within a frequency of optimization iterations
-    **********************************************************************************/
+     **********************************************************************************/
     void update()
     {
         // update SIMP penalty parameter
@@ -63,67 +68,69 @@ public:
         mPenaltyParam = tSuggestedPenalty >= mUpperBoundOnPenaltyParam ? mUpperBoundOnPenaltyParam : tSuggestedPenalty;
         std::ostringstream tMsg;
         tMsg << "Heaviside Penalization Model: New penalty parameter is set to '" << mPenaltyParam
-                << "'. Previous penalty parameter was '" << tPreviousPenalty << "'.\n";
+             << "'. Previous penalty parameter was '" << tPreviousPenalty << "'.\n";
         REPORT(tMsg.str().c_str())
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Set Heaviside model parameters
      * \param [in] aInput parameter list
-    **********************************************************************************/
+     **********************************************************************************/
     void setParameters(const std::map<std::string, Plato::Scalar>& aInputs)
     {
         auto tParamMapIterator = aInputs.find("Exponent");
-        if(tParamMapIterator == aInputs.end())
+        if (tParamMapIterator == aInputs.end())
         {
-            mPenaltyParam = 1.0; // default value
+            mPenaltyParam = 1.0;  // default value
         }
         mPenaltyParam = tParamMapIterator->second;
 
         tParamMapIterator = aInputs.find("Minimum Value");
-        if(tParamMapIterator == aInputs.end())
+        if (tParamMapIterator == aInputs.end())
         {
-            mMinValue = 1e-9; // default value
+            mMinValue = 1e-9;  // default value
         }
         mMinValue = tParamMapIterator->second;
 
         tParamMapIterator = aInputs.find("Regularization Length");
-        if(tParamMapIterator == aInputs.end())
+        if (tParamMapIterator == aInputs.end())
         {
-            mMinValue = 1.0; // default value
+            mMinValue = 1.0;  // default value
         }
         mMinValue = tParamMapIterator->second;
 
         tParamMapIterator = aInputs.find("Additive Continuation");
-        if(tParamMapIterator == aInputs.end())
+        if (tParamMapIterator == aInputs.end())
         {
-            mAdditiveContinuationValue = 0.1; // default value
+            mAdditiveContinuationValue = 0.1;  // default value
         }
         mAdditiveContinuationValue = tParamMapIterator->second;
     }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate Heaviside model
      * \param [in] aInput material density
-    **********************************************************************************/
-    template<typename ScalarType>
-    KOKKOS_INLINE_FUNCTION ScalarType operator()( ScalarType aInput ) const
+     **********************************************************************************/
+    template <typename ScalarType>
+    KOKKOS_INLINE_FUNCTION ScalarType operator()(ScalarType aInput) const
     {
         if (aInput <= -mRegLength)
         {
             return mMinValue;
         }
-        else
-        if (aInput >=  mRegLength)
+        else if (aInput >= mRegLength)
         {
             return 1.0;
         }
         else
         {
-            return mMinValue + (1.0 - mMinValue) * pow(1.0/2.0*(1.0 + sin(T_PI*aInput/(2.0*mRegLength))),mPenaltyParam);
+            return mMinValue +
+                   (1.0 - mMinValue) * pow(1.0 / 2.0 * (1.0 + sin(T_PI * aInput / (2.0 * mRegLength))), mPenaltyParam);
         }
     }
 };
 // class Heaviside
 
-} // namespace Plato
+}  // namespace Plato

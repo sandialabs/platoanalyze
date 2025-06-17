@@ -14,7 +14,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \fn device_type void integrate_divergence_operator
  *
  * \tparam NumNodes number of nodes on cell/element (integer)
@@ -41,33 +42,32 @@ namespace Fluids
  * \param [in/out] aResult     result/output workset
  *
  ******************************************************************************/
-template<Plato::OrdinalType NumNodes,
-         Plato::OrdinalType SpaceDim,
-         typename ConfigT,
-         typename PrevVelT,
-         typename ResultT>
-KOKKOS_INLINE_FUNCTION void
-integrate_divergence_operator
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVector & aBasisFunctions,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarMultiVectorT<PrevVelT> & aPrevVel,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ConfigT,
+          typename PrevVelT,
+          typename ResultT>
+KOKKOS_INLINE_FUNCTION void integrate_divergence_operator(const Plato::OrdinalType& aCellOrdinal,
+                                                          const Plato::ScalarVector& aBasisFunctions,
+                                                          const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                          const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                          const Plato::ScalarMultiVectorT<PrevVelT>& aPrevVel,
+                                                          const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                          Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
-            aResult(aCellOrdinal, tNode) += aMultiplier * aCellVolume(aCellOrdinal) *
-                aBasisFunctions(tNode) * aGradient(aCellOrdinal, tNode, tDim) * aPrevVel(aCellOrdinal, tDim);
+            aResult(aCellOrdinal, tNode) += aMultiplier * aCellVolume(aCellOrdinal) * aBasisFunctions(tNode) *
+                                            aGradient(aCellOrdinal, tNode, tDim) * aPrevVel(aCellOrdinal, tDim);
         }
     }
 }
 // function integrate_divergence_operator
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \fn device_type void integrate_laplacian_operator
  *
  * \tparam NumNodes number of nodes on cell/element (integer)
@@ -94,32 +94,27 @@ integrate_divergence_operator
  * \param [in/out] aResult     result/output workset
  *
  ******************************************************************************/
-template<Plato::OrdinalType NumNodes,
-         Plato::OrdinalType SpaceDim,
-         typename ConfigT,
-         typename FieldT,
-         typename ResultT>
-KOKKOS_INLINE_FUNCTION void
-integrate_laplacian_operator
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarVectorT<ConfigT> & aCellVolume,
- const Plato::ScalarMultiVectorT<FieldT> & aField,
- const Plato::ScalarMultiVectorT<ResultT> & aResult,
- Plato::Scalar aMultiplier = 1.0)
+template <Plato::OrdinalType NumNodes, Plato::OrdinalType SpaceDim, typename ConfigT, typename FieldT, typename ResultT>
+KOKKOS_INLINE_FUNCTION void integrate_laplacian_operator(const Plato::OrdinalType& aCellOrdinal,
+                                                         const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                         const Plato::ScalarVectorT<ConfigT>& aCellVolume,
+                                                         const Plato::ScalarMultiVectorT<FieldT>& aField,
+                                                         const Plato::ScalarMultiVectorT<ResultT>& aResult,
+                                                         Plato::Scalar aMultiplier = 1.0)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
             aResult(aCellOrdinal, tNode) += aMultiplier * aCellVolume(aCellOrdinal) *
-                aGradient(aCellOrdinal, tNode, tDim) * aField(aCellOrdinal, tDim);
+                                            aGradient(aCellOrdinal, tNode, tDim) * aField(aCellOrdinal, tDim);
         }
     }
 }
 // function integrate_laplacian_operator
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes   number of nodes on the cell
  * \tparam SpaceDim   spatial dimensions
  * \tparam ConfigT    configuration Forward Automaitc Differentiation (FAD) type
@@ -148,34 +143,34 @@ integrate_laplacian_operator
  * \param [in\out] aPressGrad pressure gradient workset
  *
  ******************************************************************************/
-template<Plato::OrdinalType NumNodes,
-         Plato::OrdinalType SpaceDim,
-         typename ConfigT,
-         typename CurPressT,
-         typename PrevPressT,
-         typename PressGradT>
-KOKKOS_INLINE_FUNCTION void
-calculate_pressure_gradient
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::Scalar & aTheta,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<CurPressT> & aCurPress,
- const Plato::ScalarMultiVectorT<PrevPressT> & aPrevPress,
- const Plato::ScalarMultiVectorT<PressGradT> & aPressGrad)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ConfigT,
+          typename CurPressT,
+          typename PrevPressT,
+          typename PressGradT>
+KOKKOS_INLINE_FUNCTION void calculate_pressure_gradient(const Plato::OrdinalType& aCellOrdinal,
+                                                        const Plato::Scalar& aTheta,
+                                                        const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                        const Plato::ScalarMultiVectorT<CurPressT>& aCurPress,
+                                                        const Plato::ScalarMultiVectorT<PrevPressT>& aPrevPress,
+                                                        const Plato::ScalarMultiVectorT<PressGradT>& aPressGrad)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
-            aPressGrad(aCellOrdinal, tDim) += ( (static_cast<Plato::Scalar>(1.0) - aTheta)
-                * aGradient(aCellOrdinal, tNode, tDim) * aPrevPress(aCellOrdinal, tNode) )
-                + ( aTheta * aGradient(aCellOrdinal, tNode, tDim) * aCurPress(aCellOrdinal, tNode) );
+            aPressGrad(aCellOrdinal, tDim) +=
+                ((static_cast<Plato::Scalar>(1.0) - aTheta) * aGradient(aCellOrdinal, tNode, tDim) *
+                 aPrevPress(aCellOrdinal, tNode)) +
+                (aTheta * aGradient(aCellOrdinal, tNode, tDim) * aCurPress(aCellOrdinal, tNode));
         }
     }
 }
 // function calculate_pressure_gradient
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \tparam NumNodes   number of nodes on the cell
  * \tparam SpaceDim   spatial dimensions
  * \tparam ConfigT    configuration Forward Automaitc Differentiation (FAD) type
@@ -196,21 +191,19 @@ calculate_pressure_gradient
  * \param [in\out] aResult  output/result workset
  *
  ******************************************************************************/
-template<Plato::OrdinalType NumNodes,
-         Plato::OrdinalType SpaceDim,
-         typename ConfigT,
-         typename FieldT,
-         typename FieldGradT>
-KOKKOS_INLINE_FUNCTION void
-calculate_scalar_field_gradient
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarArray3DT<ConfigT> & aGradient,
- const Plato::ScalarMultiVectorT<FieldT> & aScalarField,
- const Plato::ScalarMultiVectorT<FieldGradT> & aResult)
+template <Plato::OrdinalType NumNodes,
+          Plato::OrdinalType SpaceDim,
+          typename ConfigT,
+          typename FieldT,
+          typename FieldGradT>
+KOKKOS_INLINE_FUNCTION void calculate_scalar_field_gradient(const Plato::OrdinalType& aCellOrdinal,
+                                                            const Plato::ScalarArray3DT<ConfigT>& aGradient,
+                                                            const Plato::ScalarMultiVectorT<FieldT>& aScalarField,
+                                                            const Plato::ScalarMultiVectorT<FieldGradT>& aResult)
 {
-    for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+    for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
     {
-        for(Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
+        for (Plato::OrdinalType tDim = 0; tDim < SpaceDim; tDim++)
         {
             aResult(aCellOrdinal, tDim) += aGradient(aCellOrdinal, tNode, tDim) * aScalarField(aCellOrdinal, tNode);
         }
@@ -218,8 +211,8 @@ calculate_scalar_field_gradient
 }
 // function calculate_scalar_field_gradient
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato

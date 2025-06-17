@@ -8,13 +8,14 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "SpatialModel.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "SpatialModel.hpp"
 
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn inline void is_positive_finite_number
  *
  * \brief Check if scalar number is positive, if negative, throw error.
@@ -23,21 +24,18 @@ namespace Plato
  * \param [in] aTag   scalar tag
  *
  * \return parameter of type=Type
-**********************************************************************************/
-inline void
-is_positive_finite_number
-(const Plato::Scalar aInput,
- std::string aTag = "scalar")
+ **********************************************************************************/
+inline void is_positive_finite_number(const Plato::Scalar aInput, std::string aTag = "scalar")
 {
-    if(!std::isfinite(aInput))
+    if (!std::isfinite(aInput))
     {
         ANALYZE_THROWERR(std::string("Paramater '") + aTag + "' is set to a non-finite number")
     }
 
-    if(aInput <= static_cast<Plato::Scalar>(0.0))
+    if (aInput <= static_cast<Plato::Scalar>(0.0))
     {
-        ANALYZE_THROWERR(std::string("Expected a positive non-zero number and instead user-defined parameter '")
-             + aTag + "' was set to '" + std::to_string(aInput) + "'.")
+        ANALYZE_THROWERR(std::string("Expected a positive non-zero number and instead user-defined parameter '") +
+                         aTag + "' was set to '" + std::to_string(aInput) + "'.")
     }
 }
 // function is_positive_finite_number
@@ -45,26 +43,27 @@ is_positive_finite_number
 namespace teuchos
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn void is_material_defined
  *
  * \brief Check if material is defined, if not, throw an error.
  *
  * \param [in] aMaterialName material sublist name
  * \param [in] aInputs       parameter list with input data information
-**********************************************************************************/
-inline void is_material_defined
-(const std::string & aMaterialName,
- const Teuchos::ParameterList & aInputs)
+ **********************************************************************************/
+inline void is_material_defined(const std::string& aMaterialName, const Teuchos::ParameterList& aInputs)
 {
-    if(!aInputs.sublist("Material Models").isSublist(aMaterialName))
+    if (!aInputs.sublist("Material Models").isSublist(aMaterialName))
     {
-        ANALYZE_THROWERR(std::string("Material with tag '") + aMaterialName + "' is not defined in 'Material Models' block")
+        ANALYZE_THROWERR(std::string("Material with tag '") + aMaterialName +
+                         "' is not defined in 'Material Models' block")
     }
 }
 // function is_material_defined
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \tparam Type array type
  *
  * \fn inline std::vector<Type> parse_array
@@ -75,23 +74,20 @@ inline void is_material_defined
  * \param [in] aInputs input file metadata
  *
  * \return array of type=Type
-**********************************************************************************/
+ **********************************************************************************/
 template <typename Type>
-inline std::vector<Type>
-parse_array
-(const std::string & aTag,
- const Teuchos::ParameterList & aInputs)
+inline std::vector<Type> parse_array(const std::string& aTag, const Teuchos::ParameterList& aInputs)
 {
-    if(!aInputs.isParameter(aTag))
+    if (!aInputs.isParameter(aTag))
     {
         std::vector<Type> tOutput;
         return tOutput;
     }
-    auto tSideSets = aInputs.get< Teuchos::Array<Type> >(aTag);
+    auto tSideSets = aInputs.get<Teuchos::Array<Type> >(aTag);
 
     auto tLength = tSideSets.size();
     std::vector<Type> tOutput(tLength);
-    for(auto & tName : tOutput)
+    for (auto& tName : tOutput)
     {
         auto tIndex = &tName - &tOutput[0];
         tOutput[tIndex] = tSideSets[tIndex];
@@ -100,7 +96,8 @@ parse_array
 }
 // function parse_array
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \tparam Type parameter type
  *
  * \fn inline Type parse_parameter
@@ -112,29 +109,29 @@ parse_array
  * \param [in] aInputs input file metadata
  *
  * \return parameter of type=Type
-**********************************************************************************/
+ **********************************************************************************/
 template <typename Type>
-inline Type parse_parameter
-(const std::string            & aTag,
- const std::string            & aBlock,
- const Teuchos::ParameterList & aInputs)
+inline Type parse_parameter(const std::string& aTag, const std::string& aBlock, const Teuchos::ParameterList& aInputs)
 {
-    if( !aInputs.isSublist(aBlock) )
+    if (!aInputs.isSublist(aBlock))
     {
-        ANALYZE_THROWERR(std::string("Parameter Sublist '") + aBlock + "' within Paramater List '" + aInputs.name() + "' is not defined.")
+        ANALYZE_THROWERR(std::string("Parameter Sublist '") + aBlock + "' within Paramater List '" + aInputs.name() +
+                         "' is not defined.")
     }
     auto tSublist = aInputs.sublist(aBlock);
 
-    if( !tSublist.isParameter(aTag) )
+    if (!tSublist.isParameter(aTag))
     {
-        ANALYZE_THROWERR(std::string("Parameter with tag '") + aTag + "' is not defined in Parameter Sublist '" + aBlock + "'.")
+        ANALYZE_THROWERR(std::string("Parameter with tag '") + aTag + "' is not defined in Parameter Sublist '" +
+                         aBlock + "'.")
     }
     auto tOutput = tSublist.get<Type>(aTag);
     return tOutput;
 }
 // function parse_parameter
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \tparam Type scalar type
  *
  * \fn inline Type parse_max_material_property
@@ -147,20 +144,19 @@ inline Type parse_parameter
  * \param [in] aDomains  spatial domain metadata
  *
  * \return material property scalar value
-**********************************************************************************/
-template<typename Type>
-inline Type parse_max_material_property
-(Teuchos::ParameterList& aInputs,
- const std::string& aProperty,
- const std::vector<Plato::SpatialDomain>& aDomains)
+ **********************************************************************************/
+template <typename Type>
+inline Type parse_max_material_property(Teuchos::ParameterList& aInputs,
+                                        const std::string& aProperty,
+                                        const std::vector<Plato::SpatialDomain>& aDomains)
 {
     std::vector<Type> tProperties;
-    for(auto& tDomain : aDomains)
+    for (auto& tDomain : aDomains)
     {
         auto tMaterialName = tDomain.getMaterialName();
         Plato::teuchos::is_material_defined(tMaterialName, aInputs);
         auto tMaterialParamList = aInputs.sublist("Material Models").sublist(tMaterialName);
-        if( tMaterialParamList.isParameter(aProperty) )
+        if (tMaterialParamList.isParameter(aProperty))
         {
             auto tValue = tMaterialParamList.get<Plato::Scalar>(aProperty);
             Plato::is_positive_finite_number(tValue, aProperty);
@@ -169,7 +165,7 @@ inline Type parse_max_material_property
     }
 
     Plato::Scalar tMaxValue = std::numeric_limits<Plato::Scalar>::infinity();
-    if(!tProperties.empty())
+    if (!tProperties.empty())
     {
         tMaxValue = *std::max_element(tProperties.begin(), tProperties.end());
     }
@@ -177,7 +173,7 @@ inline Type parse_max_material_property
 }
 // function parse_max_material_property
 
-}
+}  // namespace teuchos
 
-}
+}  // namespace Plato
 // namespace Plato

@@ -6,31 +6,33 @@
 
 #pragma once
 
+#include <Teuchos_ParameterList.hpp>
 #include <memory>
 #include <string>
 
-#include <Teuchos_ParameterList.hpp>
-
-#include "LocalScalarFunctionInc.hpp"
 #include "InfinitesimalStrainPlasticity.hpp"
 #include "InfinitesimalStrainThermoPlasticity.hpp"
+#include "LocalScalarFunctionInc.hpp"
 
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Factory for scalar functions interface with local path-dependent states
  **********************************************************************************/
-template<typename PhysicsT>
+template <typename PhysicsT>
 class PathDependentScalarFunctionFactory
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Constructor
      **********************************************************************************/
-    PathDependentScalarFunctionFactory () {}
+    PathDependentScalarFunctionFactory() {}
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Create interface for the evaluation of path-dependent scalar function
      *  operators, e.g. value and sensitivities.
      * \param [in] aMesh         mesh database
@@ -39,16 +41,14 @@ public:
      * \param [in] aFunctionName scalar function name, i.e. type
      * \return shared pointer to the interface of path-dependent scalar functions
      **********************************************************************************/
-    std::shared_ptr<Plato::LocalScalarFunctionInc>
-    create(
-        const Plato::SpatialModel    & aSpatialModel,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aInputParams,
-        const std::string            & aFunctionName);
+    std::shared_ptr<Plato::LocalScalarFunctionInc> create(const Plato::SpatialModel& aSpatialModel,
+                                                          Plato::DataMap& aDataMap,
+                                                          Teuchos::ParameterList& aInputParams,
+                                                          const std::string& aFunctionName);
 };
 // class PathDependentScalarFunctionFactory
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #ifdef PLATOANALYZE_1D

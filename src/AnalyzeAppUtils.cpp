@@ -4,49 +4,43 @@
  *  Created on: Apr 11, 2021
  */
 
+#include "AnalyzeAppUtils.hpp"
+
 #include <fstream>
 
 #include "PlatoUtilities.hpp"
-#include "AnalyzeAppUtils.hpp"
 
 namespace Plato
 {
 
-Plato::ScalarVector
-get_vector_component
-(Plato::ScalarVector aFrom,
- Plato::OrdinalType aDof,
- Plato::OrdinalType aStride)
+Plato::ScalarVector get_vector_component(Plato::ScalarVector aFrom, Plato::OrdinalType aDof, Plato::OrdinalType aStride)
 {
     Plato::OrdinalType tNumLocalVals = aFrom.size() / aStride;
     Plato::ScalarVector tRetVal("vector component", tNumLocalVals);
-    Kokkos::parallel_for("copy component from vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
-    {
-        tRetVal(aNodeOrdinal) = aFrom(aStride*aNodeOrdinal+aDof);
-    });
+    Kokkos::parallel_for(
+        "copy component from vector", Kokkos::RangePolicy<>(0, tNumLocalVals),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aNodeOrdinal) {
+            tRetVal(aNodeOrdinal) = aFrom(aStride * aNodeOrdinal + aDof);
+        });
     return tRetVal;
 }
 // function get_vector_component
 
-void
-set_vector_component
-(Plato::ScalarVector aTo,
- Plato::ScalarVector aFrom,
- Plato::OrdinalType aDof,
- Plato::OrdinalType aStride)
+void set_vector_component(Plato::ScalarVector aTo,
+                          Plato::ScalarVector aFrom,
+                          Plato::OrdinalType aDof,
+                          Plato::OrdinalType aStride)
 {
     Plato::OrdinalType tNumLocalVals = aFrom.size();
-    Kokkos::parallel_for("copy component to vector", Kokkos::RangePolicy<>(0, tNumLocalVals), KOKKOS_LAMBDA(const Plato::OrdinalType & aNodeOrdinal)
-    {
-        aTo(aStride*aNodeOrdinal+aDof) = aFrom(aNodeOrdinal);
-    });
+    Kokkos::parallel_for(
+        "copy component to vector", Kokkos::RangePolicy<>(0, tNumLocalVals),
+        KOKKOS_LAMBDA(const Plato::OrdinalType& aNodeOrdinal) {
+            aTo(aStride * aNodeOrdinal + aDof) = aFrom(aNodeOrdinal);
+        });
 }
 // function set_vector_component
 
-void parse_inline
-(Teuchos::ParameterList& aParams,
- const std::string& aTarget,
- Plato::Scalar aValue)
+void parse_inline(Teuchos::ParameterList& aParams, const std::string& aTarget, Plato::Scalar aValue)
 {
     std::vector<std::string> tokens = split(aTarget, ':');
     Teuchos::ParameterList& innerList = get_inner_list(aParams, tokens);
@@ -54,9 +48,7 @@ void parse_inline
 }
 // function parse_inline
 
-std::vector<std::string> split
-(const std::string& aInputString,
- const char aDelimiter)
+std::vector<std::string> split(const std::string& aInputString, const char aDelimiter)
 {
     // break aInputString apart by 'aDelimiter' below //
     // produces a vector of strings: tTokens   //
@@ -64,7 +56,7 @@ std::vector<std::string> split
     {
         std::istringstream tStream(aInputString);
         std::string tToken;
-        while(std::getline(tStream, tToken, aDelimiter))
+        while (std::getline(tStream, tToken, aDelimiter))
         {
             tTokens.push_back(tToken);
         }
@@ -73,13 +65,10 @@ std::vector<std::string> split
 }
 // function split
 
-Teuchos::ParameterList&
-get_inner_list
-(Teuchos::ParameterList& aParams,
- std::vector<std::string>& aTokens)
+Teuchos::ParameterList& get_inner_list(Teuchos::ParameterList& aParams, std::vector<std::string>& aTokens)
 {
     auto& token = aTokens[0];
-    if(token.front() == '[' && token.back() == ']')
+    if (token.front() == '[' && token.back() == ']')
     {
         // listName = token with '[' and ']' removed.
         std::string listName = token.substr(1, token.size() - 2);
@@ -93,16 +82,13 @@ get_inner_list
 }
 // function get_inner_list
 
-void set_parameter_value
-(Teuchos::ParameterList& aParams,
- std::vector<std::string> aTokens,
- Plato::Scalar aValue)
+void set_parameter_value(Teuchos::ParameterList& aParams, std::vector<std::string> aTokens, Plato::Scalar aValue)
 {
     // if '(int)' then
     auto& token = aTokens[0];
     auto p1 = token.find("(");
     auto p2 = token.find(")");
-    if(p1 != std::string::npos && p2 != std::string::npos)
+    if (p1 != std::string::npos && p2 != std::string::npos)
     {
         std::string vecName = token.substr(0, p1);
         auto vec = aParams.get<Teuchos::Array<Plato::Scalar>>(vecName);
@@ -120,43 +106,43 @@ void set_parameter_value
 }
 // function set_parameter_value
 
-std::string 
-find_solution_tag
-(const std::string & aName,
- const Plato::Solutions & aSolution)
+std::string find_solution_tag(const std::string& aName, const Plato::Solutions& aSolution)
 {
-    std::unordered_map<std::string, std::string> tSupportedTags = 
-        { {"solution", "state" }, {"solution x", "state"}, {"solution y", "state"}, {"solution z", "state"} };
+    std::unordered_map<std::string, std::string> tSupportedTags = {
+        {"solution", "state"}, {"solution x", "state"}, {"solution y", "state"}, {"solution z", "state"}};
     auto tLowerName = Plato::tolower(aName);
     auto tItr = tSupportedTags.find(tLowerName);
-    if( tItr == tSupportedTags.end() )
-    { ANALYZE_THROWERR(std::string("Solution tag '") + tItr->first + "' is not a supported output key.") }
+    if (tItr == tSupportedTags.end())
+    {
+        ANALYZE_THROWERR(std::string("Solution tag '") + tItr->first + "' is not a supported output key.")
+    }
     return tItr->second;
 }
 // function find_solution_tag
 
-Plato::ScalarVector
-extract_solution
-(const std::string        & aName,
- const Plato::Solutions   & aSolution,
- const Plato::OrdinalType & aDof,
- const Plato::OrdinalType & aStride)
- {
-    if(aSolution.empty()) 
-    { ANALYZE_THROWERR("Plato::Solutions database is empty.") }
+Plato::ScalarVector extract_solution(const std::string& aName,
+                                     const Plato::Solutions& aSolution,
+                                     const Plato::OrdinalType& aDof,
+                                     const Plato::OrdinalType& aStride)
+{
+    if (aSolution.empty())
+    {
+        ANALYZE_THROWERR("Plato::Solutions database is empty.")
+    }
     auto tTag = Plato::find_solution_tag(aName, aSolution);
     auto tState = aSolution.get(tTag);
-    const Plato::OrdinalType tTIME_STEP_INDEX = tState.extent(0)-1;
-    if(tTIME_STEP_INDEX < 0) { ANALYZE_THROWERR("Negative time step index. State solution is most likely empty.") }
+    const Plato::OrdinalType tTIME_STEP_INDEX = tState.extent(0) - 1;
+    if (tTIME_STEP_INDEX < 0)
+    {
+        ANALYZE_THROWERR("Negative time step index. State solution is most likely empty.")
+    }
     auto tStatesSubView = Kokkos::subview(tState, tTIME_STEP_INDEX, Kokkos::ALL());
     auto tDeviceData = Plato::get_vector_component(tStatesSubView, aDof, aStride);
     return tDeviceData;
 }
 // function extract_solution
 
-size_t read_num_time_steps_from_pvd_file
-(const std::string & aOutputDirectory,
- const std::string & aFindKeyword)
+size_t read_num_time_steps_from_pvd_file(const std::string& aOutputDirectory, const std::string& aFindKeyword)
 {
     size_t tNumTimeStep = 0;
     std::string tFileName = aOutputDirectory + "/steps.pvd";
@@ -178,5 +164,5 @@ size_t read_num_time_steps_from_pvd_file
 }
 // function read_num_time_steps_from_pvd_file
 
-}
+}  // namespace Plato
 // namespace Plato

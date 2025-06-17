@@ -1,9 +1,8 @@
 #ifndef MULTIPOINT_CONSTRAINT_HPP
 #define MULTIPOINT_CONSTRAINT_HPP
 
-#include <sstream>
-
 #include <Teuchos_ParameterList.hpp>
+#include <sstream>
 
 #include "AnalyzeMacros.hpp"
 #include "PlatoStaticsTypes.hpp"
@@ -18,25 +17,19 @@ namespace Plato
 class MultipointConstraint
 /******************************************************************************/
 {
-public:
-
-    MultipointConstraint(const std::string & aName) :
-                        name(aName)
-    {
-    }
+   public:
+    MultipointConstraint(const std::string& aName) : name(aName) {}
 
     virtual ~MultipointConstraint() = default;
 
     MultipointConstraint(const MultipointConstraint& aMPC) = delete;
     MultipointConstraint(MultipointConstraint&& aMPC) = delete;
 
-    MultipointConstraint&
-    operator=(const MultipointConstraint& aMPC) = delete;
-    MultipointConstraint&
-    operator=(MultipointConstraint&& aMPC) = delete;
+    MultipointConstraint& operator=(const MultipointConstraint& aMPC) = delete;
+    MultipointConstraint& operator=(MultipointConstraint&& aMPC) = delete;
 
     /*!
-     \brief Pure virtual function 
+     \brief Pure virtual function
      \Get constraint matrix and RHS data.
      \param mpcRowMap CRS-style rowMap for constraint data.
      \param mpcColumnIndices CRS-style columnIndices for constraint data.
@@ -46,26 +39,23 @@ public:
      \param offsetParent Starting location for storage of parent nodes.
      \param offsetNnz Starting location in columnIndices/entries where constraining nodes/coefficients will be added.
      */
-    virtual void get(OrdinalVector & aMpcChildNodes,
-                 OrdinalVector & aMpcParentNodes,
-                 Plato::CrsMatrixType::RowMapVectorT & aMpcRowMap,
-                 Plato::CrsMatrixType::OrdinalVectorT & aMpcColumnIndices,
-                 Plato::CrsMatrixType::ScalarVectorT & aMpcEntries,
-                 ScalarVector & aMpcValues,
-                 OrdinalType aOffsetChild,
-                 OrdinalType aOffsetParent,
-                 OrdinalType aOffsetNnz) = 0;
+    virtual void get(OrdinalVector& aMpcChildNodes,
+                     OrdinalVector& aMpcParentNodes,
+                     Plato::CrsMatrixType::RowMapVectorT& aMpcRowMap,
+                     Plato::CrsMatrixType::OrdinalVectorT& aMpcColumnIndices,
+                     Plato::CrsMatrixType::ScalarVectorT& aMpcEntries,
+                     ScalarVector& aMpcValues,
+                     OrdinalType aOffsetChild,
+                     OrdinalType aOffsetParent,
+                     OrdinalType aOffsetNnz) = 0;
 
     // ! Update number of nodes in the child and parent nodesets and number of nonzeros in constraint matrix.
-    virtual void updateLengths(OrdinalType& lengthChild,
-                               OrdinalType& lengthParent,
-                               OrdinalType& lengthNnz) = 0;
-    
-protected:
+    virtual void updateLengths(OrdinalType& lengthChild, OrdinalType& lengthParent, OrdinalType& lengthNnz) = 0;
+
+   protected:
     const std::string name;
 };
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif
-

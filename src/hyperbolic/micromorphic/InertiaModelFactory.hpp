@@ -1,33 +1,31 @@
 #pragma once
 
+#include <Teuchos_RCP.hpp>
+
+#include "hyperbolic/micromorphic/CubicInertiaMaterial.hpp"
 #include "material/MaterialModel.hpp"
 #include "material/MaterialModelFactory.hpp"
-#include "hyperbolic/micromorphic/CubicInertiaMaterial.hpp"
-
-#include <Teuchos_RCP.hpp>
 
 namespace Plato::Hyperbolic::Micromorphic
 {
 
-template<Plato::OrdinalType SpatialDim>
+template <Plato::OrdinalType SpatialDim>
 class InertiaModelFactory : public MaterialModelFactory<SpatialDim>
 {
-public:
-    InertiaModelFactory(const Teuchos::ParameterList& aParamList) :
-    MaterialModelFactory<SpatialDim>(aParamList)
-    {}
+   public:
+    InertiaModelFactory(const Teuchos::ParameterList& aParamList) : MaterialModelFactory<SpatialDim>(aParamList) {}
 
-protected:
-    Teuchos::RCP<Plato::MaterialModel<SpatialDim>>
-    constructFromSublist(const Teuchos::ParameterList& aParamList) override
+   protected:
+    Teuchos::RCP<Plato::MaterialModel<SpatialDim>> constructFromSublist(
+        const Teuchos::ParameterList& aParamList) override
     {
-        if(aParamList.isSublist("Cubic Micromorphic Inertia"))
+        if (aParamList.isSublist("Cubic Micromorphic Inertia"))
         {
-            return Teuchos::rcp(new Plato::Hyperbolic::Micromorphic::CubicInertiaMaterial<SpatialDim>(aParamList.sublist("Cubic Micromorphic Inertia")));
+            return Teuchos::rcp(new Plato::Hyperbolic::Micromorphic::CubicInertiaMaterial<SpatialDim>(
+                aParamList.sublist("Cubic Micromorphic Inertia")));
         }
         return Teuchos::RCP<Plato::MaterialModel<SpatialDim>>(nullptr);
     }
-
 };
 
-}
+}  // namespace Plato::Hyperbolic::Micromorphic

@@ -11,7 +11,8 @@
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Apply divergence operator to the strain tensor, i.e.
  *            /f$ \div\cdot\epsilon /f$,
@@ -20,17 +21,19 @@ namespace Plato
  *
  * \tparam SpaceDim spatial dimensions
  *
-*******************************************************************************/
-template<Plato::OrdinalType SpaceDim>
+ *******************************************************************************/
+template <Plato::OrdinalType SpaceDim>
 class StrainDivergence
 {
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
-    *******************************************************************************/
-    StrainDivergence(){}
+     *******************************************************************************/
+    StrainDivergence() {}
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      *
      * \brief Apply the divergence operator to the strain tensor.
      *
@@ -41,26 +44,25 @@ public:
      * \param [in] aStrain      strain tensor
      * \param [in] aOutput      strain tensor divergence
      *
-    *******************************************************************************/
-    template<typename StrainType, typename ResultType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(const Plato::OrdinalType & aCellOrdinal,
-               const Plato::ScalarMultiVectorT<StrainType> & aStrain,
-               const Plato::ScalarVectorT<ResultType> & aOutput) const;
+     *******************************************************************************/
+    template <typename StrainType, typename ResultType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarMultiVectorT<StrainType>& aStrain,
+                                           const Plato::ScalarVectorT<ResultType>& aOutput) const;
 };
 // class StrainDivergence
 
-template<>
-template<typename StrainType, typename ResultType>
-KOKKOS_INLINE_FUNCTION void
-StrainDivergence <3>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                 const Plato::ScalarMultiVectorT<StrainType> & aStrain,
-                                 const Plato::ScalarVectorT<ResultType> & aOutput) const
+template <>
+template <typename StrainType, typename ResultType>
+KOKKOS_INLINE_FUNCTION void StrainDivergence<3>::operator()(const Plato::OrdinalType& aCellOrdinal,
+                                                            const Plato::ScalarMultiVectorT<StrainType>& aStrain,
+                                                            const Plato::ScalarVectorT<ResultType>& aOutput) const
 {
     aOutput(aCellOrdinal) = aStrain(aCellOrdinal, 0) + aStrain(aCellOrdinal, 1) + aStrain(aCellOrdinal, 2);
 }
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Specialization for 2-D applications. Plane Strain formulation, i.e.
  *   out-of-plane strain (e_33) is zero.
@@ -72,19 +74,19 @@ StrainDivergence <3>::operator()(const Plato::OrdinalType & aCellOrdinal,
  * \param [in] aStrain      strain tensor
  * \param [in] aOutput      strain tensor divergence
  *
-*******************************************************************************/
-template<>
-template<typename StrainType, typename ResultType>
-KOKKOS_INLINE_FUNCTION void
-StrainDivergence <2>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                 const Plato::ScalarMultiVectorT<StrainType> & aStrain,
-                                 const Plato::ScalarVectorT<ResultType> & aOutput) const
+ *******************************************************************************/
+template <>
+template <typename StrainType, typename ResultType>
+KOKKOS_INLINE_FUNCTION void StrainDivergence<2>::operator()(const Plato::OrdinalType& aCellOrdinal,
+                                                            const Plato::ScalarMultiVectorT<StrainType>& aStrain,
+                                                            const Plato::ScalarVectorT<ResultType>& aOutput) const
 {
-    aOutput(aCellOrdinal) = aStrain(aCellOrdinal, 0)  // e^{elastic}_{11}
-                          + aStrain(aCellOrdinal, 1); // e^{elastic}_{22}
+    aOutput(aCellOrdinal) = aStrain(aCellOrdinal, 0)     // e^{elastic}_{11}
+                            + aStrain(aCellOrdinal, 1);  // e^{elastic}_{22}
 }
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Specialization for 1-D applications.
  *
@@ -95,16 +97,15 @@ StrainDivergence <2>::operator()(const Plato::OrdinalType & aCellOrdinal,
  * \param [in] aStrain      strain tensor
  * \param [in] aOutput      strain tensor divergence
  *
-*******************************************************************************/
-template<>
-template<typename StrainType, typename ResultType>
-KOKKOS_INLINE_FUNCTION void
-StrainDivergence <1>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                 const Plato::ScalarMultiVectorT<StrainType> & aStrain,
-                                 const Plato::ScalarVectorT<ResultType> & aOutput) const
+ *******************************************************************************/
+template <>
+template <typename StrainType, typename ResultType>
+KOKKOS_INLINE_FUNCTION void StrainDivergence<1>::operator()(const Plato::OrdinalType& aCellOrdinal,
+                                                            const Plato::ScalarMultiVectorT<StrainType>& aStrain,
+                                                            const Plato::ScalarVectorT<ResultType>& aOutput) const
 {
     aOutput(aCellOrdinal) = aStrain(aCellOrdinal, 0);
 }
 
-}
+}  // namespace Plato
 // namespace Plato

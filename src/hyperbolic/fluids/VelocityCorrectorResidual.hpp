@@ -7,23 +7,22 @@
 #pragma once
 
 #include "BLAS2.hpp"
-#include "MetaData.hpp"
-#include "WorkSets.hpp"
-#include "NaturalBCs.hpp"
-#include "UtilsTeuchos.hpp"
-#include "SpatialModel.hpp"
 #include "ExpInstMacros.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "LinearTetCubRuleDegreeOne.hpp"
-
-#include "hyperbolic/fluids/FluidsUtils.hpp"
-#include "hyperbolic/fluids/SimplexFluids.hpp"
-#include "hyperbolic/fluids/BrinkmanForces.hpp"
-#include "hyperbolic/fluids/ThermalBuoyancy.hpp"
-#include "hyperbolic/fluids/SimplexFluidsFadTypes.hpp"
-#include "hyperbolic/fluids/MassConservationUtils.hpp"
+#include "MetaData.hpp"
+#include "NaturalBCs.hpp"
+#include "SpatialModel.hpp"
+#include "UtilsTeuchos.hpp"
+#include "WorkSets.hpp"
 #include "hyperbolic/fluids/AbstractVectorFunction.hpp"
+#include "hyperbolic/fluids/BrinkmanForces.hpp"
+#include "hyperbolic/fluids/FluidsUtils.hpp"
+#include "hyperbolic/fluids/MassConservationUtils.hpp"
 #include "hyperbolic/fluids/MomentumConservationUtils.hpp"
+#include "hyperbolic/fluids/SimplexFluids.hpp"
+#include "hyperbolic/fluids/SimplexFluidsFadTypes.hpp"
+#include "hyperbolic/fluids/ThermalBuoyancy.hpp"
 
 namespace Plato
 {
@@ -31,7 +30,8 @@ namespace Plato
 namespace Fluids
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \class VelocityCorrectorResidual
  *
  * \tparam PhysicsT    physics type
@@ -53,68 +53,67 @@ namespace Fluids
  * the pressure artificial damping parameter.
  *
  ******************************************************************************/
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class VelocityCorrectorResidual : public Plato::Fluids::AbstractVectorFunction<PhysicsT, EvaluationT>
 {
-private:
-    static constexpr auto mNumDofsPerNode    = PhysicsT::mNumDofsPerNode; /*!< number of degrees of freedom per node */
-    static constexpr auto mNumDofsPerCell    = PhysicsT::mNumDofsPerCell; /*!< number of degrees of freedom per cell */
-    static constexpr auto mNumNodesPerCell   = PhysicsT::SimplexT::mNumNodesPerCell; /*!< number of nodes per cell */
-    static constexpr auto mNumSpatialDims    = PhysicsT::SimplexT::mNumSpatialDims; /*!< number of spatial dimensions */
+   private:
+    static constexpr auto mNumDofsPerNode = PhysicsT::mNumDofsPerNode; /*!< number of degrees of freedom per node */
+    static constexpr auto mNumDofsPerCell = PhysicsT::mNumDofsPerCell; /*!< number of degrees of freedom per cell */
+    static constexpr auto mNumNodesPerCell = PhysicsT::SimplexT::mNumNodesPerCell; /*!< number of nodes per cell */
+    static constexpr auto mNumSpatialDims = PhysicsT::SimplexT::mNumSpatialDims;   /*!< number of spatial dimensions */
 
     // set local ad types
-    using ResultT    = typename EvaluationT::ResultScalarType; /*!< result/output FAD type */
-    using ConfigT    = typename EvaluationT::ConfigScalarType; /*!< configuration FAD type */
-    using CurVelT    = typename EvaluationT::CurrentMomentumScalarType; /*!< current velocity FAD type */
-    using PrevVelT   = typename EvaluationT::PreviousMomentumScalarType; /*!< previous velocity FAD type */
-    using PredVelT   = typename EvaluationT::MomentumPredictorScalarType; /*!< predicted velocity FAD type */
-    using CurPressT  = typename EvaluationT::CurrentMassScalarType; /*!< current pressure FAD type */
-    using PrevPressT = typename EvaluationT::PreviousMassScalarType; /*!< previous pressure FAD type */
+    using ResultT = typename EvaluationT::ResultScalarType;             /*!< result/output FAD type */
+    using ConfigT = typename EvaluationT::ConfigScalarType;             /*!< configuration FAD type */
+    using CurVelT = typename EvaluationT::CurrentMomentumScalarType;    /*!< current velocity FAD type */
+    using PrevVelT = typename EvaluationT::PreviousMomentumScalarType;  /*!< previous velocity FAD type */
+    using PredVelT = typename EvaluationT::MomentumPredictorScalarType; /*!< predicted velocity FAD type */
+    using CurPressT = typename EvaluationT::CurrentMassScalarType;      /*!< current pressure FAD type */
+    using PrevPressT = typename EvaluationT::PreviousMassScalarType;    /*!< previous pressure FAD type */
 
     /*!< pressure gradient FAD type */
     using PressGradT = typename Plato::Fluids::fad_type_t<typename PhysicsT::SimplexT, CurPressT, PrevPressT, ConfigT>;
 
-    Plato::DataMap& mDataMap; /*!< output database */
-    const Plato::SpatialDomain& mSpatialDomain; /*!< Plato spatial model */
+    Plato::DataMap& mDataMap;                                        /*!< output database */
+    const Plato::SpatialDomain& mSpatialDomain;                      /*!< Plato spatial model */
     Plato::LinearTetCubRuleDegreeOne<mNumSpatialDims> mCubatureRule; /*!< integration rule */
 
-    Plato::Scalar mPressureTheta = 1.0; /*!< artificial pressure damping */
+    Plato::Scalar mPressureTheta = 1.0;  /*!< artificial pressure damping */
     Plato::Scalar mViscosityTheta = 1.0; /*!< artificial viscosity damping */
 
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aDomain  spatial domain metadata
      * \param [in] aDataMap output data metadata
      * \param [in] aInputs  input file metadata
      ******************************************************************************/
-    VelocityCorrectorResidual
-    (const Plato::SpatialDomain & aDomain,
-     Plato::DataMap             & aDataMap,
-     Teuchos::ParameterList     & aInputs) :
-         mDataMap(aDataMap),
-         mSpatialDomain(aDomain),
-         mCubatureRule(Plato::LinearTetCubRuleDegreeOne<mNumSpatialDims>())
+    VelocityCorrectorResidual(const Plato::SpatialDomain& aDomain,
+                              Plato::DataMap& aDataMap,
+                              Teuchos::ParameterList& aInputs)
+        : mDataMap(aDataMap),
+          mSpatialDomain(aDomain),
+          mCubatureRule(Plato::LinearTetCubRuleDegreeOne<mNumSpatialDims>())
     {
         this->setAritificalPressureDamping(aInputs);
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Evaluate Brinkman forces, including stabilized forces if enabled.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [in/out] aResultWS result/output workset
      ******************************************************************************/
-    void evaluate
-    (const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResultWS)
-    const override
+    void evaluate(const Plato::WorkSets& aWorkSets, Plato::ScalarMultiVectorT<ResultT>& aResultWS) const override
     {
         auto tNumCells = mSpatialDomain.numCells();
-        if( tNumCells != static_cast<Plato::OrdinalType>(aResultWS.extent(0)) )
+        if (tNumCells != static_cast<Plato::OrdinalType>(aResultWS.extent(0)))
         {
-            ANALYZE_THROWERR(std::string("Number of elements mismatch. Spatial domain and output/result workset ")
-                + "have different number of cells. " + "Spatial domain has '" + std::to_string(tNumCells)
-                + "' elements and output workset has '" + std::to_string(aResultWS.extent(0)) + "' elements.")
+            ANALYZE_THROWERR(std::string("Number of elements mismatch. Spatial domain and output/result workset ") +
+                             "have different number of cells. " + "Spatial domain has '" + std::to_string(tNumCells) +
+                             "' elements and output workset has '" + std::to_string(aResultWS.extent(0)) +
+                             "' elements.")
         }
 
         // set local data structures
@@ -124,86 +123,91 @@ public:
         Plato::ScalarMultiVectorT<PressGradT> tPressGradGP("pressure gradient", tNumCells, mNumSpatialDims);
         Plato::ScalarMultiVectorT<CurVelT> tCurVelGP("current velocity at Gauss points", tNumCells, mNumSpatialDims);
         Plato::ScalarMultiVectorT<PrevVelT> tPrevVelGP("previous velocity at Gauss points", tNumCells, mNumSpatialDims);
-        Plato::ScalarMultiVectorT<PredVelT> tPredVelGP("predicted velocity at Gauss points", tNumCells, mNumSpatialDims);
+        Plato::ScalarMultiVectorT<PredVelT> tPredVelGP("predicted velocity at Gauss points", tNumCells,
+                                                       mNumSpatialDims);
 
         // set input state worksets
-        auto tConfigWS    = Plato::metadata<Plato::ScalarArray3DT<ConfigT>>(aWorkSets.get("configuration"));
-        auto tCurVelWS    = Plato::metadata<Plato::ScalarMultiVectorT<CurVelT>>(aWorkSets.get("current velocity"));
-        auto tPrevVelWS   = Plato::metadata<Plato::ScalarMultiVectorT<PrevVelT>>(aWorkSets.get("previous velocity"));
-        auto tPredVelWS   = Plato::metadata<Plato::ScalarMultiVectorT<PredVelT>>(aWorkSets.get("current predictor"));
-        auto tCurPressWS  = Plato::metadata<Plato::ScalarMultiVectorT<CurPressT>>(aWorkSets.get("current pressure"));
+        auto tConfigWS = Plato::metadata<Plato::ScalarArray3DT<ConfigT>>(aWorkSets.get("configuration"));
+        auto tCurVelWS = Plato::metadata<Plato::ScalarMultiVectorT<CurVelT>>(aWorkSets.get("current velocity"));
+        auto tPrevVelWS = Plato::metadata<Plato::ScalarMultiVectorT<PrevVelT>>(aWorkSets.get("previous velocity"));
+        auto tPredVelWS = Plato::metadata<Plato::ScalarMultiVectorT<PredVelT>>(aWorkSets.get("current predictor"));
+        auto tCurPressWS = Plato::metadata<Plato::ScalarMultiVectorT<CurPressT>>(aWorkSets.get("current pressure"));
         auto tPrevPressWS = Plato::metadata<Plato::ScalarMultiVectorT<PrevPressT>>(aWorkSets.get("previous pressure"));
         auto tCriticalTimeStep = Plato::metadata<Plato::ScalarVector>(aWorkSets.get("critical time step"));
 
         // set local functors
         Plato::ComputeGradientWorkset<mNumSpatialDims> tComputeGradient;
-        Plato::InterpolateFromNodal<mNumSpatialDims, mNumDofsPerNode, 0/*offset*/, mNumSpatialDims> tIntrplVectorField;
+        Plato::InterpolateFromNodal<mNumSpatialDims, mNumDofsPerNode, 0 /*offset*/, mNumSpatialDims> tIntrplVectorField;
 
         // transfer member data to device
         auto tPressureTheta = mPressureTheta;
         auto tCubWeight = mCubatureRule.getCubWeight();
         auto tBasisFunctions = mCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for("calculate corrected velocity residual", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType & aCellOrdinal)
-        {
-            tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
-            tCellVolume(aCellOrdinal) *= tCubWeight;
+        Kokkos::parallel_for(
+            "calculate corrected velocity residual", Kokkos::RangePolicy<>(0, tNumCells),
+            KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
+                tComputeGradient(aCellOrdinal, tGradient, tConfigWS, tCellVolume);
+                tCellVolume(aCellOrdinal) *= tCubWeight;
 
-            // 1. add previous pressure gradient to residual, i.e. R += Delta{t} G(p_n + \theta\Delta{p})
-            Plato::Fluids::calculate_pressure_gradient<mNumNodesPerCell, mNumSpatialDims>
-                (aCellOrdinal, tPressureTheta, tGradient, tCurPressWS, tPrevPressWS, tPressGradGP);
-            Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>
-                (aCellOrdinal, tBasisFunctions, tCellVolume, tPressGradGP, aResultWS);
-            Plato::blas2::scale<mNumDofsPerCell>(aCellOrdinal, tCriticalTimeStep(0), aResultWS);
+                // 1. add previous pressure gradient to residual, i.e. R += Delta{t} G(p_n + \theta\Delta{p})
+                Plato::Fluids::calculate_pressure_gradient<mNumNodesPerCell, mNumSpatialDims>(
+                    aCellOrdinal, tPressureTheta, tGradient, tCurPressWS, tPrevPressWS, tPressGradGP);
+                Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>(
+                    aCellOrdinal, tBasisFunctions, tCellVolume, tPressGradGP, aResultWS);
+                Plato::blas2::scale<mNumDofsPerCell>(aCellOrdinal, tCriticalTimeStep(0), aResultWS);
 
-            // 2. add current delta inertial force to residual, i.e. R += M(u_{n+1} - u_n)
-            tIntrplVectorField(aCellOrdinal, tBasisFunctions, tCurVelWS, tCurVelGP);
-            Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>
-                (aCellOrdinal, tBasisFunctions, tCellVolume, tCurVelGP, aResultWS);
-            tIntrplVectorField(aCellOrdinal, tBasisFunctions, tPrevVelWS, tPrevVelGP);
-            Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>
-                (aCellOrdinal, tBasisFunctions, tCellVolume, tPrevVelGP, aResultWS, -1.0);
+                // 2. add current delta inertial force to residual, i.e. R += M(u_{n+1} - u_n)
+                tIntrplVectorField(aCellOrdinal, tBasisFunctions, tCurVelWS, tCurVelGP);
+                Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>(
+                    aCellOrdinal, tBasisFunctions, tCellVolume, tCurVelGP, aResultWS);
+                tIntrplVectorField(aCellOrdinal, tBasisFunctions, tPrevVelWS, tPrevVelGP);
+                Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>(
+                    aCellOrdinal, tBasisFunctions, tCellVolume, tPrevVelGP, aResultWS, -1.0);
 
-            // 3. add delta predicted inertial force to residual, i.e. R -= M(\bar{u} - u_n)
-            tIntrplVectorField(aCellOrdinal, tBasisFunctions, tPredVelWS, tPredVelGP);
-            Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>
-                (aCellOrdinal, tBasisFunctions, tCellVolume, tPredVelGP, aResultWS, -1.0);
-            Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>
-                (aCellOrdinal, tBasisFunctions, tCellVolume, tPrevVelGP, aResultWS);
-        });
+                // 3. add delta predicted inertial force to residual, i.e. R -= M(\bar{u} - u_n)
+                tIntrplVectorField(aCellOrdinal, tBasisFunctions, tPredVelWS, tPredVelGP);
+                Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>(
+                    aCellOrdinal, tBasisFunctions, tCellVolume, tPredVelGP, aResultWS, -1.0);
+                Plato::Fluids::integrate_vector_field<mNumNodesPerCell, mNumSpatialDims>(
+                    aCellOrdinal, tBasisFunctions, tCellVolume, tPrevVelGP, aResultWS);
+            });
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Evaluate non-prescribed boundary conditions.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [in/out] aResultWS result/output workset
      ******************************************************************************/
-    void evaluateBoundary
-    (const Plato::SpatialModel & aSpatialModel,
-     const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResult)
-    const override
-    { return; /* boundary integral equals zero */ }
+    void evaluateBoundary(const Plato::SpatialModel& aSpatialModel,
+                          const Plato::WorkSets& aWorkSets,
+                          Plato::ScalarMultiVectorT<ResultT>& aResult) const override
+    {
+        return; /* boundary integral equals zero */
+    }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Evaluate prescribed boundary conditions.
      * \param [in] aWorkSets holds input worksets (e.g. states, control, etc)
      * \param [in/out] aResultWS result/output workset
      ******************************************************************************/
-    void evaluatePrescribed
-    (const Plato::SpatialModel & aSpatialModel,
-     const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResult)
-    const override
-    { return; /* prescribed force integral equals zero */ }
+    void evaluatePrescribed(const Plato::SpatialModel& aSpatialModel,
+                            const Plato::WorkSets& aWorkSets,
+                            Plato::ScalarMultiVectorT<ResultT>& aResult) const override
+    {
+        return; /* prescribed force integral equals zero */
+    }
 
-private:
-    /***************************************************************************//**
+   private:
+    /***************************************************************************/
+    /**
      * \brief Set artificial pressure damping parameter.
      * \param [in] aInputs  input file metadata
      ******************************************************************************/
     void setAritificalPressureDamping(Teuchos::ParameterList& aInputs)
     {
-        if(aInputs.isSublist("Time Integration"))
+        if (aInputs.isSublist("Time Integration"))
         {
             auto tTimeIntegration = aInputs.sublist("Time Integration");
             mPressureTheta = tTimeIntegration.get<Plato::Scalar>("Pressure Damping", 1.0);
@@ -212,10 +216,10 @@ private:
 };
 // class VelocityCorrectorResidual
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "SimplexMechanics.hpp"
-#include "PlatoStaticsTypes.hpp"
-
 #include "PlatoMathTypes.hpp"
+#include "PlatoStaticsTypes.hpp"
+#include "SimplexMechanics.hpp"
 
 namespace Plato
 {
@@ -16,78 +15,80 @@ namespace Plato
 
  */
 /******************************************************************************/
-template<Plato::OrdinalType SpaceDim, Plato::OrdinalType NumDofsPerNode = SpaceDim>
+template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumDofsPerNode = SpaceDim>
 class Strain : public Plato::SimplexMechanics<SpaceDim>
 {
-private:
-
+   private:
     using Plato::SimplexMechanics<SpaceDim>::mNumVoigtTerms;   /*!< number of Voigt terms */
     using Plato::SimplexMechanics<SpaceDim>::mNumDofsPerCell;  /*!< number of degrees of freedom per cell */
     using Plato::SimplexMechanics<SpaceDim>::mNumNodesPerCell; /*!< number of nodes per cell */
 
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Compute Cauchy strain tensor - Voigt notation used herein.
      * \param [in]     aCellOrdinal    cell ordinal
      * \param [in/out] aStrain         Cauchy strain tensor
      * \param [in]     aState          cell states
      * \param [in]     aGradientMatrix spatial gradient matrix
-    *******************************************************************************/
-    template<typename ScalarType>
+     *******************************************************************************/
+    template <typename ScalarType>
     KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType aCellOrdinal,
-                                       Kokkos::View<ScalarType**, Plato::Layout, Plato::MemSpace> const& aStrain,
-                                       Kokkos::View<ScalarType**, Plato::Layout, Plato::MemSpace> const& aState,
-                                       Plato::Array<mNumVoigtTerms> const* aGradientMatrix) const
+                                           Kokkos::View<ScalarType**, Plato::Layout, Plato::MemSpace> const& aStrain,
+                                           Kokkos::View<ScalarType**, Plato::Layout, Plato::MemSpace> const& aState,
+                                           Plato::Array<mNumVoigtTerms> const* aGradientMatrix) const
     {
-
         // compute strain
         //
-        for(Plato::OrdinalType tVoigtIndex = 0; tVoigtIndex < mNumVoigtTerms; tVoigtIndex++)
+        for (Plato::OrdinalType tVoigtIndex = 0; tVoigtIndex < mNumVoigtTerms; tVoigtIndex++)
         {
             aStrain(aCellOrdinal, tVoigtIndex) = 0.0;
-            for(Plato::OrdinalType tDofIndex = 0; tDofIndex < mNumDofsPerCell; tDofIndex++)
+            for (Plato::OrdinalType tDofIndex = 0; tDofIndex < mNumDofsPerCell; tDofIndex++)
             {
-                aStrain(aCellOrdinal, tVoigtIndex) += aState(aCellOrdinal, tDofIndex) * aGradientMatrix[tDofIndex][tVoigtIndex];
+                aStrain(aCellOrdinal, tVoigtIndex) +=
+                    aState(aCellOrdinal, tDofIndex) * aGradientMatrix[tDofIndex][tVoigtIndex];
             }
         }
     }
 
-    template<typename StrainScalarType, typename DispScalarType, typename GradientScalarType>
+    template <typename StrainScalarType, typename DispScalarType, typename GradientScalarType>
     KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType aCellOrdinal,
-                                       Plato::ScalarMultiVectorT<StrainScalarType> const& aStrain,
-                                       Plato::ScalarMultiVectorT<DispScalarType> const& aState,
-                                       Plato::ScalarArray3DT<GradientScalarType> const& aGradient) const
+                                           Plato::ScalarMultiVectorT<StrainScalarType> const& aStrain,
+                                           Plato::ScalarMultiVectorT<DispScalarType> const& aState,
+                                           Plato::ScalarArray3DT<GradientScalarType> const& aGradient) const
     {
-        /***************************************************************************//**
+        /***************************************************************************/
+        /**
          * \brief Compute Cauchy strain tensor - Voigt notation used herein.
          * \param [in]     aCellOrdinal cell ordinal
          * \param [in/out] aStrain      Cauchy strain tensor
          * \param [in]     aState       cell states
          * \param [in]     aGradient    spatial gradient matrix
-        *******************************************************************************/
+         *******************************************************************************/
         Plato::OrdinalType tVoigtTerm = 0;
-        for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
+        for (Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
         {
             aStrain(aCellOrdinal, tVoigtTerm) = 0.0;
-            for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
+            for (Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
             {
                 auto tLocalOrdinal = tNodeIndex * NumDofsPerNode + tDimIndex;
                 aStrain(aCellOrdinal, tVoigtTerm) +=
-                        aState(aCellOrdinal, tLocalOrdinal) * aGradient(aCellOrdinal, tNodeIndex, tDimIndex);
+                    aState(aCellOrdinal, tLocalOrdinal) * aGradient(aCellOrdinal, tNodeIndex, tDimIndex);
             }
             tVoigtTerm++;
         }
 
-        for(Plato::OrdinalType tDofIndexJ = SpaceDim - 1; tDofIndexJ >= 1; tDofIndexJ--)
+        for (Plato::OrdinalType tDofIndexJ = SpaceDim - 1; tDofIndexJ >= 1; tDofIndexJ--)
         {
-            for(Plato::OrdinalType tDofIndexI = tDofIndexJ - 1; tDofIndexI >= 0; tDofIndexI--)
+            for (Plato::OrdinalType tDofIndexI = tDofIndexJ - 1; tDofIndexI >= 0; tDofIndexI--)
             {
-                for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
+                for (Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
                 {
                     auto tLocalOrdinalI = tNodeIndex * NumDofsPerNode + tDofIndexI;
                     auto tLocalOrdinalJ = tNodeIndex * NumDofsPerNode + tDofIndexJ;
-                    aStrain(aCellOrdinal, tVoigtTerm) += (aState(aCellOrdinal, tLocalOrdinalJ) * aGradient(aCellOrdinal, tNodeIndex, tDofIndexI)
-                            + aState(aCellOrdinal, tLocalOrdinalI) * aGradient(aCellOrdinal, tNodeIndex, tDofIndexJ));
+                    aStrain(aCellOrdinal, tVoigtTerm) +=
+                        (aState(aCellOrdinal, tLocalOrdinalJ) * aGradient(aCellOrdinal, tNodeIndex, tDofIndexI) +
+                         aState(aCellOrdinal, tLocalOrdinalI) * aGradient(aCellOrdinal, tNodeIndex, tDofIndexJ));
                 }
                 tVoigtTerm++;
             }
@@ -96,5 +97,5 @@ public:
 };
 // class Strain
 
-}
+}  // namespace Plato
 // namespace Plato

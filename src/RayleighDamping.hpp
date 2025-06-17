@@ -7,17 +7,17 @@
 #ifndef SRC_PLATO_RAYLEIGHDAMPING_HPP_
 #define SRC_PLATO_RAYLEIGHDAMPING_HPP_
 
+#include <Teuchos_ParameterList.hpp>
 #include <cassert>
 
-#include <Teuchos_ParameterList.hpp>
-
-#include "SimplexFadTypes.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "SimplexFadTypes.hpp"
 
 namespace Plato
 {
 
-/****************************************************************************//**
+/****************************************************************************/
+/**
  * \brief Rayleigh damping functor for elastodynamics applications.
  *
  * Evaluates classical Rayleigh damping at a given cell for elastodynamics
@@ -38,28 +38,30 @@ namespace Plato
  * \mathbf{K}\f$ damps higher modes most heavily.
  *
  *******************************************************************************/
-template<const Plato::OrdinalType NumDofsPerCell>
+template <const Plato::OrdinalType NumDofsPerCell>
 class RayleighDamping
 {
-private:
-    Plato::Scalar mMassConstant; /*!< mass proportional damping coefficients */
+   private:
+    Plato::Scalar mMassConstant;  /*!< mass proportional damping coefficients */
     Plato::Scalar mStiffConstant; /*!< stiffness proportional damping coefficients */
 
-public:
-    /************************************************************************//**
+   public:
+    /************************************************************************/
+    /**
      *
      * \brief Construct an instance of class Plato::RayleighDamping.
      *        \param aProblemParams Teuchos parameter list used to access the mass
      *                 and stiffness proportional damping coefficients
      *
      ***************************************************************************/
-    explicit RayleighDamping(Teuchos::ParameterList & aProblemParams) :
-            mMassConstant(aProblemParams.get<Plato::Scalar>("Rayleigh Mass Damping", 0.0)),
-            mStiffConstant(aProblemParams.get<Plato::Scalar>("Rayleigh Stiffness Damping", 0.0))
+    explicit RayleighDamping(Teuchos::ParameterList& aProblemParams)
+        : mMassConstant(aProblemParams.get<Plato::Scalar>("Rayleigh Mass Damping", 0.0)),
+          mStiffConstant(aProblemParams.get<Plato::Scalar>("Rayleigh Stiffness Damping", 0.0))
     {
     }
 
-    /************************************************************************//**
+    /************************************************************************/
+    /**
      *
      * \brief Construct an instance of class Plato::RayleighDamping.
      *        \param aMassConstant mass proportional damping coefficient,
@@ -68,13 +70,13 @@ public:
      *          which is set to 0.023 by default
      *
      ***************************************************************************/
-    RayleighDamping(Plato::Scalar aMassConstant = 0.025, Plato::Scalar aStiffConstant = 0.023) :
-            mMassConstant(aMassConstant),
-            mStiffConstant(aStiffConstant)
+    RayleighDamping(Plato::Scalar aMassConstant = 0.025, Plato::Scalar aStiffConstant = 0.023)
+        : mMassConstant(aMassConstant), mStiffConstant(aStiffConstant)
     {
     }
 
-    /**************************************************************************//**
+    /**************************************************************************/
+    /**
      *
      * \brief Compute element (i.e. cell) damping forces.
      *        \param aCellOrdinal      element index
@@ -83,27 +85,27 @@ public:
      *        \param aViscousForces    2D viscous force array
      *
      *****************************************************************************/
-    template<typename ElasticForceScalarType, typename InertialForceScalarType, typename DampingForceScalarType>
-    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarMultiVectorT<ElasticForceScalarType> & aStiffPropDamping,
-                                       const Plato::ScalarMultiVectorT<InertialForceScalarType> & aMassPropDamping,
-                                       const Plato::ScalarMultiVectorT<DampingForceScalarType> & aViscousForces) const
+    template <typename ElasticForceScalarType, typename InertialForceScalarType, typename DampingForceScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(
+        const Plato::OrdinalType& aCellOrdinal,
+        const Plato::ScalarMultiVectorT<ElasticForceScalarType>& aStiffPropDamping,
+        const Plato::ScalarMultiVectorT<InertialForceScalarType>& aMassPropDamping,
+        const Plato::ScalarMultiVectorT<DampingForceScalarType>& aViscousForces) const
     {
         assert(aStiffPropDamping.extent(0) == aMassPropDamping.extent(0));
         assert(aStiffPropDamping.extent(0) == aMassPropDamping.extent(0));
         assert(aStiffPropDamping.extent(1) == aMassPropDamping.extent(1));
         assert(aViscousForces.extent(1) == aMassPropDamping.extent(1));
 
-        for(Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerCell; tDofIndex++)
+        for (Plato::OrdinalType tDofIndex = 0; tDofIndex < NumDofsPerCell; tDofIndex++)
         {
-            aViscousForces(aCellOrdinal, tDofIndex) =
-                    ( (mMassConstant * aMassPropDamping(aCellOrdinal, tDofIndex)) +
-                            (mStiffConstant * aStiffPropDamping(aCellOrdinal, tDofIndex)) );
+            aViscousForces(aCellOrdinal, tDofIndex) = ((mMassConstant * aMassPropDamping(aCellOrdinal, tDofIndex)) +
+                                                       (mStiffConstant * aStiffPropDamping(aCellOrdinal, tDofIndex)));
         }
     }
 };
 // class RayleighDamping
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* SRC_PLATO_RAYLEIGHDAMPING_HPP_ */

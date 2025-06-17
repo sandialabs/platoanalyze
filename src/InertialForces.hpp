@@ -14,47 +14,47 @@ namespace Plato
 
 /******************************************************************************/
 /*! InertialForces Functor.
-*
-*   Evaluates cell inertial forces.
-*/
+ *
+ *   Evaluates cell inertial forces.
+ */
 /******************************************************************************/
 class InertialForces
 {
-public:
+   public:
     /******************************************************************************/
-    explicit InertialForces(const Plato::Scalar & aDensity) :
-            mDensity(aDensity)
+    explicit InertialForces(const Plato::Scalar& aDensity) : mDensity(aDensity)
     /******************************************************************************/
     {
     }
 
     /******************************************************************************/
-    template<typename DispScalarType, typename ForceScalarType, typename VolumeScalarType>
-    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarVectorT<VolumeScalarType> & aCellVolume,
-                                       const Plato::ScalarVectorT<Plato::Scalar> & tBasisFunctions,
-                                       const Plato::ScalarMultiVectorT<DispScalarType> & aStateValues,
-                                       const Plato::ScalarMultiVectorT<ForceScalarType> & aInertialForces) const
+    template <typename DispScalarType, typename ForceScalarType, typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarVectorT<VolumeScalarType>& aCellVolume,
+                                           const Plato::ScalarVectorT<Plato::Scalar>& tBasisFunctions,
+                                           const Plato::ScalarMultiVectorT<DispScalarType>& aStateValues,
+                                           const Plato::ScalarMultiVectorT<ForceScalarType>& aInertialForces) const
     /******************************************************************************/
     {
         const Plato::OrdinalType tNumNodesPerCell = tBasisFunctions.size();
         const Plato::OrdinalType tNumDofsPerNode = aStateValues.extent(1);
-        for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < tNumNodesPerCell; tNodeIndex++)
+        for (Plato::OrdinalType tNodeIndex = 0; tNodeIndex < tNumNodesPerCell; tNodeIndex++)
         {
-            for(Plato::OrdinalType tDofIndex = 0; tDofIndex < tNumDofsPerNode; tDofIndex++)
+            for (Plato::OrdinalType tDofIndex = 0; tDofIndex < tNumDofsPerNode; tDofIndex++)
             {
                 Plato::OrdinalType tMyDofIndex = (tNumDofsPerNode * tNodeIndex) + tDofIndex;
-                aInertialForces(aCellOrdinal, tMyDofIndex) = tBasisFunctions(tNodeIndex)
-                        * aStateValues(aCellOrdinal, tDofIndex) * aCellVolume(aCellOrdinal) * mDensity;
+                aInertialForces(aCellOrdinal, tMyDofIndex) = tBasisFunctions(tNodeIndex) *
+                                                             aStateValues(aCellOrdinal, tDofIndex) *
+                                                             aCellVolume(aCellOrdinal) * mDensity;
             }
         }
     }
 
-private:
+   private:
     Plato::Scalar mDensity; /* Material Density */
 };
 // class InertialForces
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* INERTIALFORCES_HPP_ */

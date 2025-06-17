@@ -2,60 +2,70 @@
 
 #include "helmholtz/AdjointProblem_decl.hpp"
 
-namespace Plato::Helmholtz {
+namespace Plato::Helmholtz
+{
 
 template <typename PhysicsType>
 AdjointProblem<PhysicsType>::AdjointProblem(Plato::Mesh aMesh,
                                             Teuchos::ParameterList& aProblemParams,
                                             Comm::Machine aMachine)
-    : mHelmholtzProblem{std::make_shared<Problem<PhysicsType>>(std::move(aMesh), aProblemParams, std::move(aMachine))} {
+    : mHelmholtzProblem{std::make_shared<Problem<PhysicsType>>(std::move(aMesh), aProblemParams, std::move(aMachine))}
+{
 }
 
 template <typename PhysicsType>
 AdjointProblem<PhysicsType>::AdjointProblem(std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> aProblem)
-    : mHelmholtzProblem{std::move(aProblem)} {
-  assert(mHelmholtzProblem);
+    : mHelmholtzProblem{std::move(aProblem)}
+{
+    assert(mHelmholtzProblem);
 }
 
 template <typename PhysicsType>
-Plato::OrdinalType AdjointProblem<PhysicsType>::numNodes() const {
-  return mHelmholtzProblem->numNodes();
+Plato::OrdinalType AdjointProblem<PhysicsType>::numNodes() const
+{
+    return mHelmholtzProblem->numNodes();
 }
 
 template <typename PhysicsType>
-Plato::OrdinalType AdjointProblem<PhysicsType>::numCells() const {
-  return mHelmholtzProblem->numCells();
+Plato::OrdinalType AdjointProblem<PhysicsType>::numCells() const
+{
+    return mHelmholtzProblem->numCells();
 }
 
 template <typename PhysicsType>
-Plato::OrdinalType AdjointProblem<PhysicsType>::numDofsPerCell() const {
-  return mHelmholtzProblem->numDofsPerCell();
+Plato::OrdinalType AdjointProblem<PhysicsType>::numDofsPerCell() const
+{
+    return mHelmholtzProblem->numDofsPerCell();
 }
 
 template <typename PhysicsType>
-Plato::OrdinalType AdjointProblem<PhysicsType>::numNodesPerCell() const {
-  return mHelmholtzProblem->numNodesPerCell();
+Plato::OrdinalType AdjointProblem<PhysicsType>::numNodesPerCell() const
+{
+    return mHelmholtzProblem->numNodesPerCell();
 }
 
 template <typename PhysicsType>
-Plato::OrdinalType AdjointProblem<PhysicsType>::numDofsPerNode() const {
-  return mHelmholtzProblem->numDofsPerNode();
+Plato::OrdinalType AdjointProblem<PhysicsType>::numDofsPerNode() const
+{
+    return mHelmholtzProblem->numDofsPerNode();
 }
 
 template <typename PhysicsType>
-Plato::OrdinalType AdjointProblem<PhysicsType>::numControlsPerNode() const {
-  return mHelmholtzProblem->numControlsPerNode();
+Plato::OrdinalType AdjointProblem<PhysicsType>::numControlsPerNode() const
+{
+    return mHelmholtzProblem->numControlsPerNode();
 }
 
 template <typename PhysicsType>
-void AdjointProblem<PhysicsType>::output(const std::string& aFilepath) {
-  mHelmholtzProblem->output(aFilepath);
+void AdjointProblem<PhysicsType>::output(const std::string& aFilepath)
+{
+    mHelmholtzProblem->output(aFilepath);
 }
 
 template <typename PhysicsType>
-void AdjointProblem<PhysicsType>::updateProblem(const Plato::ScalarVector& aControl,
-                                                const Plato::Solutions& aSolution) {
-  mHelmholtzProblem->updateProblem(aControl, aSolution);
+void AdjointProblem<PhysicsType>::updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution)
+{
+    mHelmholtzProblem->updateProblem(aControl, aSolution);
 }
 
 template <typename PhysicsType>
@@ -66,7 +76,8 @@ Plato::Solutions AdjointProblem<PhysicsType>::solution(const Plato::ScalarVector
 
 template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
-                                                                   const std::string& aName) {
+                                                                   const std::string& aName)
+{
     // Given `K \rho - M z = 0`, \rho = K^-1 M z
     // The Jacobian J of \rho with respect to z is then K^-1 M
     // This computes the product of J v, which corresponds to v^T J^T.
@@ -90,35 +101,39 @@ Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::
 }
 
 template <typename PhysicsType>
-Plato::Scalar AdjointProblem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl,
-                                                          const std::string& aName) {
+Plato::Scalar AdjointProblem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl, const std::string& aName)
+{
     return mHelmholtzProblem->criterionValue(aControl, aName);
 }
 
 template <typename PhysicsType>
 Plato::Scalar AdjointProblem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl,
                                                           const Plato::Solutions& aSolution,
-                                                          const std::string& aName) {
+                                                          const std::string& aName)
+{
     return mHelmholtzProblem->criterionValue(aControl, aSolution, aName);
 }
 
 template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
                                                                    const Plato::Solutions& aSolution,
-                                                                   const std::string& aName) {
+                                                                   const std::string& aName)
+{
     return mHelmholtzProblem->criterionGradient(aControl, aSolution, aName);
 }
 
 template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
                                                                     const Plato::Solutions& aSolution,
-                                                                    const std::string& aName) {
+                                                                    const std::string& aName)
+{
     return mHelmholtzProblem->criterionGradientX(aControl, aSolution, aName);
 }
 
 template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
-                                                                    const std::string& aName) {
+                                                                    const std::string& aName)
+{
     return mHelmholtzProblem->criterionGradientX(aControl, aName);
 }
 

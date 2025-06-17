@@ -5,37 +5,24 @@
  */
 
 #include "Solutions.hpp"
+
 #include "PlatoUtilities.hpp"
 
 namespace Plato
 {
 
-Solutions::Solutions
-(std::string aPhysics,
- std::string aPDE) :
-    mPDE(aPDE),
-    mPhysics(aPhysics)
-{}
+Solutions::Solutions(std::string aPhysics, std::string aPDE) : mPDE(aPDE), mPhysics(aPhysics) {}
 
-std::string Solutions::pde() const
-{
-    return (mPDE);
-}
+std::string Solutions::pde() const { return (mPDE); }
 
-std::string Solutions::physics() const
-{
-    return (mPhysics);
-}
+std::string Solutions::physics() const { return (mPhysics); }
 
-Plato::OrdinalType Solutions::size() const
-{
-    return (mSolution.size());
-}
+Plato::OrdinalType Solutions::size() const { return (mSolution.size()); }
 
 std::vector<std::string> Solutions::tags() const
 {
     std::vector<std::string> tTags;
-    for(auto& tPair : mSolution)
+    for (auto& tPair : mSolution)
     {
         tTags.push_back(tPair.first);
     }
@@ -60,11 +47,9 @@ void Solutions::set(const std::string& aTag, const Plato::ScalarArray4D& aData)
     mSolutionArray4D[tLowerTag] = aData;
 }
 
-void
-Solutions::set(
-    const std::string              & aTag,
-    const Plato::ScalarMultiVector & aData,
-    const std::vector<std::string> & aDofNames)
+void Solutions::set(const std::string& aTag,
+                    const Plato::ScalarMultiVector& aData,
+                    const std::vector<std::string>& aDofNames)
 {
     auto tLowerTag = Plato::tolower(aTag);
     mSolution[tLowerTag] = aData;
@@ -75,29 +60,29 @@ Plato::ScalarMultiVector Solutions::get(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mSolution.find(tLowerTag);
-    if(tItr == mSolution.end())
+    if (tItr == mSolution.end())
     {
         ANALYZE_THROWERR(std::string("Solution with tag '") + aTag + "' is not defined.")
     }
     return tItr->second;
 }
 
-void Solutions::get(const std::string& aTag, Plato::ScalarArray3D & aData) const
+void Solutions::get(const std::string& aTag, Plato::ScalarArray3D& aData) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mSolutionArray3D.find(tLowerTag);
-    if(tItr == mSolutionArray3D.end())
+    if (tItr == mSolutionArray3D.end())
     {
         ANALYZE_THROWERR(std::string("Solution of type ScalarArray3D with tag '") + aTag + "' is not defined.")
     }
     aData = tItr->second;
 }
 
-void Solutions::get(const std::string& aTag, Plato::ScalarArray4D & aData) const
+void Solutions::get(const std::string& aTag, Plato::ScalarArray4D& aData) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mSolutionArray4D.find(tLowerTag);
-    if(tItr == mSolutionArray4D.end())
+    if (tItr == mSolutionArray4D.end())
     {
         ANALYZE_THROWERR(std::string("Solution of type ScalarArray4D with tag '") + aTag + "' is not defined.")
     }
@@ -120,7 +105,7 @@ Plato::OrdinalType Solutions::getNumDofs(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mSolutionNameToNumDofsMap.find(tLowerTag);
-    if(tItr == mSolutionNameToNumDofsMap.end())
+    if (tItr == mSolutionNameToNumDofsMap.end())
     {
         ANALYZE_THROWERR(std::string("Solution NumDofs with tag '") + aTag + "' is not defined.")
     }
@@ -129,7 +114,7 @@ Plato::OrdinalType Solutions::getNumDofs(const std::string& aTag) const
 
 Plato::OrdinalType Solutions::getNumTimeSteps() const
 {
-    if(this->empty())
+    if (this->empty())
     {
         ANALYZE_THROWERR("Solution map is empty.")
     }
@@ -144,37 +129,37 @@ std::vector<std::string> Solutions::getDofNames(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mSolutionNameToDofNamesMap.find(tLowerTag);
-    if(tItr == mSolutionNameToDofNamesMap.end())
+    if (tItr == mSolutionNameToDofNamesMap.end())
     {
         return std::vector<std::string>(0);
     }
     return tItr->second;
 }
 
-
 void Solutions::print() const
 {
-    if(mSolution.empty())
-    { return; }
-    for(auto& tPair : mSolution)
-    { Plato::print_array_2D(tPair.second, tPair.first); }
+    if (mSolution.empty())
+    {
+        return;
+    }
+    for (auto& tPair : mSolution)
+    {
+        Plato::print_array_2D(tPair.second, tPair.first);
+    }
 }
 
-bool Solutions::defined(const std::string & aTag) const
+bool Solutions::defined(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mSolution.find(tLowerTag);
-    if(tItr == mSolution.end())
+    if (tItr == mSolution.end())
     {
         return false;
     }
     return true;
 }
 
-bool Solutions::empty() const
-{
-    return mSolution.empty();
-}
+bool Solutions::empty() const { return mSolution.empty(); }
 
-}
+}  // namespace Plato
 // namespace Plato

@@ -6,14 +6,15 @@
 
 #pragma once
 
-#include "SpatialModel.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "SpatialModel.hpp"
 #include "TimeData.hpp"
 
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Abstract scalar function interface for Partial Differential Equations
  *   (PDEs) with path dependent global and local states.
@@ -21,59 +22,53 @@ namespace Plato
  * \tparam EvaluationType determines the automatic differentiation type used to
  *   evaluate the scalar function (e.g. Value, GradientZ, GradientX, etc.)
  *
-*******************************************************************************/
-template<typename EvaluationType>
+ *******************************************************************************/
+template <typename EvaluationType>
 class AbstractLocalScalarFunctionInc
 {
+   protected:
+    const Plato::SpatialDomain& mSpatialDomain;
+    Plato::DataMap& mDataMap;        /*!< output database */
+    const std::string mFunctionName; /*!< my scalar function name */
 
-protected:
-    const Plato::SpatialDomain & mSpatialDomain;
-          Plato::DataMap       & mDataMap;       /*!< output database */
-    const std::string            mFunctionName;  /*!< my scalar function name */
-
-
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aSpatialDomain Plato Analyze spatial domain
      * \param [in] aDataMap  output data map
      * \param [in] aName     scalar function name, e.g. type
-    *******************************************************************************/
-    explicit
-    AbstractLocalScalarFunctionInc(
-        const Plato::SpatialDomain & aSpatialDomain,
-              Plato::DataMap       & aDataMap,
-        const std::string          & aName
-    ) :
-        mSpatialDomain (aSpatialDomain),
-        mDataMap       (aDataMap),
-        mFunctionName  (aName)
-    { return; }
+     *******************************************************************************/
+    explicit AbstractLocalScalarFunctionInc(const Plato::SpatialDomain& aSpatialDomain,
+                                            Plato::DataMap& aDataMap,
+                                            const std::string& aName)
+        : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap), mFunctionName(aName)
+    {
+        return;
+    }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Destructor
-    *******************************************************************************/
+     *******************************************************************************/
     virtual ~AbstractLocalScalarFunctionInc() = default;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Return reference to mesh data base
      * \return mesh metadata
-    *******************************************************************************/
-    decltype(mSpatialDomain.Mesh) getMesh() const
-    {
-        return (mSpatialDomain.Mesh);
-    }
+     *******************************************************************************/
+    decltype(mSpatialDomain.Mesh) getMesh() const { return (mSpatialDomain.Mesh); }
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Return abstract scalar function name
      * \return name
-    **********************************************************************************/
-    const decltype(mFunctionName)& getName() const
-    {
-        return (mFunctionName);
-    }
+     **********************************************************************************/
+    const decltype(mFunctionName)& getName() const { return (mFunctionName); }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      *
      * \brief Evaluate the scalar function with local path-dependent states.
      *
@@ -86,32 +81,34 @@ public:
      * \param [in/out] aResult              scalar function value per cell
      * \param [in]     aTimeData            current time data object
      *
-    *******************************************************************************/
-    virtual void
-    evaluate(
-        const Plato::ScalarMultiVectorT <typename EvaluationType::StateScalarType>          & aCurrentGlobalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::PrevStateScalarType>      & aPreviousGlobalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::LocalStateScalarType>     & aCurrentLocalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::PrevLocalStateScalarType> & aPreviousLocalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::ControlScalarType>        & aControls,
-        const Plato::ScalarArray3DT     <typename EvaluationType::ConfigScalarType>         & aConfig,
-        const Plato::ScalarVectorT      <typename EvaluationType::ResultScalarType>         & aResult,
-        const Plato::TimeData & aTimeData) = 0;
+     *******************************************************************************/
+    virtual void evaluate(
+        const Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType>& aCurrentGlobalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::PrevStateScalarType>& aPreviousGlobalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::LocalStateScalarType>& aCurrentLocalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::PrevLocalStateScalarType>& aPreviousLocalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControls,
+        const Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType>& aConfig,
+        const Plato::ScalarVectorT<typename EvaluationType::ResultScalarType>& aResult,
+        const Plato::TimeData& aTimeData) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Update physics-based data within a frequency of optimization iterations
      * \param [in] aGlobalState global state variables
      * \param [in] aLocalState  local state variables
      * \param [in] aControl     control variables, e.g. design variables
      * \param [in] aTimeData    current time data object,
-    **********************************************************************************/
-    virtual void updateProblem(const Plato::ScalarMultiVector & aGlobalState,
-                               const Plato::ScalarMultiVector & aLocalState,
-                               const Plato::ScalarVector & aControl,
-                               const Plato::TimeData & aTimeData)
-    { return; }
+     **********************************************************************************/
+    virtual void updateProblem(const Plato::ScalarMultiVector& aGlobalState,
+                               const Plato::ScalarMultiVector& aLocalState,
+                               const Plato::ScalarVector& aControl,
+                               const Plato::TimeData& aTimeData)
+    {
+        return;
+    }
 };
 // class AbstractLocalScalarFunctionInc
 
-}
+}  // namespace Plato
 // namespace Plato

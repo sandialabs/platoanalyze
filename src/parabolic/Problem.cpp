@@ -2,9 +2,9 @@
 
 #ifdef PLATOANALYZE_USE_EXPLICIT_INSTANTIATION
 
+#include "BaseExpInstMacros.hpp"
 #include "Thermal.hpp"
 #include "Thermomechanics.hpp"
-#include "BaseExpInstMacros.hpp"
 #include "parabolic/Problem_def.hpp"
 
 PLATO_ELEMENT_DEF(Plato::Parabolic::Problem, Plato::Thermal)

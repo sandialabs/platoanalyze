@@ -1,36 +1,37 @@
-#include "Analyze_App.hpp"
-#include "Plato_Interface.hpp"
 #include <Teuchos_Comm.hpp>
 #include <Teuchos_DefaultMpiComm.hpp>
 #include <Teuchos_TimeMonitor.hpp>
+
+#include "Analyze_App.hpp"
+#include "Plato_Interface.hpp"
 
 #ifndef NDEBUG
 #include <fenv.h>
 #endif
 
-void printTimingResultsMPMD(MPI_Comm &aComm)
+void printTimingResultsMPMD(MPI_Comm& aComm)
 {
-  const std::string tTimerFilter = ""; //"Analyze:"; // Only timers beginning with this string get summarized.
-  const bool tAlwaysWriteLocal = false;
-  const bool tWriteGlobalStats = true;
-  const bool tWriteZeroTimers  = false;
-  Teuchos::RCP<const Teuchos::Comm<int> > tComm = Teuchos::rcp (new Teuchos::MpiComm<int> (aComm));
-  std::ofstream tTimingOutputFileStream ("plato_analyze_timing_summary.txt", std::ofstream::out);
-  Teuchos::TimeMonitor::summarize(tComm.ptr(), tTimingOutputFileStream, tAlwaysWriteLocal, 
-                                  tWriteGlobalStats, tWriteZeroTimers, 
-                                  Teuchos::ECounterSetOp::Intersection, tTimerFilter);
-  tTimingOutputFileStream.close();
+    const std::string tTimerFilter = "";  //"Analyze:"; // Only timers beginning with this string get summarized.
+    const bool tAlwaysWriteLocal = false;
+    const bool tWriteGlobalStats = true;
+    const bool tWriteZeroTimers = false;
+    Teuchos::RCP<const Teuchos::Comm<int> > tComm = Teuchos::rcp(new Teuchos::MpiComm<int>(aComm));
+    std::ofstream tTimingOutputFileStream("plato_analyze_timing_summary.txt", std::ofstream::out);
+    Teuchos::TimeMonitor::summarize(tComm.ptr(), tTimingOutputFileStream, tAlwaysWriteLocal, tWriteGlobalStats,
+                                    tWriteZeroTimers, Teuchos::ECounterSetOp::Intersection, tTimerFilter);
+    tTimingOutputFileStream.close();
 }
 
-void safeExit(int aExitCode=0){
-  Plato::MeshFactory::finalize();
-  Kokkos::finalize();
-  MPI_Finalize();
-  exit(aExitCode);
+void safeExit(int aExitCode = 0)
+{
+    Plato::MeshFactory::finalize();
+    Kokkos::finalize();
+    MPI_Finalize();
+    exit(aExitCode);
 }
 
 /******************************************************************************/
-int main(int aArgc, char **aArgv)
+int main(int aArgc, char** aArgv)
 /******************************************************************************/
 {
 #ifndef NDEBUG
@@ -45,12 +46,12 @@ int main(int aArgc, char **aArgv)
     Plato::Interface* tPlatoInterface = nullptr;
     try
     {
-      tPlatoInterface = new Plato::Interface();
+        tPlatoInterface = new Plato::Interface();
     }
-    catch(...)
+    catch (...)
     {
-      int tErrorCode = 1;
-      safeExit(tErrorCode);
+        int tErrorCode = 1;
+        safeExit(tErrorCode);
     }
 
     MPI_Comm tLocalComm;
@@ -59,42 +60,42 @@ int main(int aArgc, char **aArgv)
     Plato::MPMD_App* tMyApp = nullptr;
     try
     {
-      tMyApp = new Plato::MPMD_App(aArgc, aArgv, tLocalComm);
+        tMyApp = new Plato::MPMD_App(aArgc, aArgv, tLocalComm);
     }
-    catch(...)
+    catch (...)
     {
-      tMyApp = nullptr;
-      tPlatoInterface->Catch();
-    }
-
-    try
-    {
-      tPlatoInterface->registerApplication(tMyApp);
-    }
-    catch(...)
-    {
-      int tErrorCode = 1;
-      safeExit(tErrorCode);
+        tMyApp = nullptr;
+        tPlatoInterface->Catch();
     }
 
     try
     {
-      tPlatoInterface->perform();
-      printTimingResultsMPMD(tLocalComm);
+        tPlatoInterface->registerApplication(tMyApp);
     }
-    catch(...)
+    catch (...)
     {
-      safeExit();
+        int tErrorCode = 1;
+        safeExit(tErrorCode);
     }
 
-    if(tMyApp)
+    try
     {
-      delete tMyApp;
+        tPlatoInterface->perform();
+        printTimingResultsMPMD(tLocalComm);
     }
-    
-    if(tPlatoInterface)
+    catch (...)
     {
-      delete tPlatoInterface;
+        safeExit();
+    }
+
+    if (tMyApp)
+    {
+        delete tMyApp;
+    }
+
+    if (tPlatoInterface)
+    {
+        delete tPlatoInterface;
     }
 
     safeExit();

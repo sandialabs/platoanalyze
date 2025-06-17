@@ -7,14 +7,13 @@
 #pragma once
 
 #include "BLAS2.hpp"
-#include "WorkSets.hpp"
-#include "NaturalBCs.hpp"
-#include "UtilsOmegaH.hpp"
-#include "SpatialModel.hpp"
 #include "ExpInstMacros.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "LinearTetCubRuleDegreeOne.hpp"
-
+#include "NaturalBCs.hpp"
+#include "SpatialModel.hpp"
+#include "UtilsOmegaH.hpp"
+#include "WorkSets.hpp"
 #include "hyperbolic/fluids/AbstractVolumeIntegrand.hpp"
 #include "hyperbolic/fluids/SimplexFluids.hpp"
 #include "hyperbolic/fluids/SimplexFluidsFadTypes.hpp"
@@ -25,7 +24,8 @@ namespace Plato
 namespace Fluids
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \tparam SpaceDims (integer) number of spatial dimensions
  * \tparam NumNodes  (integer) number of nodes on surface/face
  * \tparam InStateType  input state type
@@ -40,34 +40,30 @@ namespace Fluids
  * \param [in] aLocalNodeOrdinals local cell node ordinals
  * \param [in] aInputState        input state
  * \param [in/out] aInputState    output state
-**********************************************************************************/
-template<Plato::OrdinalType SpaceDims,
-         Plato::OrdinalType NumNodes,
-         typename InStateType,
-         typename OutStateType>
-KOKKOS_INLINE_FUNCTION void
-project_vector_field_onto_surface
-(const Plato::OrdinalType & aCellOrdinal,
- const Plato::ScalarVector & aBasisFunctions,
- const Plato::OrdinalType aLocalNodeOrdinals[NumNodes],
- const Plato::ScalarMultiVectorT<InStateType> & aInputState,
- const Plato::ScalarMultiVectorT<OutStateType> & aOutputState)
+ **********************************************************************************/
+template <Plato::OrdinalType SpaceDims, Plato::OrdinalType NumNodes, typename InStateType, typename OutStateType>
+KOKKOS_INLINE_FUNCTION void project_vector_field_onto_surface(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarVector& aBasisFunctions,
+    const Plato::OrdinalType aLocalNodeOrdinals[NumNodes],
+    const Plato::ScalarMultiVectorT<InStateType>& aInputState,
+    const Plato::ScalarMultiVectorT<OutStateType>& aOutputState)
 {
-    for(Plato::OrdinalType tDim = 0; tDim < SpaceDims; tDim++)
+    for (Plato::OrdinalType tDim = 0; tDim < SpaceDims; tDim++)
     {
         aOutputState(aCellOrdinal, tDim) = 0.0;
-        for(Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
+        for (Plato::OrdinalType tNode = 0; tNode < NumNodes; tNode++)
         {
             auto tLocalCellNode = aLocalNodeOrdinals[tNode];
             auto tLocalCellDof = (SpaceDims * tLocalCellNode) + tDim;
-            aOutputState(aCellOrdinal, tDim) +=
-                aBasisFunctions(tNode) * aInputState(aCellOrdinal, tLocalCellDof);
+            aOutputState(aCellOrdinal, tDim) += aBasisFunctions(tNode) * aInputState(aCellOrdinal, tLocalCellDof);
         }
     }
 }
 // function project_vector_field_onto_surface
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \class MomentumSurfaceForces
  *
  * \tparam PhysicsT    Physics type
@@ -86,53 +82,55 @@ project_vector_field_onto_surface
  * \f$ \alpha \f$ is a scalar multiplier.
  *
  ******************************************************************************/
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class MomentumSurfaceForces
 {
-private:
-    static constexpr auto mNumSpatialDims       = PhysicsT::SimplexT::mNumSpatialDims; /*!< number of spatial dimensions */
-    static constexpr auto mNumNodesPerFace      = PhysicsT::SimplexT::mNumNodesPerFace; /*!< number of nodes per face */
-    static constexpr auto mNumVelDofsPerNode    = PhysicsT::SimplexT::mNumMomentumDofsPerNode; /*!< number of momentum dofs per node */
-    static constexpr auto mNumSpatialDimsOnFace = PhysicsT::SimplexT::mNumSpatialDimsOnFace; /*!< number of spatial dimensions on face */
+   private:
+    static constexpr auto mNumSpatialDims = PhysicsT::SimplexT::mNumSpatialDims;   /*!< number of spatial dimensions */
+    static constexpr auto mNumNodesPerFace = PhysicsT::SimplexT::mNumNodesPerFace; /*!< number of nodes per face */
+    static constexpr auto mNumVelDofsPerNode =
+        PhysicsT::SimplexT::mNumMomentumDofsPerNode; /*!< number of momentum dofs per node */
+    static constexpr auto mNumSpatialDimsOnFace =
+        PhysicsT::SimplexT::mNumSpatialDimsOnFace; /*!< number of spatial dimensions on face */
 
     // forward automatic differentiation types
-    using ResultT = typename EvaluationT::ResultScalarType; /*!< result FAD evaluation type */
-    using ConfigT = typename EvaluationT::ConfigScalarType; /*!< configuration FAD evaluation type */
+    using ResultT = typename EvaluationT::ResultScalarType;            /*!< result FAD evaluation type */
+    using ConfigT = typename EvaluationT::ConfigScalarType;            /*!< configuration FAD evaluation type */
     using PrevVelT = typename EvaluationT::PreviousMomentumScalarType; /*!< previous momentum FAD evaluation type */
 
-    const std::string mEntitySetName; /*!< entity set name, defined by the surfaces where Dirichlet boundary conditions are applied */
+    const std::string
+        mEntitySetName; /*!< entity set name, defined by the surfaces where Dirichlet boundary conditions are applied */
     const Plato::SpatialDomain& mSpatialDomain; /*!< spatial domain metadata */
-    Plato::LinearTetCubRuleDegreeOne<mNumSpatialDimsOnFace> mSurfaceCubatureRule; /*!< surface cubature integration rule */
+    Plato::LinearTetCubRuleDegreeOne<mNumSpatialDimsOnFace>
+        mSurfaceCubatureRule; /*!< surface cubature integration rule */
 
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aDomain        spatial domain metadata
      * \param [in] aEntitySetName entity set name (e.g. side set name)
      ******************************************************************************/
-    MomentumSurfaceForces
-    (const Plato::SpatialDomain & aDomain,
-     const std::string & aEntitySetName) :
-         mEntitySetName(aEntitySetName),
-         mSpatialDomain(aDomain)
+    MomentumSurfaceForces(const Plato::SpatialDomain& aDomain, const std::string& aEntitySetName)
+        : mEntitySetName(aEntitySetName), mSpatialDomain(aDomain)
     {
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \fn void operator()
      * \brief Evaluate surface integral.
      * \param [in] aWorkSets   holds input worksets (e.g. states, control, etc)
      * \param [in] aMultiplier scalar multiplier (default = 1.0)
      * \param [in/out] aResultWS result/output workset
      ******************************************************************************/
-    void operator()
-    (const Plato::WorkSets & aWorkSets,
-     Plato::ScalarMultiVectorT<ResultT> & aResult,
-     Plato::Scalar aMultiplier = 1.0) const
+    void operator()(const Plato::WorkSets& aWorkSets,
+                    Plato::ScalarMultiVectorT<ResultT>& aResult,
+                    Plato::Scalar aMultiplier = 1.0) const
     {
         auto tElementOrds = mSpatialDomain.Mesh->GetSideSetElements(mEntitySetName);
-        auto tFaceOrds    = mSpatialDomain.Mesh->GetSideSetFaces(mEntitySetName);
-        auto tNodeOrds    = mSpatialDomain.Mesh->GetSideSetLocalNodes(mEntitySetName);
+        auto tFaceOrds = mSpatialDomain.Mesh->GetSideSetFaces(mEntitySetName);
+        auto tNodeOrds = mSpatialDomain.Mesh->GetSideSetLocalNodes(mEntitySetName);
 
         auto tNumFaces = tElementOrds.size();
 
@@ -140,7 +138,8 @@ public:
         Plato::CalculateSurfaceArea<mNumSpatialDims> tCalculateSurfaceArea;
         Plato::NodeCoordinate<mNumSpatialDims> tCoords(mSpatialDomain.Mesh);
         Plato::CalculateSurfaceJacobians<mNumSpatialDims> tCalculateSurfaceJacobians;
-        Plato::InterpolateFromNodal<mNumSpatialDims, mNumVelDofsPerNode,   0/*offset*/, mNumSpatialDims> tIntrplVectorField;
+        Plato::InterpolateFromNodal<mNumSpatialDims, mNumVelDofsPerNode, 0 /*offset*/, mNumSpatialDims>
+            tIntrplVectorField;
 
         Plato::ScalarArray3DT<ConfigT> tJacobians("jacobian", tNumFaces, mNumSpatialDimsOnFace, mNumSpatialDims);
         auto tNumCells = mSpatialDomain.Mesh->NumElements();
@@ -154,48 +153,50 @@ public:
         // evaluate integral
         auto tSurfaceCubatureWeight = mSurfaceCubatureRule.getCubWeight();
         auto tSurfaceBasisFunctions = mSurfaceCubatureRule.getBasisFunctions();
-        Kokkos::parallel_for("calculate surface momentum integral", Kokkos::RangePolicy<>(0, tNumFaces), KOKKOS_LAMBDA(const Plato::OrdinalType & aSideOrdinal)
-        {
-            auto tElementOrdinal = tElementOrds(aSideOrdinal);
-            auto tElemFaceOrdinal = tFaceOrds(aSideOrdinal);
+        Kokkos::parallel_for(
+            "calculate surface momentum integral", Kokkos::RangePolicy<>(0, tNumFaces),
+            KOKKOS_LAMBDA(const Plato::OrdinalType& aSideOrdinal) {
+                auto tElementOrdinal = tElementOrds(aSideOrdinal);
+                auto tElemFaceOrdinal = tFaceOrds(aSideOrdinal);
 
-            Plato::OrdinalType tLocalNodeOrds[mNumNodesPerFace];
-            for( Plato::OrdinalType tNodeOrd=0; tNodeOrd<mNumNodesPerFace; tNodeOrd++)
-            {
-                tLocalNodeOrds[tNodeOrd] = tNodeOrds(aSideOrdinal*mNumNodesPerFace+tNodeOrd);
-            }
-
-            // calculate surface jacobians
-            ConfigT tSurfaceAreaTimesCubWeight(0.0);
-            tCalculateSurfaceJacobians(tElementOrdinal, aSideOrdinal, tLocalNodeOrds, tConfigWS, tJacobians);
-            tCalculateSurfaceArea(aSideOrdinal, tSurfaceCubatureWeight, tJacobians, tSurfaceAreaTimesCubWeight);
-
-            // compute unit normal vector
-            auto tUnitNormalVec = Plato::omega_h::unit_normal_vector(tElementOrdinal, tElemFaceOrdinal, tCoords);
-
-            // project velocity field onto surface
-            Plato::Fluids::project_vector_field_onto_surface<mNumSpatialDims,mNumNodesPerFace>
-               (tElementOrdinal, tSurfaceBasisFunctions, tLocalNodeOrds, tPrevVelWS, tPrevVelGP);
-
-            auto tMultiplier = aMultiplier / tCriticalTimeStep(0);
-            for( Plato::OrdinalType tNode = 0; tNode < mNumNodesPerFace; tNode++ )
-            {
-                auto tLocalCellNode = tLocalNodeOrds[tNode];
-                for( Plato::OrdinalType tDim = 0; tDim < mNumSpatialDims; tDim++ )
+                Plato::OrdinalType tLocalNodeOrds[mNumNodesPerFace];
+                for (Plato::OrdinalType tNodeOrd = 0; tNodeOrd < mNumNodesPerFace; tNodeOrd++)
                 {
-                    aResult(tElementOrdinal, tLocalCellNode) += tMultiplier * tUnitNormalVec(tDim) *
-                        tPrevVelGP(tElementOrdinal, tDim) * tSurfaceBasisFunctions(tNode) * tSurfaceAreaTimesCubWeight;
+                    tLocalNodeOrds[tNodeOrd] = tNodeOrds(aSideOrdinal * mNumNodesPerFace + tNodeOrd);
                 }
-            }
-        });
+
+                // calculate surface jacobians
+                ConfigT tSurfaceAreaTimesCubWeight(0.0);
+                tCalculateSurfaceJacobians(tElementOrdinal, aSideOrdinal, tLocalNodeOrds, tConfigWS, tJacobians);
+                tCalculateSurfaceArea(aSideOrdinal, tSurfaceCubatureWeight, tJacobians, tSurfaceAreaTimesCubWeight);
+
+                // compute unit normal vector
+                auto tUnitNormalVec = Plato::omega_h::unit_normal_vector(tElementOrdinal, tElemFaceOrdinal, tCoords);
+
+                // project velocity field onto surface
+                Plato::Fluids::project_vector_field_onto_surface<mNumSpatialDims, mNumNodesPerFace>(
+                    tElementOrdinal, tSurfaceBasisFunctions, tLocalNodeOrds, tPrevVelWS, tPrevVelGP);
+
+                auto tMultiplier = aMultiplier / tCriticalTimeStep(0);
+                for (Plato::OrdinalType tNode = 0; tNode < mNumNodesPerFace; tNode++)
+                {
+                    auto tLocalCellNode = tLocalNodeOrds[tNode];
+                    for (Plato::OrdinalType tDim = 0; tDim < mNumSpatialDims; tDim++)
+                    {
+                        aResult(tElementOrdinal, tLocalCellNode) +=
+                            tMultiplier * tUnitNormalVec(tDim) * tPrevVelGP(tElementOrdinal, tDim) *
+                            tSurfaceBasisFunctions(tNode) * tSurfaceAreaTimesCubWeight;
+                    }
+                }
+            });
     }
 };
 // class MomentumSurfaceForces
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"

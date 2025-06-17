@@ -7,12 +7,12 @@ namespace Plato
 
 /******************************************************************************/
 /*! Base class for geometrical element
-*/
+ */
 /******************************************************************************/
-template<typename ElementType, Plato::OrdinalType NumControls = 1>
+template <typename ElementType, Plato::OrdinalType NumControls = 1>
 class GeometricalElement : public ElementType, public ElementBase<ElementType>
 {
-  public:
+   public:
     using ElementType::mNumNodesPerCell;
     using ElementType::mNumNodesPerFace;
     using ElementType::mNumSpatialDims;
@@ -20,4 +20,4 @@ class GeometricalElement : public ElementType, public ElementBase<ElementType>
     static constexpr Plato::OrdinalType mNumControl = NumControls;
 };
 
-}
+}  // namespace Plato

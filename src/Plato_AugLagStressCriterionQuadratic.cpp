@@ -7,9 +7,8 @@
 
 #ifdef PLATOANALYZE_USE_EXPLICIT_INSTANTIATION
 
-#include "Plato_AugLagStressCriterionQuadratic_def.hpp"
-
 #include "MechanicsElement.hpp"
+#include "Plato_AugLagStressCriterionQuadratic_def.hpp"
 #include "ThermomechanicsElement.hpp"
 #include "elliptic/ExpInstMacros.hpp"
 

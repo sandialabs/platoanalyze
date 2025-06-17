@@ -7,21 +7,22 @@
 #ifndef SIMPLEXSTRUCTURALDYNAMICS_HPP_
 #define SIMPLEXSTRUCTURALDYNAMICS_HPP_
 
-#include "Simplex.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "Simplex.hpp"
 
 namespace Plato
 {
 
-template<Plato::OrdinalType SpaceDim, Plato::OrdinalType NumControls = 1>
+template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumControls = 1>
 class SimplexStructuralDynamics : public Plato::Simplex<SpaceDim>
 {
-public:
+   public:
     using Plato::Simplex<SpaceDim>::mNumNodesPerCell;
     using Plato::Simplex<SpaceDim>::mNumSpatialDims;
 
     static constexpr Plato::OrdinalType mComplexSpaceDim = 2;
-    static constexpr Plato::OrdinalType mNumVoigtTerms = (SpaceDim == 3) ? 6 : ((SpaceDim == 2) ? 3: (((SpaceDim == 1) ? 1: 0)));
+    static constexpr Plato::OrdinalType mNumVoigtTerms =
+        (SpaceDim == 3) ? 6 : ((SpaceDim == 2) ? 3 : (((SpaceDim == 1) ? 1 : 0)));
     static constexpr Plato::OrdinalType mNumDofsPerNode = mComplexSpaceDim * SpaceDim;
     static constexpr Plato::OrdinalType mNumDofsPerCell = mNumDofsPerNode * mNumNodesPerCell;
 
@@ -30,10 +31,9 @@ public:
     static constexpr Plato::OrdinalType mNumNodeStatePerNode = 0;
 
     static constexpr Plato::OrdinalType mNumLocalDofsPerCell = 0;
-
 };
 // class SimplexStructuralDynamics
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* SIMPLEXSTRUCTURALDYNAMICS_HPP_ */

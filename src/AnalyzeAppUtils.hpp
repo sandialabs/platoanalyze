@@ -13,23 +13,23 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Extract vector solution from input scalar vector.
  *
  * \param [in] aFrom scalar vector
  * \param [in] aDof    degree of freedom
  * \param [in] aStride locations in memory between beginnings of successive array elements
- * 
+ *
  * \return scalar vector
-**********************************************************************************/
-Plato::ScalarVector
-get_vector_component
-(Plato::ScalarVector aFrom,
- Plato::OrdinalType aDof,
- Plato::OrdinalType aStride);
+ **********************************************************************************/
+Plato::ScalarVector get_vector_component(Plato::ScalarVector aFrom,
+                                         Plato::OrdinalType aDof,
+                                         Plato::OrdinalType aStride);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Set vector component in strided storage
  *
@@ -37,87 +37,74 @@ get_vector_component
  * \param [in] aFrom scalar vector containing data to be copied
  * \param [in] aDof    degree of freedom
  * \param [in] aStride locations in memory between beginnings of successive array elements
- * 
+ *
  * \return scalar vector
-**********************************************************************************/
-void
-set_vector_component
-(Plato::ScalarVector aTo,
- Plato::ScalarVector aFrom,
- Plato::OrdinalType aDof,
- Plato::OrdinalType aStride);
+ **********************************************************************************/
+void set_vector_component(Plato::ScalarVector aTo,
+                          Plato::ScalarVector aFrom,
+                          Plato::OrdinalType aDof,
+                          Plato::OrdinalType aStride);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Parse parameter list inline and set value of parsed parameter
  *
  * \param [in] aParams parameter list
  * \param [in] aTarget parameter tag
  * \param [in] aValue  parameter value
-**********************************************************************************/
-void
-parse_inline
-(Teuchos::ParameterList& aParams,
- const std::string& aTarget,
- Plato::Scalar aValue);
+ **********************************************************************************/
+void parse_inline(Teuchos::ParameterList& aParams, const std::string& aTarget, Plato::Scalar aValue);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Break input string apart by 'aDelimiter'.
  *
  * \param [in] aInputString input string
  * \param [in] aDelimiter   delimiter
- * 
- * \return vector of strings: tTokens 
-**********************************************************************************/
-std::vector<std::string>
-split
-(const std::string& aInputString,
- const char aDelimiter);
+ *
+ * \return vector of strings: tTokens
+ **********************************************************************************/
+std::vector<std::string> split(const std::string& aInputString, const char aDelimiter);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Return inner parameter list.
  *
  * \param [in] aParams parameter list
  * \param [in] aTokens tokens for parsing
- * 
+ *
  * \return parameter list
-**********************************************************************************/
-Teuchos::ParameterList&
-get_inner_list
-(Teuchos::ParameterList& aParams,
- std::vector<std::string>& aTokens);
+ **********************************************************************************/
+Teuchos::ParameterList& get_inner_list(Teuchos::ParameterList& aParams, std::vector<std::string>& aTokens);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Set parameter value in parameter list.
  *
  * \param [in] aParams parameter list
  * \param [in] aTokens tokens for parsing
  * \param [in] aValue  parameter value
-**********************************************************************************/
-void
-set_parameter_value
-(Teuchos::ParameterList& aParams,
- std::vector<std::string> aTokens,
- Plato::Scalar aValue);
+ **********************************************************************************/
+void set_parameter_value(Teuchos::ParameterList& aParams, std::vector<std::string> aTokens, Plato::Scalar aValue);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
- * \brief Find solution supported tag 
+ * \brief Find solution supported tag
  *
  * \param [in] aName     solution name
  * \param [in] aSolution solutions database
- * 
+ *
  * \return solution tag
-**********************************************************************************/
-std::string 
-find_solution_tag
-(const std::string & aName,
- const Plato::Solutions & aSolution);
+ **********************************************************************************/
+std::string find_solution_tag(const std::string& aName, const Plato::Solutions& aSolution);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  *
  * \brief Extract state solution from Solutions database
  *
@@ -125,28 +112,25 @@ find_solution_tag
  * \param [in] aSolution solutions database
  * \param [in] aDof      degree of freedom
  * \param [in] aStride   locations in memory between beginnings of successive array elements
- * 
+ *
  * \return scalar vector of state solutions
-**********************************************************************************/
-Plato::ScalarVector
-extract_solution
-(const std::string        & aName,
- const Plato::Solutions   & aSolution,
- const Plato::OrdinalType & aDof,
- const Plato::OrdinalType & aStride);
+ **********************************************************************************/
+Plato::ScalarVector extract_solution(const std::string& aName,
+                                     const Plato::Solutions& aSolution,
+                                     const Plato::OrdinalType& aDof,
+                                     const Plato::OrdinalType& aStride);
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \fn read_num_time_steps_from_pvd_file
  * \brief Read number of time steps from .pvd file
  *
  * \param [in] aOutputDirectory output directory name
  * \param [in] aFindKeyword     keyword to find in line
- * 
+ *
  * \return number of time steps
-**********************************************************************************/
-size_t read_num_time_steps_from_pvd_file
-(const std::string & aOutputDirectory,
- const std::string & aFindKeyword);
- 
-}
+ **********************************************************************************/
+size_t read_num_time_steps_from_pvd_file(const std::string& aOutputDirectory, const std::string& aFindKeyword);
+
+}  // namespace Plato
 // namespace Plato

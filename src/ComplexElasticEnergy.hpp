@@ -19,37 +19,36 @@ namespace Plato
  *  Function Description: Given the stress and strain Voigt tensors, compute the
  *  elastic energy for structural dynamics applications. Assumes single point
  *  integration.
-*/
+ */
 /******************************************************************************/
-template<Plato::OrdinalType NumVoigtTerms>
+template <Plato::OrdinalType NumVoigtTerms>
 class ComplexElasticEnergy
 {
-public:
-    ComplexElasticEnergy(){}
+   public:
+    ComplexElasticEnergy() {}
 
-    template<typename OutputScalarType, typename Tensor1ScalarType, typename Tensor2ScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()( const Plato::OrdinalType & aCellOrdinal,
-                const Plato::ScalarArray3DT<Tensor1ScalarType> & aStress,
-                const Plato::ScalarArray3DT<Tensor2ScalarType> & aStrain,
-                const Plato::ScalarVectorT<OutputScalarType> & aOutput) const
+    template <typename OutputScalarType, typename Tensor1ScalarType, typename Tensor2ScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarArray3DT<Tensor1ScalarType>& aStress,
+                                           const Plato::ScalarArray3DT<Tensor2ScalarType>& aStrain,
+                                           const Plato::ScalarVectorT<OutputScalarType>& aOutput) const
     {
         assert(aStress.size() == aStrain.size());
 
         aOutput(aCellOrdinal) = 0.0;
         const Plato::OrdinalType tComplexSpaceDim = aStress.extent(1);
-        for(Plato::OrdinalType tComplexDim = 0; tComplexDim < tComplexSpaceDim; tComplexDim++)
+        for (Plato::OrdinalType tComplexDim = 0; tComplexDim < tComplexSpaceDim; tComplexDim++)
         {
-            for(Plato::OrdinalType tIndex = 0; tIndex < NumVoigtTerms; tIndex++)
+            for (Plato::OrdinalType tIndex = 0; tIndex < NumVoigtTerms; tIndex++)
             {
-                aOutput(aCellOrdinal) += aStress(aCellOrdinal, tComplexDim, tIndex)
-                        * aStrain(aCellOrdinal, tComplexDim, tIndex);
+                aOutput(aCellOrdinal) +=
+                    aStress(aCellOrdinal, tComplexDim, tIndex) * aStrain(aCellOrdinal, tComplexDim, tIndex);
             }
         }
     }
 };
 // class ComplexDotProduct
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* COMPLEXELASTICENERGY_HPP_ */

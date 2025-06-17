@@ -20,16 +20,16 @@ namespace Plato
  *
  *  Function Description: Given the trial and experimental state values,
  *  compute the misfit. Assumes single point integration.
-*/
+ */
 /******************************************************************************/
-template<Plato::OrdinalType SpaceDim, Plato::OrdinalType NumControls = 1>
+template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumControls = 1>
 class ComputeFrequencyResponseMisfit : public Plato::SimplexStructuralDynamics<SpaceDim, NumControls>
 {
-private:
+   private:
     using Plato::SimplexStructuralDynamics<SpaceDim>::mNumDofsPerNode;
     using Plato::SimplexStructuralDynamics<SpaceDim>::mNumNodesPerCell;
 
-public:
+   public:
     /*************************************************************************/
     ComputeFrequencyResponseMisfit()
     /*************************************************************************/
@@ -37,26 +37,27 @@ public:
     }
 
     /*************************************************************************/
-    template<typename StateScalarType, typename OutputScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(const Plato::OrdinalType & aCellOrdinal,
-               const Plato::ScalarMultiVector & aExpStates,
-               const Plato::ScalarMultiVectorT<StateScalarType> & aTrialStates,
-               const Plato::ScalarVectorT<OutputScalarType> & aOutput) const
+    template <typename StateScalarType, typename OutputScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarMultiVector& aExpStates,
+                                           const Plato::ScalarMultiVectorT<StateScalarType>& aTrialStates,
+                                           const Plato::ScalarVectorT<OutputScalarType>& aOutput) const
     /*************************************************************************/
     {
         assert(aExpStates.size() == aTrialStates.size());
         assert(aExpStates.extent(0) == aOutput.size());
 
         aOutput(aCellOrdinal) = 0.0;
-        for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
+        for (Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
         {
-            for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
+            for (Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
             {
                 Plato::OrdinalType tRealDofIndex = (mNumDofsPerNode * tNodeIndex) + tDimIndex;
-                OutputScalarType tRealMisfit = aTrialStates(aCellOrdinal, tRealDofIndex) - aExpStates(aCellOrdinal, tRealDofIndex);
+                OutputScalarType tRealMisfit =
+                    aTrialStates(aCellOrdinal, tRealDofIndex) - aExpStates(aCellOrdinal, tRealDofIndex);
                 Plato::OrdinalType tImagDofIndex = (mNumDofsPerNode * tNodeIndex) + SpaceDim + tDimIndex;
-                OutputScalarType tImagMisfit = aTrialStates(aCellOrdinal, tImagDofIndex) - aExpStates(aCellOrdinal, tImagDofIndex);
+                OutputScalarType tImagMisfit =
+                    aTrialStates(aCellOrdinal, tImagDofIndex) - aExpStates(aCellOrdinal, tImagDofIndex);
                 aOutput(aCellOrdinal) += (tRealMisfit * tRealMisfit) + (tImagMisfit * tImagMisfit);
             }
         }
@@ -65,6 +66,6 @@ public:
 };
 // class ComputeFrequencyResponseMisfit
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* SRC_PLATO_COMPUTEFREQUENCYRESPONSEMISFIT_HPP_ */

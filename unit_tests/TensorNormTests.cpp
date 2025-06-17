@@ -1,14 +1,12 @@
-#include "util/PlatoTestHelpers.hpp"
-#include "PlatoStaticsTypes.hpp"
-
-#include "Tet4.hpp"
-#include "Mechanics.hpp"
-#include "TensorPNorm.hpp"
-
-#include "elliptic/EvaluationTypes.hpp"
-
-#include "Teuchos_UnitTestHarness.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
+
+#include "Mechanics.hpp"
+#include "PlatoStaticsTypes.hpp"
+#include "TensorPNorm.hpp"
+#include "Tet4.hpp"
+#include "Teuchos_UnitTestHarness.hpp"
+#include "elliptic/EvaluationTypes.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 namespace TensorNormTests
 {
@@ -28,17 +26,15 @@ TEUCHOS_UNIT_TEST(TensorNormTests, VonMisesPNormDefaultVolumeScaling)
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
 
     // set parameters
-    Teuchos::RCP<Teuchos::ParameterList> tParamList =
-      Teuchos::getParametersFromXmlString(
-      "<ParameterList name='von Mises P-Norm'>                                    \n"
-      "  <Parameter name='Type' type='string' value='Scalar Function'/>              \n"
-      "  <Parameter name='Scalar Function Type' type='string' value='Stress P-Norm'/>              \n"
-      "  <Parameter name='Exponent' type='double' value='6.0'/>              \n"
-      "  <ParameterList name='Normalize'>                                    \n"
-      "    <Parameter name='Type' type='string' value='Von Mises'/>              \n"
-      "  </ParameterList>                                                        \n"
-      "</ParameterList>                                                        \n"
-    );
+    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
+        "<ParameterList name='von Mises P-Norm'>                                    \n"
+        "  <Parameter name='Type' type='string' value='Scalar Function'/>              \n"
+        "  <Parameter name='Scalar Function Type' type='string' value='Stress P-Norm'/>              \n"
+        "  <Parameter name='Exponent' type='double' value='6.0'/>              \n"
+        "  <ParameterList name='Normalize'>                                    \n"
+        "    <Parameter name='Type' type='string' value='Von Mises'/>              \n"
+        "  </ParameterList>                                                        \n"
+        "</ParameterList>                                                        \n");
 
     // construct tensor norm
     Plato::TensorNormFactory<numVoigt, ResidualEvalT> tNormFactory;
@@ -53,21 +49,21 @@ TEUCHOS_UNIT_TEST(TensorNormTests, VonMisesPNormDefaultVolumeScaling)
 
     Kokkos::deep_copy(tResult, 0.0);
     Kokkos::deep_copy(tControl, 1.0);
-    Kokkos::deep_copy(tCellVolume, 0.5);    
+    Kokkos::deep_copy(tCellVolume, 0.5);
 
-    Kokkos::parallel_for("stress", Kokkos::RangePolicy<int>(0,tNumCells), KOKKOS_LAMBDA(const int & aCellOrdinal)
-    {
-        for (int tVoigtIndex=0; tVoigtIndex<numVoigt; tVoigtIndex++)
-        {
-            tStress(aCellOrdinal,tVoigtIndex) = 0.1*(tVoigtIndex + 1);
-        }
-    });
+    Kokkos::parallel_for(
+        "stress", Kokkos::RangePolicy<int>(0, tNumCells), KOKKOS_LAMBDA(const int& aCellOrdinal) {
+            for (int tVoigtIndex = 0; tVoigtIndex < numVoigt; tVoigtIndex++)
+            {
+                tStress(aCellOrdinal, tVoigtIndex) = 0.1 * (tVoigtIndex + 1);
+            }
+        });
 
     // compute tensor norm
     tNorm->evaluate(tResult, tStress, tControl, tCellVolume);
 
-    auto tResult_Host = Kokkos::create_mirror_view( tResult );
-    Kokkos::deep_copy( tResult_Host, tResult );
+    auto tResult_Host = Kokkos::create_mirror_view(tResult);
+    Kokkos::deep_copy(tResult_Host, tResult);
 
     TEST_FLOATING_EQUALITY(tResult_Host(0), 6.406452, 1e-13);
 }
@@ -87,18 +83,16 @@ TEUCHOS_UNIT_TEST(TensorNormTests, VonMisesPNormSpecifiedVolumeScaling)
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
 
     // set parameters
-    Teuchos::RCP<Teuchos::ParameterList> tParamList =
-      Teuchos::getParametersFromXmlString(
-      "<ParameterList name='von Mises P-Norm'>                                    \n"
-      "  <Parameter name='Type' type='string' value='Scalar Function'/>              \n"
-      "  <Parameter name='Scalar Function Type' type='string' value='Stress P-Norm'/>              \n"
-      "  <Parameter name='Exponent' type='double' value='6.0'/>              \n"
-      "  <ParameterList name='Normalize'>                                    \n"
-      "    <Parameter name='Type' type='string' value='Von Mises'/>              \n"
-      "    <Parameter name='Volume Scaling' type='bool' value='true'/>              \n"
-      "  </ParameterList>                                                        \n"
-      "</ParameterList>                                                        \n"
-    );
+    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
+        "<ParameterList name='von Mises P-Norm'>                                    \n"
+        "  <Parameter name='Type' type='string' value='Scalar Function'/>              \n"
+        "  <Parameter name='Scalar Function Type' type='string' value='Stress P-Norm'/>              \n"
+        "  <Parameter name='Exponent' type='double' value='6.0'/>              \n"
+        "  <ParameterList name='Normalize'>                                    \n"
+        "    <Parameter name='Type' type='string' value='Von Mises'/>              \n"
+        "    <Parameter name='Volume Scaling' type='bool' value='true'/>              \n"
+        "  </ParameterList>                                                        \n"
+        "</ParameterList>                                                        \n");
 
     // construct tensor norm
     Plato::TensorNormFactory<numVoigt, ResidualEvalT> tNormFactory;
@@ -113,21 +107,21 @@ TEUCHOS_UNIT_TEST(TensorNormTests, VonMisesPNormSpecifiedVolumeScaling)
 
     Kokkos::deep_copy(tResult, 0.0);
     Kokkos::deep_copy(tControl, 1.0);
-    Kokkos::deep_copy(tCellVolume, 2.7);    
+    Kokkos::deep_copy(tCellVolume, 2.7);
 
-    Kokkos::parallel_for("stress", Kokkos::RangePolicy<int>(0,tNumCells), KOKKOS_LAMBDA(const int & aCellOrdinal)
-    {
-        for (int tVoigtIndex=0; tVoigtIndex<numVoigt; tVoigtIndex++)
-        {
-            tStress(aCellOrdinal,tVoigtIndex) = 0.1*(tVoigtIndex + 1);
-        }
-    });
+    Kokkos::parallel_for(
+        "stress", Kokkos::RangePolicy<int>(0, tNumCells), KOKKOS_LAMBDA(const int& aCellOrdinal) {
+            for (int tVoigtIndex = 0; tVoigtIndex < numVoigt; tVoigtIndex++)
+            {
+                tStress(aCellOrdinal, tVoigtIndex) = 0.1 * (tVoigtIndex + 1);
+            }
+        });
 
     // compute tensor norm
     tNorm->evaluate(tResult, tStress, tControl, tCellVolume);
 
-    auto tResult_Host = Kokkos::create_mirror_view( tResult );
-    Kokkos::deep_copy( tResult_Host, tResult );
+    auto tResult_Host = Kokkos::create_mirror_view(tResult);
+    Kokkos::deep_copy(tResult_Host, tResult);
 
     TEST_FLOATING_EQUALITY(tResult_Host(0), 34.5948408, 1e-13);
 }
@@ -147,18 +141,16 @@ TEUCHOS_UNIT_TEST(TensorNormTests, VonMisesPNormNoVolumeScaling)
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
 
     // set parameters
-    Teuchos::RCP<Teuchos::ParameterList> tParamList =
-      Teuchos::getParametersFromXmlString(
-      "<ParameterList name='von Mises P-Norm'>                                    \n"
-      "  <Parameter name='Type' type='string' value='Scalar Function'/>              \n"
-      "  <Parameter name='Scalar Function Type' type='string' value='Stress P-Norm'/>              \n"
-      "  <Parameter name='Exponent' type='double' value='6.0'/>              \n"
-      "  <ParameterList name='Normalize'>                                    \n"
-      "    <Parameter name='Type' type='string' value='Von Mises'/>              \n"
-      "    <Parameter name='Volume Scaling' type='bool' value='false'/>              \n"
-      "  </ParameterList>                                                        \n"
-      "</ParameterList>                                                        \n"
-    );
+    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
+        "<ParameterList name='von Mises P-Norm'>                                    \n"
+        "  <Parameter name='Type' type='string' value='Scalar Function'/>              \n"
+        "  <Parameter name='Scalar Function Type' type='string' value='Stress P-Norm'/>              \n"
+        "  <Parameter name='Exponent' type='double' value='6.0'/>              \n"
+        "  <ParameterList name='Normalize'>                                    \n"
+        "    <Parameter name='Type' type='string' value='Von Mises'/>              \n"
+        "    <Parameter name='Volume Scaling' type='bool' value='false'/>              \n"
+        "  </ParameterList>                                                        \n"
+        "</ParameterList>                                                        \n");
 
     // construct tensor norm
     Plato::TensorNormFactory<numVoigt, ResidualEvalT> tNormFactory;
@@ -173,23 +165,23 @@ TEUCHOS_UNIT_TEST(TensorNormTests, VonMisesPNormNoVolumeScaling)
 
     Kokkos::deep_copy(tResult, 0.0);
     Kokkos::deep_copy(tControl, 1.0);
-    Kokkos::deep_copy(tCellVolume, 15.3);    
+    Kokkos::deep_copy(tCellVolume, 15.3);
 
-    Kokkos::parallel_for("stress", Kokkos::RangePolicy<int>(0,tNumCells), KOKKOS_LAMBDA(const int & aCellOrdinal)
-    {
-        for (int tVoigtIndex=0; tVoigtIndex<numVoigt; tVoigtIndex++)
-        {
-            tStress(aCellOrdinal,tVoigtIndex) = 0.1*(tVoigtIndex + 1);
-        }
-    });
+    Kokkos::parallel_for(
+        "stress", Kokkos::RangePolicy<int>(0, tNumCells), KOKKOS_LAMBDA(const int& aCellOrdinal) {
+            for (int tVoigtIndex = 0; tVoigtIndex < numVoigt; tVoigtIndex++)
+            {
+                tStress(aCellOrdinal, tVoigtIndex) = 0.1 * (tVoigtIndex + 1);
+            }
+        });
 
     // compute tensor norm
     tNorm->evaluate(tResult, tStress, tControl, tCellVolume);
 
-    auto tResult_Host = Kokkos::create_mirror_view( tResult );
-    Kokkos::deep_copy( tResult_Host, tResult );
+    auto tResult_Host = Kokkos::create_mirror_view(tResult);
+    Kokkos::deep_copy(tResult_Host, tResult);
 
     TEST_FLOATING_EQUALITY(tResult_Host(0), 12.812904, 1e-13);
 }
 
-}
+}  // namespace TensorNormTests

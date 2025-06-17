@@ -39,57 +39,57 @@
 */
 
 #include "ParallelComm.hpp"
-#include <Teuchos_DefaultComm.hpp>
+
 #include <Teuchos_CommHelpers.hpp>
+#include <Teuchos_DefaultComm.hpp>
 
+namespace Plato
+{
+namespace Comm
+{
 
-namespace Plato {
-namespace Comm {
-
-Machine::Machine(MPI_Comm& localComm) {
-  mpiSession = Teuchos::null;
-  teuchosComm = Teuchos::rcp(new Teuchos::MpiComm<int>(localComm));
+Machine::Machine(MPI_Comm& localComm)
+{
+    mpiSession = Teuchos::null;
+    teuchosComm = Teuchos::rcp(new Teuchos::MpiComm<int>(localComm));
 }
 
-Machine::Machine(int *argc, char ***argv) {
-  mpiSession = Teuchos::rcp(new Teuchos::GlobalMPISession(argc, argv));
-  teuchosComm = Teuchos::DefaultComm<int>::getComm();
+Machine::Machine(int* argc, char*** argv)
+{
+    mpiSession = Teuchos::rcp(new Teuchos::GlobalMPISession(argc, argv));
+    teuchosComm = Teuchos::DefaultComm<int>::getComm();
 }
 
-unsigned size(Machine const& machine) {
-  return (machine.teuchosComm)->getSize();
+unsigned size(Machine const& machine) { return (machine.teuchosComm)->getSize(); }
+
+unsigned rank(Machine const& machine) { return (machine.teuchosComm)->getRank(); }
+
+Plato::Scalar max(Machine const& machine, Plato::Scalar local)
+{
+    Plato::Scalar global = 0;
+    Teuchos::reduceAll(*(machine.teuchosComm), Teuchos::REDUCE_MAX, 1, &local, &global);
+    return global;
 }
 
-unsigned rank(Machine const& machine) {
-  return (machine.teuchosComm)->getRank();
+Plato::Scalar min(Machine const& machine, Plato::Scalar local)
+{
+    Plato::Scalar global = 0;
+    Teuchos::reduceAll(*(machine.teuchosComm), Teuchos::REDUCE_MIN, 1, &local, &global);
+    return global;
 }
 
-Plato::Scalar max(Machine const& machine, Plato::Scalar local) {
-  Plato::Scalar global = 0;
-  Teuchos::reduceAll(
-      *(machine.teuchosComm), Teuchos::REDUCE_MAX, 1, &local, &global);
-  return global;
+Plato::Scalar sum(Machine const& machine, Plato::Scalar local)
+{
+    Plato::Scalar global = 0;
+    Teuchos::reduceAll(*(machine.teuchosComm), Teuchos::REDUCE_SUM, 1, &local, &global);
+    return global;
 }
 
-Plato::Scalar min(Machine const& machine, Plato::Scalar local) {
-  Plato::Scalar global = 0;
-  Teuchos::reduceAll(
-      *(machine.teuchosComm), Teuchos::REDUCE_MIN, 1, &local, &global);
-  return global;
+void allReduce(Machine const& machine, int n, const Plato::Scalar* local, Plato::Scalar* global)
+{
+    std::copy(local, local + n, global);
+    Teuchos::reduceAll(*(machine.teuchosComm), Teuchos::REDUCE_SUM, n, local, global);
 }
 
-Plato::Scalar sum(Machine const& machine, Plato::Scalar local) {
-  Plato::Scalar global = 0;
-  Teuchos::reduceAll(
-      *(machine.teuchosComm), Teuchos::REDUCE_SUM, 1, &local, &global);
-  return global;
-}
-
-void allReduce(
-    Machine const& machine, int n, const Plato::Scalar *local, Plato::Scalar *global) {
-  std::copy(local, local + n, global);
-  Teuchos::reduceAll(
-      *(machine.teuchosComm), Teuchos::REDUCE_SUM, n, local, global);
-}
-
-}}  //end namespace Plato::Comm
+}  // namespace Comm
+}  // namespace Plato

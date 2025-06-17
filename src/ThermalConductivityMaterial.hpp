@@ -2,9 +2,9 @@
 #define LINEARTHERMALMATERIAL_HPP
 
 #include <Teuchos_ParameterList.hpp>
-#include "material/MaterialModel.hpp"
 
 #include "PlatoStaticsTypes.hpp"
+#include "material/MaterialModel.hpp"
 
 namespace Plato
 {
@@ -13,18 +13,18 @@ namespace Plato
 /*!
  \brief Base class for Linear Thermal material models
  */
-template<int SpatialDim>
+template <int SpatialDim>
 class ThermalConductionModel : public MaterialModel<SpatialDim>
 /******************************************************************************/
 {
-  public:
+   public:
     ThermalConductionModel(const Teuchos::ParameterList& paramList);
 };
 
 /******************************************************************************/
-template<int SpatialDim>
-ThermalConductionModel<SpatialDim>::
-ThermalConductionModel(const Teuchos::ParameterList& paramList) : MaterialModel<SpatialDim>(paramList)
+template <int SpatialDim>
+ThermalConductionModel<SpatialDim>::ThermalConductionModel(const Teuchos::ParameterList& paramList)
+    : MaterialModel<SpatialDim>(paramList)
 /******************************************************************************/
 {
     this->parseTensor("Thermal Conductivity", paramList);
@@ -34,23 +34,20 @@ ThermalConductionModel(const Teuchos::ParameterList& paramList) : MaterialModel<
 /*!
  \brief Factory for creating material models
  */
-template<int SpatialDim>
+template <int SpatialDim>
 class ThermalConductionModelFactory
 /******************************************************************************/
 {
-public:
-    ThermalConductionModelFactory(const Teuchos::ParameterList& aParamList) :
-            mParamList(aParamList)
-    {
-    }
+   public:
+    ThermalConductionModelFactory(const Teuchos::ParameterList& aParamList) : mParamList(aParamList) {}
     Teuchos::RCP<MaterialModel<SpatialDim>> create(std::string aModelName);
-private:
+
+   private:
     const Teuchos::ParameterList& mParamList;
 };
 /******************************************************************************/
-template<int SpatialDim>
-Teuchos::RCP<MaterialModel<SpatialDim>>
-ThermalConductionModelFactory<SpatialDim>::create(std::string aModelName)
+template <int SpatialDim>
+Teuchos::RCP<MaterialModel<SpatialDim>> ThermalConductionModelFactory<SpatialDim>::create(std::string aModelName)
 /******************************************************************************/
 {
     if (!mParamList.isSublist("Material Models"))
@@ -60,7 +57,7 @@ ThermalConductionModelFactory<SpatialDim>::create(std::string aModelName)
     }
     else
     {
-        auto tModelsParamList = mParamList.get < Teuchos::ParameterList > ("Material Models");
+        auto tModelsParamList = mParamList.get<Teuchos::ParameterList>("Material Models");
 
         if (!tModelsParamList.isSublist(aModelName))
         {
@@ -70,15 +67,15 @@ ThermalConductionModelFactory<SpatialDim>::create(std::string aModelName)
         }
 
         auto tModelParamList = tModelsParamList.sublist(aModelName);
-        if(tModelParamList.isSublist("Thermal Conduction"))
+        if (tModelParamList.isSublist("Thermal Conduction"))
         {
             return Teuchos::rcp(new ThermalConductionModel<SpatialDim>(tModelParamList.sublist("Thermal Conduction")));
         }
         else
-        ANALYZE_THROWERR("Expected 'Thermal Conduction' ParameterList");
+            ANALYZE_THROWERR("Expected 'Thermal Conduction' ParameterList");
     }
 }
 
-}
+}  // namespace Plato
 
 #endif

@@ -8,46 +8,46 @@ namespace Plato
 
 /******************************************************************************/
 /*! Homogenized stress functor.
-  
+
     given a characteristic strain, compute the homogenized stress.
 */
 /******************************************************************************/
-template<typename ElementType>
+template <typename ElementType>
 class HomogenizedStress : public ElementType
 {
-  private:
-
-    using ElementType::mNumVoigtTerms;
-    using ElementType::mNumNodesPerCell;
-    using ElementType::mNumDofsPerNode;
+   private:
     using ElementType::mNumDofsPerCell;
+    using ElementType::mNumDofsPerNode;
+    using ElementType::mNumNodesPerCell;
+    using ElementType::mNumVoigtTerms;
 
     const Plato::Matrix<mNumVoigtTerms, mNumVoigtTerms> mCellStiffness;
     const int mColumnIndex;
 
-  public:
+   public:
+    HomogenizedStress(const Plato::Matrix<mNumVoigtTerms, mNumVoigtTerms> aCellStiffness, int aColumnIndex)
+        : mCellStiffness(aCellStiffness), mColumnIndex(aColumnIndex)
+    {
+    }
 
-    HomogenizedStress( const Plato::Matrix<mNumVoigtTerms,mNumVoigtTerms> aCellStiffness, int aColumnIndex) :
-            mCellStiffness(aCellStiffness), 
-            mColumnIndex(aColumnIndex) {}
-
-    template<typename StressScalarType, typename StrainScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()( int cellOrdinal,
-                Plato::Array<mNumVoigtTerms, StressScalarType> & tStress,
-                Plato::Array<mNumVoigtTerms, StrainScalarType> & tStrain) const {
-
-      // compute stress
-      //
-      for( int iVoigt=0; iVoigt<mNumVoigtTerms; iVoigt++){
-        tStress(iVoigt) = mCellStiffness(mColumnIndex, iVoigt);
-        for( int jVoigt=0; jVoigt<mNumVoigtTerms; jVoigt++){
-          tStress(iVoigt) -= tStrain(jVoigt)*mCellStiffness(jVoigt, iVoigt);
+    template <typename StressScalarType, typename StrainScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(int cellOrdinal,
+                                           Plato::Array<mNumVoigtTerms, StressScalarType>& tStress,
+                                           Plato::Array<mNumVoigtTerms, StrainScalarType>& tStrain) const
+    {
+        // compute stress
+        //
+        for (int iVoigt = 0; iVoigt < mNumVoigtTerms; iVoigt++)
+        {
+            tStress(iVoigt) = mCellStiffness(mColumnIndex, iVoigt);
+            for (int jVoigt = 0; jVoigt < mNumVoigtTerms; jVoigt++)
+            {
+                tStress(iVoigt) -= tStrain(jVoigt) * mCellStiffness(jVoigt, iVoigt);
+            }
         }
-      }
     }
 };
 
-}
+}  // namespace Plato
 
 #endif

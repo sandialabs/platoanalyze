@@ -6,9 +6,8 @@
 
 #pragma once
 
-#include <memory>
-
 #include <Teuchos_ParameterList.hpp>
+#include <memory>
 
 #include "SpatialModel.hpp"
 #include "hyperbolic/fluids/FluidsCriterionBase.hpp"
@@ -19,40 +18,41 @@ namespace Plato
 namespace Fluids
 {
 
-/**************************************************************************//**
-* \struct CriterionFactory
-*
-* \brief Responsible for the construction of Plato criteria.
-******************************************************************************/
-template<typename PhysicsT>
+/**************************************************************************/
+/**
+ * \struct CriterionFactory
+ *
+ * \brief Responsible for the construction of Plato criteria.
+ ******************************************************************************/
+template <typename PhysicsT>
 class CriterionFactory
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Constructor
      **********************************************************************************/
-    CriterionFactory () {}
+    CriterionFactory() {}
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Create criterion interface.
      * \param [in] aModel   computational model metadata
      * \param [in] aDataMap output database
      * \param [in] aInputs  input file metadata
      * \param [in] aTag    scalar function tag
      **********************************************************************************/
-    std::shared_ptr<Plato::Fluids::CriterionBase>
-    createCriterion
-    (const Plato::SpatialModel    & aModel,
-           Plato::DataMap         & aDataMap,
-           Teuchos::ParameterList & aInputs,
-           std::string            & aTag);
+    std::shared_ptr<Plato::Fluids::CriterionBase> createCriterion(const Plato::SpatialModel& aModel,
+                                                                  Plato::DataMap& aDataMap,
+                                                                  Teuchos::ParameterList& aInputs,
+                                                                  std::string& aTag);
 };
 // class CriterionFactory
 
-}
+}  // namespace Fluids
 // namespace Fluids
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #include "hyperbolic/IncompressibleFluids.hpp"
