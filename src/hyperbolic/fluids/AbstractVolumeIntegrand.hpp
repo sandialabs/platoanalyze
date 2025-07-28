@@ -11,7 +11,8 @@
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \class AbstractVolumeIntegrand
  *
  * \tparam PhysicsT    physics type
@@ -20,17 +21,17 @@ namespace Plato
  * \brief Abstract class used to defined interface for cell/element volume integrals.
  *
  ******************************************************************************/
-template<typename PhysicsT, typename EvaluationT>
+template <typename PhysicsT, typename EvaluationT>
 class AbstractVolumeIntegrand
 {
-private:
+   private:
     using ResultT = typename EvaluationT::ResultScalarType; /*!< result FAD evaluation type */
 
-public:
+   public:
     virtual ~AbstractVolumeIntegrand() = default;
-    virtual void evaluate(const Plato::WorkSets & aWorkSets, Plato::ScalarMultiVectorT<ResultT> & aResultWS) const = 0;
+    virtual void evaluate(const Plato::WorkSets& aWorkSets, Plato::ScalarMultiVectorT<ResultT>& aResultWS) const = 0;
 };
 // class AbstractVolumeIntegrand
 
-}
+}  // namespace Plato
 // namespace Plato

@@ -21,37 +21,37 @@ namespace Plato
  *  quantities. Assumes single point integration.
  */
 /******************************************************************************/
-template<Plato::OrdinalType SpaceDim>
+template <Plato::OrdinalType SpaceDim>
 class ComplexInertialEnergy
 {
-public:
-    ComplexInertialEnergy(const Plato::Scalar & aOmega, const Plato::Scalar & aDensity) :
-        mOmegaTimesOmegaTimesDensity(1)
+   public:
+    ComplexInertialEnergy(const Plato::Scalar& aOmega, const Plato::Scalar& aDensity) : mOmegaTimesOmegaTimesDensity(1)
     {
         mOmegaTimesOmegaTimesDensity = aOmega * aOmega * aDensity;
     }
 
-    template<typename OutputScalarType, typename StateScalarType, typename VolumeScalarType>
-    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarVectorT<VolumeScalarType> & aCellVolume,
-                                       const Plato::ScalarMultiVectorT<StateScalarType> & aStateValues,
-                                       const Plato::ScalarVectorT<OutputScalarType> & aInertialEnergy) const
+    template <typename OutputScalarType, typename StateScalarType, typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarVectorT<VolumeScalarType>& aCellVolume,
+                                           const Plato::ScalarMultiVectorT<StateScalarType>& aStateValues,
+                                           const Plato::ScalarVectorT<OutputScalarType>& aInertialEnergy) const
     {
         aInertialEnergy(aCellOrdinal) = 0.0;
-        for(Plato::OrdinalType tIndex = 0; tIndex < SpaceDim; tIndex++)
+        for (Plato::OrdinalType tIndex = 0; tIndex < SpaceDim; tIndex++)
         {
-            aInertialEnergy(aCellOrdinal) -= mOmegaTimesOmegaTimesDensity * aCellVolume(aCellOrdinal) 
-                    * ( (aStateValues(aCellOrdinal, tIndex) * aStateValues(aCellOrdinal, tIndex))
-                    + (aStateValues(aCellOrdinal, SpaceDim + tIndex) * aStateValues(aCellOrdinal, SpaceDim + tIndex)) );
+            aInertialEnergy(aCellOrdinal) -=
+                mOmegaTimesOmegaTimesDensity * aCellVolume(aCellOrdinal) *
+                ((aStateValues(aCellOrdinal, tIndex) * aStateValues(aCellOrdinal, tIndex)) +
+                 (aStateValues(aCellOrdinal, SpaceDim + tIndex) * aStateValues(aCellOrdinal, SpaceDim + tIndex)));
         }
     }
 
-private:
+   private:
     /* Omega = Angular Frequency,  Density = Material Density*/
     Plato::Scalar mOmegaTimesOmegaTimesDensity;
 };
 // class ComplexInertialEnergy
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* COMPLEXINERTIALENERGY_HPP_ */

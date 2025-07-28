@@ -1,10 +1,10 @@
 #pragma once
 
-#include "PlatoMesh.hpp"
-#include "PlatoStaticsTypes.hpp"
-
 #include <Teuchos_ParameterList.hpp>
 #include <string>
+
+#include "PlatoMesh.hpp"
+#include "PlatoStaticsTypes.hpp"
 
 namespace Plato
 {
@@ -14,45 +14,32 @@ namespace Contact
 
 class ContactSurface
 {
-public:
+   public:
     ContactSurface();
 
-    void
-    initialize
-    (const Teuchos::ParameterList & aParams,
-     Plato::Mesh                    aMesh);
+    void initialize(const Teuchos::ParameterList& aParams, Plato::Mesh aMesh);
 
-    void
-    addParentData
-    (const Plato::OrdinalVector     & aParentElements,
-     const Plato::OrdinalVector     & aElementWiseChildMap,
-     const Plato::ScalarMultiVector & aMappedChildNodeLocations);
+    void addParentData(const Plato::OrdinalVector& aParentElements,
+                       const Plato::OrdinalVector& aElementWiseChildMap,
+                       const Plato::ScalarMultiVector& aMappedChildNodeLocations);
 
-    const std::string &
-    childSideSet() const { return mChildSideSet; }
+    const std::string& childSideSet() const { return mChildSideSet; }
 
-    Plato::OrdinalVectorT<const Plato::OrdinalType>
-    childNodes() const { return mChildNodes; }
+    Plato::OrdinalVectorT<const Plato::OrdinalType> childNodes() const { return mChildNodes; }
 
-    Plato::OrdinalVectorT<const Plato::OrdinalType>
-    childElements() const { return mChildElements; }
+    Plato::OrdinalVectorT<const Plato::OrdinalType> childElements() const { return mChildElements; }
 
-    Plato::OrdinalVectorT<const Plato::OrdinalType>
-    childFaceLocalNodes() const { return mChildFaceLocalNodes; }
+    Plato::OrdinalVectorT<const Plato::OrdinalType> childFaceLocalNodes() const { return mChildFaceLocalNodes; }
 
-    const std::string &
-    parentBlock() const { return mParentBlock; }
+    const std::string& parentBlock() const { return mParentBlock; }
 
-    Plato::OrdinalVector
-    parentElements() const;
+    Plato::OrdinalVector parentElements() const;
 
-    Plato::OrdinalVector
-    elementWiseChildMap() const;
+    Plato::OrdinalVector elementWiseChildMap() const;
 
-    Plato::ScalarMultiVector
-    mappedChildNodeLocations() const;
+    Plato::ScalarMultiVector mappedChildNodeLocations() const;
 
-private:
+   private:
     std::string mChildSideSet;
     Plato::OrdinalVectorT<const Plato::OrdinalType> mChildNodes;
     Plato::OrdinalVectorT<const Plato::OrdinalType> mChildElements;
@@ -75,22 +62,16 @@ struct ContactPair
     Plato::Scalar searchTolerance;
 };
 
-Teuchos::Array<Plato::Scalar> 
-scale_initial_gap
-(const Teuchos::Array<Plato::Scalar> aGap,
- Plato::Scalar                       aScale);
+Teuchos::Array<Plato::Scalar> scale_initial_gap(const Teuchos::Array<Plato::Scalar> aGap, Plato::Scalar aScale);
 
-Plato::OrdinalType count_total_child_nodes(const std::vector<ContactPair> & aPairs);
+Plato::OrdinalType count_total_child_nodes(const std::vector<ContactPair>& aPairs);
 
-void populate_full_contact_arrays
-(const std::vector<ContactPair> & aPairs,
-       Plato::OrdinalVector     & aChildNodes,
-       Plato::OrdinalVector     & aParentElements);
+void populate_full_contact_arrays(const std::vector<ContactPair>& aPairs,
+                                  Plato::OrdinalVector& aChildNodes,
+                                  Plato::OrdinalVector& aParentElements);
 
-void check_for_repeated_child_nodes
-(const Plato::OrdinalVector & aChildNodes,
-       Plato::OrdinalType     aNumMeshNodes);
+void check_for_repeated_child_nodes(const Plato::OrdinalVector& aChildNodes, Plato::OrdinalType aNumMeshNodes);
 
-}
+}  // namespace Contact
 
-}
+}  // namespace Plato

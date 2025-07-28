@@ -11,23 +11,25 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Derived class for cubic linear elastic material models
  *
  * \tparam SpatialDim spatial dimensions, options 1D, 2D, and 3D
  *
-**********************************************************************************/
-template<Plato::OrdinalType SpatialDim>
+ **********************************************************************************/
+template <Plato::OrdinalType SpatialDim>
 class CubicLinearElasticMaterial : public LinearElasticMaterial<SpatialDim>
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Linear elastic cubic material model constructor.
      * \param [in] aParamList input parameter list
-    **********************************************************************************/
+     **********************************************************************************/
     CubicLinearElasticMaterial(const Teuchos::ParameterList& aParamList);
 };
 // class CubicLinearElasticMaterial
 
-}
+}  // namespace Plato
 // namespace Plato

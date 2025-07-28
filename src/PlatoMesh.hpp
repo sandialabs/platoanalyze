@@ -10,48 +10,46 @@
 #include "EngineMesh.hpp"
 #include "EngineMeshIO.hpp"
 
-namespace Plato {
+namespace Plato
+{
 
 #ifdef USE_OMEGAH_MESH
-    using MeshType = OmegaHMesh;
-    using MeshIOType = OmegaHMeshIO;
+using MeshType = OmegaHMesh;
+using MeshIOType = OmegaHMeshIO;
 #else
-    using MeshType = EngineMesh;
-    using MeshIOType = EngineMeshIO;
+using MeshType = EngineMesh;
+using MeshIOType = EngineMeshIO;
 #endif
 
-    using Mesh = std::shared_ptr<Plato::MeshType>;
-    namespace MeshFactory
-    {
-        inline void initialize(int& aArgc, char**& aArgv)
-        {
+using Mesh = std::shared_ptr<Plato::MeshType>;
+namespace MeshFactory
+{
+inline void initialize(int& aArgc, char**& aArgv)
+{
 #ifdef USE_OMEGAH_MESH
-            Plato::OmegaH::Library = new Omega_h::Library(&aArgc, &aArgv);
+    Plato::OmegaH::Library = new Omega_h::Library(&aArgc, &aArgv);
 #endif
-        }
-        inline Plato::Mesh create(std::string aFilePath)
-        {
-            return std::make_shared<Plato::MeshType>(aFilePath);
-        }
-        inline void finalize()
-        {
+}
+inline Plato::Mesh create(std::string aFilePath) { return std::make_shared<Plato::MeshType>(aFilePath); }
+inline void finalize()
+{
 #ifdef USE_OMEGAH_MESH
-            if(Plato::OmegaH::Library) delete Plato::OmegaH::Library;
+    if (Plato::OmegaH::Library) delete Plato::OmegaH::Library;
 #endif
-        }
-    }
-    // end namespace MeshFactory
+}
+}  // namespace MeshFactory
+// end namespace MeshFactory
 
-    using MeshIO = std::shared_ptr<Plato::MeshIOType>;
-    namespace MeshIOFactory
-    {
-        /// @pre @a aMesh must not be `nullptr`. Checked with an assertion.
-        inline Plato::MeshIO create(std::string aFilePath, Plato::Mesh aMesh, std::string aMode)
-        {
-            assert(aMesh);
-            return std::make_shared<Plato::MeshIOType>(aFilePath, *aMesh, aMode);
-        }
-    }
-    // end namespace MeshIOFactory
+using MeshIO = std::shared_ptr<Plato::MeshIOType>;
+namespace MeshIOFactory
+{
+/// @pre @a aMesh must not be `nullptr`. Checked with an assertion.
+inline Plato::MeshIO create(std::string aFilePath, Plato::Mesh aMesh, std::string aMode)
+{
+    assert(aMesh);
+    return std::make_shared<Plato::MeshIOType>(aFilePath, *aMesh, aMode);
+}
+}  // namespace MeshIOFactory
+// end namespace MeshIOFactory
 
-} // end namespace Plato
+}  // end namespace Plato

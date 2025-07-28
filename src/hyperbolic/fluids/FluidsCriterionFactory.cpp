@@ -5,6 +5,7 @@
  */
 
 #include "hyperbolic/fluids/FluidsCriterionFactory.hpp"
+
 #include "hyperbolic/fluids/FluidsCriterionFactory_def.hpp"
 
 #ifdef PLATOANALYZE_1D

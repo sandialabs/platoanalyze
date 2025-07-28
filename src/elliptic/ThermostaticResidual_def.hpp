@@ -1,14 +1,13 @@
 #pragma once
 
-#include "elliptic/ThermostaticResidual_decl.hpp"
-
-#include "ToMap.hpp"
 #include "FadTypes.hpp"
-#include "ScalarGrad.hpp"
-#include "ThermalFlux.hpp"
+#include "GeneralFluxDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
-#include "GeneralFluxDivergence.hpp"
+#include "ScalarGrad.hpp"
+#include "ThermalFlux.hpp"
+#include "ToMap.hpp"
+#include "elliptic/ThermostaticResidual_decl.hpp"
 
 namespace Plato
 {
@@ -16,197 +15,194 @@ namespace Plato
 namespace Elliptic
 {
 
-    template<typename EvaluationType, typename IndicatorFunctionType>
-    ThermostaticResidual<EvaluationType, IndicatorFunctionType>::ThermostaticResidual(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              Teuchos::ParameterList & penaltyParams
-    ) :
-        FunctionBaseType   (aSpatialDomain, aDataMap),
-        mIndicatorFunction (penaltyParams),
-        mApplyWeighting    (mIndicatorFunction),
-        mBodyLoads         (nullptr),
-        mBoundaryLoads     (nullptr)
-    /**************************************************************************/
+template <typename EvaluationType, typename IndicatorFunctionType>
+ThermostaticResidual<EvaluationType, IndicatorFunctionType>::ThermostaticResidual(
+    const Plato::SpatialDomain& aSpatialDomain,
+    Plato::DataMap& aDataMap,
+    Teuchos::ParameterList& aProblemParams,
+    Teuchos::ParameterList& penaltyParams)
+    : FunctionBaseType(aSpatialDomain, aDataMap),
+      mIndicatorFunction(penaltyParams),
+      mApplyWeighting(mIndicatorFunction),
+      mBodyLoads(nullptr),
+      mBoundaryLoads(nullptr)
+/**************************************************************************/
+{
+    // obligatory: define dof names in order
+    mDofNames.push_back("temperature");
+
+    Plato::ThermalConductionModelFactory<mNumSpatialDims> tMaterialFactory(aProblemParams);
+    mMaterialModel = tMaterialFactory.create(aSpatialDomain.getMaterialName());
+
+    // parse body loads
+    //
+    if (aProblemParams.isSublist("Body Loads"))
     {
-        // obligatory: define dof names in order
-        mDofNames.push_back("temperature");
-
-        Plato::ThermalConductionModelFactory<mNumSpatialDims> tMaterialFactory(aProblemParams);
-        mMaterialModel = tMaterialFactory.create(aSpatialDomain.getMaterialName());
-
-        // parse body loads
-        // 
-        if(aProblemParams.isSublist("Body Loads"))
-        {
-            mBodyLoads = std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-        }
-
-        // parse boundary Conditions
-        // 
-        if(aProblemParams.isSublist("Natural Boundary Conditions"))
-        {
-            mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType, mNumDofsPerNode>>(aProblemParams.sublist("Natural Boundary Conditions"));
-        }
-
-        auto tResidualParams = aProblemParams.sublist("Elliptic");
-        if( tResidualParams.isType<Teuchos::Array<std::string>>("Plottable") )
-        {
-            mPlottable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-        }
+        mBodyLoads =
+            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
     }
 
-    /****************************************************************************//**
-    * \brief Pure virtual function to get output solution data
-    * \param [in] state solution database
-    * \return output state solution database
-    ********************************************************************************/
-    template<typename EvaluationType, typename IndicatorFunctionType>
-    Plato::Solutions ThermostaticResidual<EvaluationType, IndicatorFunctionType>::
-    getSolutionStateOutputData(const Plato::Solutions &aSolutions) const 
+    // parse boundary Conditions
+    //
+    if (aProblemParams.isSublist("Natural Boundary Conditions"))
     {
-      return aSolutions;
+        mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType, mNumDofsPerNode>>(
+            aProblemParams.sublist("Natural Boundary Conditions"));
     }
 
-    /**************************************************************************/
-    template<typename EvaluationType, typename IndicatorFunctionType>
-    void
-    ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
-        const Plato::ScalarMultiVectorT <StateScalarType  > & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType> & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType > & aConfig,
-              Plato::ScalarMultiVectorT <ResultScalarType > & aResult,
-              Plato::Scalar aTimeStep
-    ) const
-    /**************************************************************************/
+    auto tResidualParams = aProblemParams.sublist("Elliptic");
+    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
     {
-      using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
+        mPlottable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
+    }
+}
 
-      auto tNumCells = mSpatialDomain.numCells();
+/****************************************************************************/
+/**
+ * \brief Pure virtual function to get output solution data
+ * \param [in] state solution database
+ * \return output state solution database
+ ********************************************************************************/
+template <typename EvaluationType, typename IndicatorFunctionType>
+Plato::Solutions ThermostaticResidual<EvaluationType, IndicatorFunctionType>::getSolutionStateOutputData(
+    const Plato::Solutions& aSolutions) const
+{
+    return aSolutions;
+}
 
-      Plato::ComputeGradientMatrix<ElementType>  computeGradient;
-      Plato::ScalarGrad<ElementType>             scalarGrad;
-      Plato::GeneralFluxDivergence<ElementType>  fluxDivergence;
+/**************************************************************************/
+template <typename EvaluationType, typename IndicatorFunctionType>
+void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
+    const Plato::ScalarMultiVectorT<StateScalarType>& aState,
+    const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
+    const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+    Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
+    Plato::Scalar aTimeStep) const
+/**************************************************************************/
+{
+    using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
 
-      Plato::ThermalFlux<ElementType>            thermalFlux(mMaterialModel);
+    auto tNumCells = mSpatialDomain.numCells();
 
-      Plato::ScalarVectorT<ConfigScalarType> tCellVolume("cell weight",tNumCells);
+    Plato::ComputeGradientMatrix<ElementType> computeGradient;
+    Plato::ScalarGrad<ElementType> scalarGrad;
+    Plato::GeneralFluxDivergence<ElementType> fluxDivergence;
 
-      Plato::ScalarMultiVectorT<GradScalarType>   tCellGrad("temperature gradient", tNumCells, mNumSpatialDims);
-      Plato::ScalarMultiVectorT<ResultScalarType> tCellFlux("thermal flux", tNumCells, mNumSpatialDims);
+    Plato::ThermalFlux<ElementType> thermalFlux(mMaterialModel);
 
-      Plato::InterpolateFromNodal<ElementType, mNumDofsPerNode> interpolateFromNodal;
-    
-      auto tCubPoints = ElementType::getCubPoints();
-      auto tCubWeights = ElementType::getCubWeights();
-      auto tNumPoints = tCubWeights.size();
+    Plato::ScalarVectorT<ConfigScalarType> tCellVolume("cell weight", tNumCells);
 
-      auto& applyWeighting = mApplyWeighting;
+    Plato::ScalarMultiVectorT<GradScalarType> tCellGrad("temperature gradient", tNumCells, mNumSpatialDims);
+    Plato::ScalarMultiVectorT<ResultScalarType> tCellFlux("thermal flux", tNumCells, mNumSpatialDims);
 
-      Kokkos::parallel_for("compute stress", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-      KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal)
-      {
-          ConfigScalarType tVolume(0.0);
+    Plato::InterpolateFromNodal<ElementType, mNumDofsPerNode> interpolateFromNodal;
 
-          Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, ConfigScalarType> tGradient;
+    auto tCubPoints = ElementType::getCubPoints();
+    auto tCubWeights = ElementType::getCubWeights();
+    auto tNumPoints = tCubWeights.size();
 
-          Plato::Array<ElementType::mNumSpatialDims, GradScalarType> tGrad(0.0);
-          Plato::Array<ElementType::mNumSpatialDims, ResultScalarType> tFlux(0.0);
+    auto& applyWeighting = mApplyWeighting;
 
-          auto tCubPoint = tCubPoints(iGpOrdinal);
-          auto tBasisValues = ElementType::basisValues(tCubPoint);
+    Kokkos::parallel_for(
+        "compute stress", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal) {
+            ConfigScalarType tVolume(0.0);
 
-          computeGradient(iCellOrdinal, tCubPoint, aConfig, tGradient, tVolume);
-    
-          scalarGrad(iCellOrdinal, tGrad, aState, tGradient);
-    
-          StateScalarType tTemperature = interpolateFromNodal(iCellOrdinal, tBasisValues, aState);
-          thermalFlux(tFlux, tGrad, tTemperature);
-    
-          tVolume *= tCubWeights(iGpOrdinal);
+            Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, ConfigScalarType> tGradient;
 
-          applyWeighting(iCellOrdinal, aControl, tBasisValues, tFlux);
-    
-          fluxDivergence(iCellOrdinal, aResult, tFlux, tGradient, tVolume, -1.0);
-        
-          for(int i=0; i<ElementType::mNumSpatialDims; i++)
-          {
-              Kokkos::atomic_add(&tCellGrad(iCellOrdinal,i), tVolume*tGrad(i));
-              Kokkos::atomic_add(&tCellFlux(iCellOrdinal,i), tVolume*tFlux(i));
-          }
-          Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tVolume);
-      });
+            Plato::Array<ElementType::mNumSpatialDims, GradScalarType> tGrad(0.0);
+            Plato::Array<ElementType::mNumSpatialDims, ResultScalarType> tFlux(0.0);
 
-      Kokkos::parallel_for("compute cell quantities", Kokkos::RangePolicy<>(0, tNumCells),
-      KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal)
-      {
-          for(int i=0; i<ElementType::mNumSpatialDims; i++)
-          {
-              tCellGrad(iCellOrdinal,i) /= tCellVolume(iCellOrdinal);
-              tCellFlux(iCellOrdinal,i) /= tCellVolume(iCellOrdinal);
-          }
-      });
+            auto tCubPoint = tCubPoints(iGpOrdinal);
+            auto tBasisValues = ElementType::basisValues(tCubPoint);
 
-      if( mBodyLoads != nullptr )
-      {
-          mBodyLoads->get( mSpatialDomain, aState, aControl, aConfig, aResult, -1.0 );
-      }
+            computeGradient(iCellOrdinal, tCubPoint, aConfig, tGradient, tVolume);
 
-      if( std::count(mPlottable.begin(),mPlottable.end(),"tgrad") ) toMap(mDataMap, tCellGrad, "tgrad", mSpatialDomain);
-      if( std::count(mPlottable.begin(),mPlottable.end(),"flux" ) ) toMap(mDataMap, tCellFlux, "flux" , mSpatialDomain);
+            scalarGrad(iCellOrdinal, tGrad, aState, tGradient);
+
+            StateScalarType tTemperature = interpolateFromNodal(iCellOrdinal, tBasisValues, aState);
+            thermalFlux(tFlux, tGrad, tTemperature);
+
+            tVolume *= tCubWeights(iGpOrdinal);
+
+            applyWeighting(iCellOrdinal, aControl, tBasisValues, tFlux);
+
+            fluxDivergence(iCellOrdinal, aResult, tFlux, tGradient, tVolume, -1.0);
+
+            for (int i = 0; i < ElementType::mNumSpatialDims; i++)
+            {
+                Kokkos::atomic_add(&tCellGrad(iCellOrdinal, i), tVolume * tGrad(i));
+                Kokkos::atomic_add(&tCellFlux(iCellOrdinal, i), tVolume * tFlux(i));
+            }
+            Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tVolume);
+        });
+
+    Kokkos::parallel_for(
+        "compute cell quantities", Kokkos::RangePolicy<>(0, tNumCells),
+        KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal) {
+            for (int i = 0; i < ElementType::mNumSpatialDims; i++)
+            {
+                tCellGrad(iCellOrdinal, i) /= tCellVolume(iCellOrdinal);
+                tCellFlux(iCellOrdinal, i) /= tCellVolume(iCellOrdinal);
+            }
+        });
+
+    if (mBodyLoads != nullptr)
+    {
+        mBodyLoads->get(mSpatialDomain, aState, aControl, aConfig, aResult, -1.0);
     }
 
-    /**************************************************************************/
-    template<typename EvaluationType, typename IndicatorFunctionType>
-    void
-    ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-        const Plato::SpatialModel                           & aSpatialModel,
-        const Plato::ScalarMultiVectorT <StateScalarType  > & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType> & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType > & aConfig,
-              Plato::ScalarMultiVectorT <ResultScalarType > & aResult,
-              Plato::Scalar aTimeStep
-    ) const
-    /**************************************************************************/
-    {
-        if( mBoundaryLoads != nullptr )
-        {
-            mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult,  -1.0 );
-        }
-    }
+    if (std::count(mPlottable.begin(), mPlottable.end(), "tgrad")) toMap(mDataMap, tCellGrad, "tgrad", mSpatialDomain);
+    if (std::count(mPlottable.begin(), mPlottable.end(), "flux")) toMap(mDataMap, tCellFlux, "flux", mSpatialDomain);
+}
 
-    /******************************************************************************//**
-     * \brief Evaluate contact
-     *
-     * \param [in] aSpatialModel Plato Analyze spatial model
-     * \param [in] aSideSet side set to evaluate contact on
-     * \param [in] aComputeSurfaceDisp functor for computing displacement on surface
-     * \param [in] aComputeContactForce functor for computing contact force
-     * \param [in] aState 2D array with state variables (C,DOF)
-     * \param [in] aControl 2D array with control variables (C,N)
-     * \param [in] aConfig 3D array with control variables (C,N,D)
-     * \param [in] aResult 1D array with control variables (C,DOF)
-     * \param [in] aTimeStep current time step
-     *
-     * Nomenclature: C = number of cells, DOF = number of degrees of freedom per cell
-     * N = number of nodes per cell, D = spatial dimensions
-    **********************************************************************************/
-    template<typename EvaluationType, typename IndicatorFunctionType>
-    void
-    ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_contact(
-        const Plato::SpatialModel                                                       & aSpatialModel,
-        const std::string                                                               & aSideSet,
-              Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>>   aComputeSurfaceDisp,
-              Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>>          aComputeContactForce,
-        const Plato::ScalarMultiVectorT <StateScalarType>                               & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType>                             & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType>                              & aConfig,
-              Plato::ScalarMultiVectorT <ResultScalarType>                              & aResult,
-              Plato::Scalar aTimeStep
-    ) const
+/**************************************************************************/
+template <typename EvaluationType, typename IndicatorFunctionType>
+void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
+    const Plato::SpatialModel& aSpatialModel,
+    const Plato::ScalarMultiVectorT<StateScalarType>& aState,
+    const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
+    const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+    Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
+    Plato::Scalar aTimeStep) const
+/**************************************************************************/
+{
+    if (mBoundaryLoads != nullptr)
     {
+        mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0);
     }
-} // namespace Elliptic
+}
 
-} // namespace Plato
+/******************************************************************************/
+/**
+ * \brief Evaluate contact
+ *
+ * \param [in] aSpatialModel Plato Analyze spatial model
+ * \param [in] aSideSet side set to evaluate contact on
+ * \param [in] aComputeSurfaceDisp functor for computing displacement on surface
+ * \param [in] aComputeContactForce functor for computing contact force
+ * \param [in] aState 2D array with state variables (C,DOF)
+ * \param [in] aControl 2D array with control variables (C,N)
+ * \param [in] aConfig 3D array with control variables (C,N,D)
+ * \param [in] aResult 1D array with control variables (C,DOF)
+ * \param [in] aTimeStep current time step
+ *
+ * Nomenclature: C = number of cells, DOF = number of degrees of freedom per cell
+ * N = number of nodes per cell, D = spatial dimensions
+ **********************************************************************************/
+template <typename EvaluationType, typename IndicatorFunctionType>
+void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_contact(
+    const Plato::SpatialModel& aSpatialModel,
+    const std::string& aSideSet,
+    Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
+    Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>> aComputeContactForce,
+    const Plato::ScalarMultiVectorT<StateScalarType>& aState,
+    const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
+    const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+    Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
+    Plato::Scalar aTimeStep) const
+{
+}
+}  // namespace Elliptic
+
+}  // namespace Plato

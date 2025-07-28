@@ -1,10 +1,10 @@
 #include "ScalarFunctor.hpp"
 
-#include "PlatoTypes.hpp"
-#include "AnalyzeMacros.hpp"
-
-#include <Teuchos_ParameterList.hpp>
 #include <Kokkos_Core.hpp>
+#include <Teuchos_ParameterList.hpp>
+
+#include "AnalyzeMacros.hpp"
+#include "PlatoTypes.hpp"
 
 namespace Plato
 {
@@ -35,4 +35,4 @@ ScalarFunctor::ScalarFunctor(Teuchos::ParameterList& aParams) : c0(0.0), c1(0.0)
     }
 }
 
-}
+}  // namespace Plato

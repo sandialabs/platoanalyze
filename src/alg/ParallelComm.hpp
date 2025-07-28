@@ -41,25 +41,29 @@
 #ifndef ANALYZE_PARALLEL_COMM_HPP
 #define ANALYZE_PARALLEL_COMM_HPP
 
-#include <Teuchos_RCPDecl.hpp>
-#include <Teuchos_GlobalMPISession.hpp>
-#include <Teuchos_Comm.hpp>
-#include <PlatoTypes.hpp>
 #include <mpi.h>
+
+#include <PlatoTypes.hpp>
+#include <Teuchos_Comm.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
+#include <Teuchos_RCPDecl.hpp>
 #include <memory>
 
-namespace Plato {
-namespace Comm {
+namespace Plato
+{
+namespace Comm
+{
 
-struct Machine {
-  Teuchos::RCP<Teuchos::GlobalMPISession> mpiSession;
-  Teuchos::RCP<const Teuchos::Comm<int>>  teuchosComm;
+struct Machine
+{
+    Teuchos::RCP<Teuchos::GlobalMPISession> mpiSession;
+    Teuchos::RCP<const Teuchos::Comm<int>> teuchosComm;
 
-  Machine(MPI_Comm& localComm);
+    Machine(MPI_Comm& localComm);
 
-  Machine(int *argc, char ***argv);
+    Machine(int* argc, char*** argv);
 
-  Machine();
+    Machine();
 };
 
 unsigned size(Machine const& machine);
@@ -71,9 +75,9 @@ Plato::Scalar min(Machine const& machine, Plato::Scalar local);
 
 Plato::Scalar sum(Machine const& machine, Plato::Scalar local);
 
-void allReduce(
-    Machine const& machine, int n, const Plato::Scalar *local, Plato::Scalar *global);
+void allReduce(Machine const& machine, int n, const Plato::Scalar* local, Plato::Scalar* global);
 
-}}  //end namespace Plato::comm
+}  // namespace Comm
+}  // namespace Plato
 
 #endif

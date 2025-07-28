@@ -4,19 +4,18 @@
 
 #include "PlatoTypes.hpp"
 
-namespace Plato {
+namespace Plato
+{
 
-namespace Geometry {
+namespace Geometry
+{
 
-  template<typename ElementType>
-  struct FadTypes {
+template <typename ElementType>
+struct FadTypes
+{
+    using ControlFad = Sacado::Fad::SFad<Plato::Scalar, ElementType::mNumNodesPerCell>;
+    using ConfigFad = Sacado::Fad::SFad<Plato::Scalar, ElementType::mNumSpatialDims * ElementType::mNumNodesPerCell>;
+};
+}  // namespace Geometry
 
-    using ControlFad   = Sacado::Fad::SFad<Plato::Scalar,
-                                           ElementType::mNumNodesPerCell>;
-    using ConfigFad    = Sacado::Fad::SFad<Plato::Scalar,
-                                           ElementType::mNumSpatialDims*
-                                           ElementType::mNumNodesPerCell>;
-  };
-} // namespace Geometry
-
-} // namespace Plato
+}  // namespace Plato

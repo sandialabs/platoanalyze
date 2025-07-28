@@ -15,7 +15,7 @@
 #endif
 
 /******************************************************************************/
-int main(int aArgc, char **aArgv)
+int main(int aArgc, char** aArgv)
 /******************************************************************************/
 {
 #ifndef NDEBUG
@@ -30,7 +30,7 @@ int main(int aArgc, char **aArgv)
     {
         tPlatoInterface = new Plato::Interface();
     }
-    catch(...)
+    catch (...)
     {
         Kokkos::finalize();
         MPI_Finalize();
@@ -44,7 +44,7 @@ int main(int aArgc, char **aArgv)
     {
         tMyApp = new Plato::RocketApp(aArgc, aArgv, tLocalComm);
     }
-    catch(...)
+    catch (...)
     {
         Kokkos::finalize();
         MPI_Finalize();
@@ -54,7 +54,7 @@ int main(int aArgc, char **aArgv)
     {
         tPlatoInterface->registerPerformer(tMyApp);
     }
-    catch(...)
+    catch (...)
     {
         Kokkos::finalize();
         MPI_Finalize();

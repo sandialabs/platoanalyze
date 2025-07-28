@@ -10,7 +10,6 @@
 #include <cassert>
 
 #include "PlatoMathTypes.hpp"
-
 #include "PlatoStaticsTypes.hpp"
 
 namespace Plato
@@ -18,30 +17,29 @@ namespace Plato
 
 /******************************************************************************/
 /*! ComplexLinearStress Functor.
-*
-*   Computes linear stress tensor for structural dynamics applications.
-*/
+ *
+ *   Computes linear stress tensor for structural dynamics applications.
+ */
 /******************************************************************************/
-template<Plato::OrdinalType SpaceDim, Plato::OrdinalType NumVoigtTerms>
+template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumVoigtTerms>
 class ComplexLinearStress
 {
-private:
-    const Plato::Matrix<NumVoigtTerms,NumVoigtTerms> mCellStiffness;
+   private:
+    const Plato::Matrix<NumVoigtTerms, NumVoigtTerms> mCellStiffness;
 
-public:
+   public:
     /******************************************************************************/
-    ComplexLinearStress(const Plato::Matrix<NumVoigtTerms,NumVoigtTerms> & aCellStiffness) :
-        mCellStiffness(aCellStiffness)
+    ComplexLinearStress(const Plato::Matrix<NumVoigtTerms, NumVoigtTerms>& aCellStiffness)
+        : mCellStiffness(aCellStiffness)
     /******************************************************************************/
     {
     }
 
     /******************************************************************************/
-    template<typename StressScalarType, typename StrainScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(const Plato::OrdinalType & aCellOrdinal,
-               const Plato::ScalarArray3DT<StrainScalarType> & aStrain,
-               const Plato::ScalarArray3DT<StressScalarType> & aStress) const
+    template <typename StressScalarType, typename StrainScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarArray3DT<StrainScalarType>& aStrain,
+                                           const Plato::ScalarArray3DT<StressScalarType>& aStress) const
     /******************************************************************************/
     {
         assert(aStress.extent(1) == aStrain.extent(1));
@@ -49,15 +47,15 @@ public:
         assert(static_cast<Plato::OrdinalType>(aStrain.extent(2)) == NumVoigtTerms);
 
         const Plato::OrdinalType tComplexDim = aStrain.extent(1);
-        for(Plato::OrdinalType tComplexIndex = 0; tComplexIndex < tComplexDim; tComplexIndex++)
+        for (Plato::OrdinalType tComplexIndex = 0; tComplexIndex < tComplexDim; tComplexIndex++)
         {
-            for(Plato::OrdinalType tVoigtIndexI = 0; tVoigtIndexI < NumVoigtTerms; tVoigtIndexI++)
+            for (Plato::OrdinalType tVoigtIndexI = 0; tVoigtIndexI < NumVoigtTerms; tVoigtIndexI++)
             {
                 aStress(aCellOrdinal, tComplexIndex, tVoigtIndexI) = 0.0;
-                for(Plato::OrdinalType tVoigtIndexJ = 0; tVoigtIndexJ < NumVoigtTerms; tVoigtIndexJ++)
+                for (Plato::OrdinalType tVoigtIndexJ = 0; tVoigtIndexJ < NumVoigtTerms; tVoigtIndexJ++)
                 {
-                    aStress(aCellOrdinal, tComplexIndex, tVoigtIndexI) += aStrain(aCellOrdinal, tComplexIndex, tVoigtIndexJ)
-                            * mCellStiffness(tVoigtIndexI, tVoigtIndexJ);
+                    aStress(aCellOrdinal, tComplexIndex, tVoigtIndexI) +=
+                        aStrain(aCellOrdinal, tComplexIndex, tVoigtIndexJ) * mCellStiffness(tVoigtIndexI, tVoigtIndexJ);
                 }
             }
         }
@@ -65,6 +63,6 @@ public:
 };
 // class ComplexLinearStress
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* COMPLEXLINEARSTRESS_HPP_ */

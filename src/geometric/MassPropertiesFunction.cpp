@@ -2,10 +2,9 @@
 
 #ifdef PLATOANALYZE_USE_EXPLICIT_INSTANTIATION
 
-#include "geometric/MassPropertiesFunction_def.hpp"
-
-#include "Geometrical.hpp"
 #include "BaseExpInstMacros.hpp"
+#include "Geometrical.hpp"
+#include "geometric/MassPropertiesFunction_def.hpp"
 
 PLATO_ELEMENT_DEF(Plato::Geometric::MassPropertiesFunction, Plato::Geometrical)
 

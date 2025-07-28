@@ -1,32 +1,30 @@
 #ifndef PLATO_DRIVER_HPP
 #define PLATO_DRIVER_HPP
 
-#include <string>
-#include <vector>
-#include <memory>
-
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ParameterList.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include "PlatoMesh.hpp"
 #include "AnalyzeOutput.hpp"
-#include "PlatoUtilities.hpp"
+#include "PlatoMesh.hpp"
 #include "PlatoProblemFactory.hpp"
+#include "PlatoUtilities.hpp"
 
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \brief Run simulation with Plato Analyze.
  *
  * \tparam SpatialDim spatial dimensions
  *
  * \param [in] aInputData   input parameters list
  * \param [in] aInputFile   Plato Analyze input file name
-*******************************************************************************/
-void driver(
-    Teuchos::ParameterList & aInputData,
-    Comm::Machine            aMachine)
+ *******************************************************************************/
+void driver(Teuchos::ParameterList& aInputData, Comm::Machine aMachine)
 {
     auto tInputMesh = aInputData.get<std::string>("Input Mesh");
 
@@ -45,7 +43,8 @@ void driver(
     if (tPlatoProblemList.isSublist("Criteria"))
     {
         auto tCriteriaList = tPlatoProblemList.sublist("Criteria");
-        for(Teuchos::ParameterList::ConstIterator tIndex = tCriteriaList.begin(); tIndex != tCriteriaList.end(); ++tIndex)
+        for (Teuchos::ParameterList::ConstIterator tIndex = tCriteriaList.begin(); tIndex != tCriteriaList.end();
+             ++tIndex)
         {
             std::string tName = tCriteriaList.name(tIndex);
             Plato::Scalar tCriterionValue = tPlatoProblem->criterionValue(tControl, tSolution, tName);
@@ -58,8 +57,7 @@ void driver(
 }
 // function driver
 
-}
+}  // namespace Plato
 // namespace Plato
 
 #endif /* #ifndef PLATO_DRIVER_HPP */
-

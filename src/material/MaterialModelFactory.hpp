@@ -1,24 +1,20 @@
 #pragma once
 
-#include "material/MaterialModel.hpp"
-#include "AnalyzeMacros.hpp"
-
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCPDecl.hpp>
-
 #include <string>
+
+#include "AnalyzeMacros.hpp"
+#include "material/MaterialModel.hpp"
 
 namespace Plato
 {
 
-template<int SpatialDim>
+template <int SpatialDim>
 class MaterialModelFactory
 {
-public:
-
-    MaterialModelFactory(const Teuchos::ParameterList& aParamList) :
-    mParamList(aParamList)
-    {}
+   public:
+    MaterialModelFactory(const Teuchos::ParameterList& aParamList) : mParamList(aParamList) {}
 
     virtual ~MaterialModelFactory() = default;
 
@@ -26,14 +22,11 @@ public:
 
     MaterialModelFactory(MaterialModelFactory&& aFactory) = delete;
 
-    MaterialModelFactory&
-    operator=(const MaterialModelFactory& aFactory) = delete;
+    MaterialModelFactory& operator=(const MaterialModelFactory& aFactory) = delete;
 
-    MaterialModelFactory&
-    operator=(MaterialModelFactory&& aFactory) = delete;
+    MaterialModelFactory& operator=(MaterialModelFactory&& aFactory) = delete;
 
-    Teuchos::RCP<Plato::MaterialModel<SpatialDim>>
-    create(const std::string& aModelName)
+    Teuchos::RCP<Plato::MaterialModel<SpatialDim>> create(const std::string& aModelName)
     {
         if (!mParamList.isSublist("Material Models"))
         {
@@ -46,7 +39,8 @@ public:
 
             if (!tModelsParamList.isSublist(aModelName))
             {
-                const std::string tErrMessage = "Requested a material model ('" + aModelName + "') that isn't defined \n";
+                const std::string tErrMessage =
+                    "Requested a material model ('" + aModelName + "') that isn't defined \n";
                 ANALYZE_THROWERR(tErrMessage);
             }
 
@@ -56,13 +50,12 @@ public:
         }
     }
 
-protected:
-    virtual Teuchos::RCP<Plato::MaterialModel<SpatialDim>>
-    constructFromSublist(const Teuchos::ParameterList& aParamList) = 0;
+   protected:
+    virtual Teuchos::RCP<Plato::MaterialModel<SpatialDim>> constructFromSublist(
+        const Teuchos::ParameterList& aParamList) = 0;
 
-private:
+   private:
     const Teuchos::ParameterList& mParamList;
-
 };
 
-}
+}  // namespace Plato

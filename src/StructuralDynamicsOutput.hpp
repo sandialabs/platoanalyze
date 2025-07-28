@@ -7,48 +7,43 @@
 #ifndef STRUCTURALDYNAMICSOUTPUT_HPP_
 #define STRUCTURALDYNAMICSOUTPUT_HPP_
 
-#include <memory>
-#include <vector>
-#include <cassert>
 #include <unistd.h>
 
-#include "PlatoMesh.hpp"
+#include <cassert>
+#include <memory>
+#include <vector>
 
+#include "PlatoMesh.hpp"
 #include "SimplexStructuralDynamics.hpp"
 
 namespace Plato
 {
 
-template<Plato::OrdinalType SpaceDim, Plato::OrdinalType NumControls = 1>
-class StructuralDynamicsOutput: public Plato::SimplexStructuralDynamics<SpaceDim, NumControls>
+template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumControls = 1>
+class StructuralDynamicsOutput : public Plato::SimplexStructuralDynamics<SpaceDim, NumControls>
 {
-private:
+   private:
     static constexpr Plato::OrdinalType mSpatialDim = Plato::SimplexStructuralDynamics<SpaceDim>::mNumSpatialDims;
     static constexpr Plato::OrdinalType mNumDofsPerNode = Plato::SimplexStructuralDynamics<SpaceDim>::mNumDofsPerNode;
 
     Plato::MeshIO mMeshIO;
 
-public:
-    StructuralDynamicsOutput(Plato::Mesh aMesh, Plato::Scalar aRestartFreq = 0) :
-            mMeshIO(nullptr)
+   public:
+    StructuralDynamicsOutput(Plato::Mesh aMesh, Plato::Scalar aRestartFreq = 0) : mMeshIO(nullptr)
     {
         char tTemp[FILENAME_MAX];
-        auto tFilePath = getcwd(tTemp, FILENAME_MAX) ? std::string( tTemp ) : std::string("");
+        auto tFilePath = getcwd(tTemp, FILENAME_MAX) ? std::string(tTemp) : std::string("");
         assert(tFilePath.empty() == false);
         mMeshIO = Plato::MeshIOFactory::create(tFilePath, aMesh);
     }
 
-    StructuralDynamicsOutput(Plato::Mesh aMesh, const std::string & aFilePath, Plato::Scalar aRestartFreq = 0) :
-            mMeshIO(Plato::MeshIOFactory::create(aFilePath, aMesh))
+    StructuralDynamicsOutput(Plato::Mesh aMesh, const std::string& aFilePath, Plato::Scalar aRestartFreq = 0)
+        : mMeshIO(Plato::MeshIOFactory::create(aFilePath, aMesh))
     {
     }
 
-    template<typename ArrayT>
-    void output(
-      const ArrayT                   & tFreqArray,
-      const Plato::ScalarMultiVector & aState,
-            Plato::Mesh                aMesh
-    )
+    template <typename ArrayT>
+    void output(const ArrayT& tFreqArray, const Plato::ScalarMultiVector& aState, Plato::Mesh aMesh)
     {
         auto tNumVertices = aMesh->nverts();
         auto tOutputNumDofs = tNumVertices * mSpatialDim;
@@ -57,7 +52,7 @@ public:
         Plato::ScalarVector tImagDisp("ImagDisp", tOutputNumDofs);
 
         auto tNumFrequencies = tFreqArray.size();
-        for(Plato::OrdinalType tIndex = 0; tIndex < tNumFrequencies; tIndex++)
+        for (Plato::OrdinalType tIndex = 0; tIndex < tNumFrequencies; tIndex++)
         {
             auto tMyState = Kokkos::subview(aState, tIndex, Kokkos::ALL());
             Plato::copy<mNumDofsPerNode, mSpatialDim>(/*offset=*/0, tNumVertices, tMyState, tRealDisp);
@@ -74,6 +69,6 @@ public:
 };
 // class StructuralDynamicsOutput
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* STRUCTURALDYNAMICSOUTPUT_HPP_ */

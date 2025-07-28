@@ -22,15 +22,18 @@ namespace Plato
 
  */
 /******************************************************************************/
-template<typename ElementType, Plato::OrdinalType NumDofsPerNode = ElementType::mNumDofsPerNode, Plato::OrdinalType DofOffset = 0>
+template <typename ElementType,
+          Plato::OrdinalType NumDofsPerNode = ElementType::mNumDofsPerNode,
+          Plato::OrdinalType DofOffset = 0>
 class PressureDivergence : public ElementType
 {
-private:
+   private:
     using ElementType::mNumNodesPerCell;
     using ElementType::mNumSpatialDims;
 
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Compute the divergence of the pressure field
      * \param [in] aCellOrdinal cell (i.e. element ordinal)
      * \param [in/out] aOutput pressure divergence workset
@@ -38,31 +41,31 @@ public:
      * \param [in] aGradient configuration gradients
      * \param [in] aCellVolume cell (i.e. element) volume
      * \param [in] aScale scalar parameter (default = 1.0)
-    **********************************************************************************/
-    template<typename ForcingScalarType, typename PressureScalarType, typename GradientScalarType, typename VolumeScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(
-        Plato::OrdinalType                                   aCellOrdinal,
-        Plato::ScalarMultiVectorT<ForcingScalarType>         aOutput,
-        PressureScalarType                                   aPressure,
-        Plato::Matrix<mNumNodesPerCell,
-                     mNumSpatialDims,
-                     GradientScalarType>             const & aGradient,
-        VolumeScalarType                                     aCellVolume,
-        Plato::Scalar                                        aScale = 1.0
-    ) const
+     **********************************************************************************/
+    template <typename ForcingScalarType,
+              typename PressureScalarType,
+              typename GradientScalarType,
+              typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(
+        Plato::OrdinalType aCellOrdinal,
+        Plato::ScalarMultiVectorT<ForcingScalarType> aOutput,
+        PressureScalarType aPressure,
+        Plato::Matrix<mNumNodesPerCell, mNumSpatialDims, GradientScalarType> const& aGradient,
+        VolumeScalarType aCellVolume,
+        Plato::Scalar aScale = 1.0) const
     {
-        for(Plato::OrdinalType tDimIndex = 0; tDimIndex < mNumSpatialDims; tDimIndex++)
+        for (Plato::OrdinalType tDimIndex = 0; tDimIndex < mNumSpatialDims; tDimIndex++)
         {
-            for(Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
+            for (Plato::OrdinalType tNodeIndex = 0; tNodeIndex < mNumNodesPerCell; tNodeIndex++)
             {
                 Plato::OrdinalType tLocalOrdinal = tNodeIndex * NumDofsPerNode + tDimIndex + DofOffset;
-                Kokkos::atomic_add(&aOutput(aCellOrdinal, tLocalOrdinal), aScale * aCellVolume * aPressure * aGradient(tNodeIndex, tDimIndex));
+                Kokkos::atomic_add(&aOutput(aCellOrdinal, tLocalOrdinal),
+                                   aScale * aCellVolume * aPressure * aGradient(tNodeIndex, tDimIndex));
             }
         }
     }
 };
 // class PressureDivergence
 
-}
+}  // namespace Plato
 // namespace Plato

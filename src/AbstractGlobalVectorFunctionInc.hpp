@@ -12,7 +12,8 @@
 namespace Plato
 {
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  *
  * \brief Abstract vector function interface for Variational Multi-Scale (VMS)
  *   Partial Differential Equations (PDEs) with history dependent states
@@ -20,56 +21,49 @@ namespace Plato
  * \tparam EvaluationType evaluation type use to determine automatic differentiation
  *   type for the vector function (e.g. Residual, Jacobian, GradientZ, GradientU, etc.)
  *
-*******************************************************************************/
-template<typename EvaluationType>
+ *******************************************************************************/
+template <typename EvaluationType>
 class AbstractGlobalVectorFunctionInc
 {
+   protected:
+    const Plato::SpatialDomain& mSpatialDomain; /*!< Plato spatial model */
+    Plato::DataMap& mDataMap;                   /*!< output database */
+    std::vector<std::string> mDofNames;         /*!< state dof names */
 
-protected:
-    const Plato::SpatialDomain     & mSpatialDomain; /*!< Plato spatial model */
-          Plato::DataMap           & mDataMap;       /*!< output database */
-          std::vector<std::string>   mDofNames;      /*!< state dof names */
-
-public:
-    /***************************************************************************//**
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aSpatialDomain Plato spatial model
      * \param [in]  aDataMap output data map
-    *******************************************************************************/
-    explicit
-    AbstractGlobalVectorFunctionInc(
-        const Plato::SpatialDomain & aSpatialDomain,
-              Plato::DataMap       & aDataMap
-    ) :
-        mSpatialDomain (aSpatialDomain),
-        mDataMap       (aDataMap)
+     *******************************************************************************/
+    explicit AbstractGlobalVectorFunctionInc(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+        : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap)
     {
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Destructor
-    *******************************************************************************/
+     *******************************************************************************/
     virtual ~AbstractGlobalVectorFunctionInc() = default;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Return reference to mesh data base
      * \return mesh metadata
-    *******************************************************************************/
-    decltype(mSpatialDomain.Mesh) getMesh() const
-    {
-        return (mSpatialDomain.Mesh);
-    }
+     *******************************************************************************/
+    decltype(mSpatialDomain.Mesh) getMesh() const { return (mSpatialDomain.Mesh); }
 
-    /****************************************************************************//**
-    * \brief Return reference to dof names
-    * \return mDofNames
-    ********************************************************************************/
-    const decltype(mDofNames)& getDofNames() const
-    {
-        return mDofNames;
-    }
+    /****************************************************************************/
+    /**
+     * \brief Return reference to dof names
+     * \return mDofNames
+     ********************************************************************************/
+    const decltype(mDofNames)& getDofNames() const { return mDofNames; }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      *
      * \brief Evaluate stabilized residual
      *
@@ -83,20 +77,20 @@ public:
      * \param [in/out] aResult          residual evaluation
      * \param [in]     aTimeData        current time data
      *
-    *******************************************************************************/
-    virtual void
-    evaluate(
-        const Plato::ScalarMultiVectorT <typename EvaluationType::StateScalarType>          & aGlobalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::PrevStateScalarType>      & aGlobalStatePrev,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::LocalStateScalarType>     & aLocalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::PrevLocalStateScalarType> & aLocalStatePrev,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::NodeStateScalarType>      & aPressureGrad,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::ControlScalarType>        & aControls,
-        const Plato::ScalarArray3DT     <typename EvaluationType::ConfigScalarType>         & aConfig,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::ResultScalarType>         & aResult,
-        const Plato::TimeData & aTimeData) = 0;
+     *******************************************************************************/
+    virtual void evaluate(
+        const Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType>& aGlobalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::PrevStateScalarType>& aGlobalStatePrev,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::LocalStateScalarType>& aLocalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::PrevLocalStateScalarType>& aLocalStatePrev,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::NodeStateScalarType>& aPressureGrad,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControls,
+        const Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType>& aConfig,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType>& aResult,
+        const Plato::TimeData& aTimeData) = 0;
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      *
      * \brief Evaluate stabilized residual
      *
@@ -110,36 +104,36 @@ public:
      * \param [in/out] aResult          residual evaluation
      * \param [in]     aTimeData        current time data
      *
-    *******************************************************************************/
-    virtual void
-    evaluate_boundary(
-        const Plato::SpatialModel                                                           & aModel,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::StateScalarType>          & aGlobalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::PrevStateScalarType>      & aGlobalStatePrev,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::LocalStateScalarType>     & aLocalState,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::PrevLocalStateScalarType> & aLocalStatePrev,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::NodeStateScalarType>      & aPressureGrad,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::ControlScalarType>        & aControls,
-        const Plato::ScalarArray3DT     <typename EvaluationType::ConfigScalarType>         & aConfig,
-        const Plato::ScalarMultiVectorT <typename EvaluationType::ResultScalarType>         & aResult,
-        const Plato::TimeData & aTimeData) = 0;
+     *******************************************************************************/
+    virtual void evaluate_boundary(
+        const Plato::SpatialModel& aModel,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType>& aGlobalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::PrevStateScalarType>& aGlobalStatePrev,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::LocalStateScalarType>& aLocalState,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::PrevLocalStateScalarType>& aLocalStatePrev,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::NodeStateScalarType>& aPressureGrad,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControls,
+        const Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType>& aConfig,
+        const Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType>& aResult,
+        const Plato::TimeData& aTimeData) = 0;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Update physics-based data within a frequency of optimization iterations
      * \param [in] aGlobalState global state variables
      * \param [in] aLocalState  local state variables
      * \param [in] aControl     control variables, e.g. design variables
      * \param [in] aTimeData    current time data
-    **********************************************************************************/
-    virtual void
-    updateProblem(
-        const Plato::ScalarMultiVector & aGlobalState,
-        const Plato::ScalarMultiVector & aLocalState,
-        const Plato::ScalarVector      & aControl,
-        const Plato::TimeData          & aTimeData)
-    { return; }
+     **********************************************************************************/
+    virtual void updateProblem(const Plato::ScalarMultiVector& aGlobalState,
+                               const Plato::ScalarMultiVector& aLocalState,
+                               const Plato::ScalarVector& aControl,
+                               const Plato::TimeData& aTimeData)
+    {
+        return;
+    }
 };
 // class AbstractGlobalVectorFunctionInc
 
-}
+}  // namespace Plato
 // namespace Plato

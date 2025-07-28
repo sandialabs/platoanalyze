@@ -5,53 +5,54 @@
 #include "helmholtz/AbstractVectorFunction.hpp"
 #include "helmholtz/HelmholtzResidual.hpp"
 
-namespace Plato {
+namespace Plato
+{
 
-namespace HelmholtzFactory {
+namespace HelmholtzFactory
+{
 /******************************************************************************/
-struct FunctionFactory{
-/******************************************************************************/
+struct FunctionFactory
+{
+    /******************************************************************************/
     template <typename EvaluationType>
-    std::shared_ptr<Plato::Helmholtz::AbstractVectorFunction<EvaluationType>>
-    createVectorFunction(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aParamList,
-              std::string              aFunctionType
-    )
+    std::shared_ptr<Plato::Helmholtz::AbstractVectorFunction<EvaluationType>> createVectorFunction(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aParamList,
+        std::string aFunctionType)
     {
-
         auto tFunctionType = Plato::tolower(aFunctionType);
-        if( tFunctionType == "helmholtz filter" )
+        if (tFunctionType == "helmholtz filter")
         {
-            return std::make_shared<Plato::Helmholtz::HelmholtzResidual<EvaluationType>>
-              (aSpatialDomain, aDataMap, aParamList);
+            return std::make_shared<Plato::Helmholtz::HelmholtzResidual<EvaluationType>>(aSpatialDomain, aDataMap,
+                                                                                         aParamList);
         }
         else
         {
-            throw std::runtime_error("Unknown 'PDE Constraint' specified in 'Plato Problem' ParameterList for HELMHOLTZ FILTER");
+            throw std::runtime_error(
+                "Unknown 'PDE Constraint' specified in 'Plato Problem' ParameterList for HELMHOLTZ FILTER");
         }
     }
-
 };
 
-} // namespace HelmholtzFactory
+}  // namespace HelmholtzFactory
 
-} // namespace Plato
+}  // namespace Plato
 
 #include "HelmholtzElement.hpp"
 
-namespace Plato {
+namespace Plato
+{
 
 template <typename TopoElementType>
 class HelmholtzFilter
 {
-public:
+   public:
     typedef Plato::HelmholtzFactory::FunctionFactory FunctionFactory;
     using ElementType = HelmholtzElement<TopoElementType>;
 };
 // class HelmholtzFilter
 
-} //namespace Plato
+}  // namespace Plato
 
 #endif

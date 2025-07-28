@@ -1,7 +1,6 @@
 #pragma once
 
 #include "SpatialModel.hpp"
-
 #include "hyperbolic/micromorphic/MicromorphicMechanicsElement.hpp"
 #include "hyperbolic/micromorphic/RelaxedMicromorphicResidual.hpp"
 
@@ -14,19 +13,18 @@ namespace Hyperbolic
 struct MicromorphicFunctionFactory
 {
     template <typename EvaluationType>
-    std::shared_ptr<::Plato::Hyperbolic::AbstractVectorFunction<EvaluationType>>
-    createVectorFunction(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              std::string              aPDE
-    )
+    std::shared_ptr<::Plato::Hyperbolic::AbstractVectorFunction<EvaluationType>> createVectorFunction(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aProblemParams,
+        std::string aPDE)
     {
         auto tLowerPDE = Plato::tolower(aPDE);
-        if(tLowerPDE == "hyperbolic")
+        if (tLowerPDE == "hyperbolic")
         {
-            return Plato::makeVectorFunction<EvaluationType, Plato::Hyperbolic::Micromorphic::RelaxedMicromorphicResidual>
-                     (aSpatialDomain, aDataMap, aProblemParams, aPDE);
+            return Plato::makeVectorFunction<EvaluationType,
+                                             Plato::Hyperbolic::Micromorphic::RelaxedMicromorphicResidual>(
+                aSpatialDomain, aDataMap, aProblemParams, aPDE);
         }
         else
         {
@@ -35,32 +33,30 @@ struct MicromorphicFunctionFactory
     }
 
     template <typename EvaluationType>
-    std::shared_ptr<::Plato::Hyperbolic::AbstractScalarFunction<EvaluationType>>
-    createScalarFunction(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap&          aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              std::string              strScalarFunctionType,
-              std::string              strScalarFunctionName
-    )
+    std::shared_ptr<::Plato::Hyperbolic::AbstractScalarFunction<EvaluationType>> createScalarFunction(
+        const Plato::SpatialDomain& aSpatialDomain,
+        Plato::DataMap& aDataMap,
+        Teuchos::ParameterList& aProblemParams,
+        std::string strScalarFunctionType,
+        std::string strScalarFunctionName)
     {
         ANALYZE_THROWERR("No criteria supported for micromorphic mechanics currently.")
     }
 };
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Concrete class for use as the Physics template argument in
  *        Plato::Hyperbolic::Problem
-**********************************************************************************/
-template<typename TopoElementType>
+ **********************************************************************************/
+template <typename TopoElementType>
 class MicromorphicMechanics
 {
-public:
+   public:
     typedef Plato::Hyperbolic::MicromorphicFunctionFactory FunctionFactory;
     using ElementType = MicromorphicMechanicsElement<TopoElementType>;
 };
 
-}
+}  // namespace Hyperbolic
 
-} 
-
+}  // namespace Plato

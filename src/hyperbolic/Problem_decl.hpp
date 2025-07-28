@@ -1,29 +1,27 @@
 #pragma once
 
+#include "ComputedField.hpp"
+#include "EssentialBCs.hpp"
+#include "PlatoAbstractProblem.hpp"
 #include "PlatoStaticsTypes.hpp"
 #include "Solutions.hpp"
-#include "EssentialBCs.hpp"
 #include "SpatialModel.hpp"
-#include "PlatoAbstractProblem.hpp"
 #include "alg/PlatoSolverFactory.hpp"
-#include "ComputedField.hpp"
-
 #include "hyperbolic/Newmark.hpp"
-#include "hyperbolic/VectorFunction.hpp"
 #include "hyperbolic/ScalarFunctionBase.hpp"
+#include "hyperbolic/VectorFunction.hpp"
 
 namespace Plato
 {
 
 namespace Hyperbolic
 {
-template<typename PhysicsType>
-class Problem: public Plato::AbstractProblem
+template <typename PhysicsType>
+class Problem : public Plato::AbstractProblem
 {
-  private:
-
+   private:
     using Criterion = std::shared_ptr<Plato::Hyperbolic::ScalarFunctionBase>;
-    using Criteria  = std::map<std::string, Criterion>;
+    using Criteria = std::map<std::string, Criterion>;
 
     using ElementType = typename PhysicsType::ElementType;
     using TopoElementType = typename ElementType::TopoElementType;
@@ -37,7 +35,7 @@ class Problem: public Plato::AbstractProblem
     std::shared_ptr<Plato::NewmarkIntegrator> mIntegrator;
 
     Plato::OrdinalType mNumSteps;
-    Plato::Scalar      mTimeStep;
+    Plato::Scalar mTimeStep;
 
     bool mSaveState;
 
@@ -75,134 +73,90 @@ class Problem: public Plato::AbstractProblem
 
     rcp<Plato::AbstractSolver> mSolver;
 
-    std::string mPDE; /*!< partial differential equation type */
+    std::string mPDE;     /*!< partial differential equation type */
     std::string mPhysics; /*!< physics used for the simulation */
-    bool mUForm; /*!< true: displacement-based formulation, false: acceleration-based formulation */
+    bool mUForm;          /*!< true: displacement-based formulation, false: acceleration-based formulation */
 
-  public:
-    Problem(
-      Plato::Mesh              aMesh,
-      Teuchos::ParameterList & aProblemParams,
-      Comm::Machine            aMachine
-    ); 
+   public:
+    Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine);
 
-    void parseIntegrator(Teuchos::ParameterList & aProblemParams);
+    void parseIntegrator(Teuchos::ParameterList& aProblemParams);
 
     void allocateStateData();
 
-    void parseCriteria(Teuchos::ParameterList & aProblemParams);
+    void parseCriteria(Teuchos::ParameterList& aProblemParams);
 
-    void parseComputedFields(
-      Teuchos::ParameterList & aProblemParams,
-      Plato::Mesh              aMesh
-    );
+    void parseComputedFields(Teuchos::ParameterList& aProblemParams, Plato::Mesh aMesh);
 
-    void parseInitialState(Teuchos::ParameterList & aProblemParams);
+    void parseInitialState(Teuchos::ParameterList& aProblemParams);
 
-    void parseLinearSolver(
-      Teuchos::ParameterList & aProblemParams,
-      Plato::Mesh              aMesh,
-      Comm::Machine            aMachine
-    );
+    void parseLinearSolver(Teuchos::ParameterList& aProblemParams, Plato::Mesh aMesh, Comm::Machine aMachine);
 
     void output(const std::string& aFilepath);
 
-    void applyConstraints(
-      const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix,
-      const Plato::ScalarVector & aVector
-    );
+    void applyConstraints(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix, const Plato::ScalarVector& aVector);
 
-    void applyConstraintType(
-      const Teuchos::RCP<Plato::CrsMatrixType> & aMatrix,
-      const Plato::ScalarVector                & aVector,
-      const Plato::OrdinalVector               & aBcDofs,
-      const Plato::ScalarVector                & aBcValues
-    );
+    void applyConstraintType(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix,
+                             const Plato::ScalarVector& aVector,
+                             const Plato::OrdinalVector& aBcDofs,
+                             const Plato::ScalarVector& aBcValues);
 
-    void updateProblem(const Plato::ScalarVector & aControl, const Plato::Solutions & aSolution);
+    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution);
 
-    Plato::Solutions solution(const Plato::ScalarVector & aControl);
+    Plato::Solutions solution(const Plato::ScalarVector& aControl);
 
-    void forwardStepUForm(
-        const Plato::ScalarVector & aControl,
-              Plato::Scalar       & aCurrentTime,
-              Plato::OrdinalType    aStepIndex
-    );
+    void forwardStepUForm(const Plato::ScalarVector& aControl,
+                          Plato::Scalar& aCurrentTime,
+                          Plato::OrdinalType aStepIndex);
 
-    void forwardStepAForm(
-        const Plato::ScalarVector & aControl,
-              Plato::Scalar       & aCurrentTime,
-              Plato::OrdinalType    aStepIndex
-    );
+    void forwardStepAForm(const Plato::ScalarVector& aControl,
+                          Plato::Scalar& aCurrentTime,
+                          Plato::OrdinalType aStepIndex);
 
-    void computeInitialState(
-        const Plato::ScalarVector & aControl
-    );
+    void computeInitialState(const Plato::ScalarVector& aControl);
 
-    void constrainFieldsAtBoundary(
-              Plato::ScalarVector & aDisplacement,
-              Plato::ScalarVector & aVelocity,
-              Plato::ScalarVector & aAcceleration,
-        const Plato::Scalar         aTime);
+    void constrainFieldsAtBoundary(Plato::ScalarVector& aDisplacement,
+                                   Plato::ScalarVector& aVelocity,
+                                   Plato::ScalarVector& aAcceleration,
+                                   const Plato::Scalar aTime);
 
-    void constrainUFormFieldsAtBoundary(
-              Plato::ScalarVector & aVelocity,
-              Plato::ScalarVector & aAcceleration,
-        const Plato::Scalar         aTime);
+    void constrainUFormFieldsAtBoundary(Plato::ScalarVector& aVelocity,
+                                        Plato::ScalarVector& aAcceleration,
+                                        const Plato::Scalar aTime);
 
-    void constrainAFormFieldsAtBoundary(
-              Plato::ScalarVector & aDisplacement,
-              Plato::ScalarVector & aVelocity,
-        const Plato::Scalar         aTime);
-    
-    Plato::Scalar criterionValue(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-        const std::string         & aName
-    ) override;
+    void constrainAFormFieldsAtBoundary(Plato::ScalarVector& aDisplacement,
+                                        Plato::ScalarVector& aVelocity,
+                                        const Plato::Scalar aTime);
 
-    Plato::Scalar criterionValue(
-        const Plato::ScalarVector & aControl,
-        const std::string         & aName
-    ) override;
+    Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
+                                 const Plato::Solutions& aSolution,
+                                 const std::string& aName) override;
 
-    Plato::ScalarVector criterionGradient(
-        const Plato::ScalarVector & aControl,
-        const std::string         & aName
-    ) override;
+    Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) override;
 
-    Plato::ScalarVector criterionGradient(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-        const std::string         & aName
-    ) override;
+    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) override;
 
-    Plato::ScalarVector criterionGradient(
-      const Plato::ScalarVector & aControl,
-      const Plato::Solutions    & aSolution,
-            Criterion             aCriterion
-    );
+    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
+                                          const Plato::Solutions& aSolution,
+                                          const std::string& aName) override;
 
-    Plato::ScalarVector criterionGradientX(
-        const Plato::ScalarVector & aControl,
-        const std::string         & aName
-    ) override;
+    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
+                                          const Plato::Solutions& aSolution,
+                                          Criterion aCriterion);
 
-    Plato::ScalarVector criterionGradientX(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-        const std::string         & aName
-    ) override;
+    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) override;
 
-    Plato::ScalarVector criterionGradientX(
-        const Plato::ScalarVector & aControl,
-        const Plato::Solutions    & aSolution,
-              Criterion             aCriterion
-    );
+    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
+                                           const Plato::Solutions& aSolution,
+                                           const std::string& aName) override;
 
-  private:
+    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
+                                           const Plato::Solutions& aSolution,
+                                           Criterion aCriterion);
+
+   private:
     Plato::Solutions getSolution() const override;
 };
-}
+}  // namespace Hyperbolic
 
-}
+}  // namespace Plato

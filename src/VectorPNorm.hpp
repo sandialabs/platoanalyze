@@ -13,25 +13,21 @@ namespace Plato
  Assumes single point integration.
  */
 /******************************************************************************/
-template<Plato::OrdinalType VectorLength>
+template <Plato::OrdinalType VectorLength>
 class VectorPNorm
 {
-public:
-
-    template<typename ResultScalarType, typename VectorScalarType, typename VolumeScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(
-      Plato::OrdinalType                          aCellOrdinal,
-      Plato::ScalarVectorT<ResultScalarType>      aPnorm,
-      Plato::ScalarMultiVectorT<VectorScalarType> aArgVector,
-      Plato::OrdinalType                          aPvalue,
-      Plato::ScalarVectorT<VolumeScalarType>      aCellVolume
-    ) const
+   public:
+    template <typename ResultScalarType, typename VectorScalarType, typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType aCellOrdinal,
+                                           Plato::ScalarVectorT<ResultScalarType> aPnorm,
+                                           Plato::ScalarMultiVectorT<VectorScalarType> aArgVector,
+                                           Plato::OrdinalType aPvalue,
+                                           Plato::ScalarVectorT<VolumeScalarType> aCellVolume) const
     {
         // compute scalar product
         //
         aPnorm(aCellOrdinal) = 0.0;
-        for(Plato::OrdinalType iTerm = 0; iTerm < VectorLength; iTerm++)
+        for (Plato::OrdinalType iTerm = 0; iTerm < VectorLength; iTerm++)
         {
             aPnorm(aCellOrdinal) += aArgVector(aCellOrdinal, iTerm) * aArgVector(aCellOrdinal, iTerm);
         }
@@ -39,20 +35,17 @@ public:
         aPnorm(aCellOrdinal) *= aCellVolume(aCellOrdinal);
     }
 
-    template<typename ResultScalarType, typename VectorScalarType, typename VolumeScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(
-      Plato::OrdinalType                           aCellOrdinal,
-      Plato::ScalarVectorT<ResultScalarType>       aPnorm,
-      Plato::Array<VectorLength, VectorScalarType> aArgVector,
-      Plato::OrdinalType                           aPvalue,
-      VolumeScalarType                             aVolume
-    ) const
+    template <typename ResultScalarType, typename VectorScalarType, typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(Plato::OrdinalType aCellOrdinal,
+                                           Plato::ScalarVectorT<ResultScalarType> aPnorm,
+                                           Plato::Array<VectorLength, VectorScalarType> aArgVector,
+                                           Plato::OrdinalType aPvalue,
+                                           VolumeScalarType aVolume) const
     {
         // compute scalar product
         //
         ResultScalarType tPnorm(0.0);
-        for(Plato::OrdinalType iTerm = 0; iTerm < VectorLength; iTerm++)
+        for (Plato::OrdinalType iTerm = 0; iTerm < VectorLength; iTerm++)
         {
             tPnorm += aArgVector(iTerm) * aArgVector(iTerm);
         }
@@ -63,6 +56,6 @@ public:
 };
 // class VectorPNorm
 
-}// namespace Plato
+}  // namespace Plato
 
 #endif

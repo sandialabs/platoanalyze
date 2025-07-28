@@ -6,17 +6,16 @@
 
 #pragma once
 
+#include <Teuchos_ParameterList.hpp>
 #include <sstream>
 
-#include <Teuchos_ParameterList.hpp>
-
 #include "AnalyzeMacros.hpp"
-#include "PlatoMathExpr.hpp"
-#include "NaturalBCTypes.hpp"
 #include "NaturalBCData.hpp"
+#include "NaturalBCTypes.hpp"
+#include "PlatoMathExpr.hpp"
+#include "StefanBoltzmann.hpp"
 #include "SurfaceLoadIntegral.hpp"
 #include "SurfacePressureIntegral.hpp"
-#include "StefanBoltzmann.hpp"
 
 namespace Plato
 {
@@ -24,47 +23,53 @@ namespace Plato
 ///  @a aSublist. @a aBCName is the name of the parent list used for error messages.
 /// @throw std::runtime_error if @a aParameterName cannot be found in @a aSublist or
 ///  it does not have type string.
-std::string getStringDataAndAffirmExists(
-    const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName);
+std::string getStringDataAndAffirmExists(const std::string& aParameterName,
+                                         const Teuchos::ParameterList& aSublist,
+                                         const std::string& aBCName);
 
 /// @throw std::runtime_error if @a aParameterName cannot be found in @a aSublist
-void affirmExists(
-    const std::string& aParameterName, const Teuchos::ParameterList& aSublist, const std::string& aBCName);
+void affirmExists(const std::string& aParameterName,
+                  const Teuchos::ParameterList& aSublist,
+                  const std::string& aBCName);
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \brief Class for natural boundary conditions.
  *
  * \tparam ElementType  Element type
  * \tparam DofsPerNode  number degrees of freedom per node
  * \tparam DofOffset    degrees of freedom offset
  *
-*******************************************************************************/
-template<
-  typename ElementType,
-  Plato::OrdinalType NumDofs=ElementType::mNumSpatialDims,
-  Plato::OrdinalType DofsPerNode=NumDofs,
-  Plato::OrdinalType DofOffset=0>
+ *******************************************************************************/
+template <typename ElementType,
+          Plato::OrdinalType NumDofs = ElementType::mNumSpatialDims,
+          Plato::OrdinalType DofsPerNode = NumDofs,
+          Plato::OrdinalType DofOffset = 0>
 class NaturalBC
 {
     const std::string mName; /*!< user-defined load sublist name */
     Plato::Neumann mType;
-    std::string mSidesetName;  /*!< side set name */
+    std::string mSidesetName; /*!< side set name */
     std::unique_ptr<NaturalBCData<NumDofs>> mData;
-public:
-    /***************************************************************************//**
+
+   public:
+    /***************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aLoadName user-defined name for natural boundary condition sublist
      * \param [in] aSubList  natural boundary condition input parameter sublist
-    *******************************************************************************/
-    NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>(const std::string & aLoadName, const Teuchos::ParameterList& aSublist) :
-        mName(aLoadName),
-        mType(naturalBoundaryCondition(getStringDataAndAffirmExists("Type", aSublist, mName))),
-        mSidesetName(getStringDataAndAffirmExists("Sides", aSublist, mName)),
-        mData(makeNaturalBCData<NumDofs>(aSublist))
+     *******************************************************************************/
+    NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>(const std::string& aLoadName,
+                                                            const Teuchos::ParameterList& aSublist)
+        : mName(aLoadName),
+          mType(naturalBoundaryCondition(getStringDataAndAffirmExists("Type", aSublist, mName))),
+          mSidesetName(getStringDataAndAffirmExists("Sides", aSublist, mName)),
+          mData(makeNaturalBCData<NumDofs>(aSublist))
     {
     }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Get the contribution to the assembled forcing vector.
      *
      * \tparam StateScalarType   state forward automatically differentiated (FAD) type
@@ -93,70 +98,73 @@ public:
      *            \frac{\partial\phi}{\partial\xi} \times \frac{\partial\phi}{\partial\psi}
      *          \right|\right| d\xi d\psi
      * \f}
-    *******************************************************************************/
-    template<typename StateScalarType,
-             typename ControlScalarType,
-             typename ConfigScalarType,
-             typename ResultScalarType>
+     *******************************************************************************/
+    template <typename StateScalarType,
+              typename ControlScalarType,
+              typename ConfigScalarType,
+              typename ResultScalarType>
     void get(const Plato::SpatialModel&,
-             const Plato::ScalarMultiVectorT<  StateScalarType>&,
+             const Plato::ScalarMultiVectorT<StateScalarType>&,
              const Plato::ScalarMultiVectorT<ControlScalarType>&,
-             const Plato::ScalarArray3DT    < ConfigScalarType>&,
-             const Plato::ScalarMultiVectorT< ResultScalarType>&,
+             const Plato::ScalarArray3DT<ConfigScalarType>&,
+             const Plato::ScalarMultiVectorT<ResultScalarType>&,
              Plato::Scalar aScale,
              Plato::Scalar aCurrentTime);
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Return natural boundary condition sublist name
      * \return sublist name
-    *******************************************************************************/
+     *******************************************************************************/
     const std::string& getSubListName() const { return mName; }
 
-    /***************************************************************************//**
+    /***************************************************************************/
+    /**
      * \brief Return side set name for this natural boundary condition
      * \return side set name
-    *******************************************************************************/
+     *******************************************************************************/
     const std::string& getSideSetName() const { return mSidesetName; }
 
-    /***************************************************************************//**
-     * \brief Return natural boundary condition type 
+    /***************************************************************************/
+    /**
+     * \brief Return natural boundary condition type
      * \return natural boundary condition type
-    *******************************************************************************/
+     *******************************************************************************/
     Neumann getType() const { return mType; }
 
     const NaturalBCData<NumDofs>& getNaturalBCData() const { return *mData; }
-    
-private:
 
+   private:
     void setBCType();
     void setSidesetName();
 
-}; // class NaturalBC
+};  // class NaturalBC
 
-/***************************************************************************//**
+/***************************************************************************/
+/**
  * \brief NaturalBC::get function definition
-*******************************************************************************/
-template<typename ElementType, Plato::OrdinalType NumDofs, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
-template<typename StateScalarType,
-         typename ControlScalarType,
-         typename ConfigScalarType,
-         typename ResultScalarType>
+ *******************************************************************************/
+template <typename ElementType,
+          Plato::OrdinalType NumDofs,
+          Plato::OrdinalType DofsPerNode,
+          Plato::OrdinalType DofOffset>
+template <typename StateScalarType, typename ControlScalarType, typename ConfigScalarType, typename ResultScalarType>
 void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
-    const Plato::SpatialModel                          & aSpatialModel,
-    const Plato::ScalarMultiVectorT<  StateScalarType> & aState,
-    const Plato::ScalarMultiVectorT<ControlScalarType> & aControl,
-    const Plato::ScalarArray3DT    < ConfigScalarType> & aConfig,
-    const Plato::ScalarMultiVectorT< ResultScalarType> & aResult,
-          Plato::Scalar aScale,
-          Plato::Scalar aCurrentTime
-)
+    const Plato::SpatialModel& aSpatialModel,
+    const Plato::ScalarMultiVectorT<StateScalarType>& aState,
+    const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
+    const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+    const Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
+    Plato::Scalar aScale,
+    Plato::Scalar aCurrentTime)
 {
-    switch(mType)
+    switch (mType)
     {
         case Plato::Neumann::UNIFORM_LOAD:
         case Plato::Neumann::VARIABLE_LOAD:
         {
-            Plato::SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfaceLoad(mSidesetName, aCurrentTime, mData->clone());
+            Plato::SurfaceLoadIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfaceLoad(
+                mSidesetName, aCurrentTime, mData->clone());
             tSurfaceLoad(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
             break;
         }
@@ -164,7 +172,8 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
         case Plato::Neumann::UNIFORM_PRESSURE:
         case Plato::Neumann::VARIABLE_PRESSURE:
         {
-            Plato::SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfacePress(mSidesetName, aCurrentTime, mData->clone());
+            Plato::SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset> tSurfacePress(
+                mSidesetName, aCurrentTime, mData->clone());
             tSurfacePress(aSpatialModel, aState, aControl, aConfig, aResult, aScale);
             break;
         }
@@ -181,5 +190,5 @@ void NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
     }
 }
 
-}
+}  // namespace Plato
 // namespace Plato

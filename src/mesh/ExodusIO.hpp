@@ -8,14 +8,11 @@ namespace Plato
 
 class ExodusIO
 {
-
-  public:
-
+   public:
     using Int = int;
     using Real = double;
 
-  private:
-
+   private:
     struct ElementBlock
     {
         std::string name;
@@ -44,7 +41,6 @@ class ExodusIO
         std::vector<Int> sides;
         std::vector<Int> elems;
         std::vector<Int> nodes;
-        
     };
     std::vector<SideSet> mSideSets;
 
@@ -62,10 +58,10 @@ class ExodusIO
     bool mIgnoreElemMap;
     bool mIgnoreNodeMap;
 
-  public:
+   public:
     ExodusIO() : mFileID(-1) {}
     ~ExodusIO() { closeMesh(); }
-    void readMesh(const std::string & aFileName, bool aIgnoreNodeMap, bool aIgnoreElemMap);
+    void readMesh(const std::string& aFileName, bool aIgnoreNodeMap, bool aIgnoreElemMap);
 
     Int getNumNodes() const { return mNumNodes; }
     Int getNumElems() const { return mNumElems; }
@@ -75,9 +71,9 @@ class ExodusIO
     Int getNnpeInBlk(Int blk) const;
     Int getDimensions() const;
 
-    const std::vector<Int> & getElemToNodeConnInBlk(Int blk) const;
+    const std::vector<Int>& getElemToNodeConnInBlk(Int blk) const;
 
-    const std::vector<std::vector<double>> & getCoords() const;
+    const std::vector<std::vector<double>>& getCoords() const;
 
     std::string getElemTypeInBlk(Int blk) const;
     std::string getBlockName(Int blk) const;
@@ -85,32 +81,32 @@ class ExodusIO
     Int getNumNodeSets() const;
     Int getNodeSetLength(Int i) const;
     std::string getNodeSetName(Int i) const;
-    const std::vector<Int> & getNodeSetNodes(Int i) const;
+    const std::vector<Int>& getNodeSetNodes(Int i) const;
 
     Int getNumSideSets() const;
     Int getSideSetLength(Int i) const;
     Int getSideSetNodesPerFace(Int i) const;
     std::string getSideSetName(Int i) const;
-    const std::vector<Int> & getSideSetFaces(Int i) const;
-    const std::vector<Int> & getSideSetElems(Int i) const;
-    const std::vector<Int> & getSideSetNodes(Int i) const;
+    const std::vector<Int>& getSideSetFaces(Int i) const;
+    const std::vector<Int>& getSideSetElems(Int i) const;
+    const std::vector<Int>& getSideSetNodes(Int i) const;
 
     std::vector<std::string> getNodeVarNames() const;
     void writeTime(Int aTimeStep, Real aTimeValue) const;
-    void initVars(std::string aCentering, Int aNumVars, std::vector<std::string> aNames ) const;
+    void initVars(std::string aCentering, Int aNumVars, std::vector<std::string> aNames) const;
     void writeNodePlot(Real* aData, Int aVariableIndex, Int aStepIndex) const;
     void writeElemPlot(Real* aData, Int aVariableIndex, Int aStepIndex) const;
     Int getNumSteps() const;
     void readNodePlot(double* aData, std::string aVariableName, Int aStepIndex) const;
 
-    void openMesh(std::string aFileName, const std::string & aMode);
+    void openMesh(std::string aFileName, const std::string& aMode);
 
     std::vector<std::vector<Int>> getFaceGraph(std::string) const;
     std::vector<std::vector<Int>> getFaceGraph(Int aBlockIndex) const;
 
     const std::vector<Int>& getNodeGlobalIds() const;
 
-  private:
+   private:
     void readData();
     void closeMesh();
 
@@ -123,8 +119,7 @@ class ExodusIO
 
     void writeData();
 
-    void checkAddExtension(std::string & aName, std::string aExt);
-
+    void checkAddExtension(std::string& aName, std::string aExt);
 };
 
-} // end namespace Plato
+}  // end namespace Plato

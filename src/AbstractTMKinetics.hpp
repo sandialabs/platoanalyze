@@ -1,10 +1,10 @@
 #ifndef PLATO_ABSTRACT_TMKINETICS_HPP
 #define PLATO_ABSTRACT_TMKINETICS_HPP
 
-#include "VoigtMap.hpp"
 #include "FadTypes.hpp"
-#include "material/MaterialModel.hpp"
+#include "VoigtMap.hpp"
 #include "material/MaterialBasis.hpp"
+#include "material/MaterialModel.hpp"
 
 namespace Plato
 {
@@ -15,12 +15,11 @@ namespace Plato
     given a strain, temperature gradient, and temperature, compute the stress and flux
 */
 /******************************************************************************/
-template<typename EvaluationType, typename ElementType>
-class AbstractTMKinetics :
-    public ElementType
+template <typename EvaluationType, typename ElementType>
+class AbstractTMKinetics : public ElementType
 {
-protected:
-    using StateT  = typename EvaluationType::StateScalarType;
+   protected:
+    using StateT = typename EvaluationType::StateScalarType;
     using ConfigT = typename EvaluationType::ConfigScalarType;
     using KineticsScalarType = typename EvaluationType::ResultScalarType;
     using KinematicsScalarType = typename Plato::fad_type_t<ElementType, StateT, ConfigT>;
@@ -31,16 +30,15 @@ protected:
     std::shared_ptr<Plato::UniformMaterialBasis<mNumSpatialDims>> mUniformMaterialBasis;
     std::shared_ptr<Plato::VaryingMaterialBasis<mNumSpatialDims>> mVaryingMaterialBasis;
 
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Constructor
      * \param [in] aMaterialModel material model
-    **********************************************************************************/
-    AbstractTMKinetics(
-        Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> const   aMaterialModel,
-        Plato::SpatialDomain                                const & aSpatialDomain,
-        Plato::DataMap                                      const & aDataMap
-    )
+     **********************************************************************************/
+    AbstractTMKinetics(Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> const aMaterialModel,
+                       Plato::SpatialDomain const& aSpatialDomain,
+                       Plato::DataMap const& aDataMap)
     {
         UniformMaterialBasisFactory tUniformFactory;
         mUniformMaterialBasis = tUniformFactory.create(aMaterialModel, aSpatialDomain);
@@ -57,21 +55,19 @@ public:
      * \param [out] aStress Cauchy stress tensor
      * \param [out] aFlux thermal flux vector
      **********************************************************************************/
-    void
-    operator()(
-        Plato::ScalarArray3DT<KineticsScalarType>    const & aStress,
-        Plato::ScalarArray3DT<KineticsScalarType>    const & aFlux,
-        Plato::ScalarArray3DT<KinematicsScalarType>  const & aStrain,
-        Plato::ScalarArray3DT<KinematicsScalarType>  const & aTGrad,
-        Plato::ScalarMultiVectorT<StateT>            const & aTemperature,
-        Plato::ScalarMultiVectorT<ControlScalarType> const & aControl) const
+    void operator()(Plato::ScalarArray3DT<KineticsScalarType> const& aStress,
+                    Plato::ScalarArray3DT<KineticsScalarType> const& aFlux,
+                    Plato::ScalarArray3DT<KinematicsScalarType> const& aStrain,
+                    Plato::ScalarArray3DT<KinematicsScalarType> const& aTGrad,
+                    Plato::ScalarMultiVectorT<StateT> const& aTemperature,
+                    Plato::ScalarMultiVectorT<ControlScalarType> const& aControl) const
     {
-        if(mUniformMaterialBasis)
+        if (mUniformMaterialBasis)
         {
-            mUniformMaterialBasis->VoigtTensorToMaterialBasis(aStrain, /*shear_factor*/0.5);
+            mUniformMaterialBasis->VoigtTensorToMaterialBasis(aStrain, /*shear_factor*/ 0.5);
             mUniformMaterialBasis->VectorToMaterialBasis(aTGrad);
         }
-        if(mVaryingMaterialBasis)
+        if (mVaryingMaterialBasis)
         {
             mVaryingMaterialBasis->VoigtTensorToMaterialBasis(aStrain, /*shear_factor=*/0.5);
             mVaryingMaterialBasis->VectorToMaterialBasis(aTGrad);
@@ -79,20 +75,20 @@ public:
 
         this->compute(aStress, aFlux, aStrain, aTGrad, aTemperature, aControl);
 
-        if(mVaryingMaterialBasis)
+        if (mVaryingMaterialBasis)
         {
             mVaryingMaterialBasis->VoigtTensorFromMaterialBasis(aStress);
             mVaryingMaterialBasis->VectorFromMaterialBasis(aFlux);
             // rotate the kinematics back for output
-            mVaryingMaterialBasis->VoigtTensorFromMaterialBasis(aStrain, /*shear_factor*/0.5);
+            mVaryingMaterialBasis->VoigtTensorFromMaterialBasis(aStrain, /*shear_factor*/ 0.5);
             mVaryingMaterialBasis->VectorFromMaterialBasis(aTGrad);
         }
-        if(mUniformMaterialBasis)
+        if (mUniformMaterialBasis)
         {
             mUniformMaterialBasis->VoigtTensorFromMaterialBasis(aStress);
             mUniformMaterialBasis->VectorFromMaterialBasis(aFlux);
             // rotate the kinematics back for output
-            mUniformMaterialBasis->VoigtTensorFromMaterialBasis(aStrain, /*shear_factor*/0.5);
+            mUniformMaterialBasis->VoigtTensorFromMaterialBasis(aStrain, /*shear_factor*/ 0.5);
             mUniformMaterialBasis->VectorFromMaterialBasis(aTGrad);
         }
     };
@@ -105,17 +101,14 @@ public:
      * \param [out] aStress Cauchy stress tensor
      * \param [out] aFlux thermal flux vector
      **********************************************************************************/
-    virtual void
-    compute(
-        Plato::ScalarArray3DT<KineticsScalarType>    const & aStress,
-        Plato::ScalarArray3DT<KineticsScalarType>    const & aFlux,
-        Plato::ScalarArray3DT<KinematicsScalarType>  const & aStrain,
-        Plato::ScalarArray3DT<KinematicsScalarType>  const & aTGrad,
-        Plato::ScalarMultiVectorT<StateT>            const & aTemperature,
-        Plato::ScalarMultiVectorT<ControlScalarType> const & aControl) const = 0;
-
+    virtual void compute(Plato::ScalarArray3DT<KineticsScalarType> const& aStress,
+                         Plato::ScalarArray3DT<KineticsScalarType> const& aFlux,
+                         Plato::ScalarArray3DT<KinematicsScalarType> const& aStrain,
+                         Plato::ScalarArray3DT<KinematicsScalarType> const& aTGrad,
+                         Plato::ScalarMultiVectorT<StateT> const& aTemperature,
+                         Plato::ScalarMultiVectorT<ControlScalarType> const& aControl) const = 0;
 };
 // class AbstractTMKinetics
 
-}// namespace Plato
+}  // namespace Plato
 #endif

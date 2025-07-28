@@ -14,24 +14,23 @@ namespace Plato
 
 /******************************************************************************/
 /*! ComplexStressDivergence Functor.
-*
-*   Computes stress divergence for linear structural dynamics problems.
-*/
+ *
+ *   Computes stress divergence for linear structural dynamics problems.
+ */
 /******************************************************************************/
-template<Plato::OrdinalType SpaceDim, Plato::OrdinalType NumDofsPerNode>
+template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumDofsPerNode>
 class ComplexStressDivergence
 {
-private:
+   private:
     Plato::OrdinalType mVoigtIndices[SpaceDim][SpaceDim];
 
-public:
-
+   public:
     /******************************************************************************/
     ComplexStressDivergence()
     /******************************************************************************/
     {
         Plato::OrdinalType tVoigtTerm = 0;
-        for(Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
+        for (Plato::OrdinalType tDimIndex = 0; tDimIndex < SpaceDim; tDimIndex++)
         {
             mVoigtIndices[tDimIndex][tDimIndex] = tVoigtTerm++;
         }
@@ -47,30 +46,34 @@ public:
     }
 
     /******************************************************************************/
-    template<typename ForcingScalarType, typename StressScalarType, typename GradientScalarType, typename VolumeScalarType>
-    KOKKOS_INLINE_FUNCTION void
-    operator()(const Plato::OrdinalType & aCellOrdinal,
-               const Plato::ScalarVectorT<VolumeScalarType> & aCellVolume,
-               const Plato::ScalarArray3DT<GradientScalarType> & aGradient,
-               const Plato::ScalarArray3DT<StressScalarType> & aStress,
-               const Plato::ScalarMultiVectorT<ForcingScalarType> & aForce) const
+    template <typename ForcingScalarType,
+              typename StressScalarType,
+              typename GradientScalarType,
+              typename VolumeScalarType>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarVectorT<VolumeScalarType>& aCellVolume,
+                                           const Plato::ScalarArray3DT<GradientScalarType>& aGradient,
+                                           const Plato::ScalarArray3DT<StressScalarType>& aStress,
+                                           const Plato::ScalarMultiVectorT<ForcingScalarType>& aForce) const
     /******************************************************************************/
     {
         const Plato::OrdinalType tComplexSpaceDim = aStress.extent(1);
         const Plato::OrdinalType tNumNodesPerCell = aGradient.extent(1);
-        for(Plato::OrdinalType tComplexIndex = 0; tComplexIndex < tComplexSpaceDim; tComplexIndex++)
+        for (Plato::OrdinalType tComplexIndex = 0; tComplexIndex < tComplexSpaceDim; tComplexIndex++)
         {
-            for(Plato::OrdinalType tSpaceDimI = 0; tSpaceDimI < SpaceDim; tSpaceDimI++)
+            for (Plato::OrdinalType tSpaceDimI = 0; tSpaceDimI < SpaceDim; tSpaceDimI++)
             {
-                for( Plato::OrdinalType tNodeIndex = 0; tNodeIndex < tNumNodesPerCell; tNodeIndex++)
+                for (Plato::OrdinalType tNodeIndex = 0; tNodeIndex < tNumNodesPerCell; tNodeIndex++)
                 {
-                    Plato::OrdinalType tCellDof = (tNodeIndex * NumDofsPerNode) + ((tComplexIndex * SpaceDim) + tSpaceDimI);
+                    Plato::OrdinalType tCellDof =
+                        (tNodeIndex * NumDofsPerNode) + ((tComplexIndex * SpaceDim) + tSpaceDimI);
                     aForce(aCellOrdinal, tCellDof) = 0.0;
-                    for(Plato::OrdinalType tDimIndexJ = 0; tDimIndexJ < SpaceDim; tDimIndexJ++)
+                    for (Plato::OrdinalType tDimIndexJ = 0; tDimIndexJ < SpaceDim; tDimIndexJ++)
                     {
                         const Plato::OrdinalType tVoigtIndex = mVoigtIndices[tSpaceDimI][tDimIndexJ];
-                        aForce(aCellOrdinal, tCellDof) += aCellVolume(aCellOrdinal) * aStress(aCellOrdinal, tComplexIndex, tVoigtIndex)
-                                * aGradient(aCellOrdinal, tNodeIndex, tDimIndexJ);
+                        aForce(aCellOrdinal, tCellDof) += aCellVolume(aCellOrdinal) *
+                                                          aStress(aCellOrdinal, tComplexIndex, tVoigtIndex) *
+                                                          aGradient(aCellOrdinal, tNodeIndex, tDimIndexJ);
                     }
                 }
             }
@@ -79,6 +82,6 @@ public:
 };
 // class ComplexStressDivergence
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif /* COMPLEXSTRESSDIVERGENCE_HPP_ */

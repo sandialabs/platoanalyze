@@ -4,55 +4,49 @@
  *  Created on: March 11, 2021
  */
 
-
-#include "Teuchos_UnitTestHarness.hpp"
 #include <Teuchos_XMLParameterListHelpers.hpp>
-
-#include "util/PlatoTestHelpers.hpp"
-
-#include "Tet4.hpp"
-#include "Geometrical.hpp"
-
 #include <iostream>
 #include <sstream>
 
+#include "Geometrical.hpp"
+#include "Tet4.hpp"
+#include "Teuchos_UnitTestHarness.hpp"
+#include "util/PlatoTestHelpers.hpp"
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
 {
-  // create geometry misfit criterion
-  //
-  Teuchos::RCP<Teuchos::ParameterList> tParamList =
-    Teuchos::getParametersFromXmlString(
-    "<ParameterList name='Plato Problem'>                                                  \n"
-    "  <ParameterList name='Spatial Model'>                                                \n"
-    "    <ParameterList name='Domains'>                                                    \n"
-    "      <ParameterList name='Design Volume'>                                            \n"
-    "        <Parameter name='Element Block' type='string' value='body'/>                  \n"
-    "        <Parameter name='Material Model' type='string' value='Unobtainium'/>          \n"
-    "      </ParameterList>                                                                \n"
-    "    </ParameterList>                                                                  \n"
-    "  </ParameterList>                                                                    \n"
-    "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>                   \n"
-    "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                           \n"
-    "  <ParameterList name='Material Models'>                                              \n"
-    "    <ParameterList name='Unobtainium'>                                                \n"
-    "      <ParameterList name='Isotropic Linear Elastic'>                                 \n"
-    "        <Parameter name='Poissons Ratio' type='double' value='0.3'/>                  \n"
-    "        <Parameter name='Youngs Modulus' type='double' value='1.0e6'/>                \n"
-    "      </ParameterList>                                                                \n"
-    "    </ParameterList>                                                                  \n"
-    "  </ParameterList>                                                                    \n"
-    "  <ParameterList name='Criteria'>                                                     \n"
-    "    <ParameterList name='Geometry Misfit'>                                            \n"
-    "      <Parameter name='Type' type='string' value='Scalar Function' />                 \n"
-    "      <Parameter name='Linear' type='bool' value='true' />                            \n"
-    "      <Parameter name='Scalar Function Type' type='string' value='Geometry Misfit' /> \n"
-    "      <Parameter name='Point Cloud File Name' type='string' value='points.xyz' />     \n"
-    "      <Parameter name='Sides' type='string' value='x+' />                             \n"
-    "    </ParameterList>                                                                  \n"
-    "  </ParameterList>                                                                    \n"
-    "</ParameterList>                                                                      \n"
-  );
+    // create geometry misfit criterion
+    //
+    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
+        "<ParameterList name='Plato Problem'>                                                  \n"
+        "  <ParameterList name='Spatial Model'>                                                \n"
+        "    <ParameterList name='Domains'>                                                    \n"
+        "      <ParameterList name='Design Volume'>                                            \n"
+        "        <Parameter name='Element Block' type='string' value='body'/>                  \n"
+        "        <Parameter name='Material Model' type='string' value='Unobtainium'/>          \n"
+        "      </ParameterList>                                                                \n"
+        "    </ParameterList>                                                                  \n"
+        "  </ParameterList>                                                                    \n"
+        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>                   \n"
+        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                           \n"
+        "  <ParameterList name='Material Models'>                                              \n"
+        "    <ParameterList name='Unobtainium'>                                                \n"
+        "      <ParameterList name='Isotropic Linear Elastic'>                                 \n"
+        "        <Parameter name='Poissons Ratio' type='double' value='0.3'/>                  \n"
+        "        <Parameter name='Youngs Modulus' type='double' value='1.0e6'/>                \n"
+        "      </ParameterList>                                                                \n"
+        "    </ParameterList>                                                                  \n"
+        "  </ParameterList>                                                                    \n"
+        "  <ParameterList name='Criteria'>                                                     \n"
+        "    <ParameterList name='Geometry Misfit'>                                            \n"
+        "      <Parameter name='Type' type='string' value='Scalar Function' />                 \n"
+        "      <Parameter name='Linear' type='bool' value='true' />                            \n"
+        "      <Parameter name='Scalar Function Type' type='string' value='Geometry Misfit' /> \n"
+        "      <Parameter name='Point Cloud File Name' type='string' value='points.xyz' />     \n"
+        "      <Parameter name='Sides' type='string' value='x+' />                             \n"
+        "    </ParameterList>                                                                  \n"
+        "  </ParameterList>                                                                    \n"
+        "</ParameterList>                                                                      \n");
 
     constexpr Plato::OrdinalType tSpaceDim = 3;
     constexpr Plato::OrdinalType tMeshWidth = 1;
@@ -67,19 +61,19 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
     using ResidualT = typename Plato::Geometric::Evaluation<ElementType>::Residual;
 
     std::string tFunctionName("Geometry Misfit");
-    auto tGeometryMisfit = Plato::Geometric::GeometryMisfit<ResidualT>(tOnlyDomain, tDataMap, *tParamList, tFunctionName);
+    auto tGeometryMisfit =
+        Plato::Geometric::GeometryMisfit<ResidualT>(tOnlyDomain, tDataMap, *tParamList, tFunctionName);
 
-    auto aFileName = tParamList->sublist("Criteria").sublist("Geometry Misfit").get<std::string>("Point Cloud File Name");
+    auto aFileName =
+        tParamList->sublist("Criteria").sublist("Geometry Misfit").get<std::string>("Point Cloud File Name");
     auto tHostPoints = tGeometryMisfit.readPointsFromFile(aFileName);
 
     // verify that points loaded correctly
     //
-    std::vector<std::vector<double>> tPointData = {
-      {0.0, 0.0, 1.0}, {0.0, 1.0, 0.0}
-    };
-    for (int iPoint=0; iPoint<tPointData.size(); iPoint++)
+    std::vector<std::vector<double>> tPointData = {{0.0, 0.0, 1.0}, {0.0, 1.0, 0.0}};
+    for (int iPoint = 0; iPoint < tPointData.size(); iPoint++)
     {
-        for (int iDim=0; iDim<tSpaceDim; iDim++)
+        for (int iDim = 0; iDim < tSpaceDim; iDim++)
         {
             TEST_FLOATING_EQUALITY(tPointData[iPoint][iDim], tHostPoints[iPoint][iDim], 1e-16);
         }
@@ -92,16 +86,17 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
     auto tDevicePoints_Host = Kokkos::create_mirror_view(tDevicePoints);
     Kokkos::deep_copy(tDevicePoints_Host, tDevicePoints);
 
-    for (int iPoint=0; iPoint<tPointData.size(); iPoint++)
+    for (int iPoint = 0; iPoint < tPointData.size(); iPoint++)
     {
-        for (int iDim=0; iDim<tSpaceDim; iDim++)
+        for (int iDim = 0; iDim < tSpaceDim; iDim++)
         {
             TEST_FLOATING_EQUALITY(tPointData[iPoint][iDim], tDevicePoints_Host(iDim, iPoint), 1e-16);
         }
     }
 
     const Plato::OrdinalType tNumCells = tMesh->NumElements();
-    Plato::ScalarMultiVectorT<ResidualT::ControlScalarType> tControlWS("design variables", tNumCells, ElementType::mNumNodesPerCell);
+    Plato::ScalarMultiVectorT<ResidualT::ControlScalarType> tControlWS("design variables", tNumCells,
+                                                                       ElementType::mNumNodesPerCell);
     Kokkos::deep_copy(tControlWS, 1.0);
 
     // evaluate the function
@@ -110,7 +105,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
     WorksetBaseT tWorksetBase(tMesh);
 
     {
-        Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("configuration", tNumCells, ElementType::mNumNodesPerCell, tSpaceDim);
+        Plato::ScalarArray3DT<ResidualT::ConfigScalarType> tConfigWS("configuration", tNumCells,
+                                                                     ElementType::mNumNodesPerCell, tSpaceDim);
         tWorksetBase.worksetConfig(tConfigWS, tOnlyDomain);
 
         Plato::ScalarVectorT<ResidualT::ResultScalarType> tResultWS("result", tNumCells);
@@ -121,51 +117,48 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
         Kokkos::deep_copy(tResultWS_Host, tResultWS);
 
         Plato::Scalar tError = 0.0;
-        for (int iCell=0; iCell<tResultWS.extent(0); iCell++)
+        for (int iCell = 0; iCell < tResultWS.extent(0); iCell++)
         {
             tError += tResultWS_Host(iCell);
         }
         TEST_FLOATING_EQUALITY(tError, 1.0, 1e-16);
     }
 
-
     {
         using GradientX = typename Plato::Geometric::Evaluation<ElementType>::GradientX;
-        auto tGeometryMisfit_GradientX = Plato::Geometric::GeometryMisfit<GradientX>(tOnlyDomain, tDataMap, *tParamList, tFunctionName);
+        auto tGeometryMisfit_GradientX =
+            Plato::Geometric::GeometryMisfit<GradientX>(tOnlyDomain, tDataMap, *tParamList, tFunctionName);
 
-        Plato::ScalarArray3DT<GradientX::ConfigScalarType> tConfigWS("configuration", tNumCells, ElementType::mNumNodesPerCell, tSpaceDim);
+        Plato::ScalarArray3DT<GradientX::ConfigScalarType> tConfigWS("configuration", tNumCells,
+                                                                     ElementType::mNumNodesPerCell, tSpaceDim);
         tWorksetBase.worksetConfig(tConfigWS, tOnlyDomain);
 
         Plato::ScalarVectorT<GradientX::ResultScalarType> tResultWS("result", tNumCells);
 
         tGeometryMisfit_GradientX.evaluate_boundary(tSpatialModel, tControlWS, tConfigWS, tResultWS);
 
-        Plato::OrdinalType tNumNodesPerCell = tSpaceDim+1;
-        Plato::OrdinalType tNumDofsPerCell = tSpaceDim*tNumNodesPerCell;
+        Plato::OrdinalType tNumNodesPerCell = tSpaceDim + 1;
+        Plato::OrdinalType tNumDofsPerCell = tSpaceDim * tNumNodesPerCell;
         Plato::ScalarMultiVector tResultWS_POD("result pod", tNumCells, tNumDofsPerCell);
-        Kokkos::parallel_for("flatten", Kokkos::RangePolicy<Plato::OrdinalType>(0,tNumCells), KOKKOS_LAMBDA(int aCellOrdinal)
-        {
-            for(Plato::OrdinalType iDof=0; iDof<tNumDofsPerCell; iDof++)
-            {
-                tResultWS_POD(aCellOrdinal, iDof) = tResultWS(aCellOrdinal).dx(iDof);
-            }
-        });
-
+        Kokkos::parallel_for(
+            "flatten", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumCells), KOKKOS_LAMBDA(int aCellOrdinal) {
+                for (Plato::OrdinalType iDof = 0; iDof < tNumDofsPerCell; iDof++)
+                {
+                    tResultWS_POD(aCellOrdinal, iDof) = tResultWS(aCellOrdinal).dx(iDof);
+                }
+            });
 
         auto tResultWS_Host = Kokkos::create_mirror_view(tResultWS_POD);
         Kokkos::deep_copy(tResultWS_Host, tResultWS_POD);
 
         std::vector<std::vector<Plato::Scalar>> tGold_gradX{
-          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-          {0, 0, 0, 1, -0.5, 0.5, 0, 0, -0.5, 0, 0.5, 0},
-          {0, 0, 0, 0, -0.5, 0, 1, 0.5, -0.5, 0, 0, 0.5}};
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},           {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 1, -0.5, 0.5, 0, 0, -0.5, 0, 0.5, 0}, {0, 0, 0, 0, -0.5, 0, 1, 0.5, -0.5, 0, 0, 0.5}};
 
-        for (int iCell=0; iCell<tResultWS.extent(0); iCell++)
+        for (int iCell = 0; iCell < tResultWS.extent(0); iCell++)
         {
-            for (int iDof=0; iDof<tNumDofsPerCell; iDof++)
+            for (int iDof = 0; iDof < tNumDofsPerCell; iDof++)
             {
                 if (tGold_gradX[iCell][iDof] == 0)
                 {

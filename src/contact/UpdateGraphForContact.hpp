@@ -11,50 +11,31 @@ namespace Contact
 
 class UpdateGraphForContact
 {
-public:
+   public:
     UpdateGraphForContact(Plato::Mesh aMesh);
 
-    void 
-    createNodeNodeGraph
-    (const Plato::OrdinalVector & aChildNodes,
-     const Plato::OrdinalVector & aParentElements);
+    void createNodeNodeGraph(const Plato::OrdinalVector& aChildNodes, const Plato::OrdinalVector& aParentElements);
 
-    void
-    NodeNodeGraph
-    (Plato::OrdinalVector & aOffsetMap,
-     Plato::OrdinalVector & aNodeOrds) const;
+    void NodeNodeGraph(Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const;
 
-    void
-    NodeNodeGraphTranspose
-    (Plato::OrdinalVector & aOffsetMap,
-     Plato::OrdinalVector & aNodeOrds) const;
+    void NodeNodeGraphTranspose(Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const;
 
-    Plato::OrdinalType 
-    extractChildNodeOffsets(const Plato::OrdinalVector & aChildNodes);
+    Plato::OrdinalType extractChildNodeOffsets(const Plato::OrdinalVector& aChildNodes);
 
-    void 
-    storeUniqueParentNodeContributions
-    (const Plato::OrdinalVector & aChildNodes, 
-     const Plato::OrdinalVector & aParentElements);
+    void storeUniqueParentNodeContributions(const Plato::OrdinalVector& aChildNodes,
+                                            const Plato::OrdinalVector& aParentElements);
 
-    Plato::OrdinalType 
-    updateOffsetMap();
+    Plato::OrdinalType updateOffsetMap();
 
-    void 
-    updateNodeOrds();
+    void updateNodeOrds();
 
-    void 
-    countNonzerosForTranspose(Plato::OrdinalVector & aOffsetMap) const;
+    void countNonzerosForTranspose(Plato::OrdinalVector& aOffsetMap) const;
 
-    Plato::OrdinalType 
-    constructTransposeOffsetMap(Plato::OrdinalVector & aOffsetMap) const;
+    Plato::OrdinalType constructTransposeOffsetMap(Plato::OrdinalVector& aOffsetMap) const;
 
-    void
-    constructTransposeNodeOrds
-    (const Plato::OrdinalVector & aOffsetMap,
-           Plato::OrdinalVector & aNodeOrds) const;
+    void constructTransposeNodeOrds(const Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const;
 
-private:
+   private:
     Plato::OrdinalVectorT<const Plato::OrdinalType> mConnectivity;
 
     Plato::OrdinalType mNumTotalNodes;
@@ -73,6 +54,6 @@ private:
     Plato::OrdinalVector mAllGraphOrdinals;
 };
 
-}
+}  // namespace Contact
 
-}
+}  // namespace Plato

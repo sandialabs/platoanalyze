@@ -11,7 +11,8 @@
 namespace Plato
 {
 
-/******************************************************************************//**
+/******************************************************************************/
+/**
  * \brief Compute the deviatoric strain, which is given by:
  *
  *    \f$ \epsilon_{ij}^{d} = \epsilon_{ij}^{e} - \epsilon_{kk}^{e}\delta_{ij}\f$
@@ -20,12 +21,13 @@ namespace Plato
  *
  * \tparam SpaceDim spatial dimensions
  *
-**********************************************************************************/
-template<Plato::OrdinalType SpaceDim>
+ **********************************************************************************/
+template <Plato::OrdinalType SpaceDim>
 class ComputeDeviatoricStrain
 {
-public:
-    /******************************************************************************//**
+   public:
+    /******************************************************************************/
+    /**
      * \brief Compute the deviatoric strain
      *
      * \tparam ElasticStrainT    elastic strain tensor forward automatic differentiation (FAD) type
@@ -34,23 +36,24 @@ public:
      * \param [in]     aCellOrdinal       element index
      * \param [in]     aElasticStrain     elastic strain tensor
      * \param [in\out] aDeviatoricStrain  deviatoric strain tensor
-    **********************************************************************************/
-    template<typename ElasticStrainT, typename DeviatoricStrainT>
-    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarMultiVectorT<ElasticStrainT> & aElasticStrain,
-                                       const Plato::ScalarMultiVectorT<DeviatoricStrainT> & aDeviatoricStrain) const;
+     **********************************************************************************/
+    template <typename ElasticStrainT, typename DeviatoricStrainT>
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
+                                           const Plato::ScalarMultiVectorT<ElasticStrainT>& aElasticStrain,
+                                           const Plato::ScalarMultiVectorT<DeviatoricStrainT>& aDeviatoricStrain) const;
 };
 // class ComputeDeviatoricStrain
 
-template<>
-template<typename ElasticStrainT, typename DeviatoricStrainT>
-KOKKOS_INLINE_FUNCTION void
-ComputeDeviatoricStrain<3>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarMultiVectorT<ElasticStrainT> & aElasticStrain,
-                                       const Plato::ScalarMultiVectorT<DeviatoricStrainT> & aDeviatoricStrain) const
+template <>
+template <typename ElasticStrainT, typename DeviatoricStrainT>
+KOKKOS_INLINE_FUNCTION void ComputeDeviatoricStrain<3>::operator()(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarMultiVectorT<ElasticStrainT>& aElasticStrain,
+    const Plato::ScalarMultiVectorT<DeviatoricStrainT>& aDeviatoricStrain) const
 {
-    ElasticStrainT tTraceOver3 = (aElasticStrain(aCellOrdinal, 0) + aElasticStrain(aCellOrdinal, 1)
-            + aElasticStrain(aCellOrdinal, 2)) / static_cast<Plato::Scalar>(3.0);
+    ElasticStrainT tTraceOver3 =
+        (aElasticStrain(aCellOrdinal, 0) + aElasticStrain(aCellOrdinal, 1) + aElasticStrain(aCellOrdinal, 2)) /
+        static_cast<Plato::Scalar>(3.0);
 
     aDeviatoricStrain(aCellOrdinal, 0) = aElasticStrain(aCellOrdinal, 0) - tTraceOver3;
     aDeviatoricStrain(aCellOrdinal, 1) = aElasticStrain(aCellOrdinal, 1) - tTraceOver3;
@@ -60,15 +63,16 @@ ComputeDeviatoricStrain<3>::operator()(const Plato::OrdinalType & aCellOrdinal,
     aDeviatoricStrain(aCellOrdinal, 5) = aElasticStrain(aCellOrdinal, 5);
 }
 
-template<>
-template<typename ElasticStrainT, typename DeviatoricStrainT>
-KOKKOS_INLINE_FUNCTION void
-ComputeDeviatoricStrain<2>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarMultiVectorT<ElasticStrainT> & aElasticStrain,
-                                       const Plato::ScalarMultiVectorT<DeviatoricStrainT> & aDeviatoricStrain) const
+template <>
+template <typename ElasticStrainT, typename DeviatoricStrainT>
+KOKKOS_INLINE_FUNCTION void ComputeDeviatoricStrain<2>::operator()(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarMultiVectorT<ElasticStrainT>& aElasticStrain,
+    const Plato::ScalarMultiVectorT<DeviatoricStrainT>& aDeviatoricStrain) const
 {
-    ElasticStrainT tTraceOver3 = (aElasticStrain(aCellOrdinal, 0) + aElasticStrain(aCellOrdinal, 1)
-            + aElasticStrain(aCellOrdinal, 3)) / static_cast<Plato::Scalar>(3.0);
+    ElasticStrainT tTraceOver3 =
+        (aElasticStrain(aCellOrdinal, 0) + aElasticStrain(aCellOrdinal, 1) + aElasticStrain(aCellOrdinal, 3)) /
+        static_cast<Plato::Scalar>(3.0);
 
     aDeviatoricStrain(aCellOrdinal, 0) = aElasticStrain(aCellOrdinal, 0) - tTraceOver3;
     aDeviatoricStrain(aCellOrdinal, 1) = aElasticStrain(aCellOrdinal, 1) - tTraceOver3;
@@ -76,16 +80,16 @@ ComputeDeviatoricStrain<2>::operator()(const Plato::OrdinalType & aCellOrdinal,
     aDeviatoricStrain(aCellOrdinal, 3) = aElasticStrain(aCellOrdinal, 3) - tTraceOver3;
 }
 
-template<>
-template<typename ElasticStrainT, typename DeviatoricStrainT>
-KOKKOS_INLINE_FUNCTION void
-ComputeDeviatoricStrain<1>::operator()(const Plato::OrdinalType & aCellOrdinal,
-                                       const Plato::ScalarMultiVectorT<ElasticStrainT> & aElasticStrain,
-                                       const Plato::ScalarMultiVectorT<DeviatoricStrainT> & aDeviatoricStrain) const
+template <>
+template <typename ElasticStrainT, typename DeviatoricStrainT>
+KOKKOS_INLINE_FUNCTION void ComputeDeviatoricStrain<1>::operator()(
+    const Plato::OrdinalType& aCellOrdinal,
+    const Plato::ScalarMultiVectorT<ElasticStrainT>& aElasticStrain,
+    const Plato::ScalarMultiVectorT<DeviatoricStrainT>& aDeviatoricStrain) const
 {
     ElasticStrainT tTraceOver3 = aElasticStrain(aCellOrdinal, 0) / static_cast<Plato::Scalar>(3.0);
     aDeviatoricStrain(aCellOrdinal, 0) = aElasticStrain(aCellOrdinal, 0) - tTraceOver3;
 }
 
-}
+}  // namespace Plato
 // namespace Plato

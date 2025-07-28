@@ -1,102 +1,90 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-
 #include <structmember.h>
-#include <map>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <stdexcept>
-#include <Analyze_App.hpp>
 
-std::vector<Plato::Scalar> double_vector_from_list(PyObject* list);
-PyObject* list_from_double_vector(std::vector<Plato::Scalar> inVector);
+#include <Analyze_App.hpp>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+std::vector<Plato::Scalar> double_vector_from_list(PyObject *list);
+PyObject *list_from_double_vector(std::vector<Plato::Scalar> inVector);
 
 namespace PlatoPython
 {
 
-class SharedData {
-  public:
-    SharedData(Plato::data::layout_t layout, int size, Plato::Scalar initVal=0.0 ) :
-      mData(size,initVal), mLayout(layout){}
-
-    void setData(const std::vector<Plato::Scalar> & aData)
+class SharedData
+{
+   public:
+    SharedData(Plato::data::layout_t layout, int size, Plato::Scalar initVal = 0.0)
+        : mData(size, initVal), mLayout(layout)
     {
-      mData = aData;
-    }
-    void getData(std::vector<Plato::Scalar> & aData) const
-    {
-      aData = mData;
-    }
-    int size() const
-    {
-      return mData.size();
-    }
-    std::string myName() const
-    {
-        return "Plato Python SharedData myName";    
     }
 
-    std::string myContext() const {return mContext;}
-    void setContext(std::string context) {mContext = context;}
+    void setData(const std::vector<Plato::Scalar> &aData) { mData = aData; }
+    void getData(std::vector<Plato::Scalar> &aData) const { aData = mData; }
+    int size() const { return mData.size(); }
+    std::string myName() const { return "Plato Python SharedData myName"; }
 
-    Plato::data::layout_t myLayout() const
-    {
-      return mLayout;
-    }
+    std::string myContext() const { return mContext; }
+    void setContext(std::string context) { mContext = context; }
 
-    Plato::Scalar operator[](int index){ return mData[index]; }
+    Plato::data::layout_t myLayout() const { return mLayout; }
 
-  protected:
+    Plato::Scalar operator[](int index) { return mData[index]; }
+
+   protected:
     std::vector<Plato::Scalar> mData;
     Plato::data::layout_t mLayout;
     std::string mContext;
 };
 class NodeField : public SharedData
 {
-  public:
-    NodeField(int size, Plato::Scalar initVal=0.0) :
-       SharedData(Plato::data::layout_t::SCALAR_FIELD, size, initVal){}
+   public:
+    NodeField(int size, Plato::Scalar initVal = 0.0) : SharedData(Plato::data::layout_t::SCALAR_FIELD, size, initVal) {}
 };
 
 class ElementField : public SharedData
 {
-  public:
-    ElementField(int size, Plato::Scalar initVal=0.0) :
-       SharedData(Plato::data::layout_t::ELEMENT_FIELD, size, initVal){}
+   public:
+    ElementField(int size, Plato::Scalar initVal = 0.0)
+        : SharedData(Plato::data::layout_t::ELEMENT_FIELD, size, initVal)
+    {
+    }
 };
 
 class ScalarParameter : public SharedData
 {
-  public:
-    ScalarParameter(std::string context, Plato::Scalar initVal=0.0) :
-       SharedData(Plato::data::layout_t::SCALAR_PARAMETER, 1, initVal)
-         {mContext = context;}
+   public:
+    ScalarParameter(std::string context, Plato::Scalar initVal = 0.0)
+        : SharedData(Plato::data::layout_t::SCALAR_PARAMETER, 1, initVal)
+    {
+        mContext = context;
+    }
 };
 
 class SharedValue : public SharedData
 {
-  public:
-    SharedValue(int size, Plato::Scalar initVal=0.0) :
-       SharedData(Plato::data::layout_t::SCALAR, size, initVal){}
+   public:
+    SharedValue(int size, Plato::Scalar initVal = 0.0) : SharedData(Plato::data::layout_t::SCALAR, size, initVal) {}
 };
 
-} // end namespace
+}  // namespace PlatoPython
 
-
-struct Analyze {
-    PyObject_HEAD
-    std::shared_ptr<Plato::MPMD_App> mMPMDApp;
+struct Analyze
+{
+    PyObject_HEAD std::shared_ptr<Plato::MPMD_App> mMPMDApp;
     std::vector<int> mLocalNodeIDs;
     std::vector<int> mLocalElemIDs;
     static int mNumInstances;
 };
 
-int Analyze::mNumInstances=0;
+int Analyze::mNumInstances = 0;
 
-static PyObject *
-Analyze_initialize(Analyze* self)
+static PyObject *Analyze_initialize(Analyze *self)
 {
     self->mMPMDApp->initialize();
 
@@ -108,8 +96,7 @@ Analyze_initialize(Analyze* self)
     return Py_BuildValue("i", 1);
 }
 
-static PyObject *
-Analyze_importData(Analyze *self, PyObject *args, PyObject *kwds)
+static PyObject *Analyze_importData(Analyze *self, PyObject *args, PyObject *kwds)
 {
     // parse incoming arguments
     //
@@ -117,7 +104,7 @@ Analyze_importData(Analyze *self, PyObject *args, PyObject *kwds)
     char *inputDataType;
     PyObject *inputData;
 
-    if (! PyArg_ParseTuple(args, "ssO", &inputDataName, &inputDataType, &inputData) )
+    if (!PyArg_ParseTuple(args, "ssO", &inputDataName, &inputDataType, &inputData))
     {
         return Py_BuildValue("i", -1);
     }
@@ -126,31 +113,31 @@ Analyze_importData(Analyze *self, PyObject *args, PyObject *kwds)
     std::string inName(inputDataName);
     std::string inType(inputDataType);
 
-    if( inType == "SCALAR_FIELD" )
+    if (inType == "SCALAR_FIELD")
     {
         PlatoPython::NodeField inData(self->mLocalNodeIDs.size());
         auto vecData = double_vector_from_list(inputData);
         inData.setData(vecData);
         self->mMPMDApp->importDataT(inName, inData);
-    } else
-    if( inType == "ELEMENT_FIELD" )
+    }
+    else if (inType == "ELEMENT_FIELD")
     {
         PlatoPython::ElementField inData(self->mLocalElemIDs.size());
         auto vecData = double_vector_from_list(inputData);
         inData.setData(vecData);
         self->mMPMDApp->importDataT(inName, inData);
-    } else
-    if( inType == "SCALAR_PARAMETER" )
+    }
+    else if (inType == "SCALAR_PARAMETER")
     {
-        std::vector<std::string> tokens = Plato::split(inName,':');
+        std::vector<std::string> tokens = Plato::split(inName, ':');
         auto context = tokens[0];
         auto parameter = tokens[1];
         PlatoPython::ScalarParameter inData(context);
         std::vector<Plato::Scalar> vecData(1, PyFloat_AsDouble(inputData));
         inData.setData(vecData);
         self->mMPMDApp->importDataT(parameter, inData);
-    } else
-    if( inType == "SCALAR" )
+    }
+    else if (inType == "SCALAR")
     {
         std::vector<Plato::Scalar> vecData;
         if (PyList_Check(inputData))
@@ -169,14 +156,13 @@ Analyze_importData(Analyze *self, PyObject *args, PyObject *kwds)
     return Py_BuildValue("i", 1);
 }
 
-static PyObject *
-Analyze_compute(Analyze *self, PyObject *args, PyObject *kwds)
+static PyObject *Analyze_compute(Analyze *self, PyObject *args, PyObject *kwds)
 {
     // parse incoming arguments
     //
     char *operationName;
 
-    if (! PyArg_ParseTuple(args, "s", &operationName) )
+    if (!PyArg_ParseTuple(args, "s", &operationName))
     {
         return Py_BuildValue("i", -1);
     }
@@ -186,14 +172,14 @@ Analyze_compute(Analyze *self, PyObject *args, PyObject *kwds)
     try
     {
         self->mMPMDApp->compute(opName);
-    } 
-    catch(const std::runtime_error& err) 
+    }
+    catch (const std::runtime_error &err)
     {
         // Expected exception type from ANALYZE_THROWERR
         PyErr_SetString(PyExc_RuntimeError, err.what());
         return NULL;
     }
-    catch(...)
+    catch (...)
     {
         PyErr_SetString(PyExc_RuntimeError, "Unexpected C++ exception.");
         return NULL;
@@ -201,8 +187,7 @@ Analyze_compute(Analyze *self, PyObject *args, PyObject *kwds)
     return Py_BuildValue("i", 1);
 }
 
-static PyObject *
-Analyze_exportData(Analyze *self, PyObject *args, PyObject *kwds)
+static PyObject *Analyze_exportData(Analyze *self, PyObject *args, PyObject *kwds)
 {
     // parse incoming arguments
     //
@@ -210,7 +195,7 @@ Analyze_exportData(Analyze *self, PyObject *args, PyObject *kwds)
     char *outputDataType;
     int tNumValues(1);
 
-    if (! PyArg_ParseTuple(args, "ss|i", &outputDataName, &outputDataType, &tNumValues) )
+    if (!PyArg_ParseTuple(args, "ss|i", &outputDataName, &outputDataType, &tNumValues))
     {
         return Py_BuildValue("i", -1);
     }
@@ -219,23 +204,23 @@ Analyze_exportData(Analyze *self, PyObject *args, PyObject *kwds)
     std::string outName(outputDataName);
     std::string outType(outputDataType);
 
-    if( outType == "SCALAR_FIELD" )
+    if (outType == "SCALAR_FIELD")
     {
         PlatoPython::NodeField outData(self->mLocalNodeIDs.size());
         self->mMPMDApp->exportDataT(outName, outData);
         std::vector<Plato::Scalar> vecData(self->mLocalNodeIDs.size());
         outData.getData(vecData);
         return list_from_double_vector(vecData);
-    } else
-    if( outType == "ELEMENT_FIELD" )
+    }
+    else if (outType == "ELEMENT_FIELD")
     {
         PlatoPython::ElementField outData(self->mLocalElemIDs.size());
         self->mMPMDApp->exportDataT(outName, outData);
         std::vector<Plato::Scalar> vecData(self->mLocalElemIDs.size());
         outData.getData(vecData);
         return list_from_double_vector(vecData);
-    } else
-    if( outType == "SCALAR" )
+    }
+    else if (outType == "SCALAR")
     {
         PlatoPython::SharedValue outData(tNumValues);
         self->mMPMDApp->exportDataT(outName, outData);
@@ -253,8 +238,7 @@ Analyze_exportData(Analyze *self, PyObject *args, PyObject *kwds)
     return Py_BuildValue("i", 1);
 }
 
-static PyObject *
-Analyze_finalize(Analyze* self)
+static PyObject *Analyze_finalize(Analyze *self)
 {
     self->mMPMDApp->finalize();
     return Py_BuildValue("i", 1);
@@ -267,28 +251,25 @@ static PyModuleDef Plato_module = {
     .m_size = -1,
 };
 
-
-static void
-Analyze_dealloc(Analyze* self)
+static void Analyze_dealloc(Analyze *self)
 {
     self->mNumInstances--;
-    if(self->mNumInstances == 0)
+    if (self->mNumInstances == 0)
     {
-        if(Kokkos::is_initialized())
+        if (Kokkos::is_initialized())
         {
             Kokkos::finalize();
         }
         Plato::MeshFactory::finalize();
         int isFinalized;
         MPI_Finalized(&isFinalized);
-        if( !isFinalized ) MPI_Finalize();
+        if (!isFinalized) MPI_Finalize();
     }
 
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-static PyObject *
-Analyze_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+static PyObject *Analyze_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     Analyze *self;
 
@@ -297,18 +278,15 @@ Analyze_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
-
-static int
-Analyze_init(Analyze *self, PyObject *args, PyObject *kwds)
+static int Analyze_init(Analyze *self, PyObject *args, PyObject *kwds)
 {
-
     // parse incoming arguments
     //
     char *inputfileName;
     char *appfileName;
     char *instanceName;
 
-    if (! PyArg_ParseTuple(args, "sss", &inputfileName, &appfileName, &instanceName))
+    if (!PyArg_ParseTuple(args, "sss", &inputfileName, &appfileName, &instanceName))
     {
         return -1;
     }
@@ -319,19 +297,19 @@ Analyze_init(Analyze *self, PyObject *args, PyObject *kwds)
     // construct artificial argc and argv for initializing mpi, kokkos, and the MPMD_App
     //
     int argc = 2;
-    char** argv = (char**)malloc((argc+1)*sizeof(char*));
+    char **argv = (char **)malloc((argc + 1) * sizeof(char *));
     char exeName[] = "exeName";
-    char* arg0 = strdup(exeName);
+    char *arg0 = strdup(exeName);
     argv[0] = arg0;
     std::stringstream inArgs;
     inArgs << "--input-config=" << strInputfileName;
-    char* arg1 = strdup(inArgs.str().c_str());
+    char *arg1 = strdup(inArgs.str().c_str());
     argv[1] = arg1;
     argv[argc] = NULL;
 
     int mpiIsInitialized;
-    MPI_Initialized( &mpiIsInitialized );
-    if( !mpiIsInitialized )
+    MPI_Initialized(&mpiIsInitialized);
+    if (!mpiIsInitialized)
     {
         MPI_Init(&argc, &argv);
         Kokkos::initialize(argc, argv);
@@ -345,9 +323,9 @@ Analyze_init(Analyze *self, PyObject *args, PyObject *kwds)
     setenv("PLATO_APP_FILE", strAppfileName.c_str(), true);
     self->mMPMDApp = std::make_shared<Plato::MPMD_App>(argc, argv, myComm);
 
-    free(arg0); free(arg1); free(argv);
-
-
+    free(arg0);
+    free(arg1);
+    free(argv);
 
     // increment the instance counter.  This is used to finalize mpi and kokkos
     // when the last instance is deleted.  This will conflict with other modules
@@ -359,11 +337,10 @@ Analyze_init(Analyze *self, PyObject *args, PyObject *kwds)
 }
 
 static PyMemberDef Analyze_members[] = {
-    {NULL}  /* Sentinel */
+    {NULL} /* Sentinel */
 };
 
-static PyObject *
-Analyze_name(Analyze* self)
+static PyObject *Analyze_name(Analyze *self)
 {
     PyObject *result = Py_BuildValue("s", "PlatoPython");
 
@@ -371,65 +348,61 @@ Analyze_name(Analyze* self)
 }
 
 static PyMethodDef Analyze_methods[] = {
-    {"name",       (PyCFunction)Analyze_name,       METH_NOARGS,   "Return the instance name" },
-    {"initialize", (PyCFunction)Analyze_initialize, METH_NOARGS,   "Plato::Application::initialize()" },
-    {"importData", (PyCFunction)Analyze_importData, METH_VARARGS,  "Plato::Application::importData()" },
-    {"compute",    (PyCFunction)Analyze_compute,    METH_VARARGS,  "Plato::Application::compute()" },
-    {"exportData", (PyCFunction)Analyze_exportData, METH_VARARGS,  "Plato::Application::exportData()" },
-    {"finalize",   (PyCFunction)Analyze_finalize,   METH_NOARGS,   "Plato::Application::finalize()" },
-    {NULL}  /* Sentinel */
+    {"name", (PyCFunction)Analyze_name, METH_NOARGS, "Return the instance name"},
+    {"initialize", (PyCFunction)Analyze_initialize, METH_NOARGS, "Plato::Application::initialize()"},
+    {"importData", (PyCFunction)Analyze_importData, METH_VARARGS, "Plato::Application::importData()"},
+    {"compute", (PyCFunction)Analyze_compute, METH_VARARGS, "Plato::Application::compute()"},
+    {"exportData", (PyCFunction)Analyze_exportData, METH_VARARGS, "Plato::Application::exportData()"},
+    {"finalize", (PyCFunction)Analyze_finalize, METH_NOARGS, "Plato::Application::finalize()"},
+    {NULL} /* Sentinel */
 };
 
 static PyTypeObject AnalyzeType = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    "Plato.Analyze",           /* tp_name */
-    sizeof(Analyze),           /* tp_basicsize */
-    0,                         /* tp_itemsize */
-    (destructor)Analyze_dealloc, /* tp_dealloc */
-    0,                         /* tp_print */
-    0,                         /* tp_getattr */
-    0,                         /* tp_setattr */
-    0,                         /* tp_compare */
-    0,                         /* tp_repr */
-    0,                         /* tp_as_number */
-    0,                         /* tp_as_sequence */
-    0,                         /* tp_as_mapping */
-    0,                         /* tp_hash */
-    0,                         /* tp_call */
-    0,                         /* tp_str */
-    0,                         /* tp_getattro */
-    0,                         /* tp_setattro */
-    0,                         /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT |
-        Py_TPFLAGS_BASETYPE,   /* tp_flags */
-    "Analyze objects",         /* tp_doc */
-    0,                         /* tp_traverse */
-    0,                         /* tp_clear */
-    0,                         /* tp_richcompare */
-    0,                         /* tp_weaklistoffset */
-    0,                         /* tp_iter */
-    0,                         /* tp_iternext */
-    Analyze_methods,           /* tp_methods */
-    Analyze_members,           /* tp_members */
-    0,                         /* tp_getset */
-    0,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)Analyze_init,    /* tp_init */
-    0,                         /* tp_alloc */
-    Analyze_new,               /* tp_new */
+    PyVarObject_HEAD_INIT(NULL, 0) "Plato.Analyze", /* tp_name */
+    sizeof(Analyze),                                /* tp_basicsize */
+    0,                                              /* tp_itemsize */
+    (destructor)Analyze_dealloc,                    /* tp_dealloc */
+    0,                                              /* tp_print */
+    0,                                              /* tp_getattr */
+    0,                                              /* tp_setattr */
+    0,                                              /* tp_compare */
+    0,                                              /* tp_repr */
+    0,                                              /* tp_as_number */
+    0,                                              /* tp_as_sequence */
+    0,                                              /* tp_as_mapping */
+    0,                                              /* tp_hash */
+    0,                                              /* tp_call */
+    0,                                              /* tp_str */
+    0,                                              /* tp_getattro */
+    0,                                              /* tp_setattro */
+    0,                                              /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,       /* tp_flags */
+    "Analyze objects",                              /* tp_doc */
+    0,                                              /* tp_traverse */
+    0,                                              /* tp_clear */
+    0,                                              /* tp_richcompare */
+    0,                                              /* tp_weaklistoffset */
+    0,                                              /* tp_iter */
+    0,                                              /* tp_iternext */
+    Analyze_methods,                                /* tp_methods */
+    Analyze_members,                                /* tp_members */
+    0,                                              /* tp_getset */
+    0,                                              /* tp_base */
+    0,                                              /* tp_dict */
+    0,                                              /* tp_descr_get */
+    0,                                              /* tp_descr_set */
+    0,                                              /* tp_dictoffset */
+    (initproc)Analyze_init,                         /* tp_init */
+    0,                                              /* tp_alloc */
+    Analyze_new,                                    /* tp_new */
 };
 
-
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
+#ifndef PyMODINIT_FUNC /* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
-PyMODINIT_FUNC
-PyInit_PlatoPython(void)
+PyMODINIT_FUNC PyInit_PlatoPython(void)
 {
-    PyObject* m;
+    PyObject *m;
 
     if (PyType_Ready(&AnalyzeType) < 0)
     {
@@ -456,33 +429,32 @@ PyInit_PlatoPython(void)
 /*****************************************************************************/
 // create a double vector from a Python list
 /*****************************************************************************/
-std::vector<Plato::Scalar> double_vector_from_list(PyObject* inList)
+std::vector<Plato::Scalar> double_vector_from_list(PyObject *inList)
 {
-  int length = PyList_Size(inList);
-  std::vector<Plato::Scalar> outVector(length);
-  for(int i = 0; i < length; i++) {
-    PyObject *v = PyList_GetItem(inList,i);
-    if(!PyFloat_Check(v)) {
-      PyErr_SetString(PyExc_TypeError, "list must contain only reals");
-      outVector[i] = 0.0;
+    int length = PyList_Size(inList);
+    std::vector<Plato::Scalar> outVector(length);
+    for (int i = 0; i < length; i++)
+    {
+        PyObject *v = PyList_GetItem(inList, i);
+        if (!PyFloat_Check(v))
+        {
+            PyErr_SetString(PyExc_TypeError, "list must contain only reals");
+            outVector[i] = 0.0;
+        }
+        outVector[i] = PyFloat_AsDouble(v);
     }
-    outVector[i] = PyFloat_AsDouble(v);
-  }
-  return outVector;
+    return outVector;
 }
 
 /*****************************************************************************/
 // create a python list from double vector
 /*****************************************************************************/
-PyObject* list_from_double_vector(std::vector<Plato::Scalar> inVector)
+PyObject *list_from_double_vector(std::vector<Plato::Scalar> inVector)
 {
-  int array_length = inVector.size();
-  PyObject *newlist = PyList_New(array_length);
+    int array_length = inVector.size();
+    PyObject *newlist = PyList_New(array_length);
 
-  for(int i=0; i<array_length; i++)
-    PyList_SetItem(newlist, i, PyFloat_FromDouble(inVector[i]));
+    for (int i = 0; i < array_length; i++) PyList_SetItem(newlist, i, PyFloat_FromDouble(inVector[i]));
 
-  return newlist;
+    return newlist;
 }
-
-

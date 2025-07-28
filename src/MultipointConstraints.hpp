@@ -1,16 +1,15 @@
 #ifndef MULTIPOINT_CONSTRAINTS_HPP
 #define MULTIPOINT_CONSTRAINTS_HPP
 
+#include <Teuchos_ParameterList.hpp>
 #include <sstream>
 
-#include <Teuchos_ParameterList.hpp>
-
 #include "AnalyzeMacros.hpp"
-#include "PlatoStaticsTypes.hpp"
 #include "BLAS1.hpp"
-#include "PlatoMathHelpers.hpp"
-#include "MultipointConstraintFactory.hpp"
 #include "MultipointConstraint.hpp"
+#include "MultipointConstraintFactory.hpp"
+#include "PlatoMathHelpers.hpp"
+#include "PlatoStaticsTypes.hpp"
 #include "SpatialModel.hpp"
 
 namespace Plato
@@ -23,7 +22,7 @@ namespace Plato
 class MultipointConstraints
 /******************************************************************************/
 {
-private:
+   private:
     std::vector<std::shared_ptr<MultipointConstraint>> MPCs;
     const OrdinalType mNumDofsPerNode;
     const OrdinalType mNumNodes;
@@ -34,58 +33,54 @@ private:
     ScalarVector mRhs;
     OrdinalType mNumChildNodes;
 
-public :
-
+   public:
     /*!
      \brief Constructor that parses and creates a vector of MultipointConstraint objects
      based on the ParameterList.
      */
-    MultipointConstraints(const Plato::SpatialModel & aSpatialModel,
-                          const OrdinalType & aNumDofsPerNode, 
-                          Teuchos::ParameterList & aParams);
+    MultipointConstraints(const Plato::SpatialModel& aSpatialModel,
+                          const OrdinalType& aNumDofsPerNode,
+                          Teuchos::ParameterList& aParams);
 
     /*!
      \brief Get node ordinals and values for constraints.
      */
-    void get(Teuchos::RCP<Plato::CrsMatrixType> & mpcMatrix,
-             ScalarVector & mpcValues);
+    void get(Teuchos::RCP<Plato::CrsMatrixType>& mpcMatrix, ScalarVector& mpcValues);
 
     // brief get mappings from DOF to DOF type and constraint number
-    void getMaps(OrdinalVector & nodeTypes,
-                 OrdinalVector & nodeConNum);
+    void getMaps(OrdinalVector& nodeTypes, OrdinalVector& nodeConNum);
 
     // brief assemble transform matrix for constraint enforcement
-    void assembleTransformMatrix(const Teuchos::RCP<Plato::CrsMatrixType> & aMpcMatrix,
-                                 const OrdinalVector & aNodeTypes,
-                                 const OrdinalVector & aNodeConNum);
+    void assembleTransformMatrix(const Teuchos::RCP<Plato::CrsMatrixType>& aMpcMatrix,
+                                 const OrdinalVector& aNodeTypes,
+                                 const OrdinalVector& aNodeConNum);
 
     // brief assemble RHS vector for transformation
-    void assembleRhs(const ScalarVector & aMpcValues);
+    void assembleRhs(const ScalarVector& aMpcValues);
 
     // brief setup transform matrices and RHS
     void setupTransform();
-    
+
     // brief check for MPC and Essential BC conflicts
-    void checkEssentialBcsConflicts(const OrdinalVector & aBcDofs);
+    void checkEssentialBcsConflicts(const OrdinalVector& aBcDofs);
 
     // brief getters
-    decltype(mTransformMatrix)          getTransformMatrix()           { return mTransformMatrix; }
-    decltype(mTransformMatrixTranspose) getTransformMatrixTranspose()  { return mTransformMatrixTranspose; }
-    decltype(mRhs)                      getRhsVector()                 { return mRhs; }
-    Plato::OrdinalType                  getNumTotalNodes()             { return mNumNodes; }
-    Plato::OrdinalType                  getNumCondensedNodes()         { return mNumNodes - mNumChildNodes; }
-    Plato::OrdinalType                  getNumDofsPerNode()            { return mNumDofsPerNode; }
-    
+    decltype(mTransformMatrix) getTransformMatrix() { return mTransformMatrix; }
+    decltype(mTransformMatrixTranspose) getTransformMatrixTranspose() { return mTransformMatrixTranspose; }
+    decltype(mRhs) getRhsVector() { return mRhs; }
+    Plato::OrdinalType getNumTotalNodes() { return mNumNodes; }
+    Plato::OrdinalType getNumCondensedNodes() { return mNumNodes - mNumChildNodes; }
+    Plato::OrdinalType getNumDofsPerNode() { return mNumDofsPerNode; }
+
     // brief const getters
-    const decltype(mTransformMatrix)          getTransformMatrix()           const { return mTransformMatrix; }
-    const decltype(mTransformMatrixTranspose) getTransformMatrixTranspose()  const { return mTransformMatrixTranspose; }
-    const decltype(mRhs)                      getRhsVector()                 const { return mRhs; }
-    Plato::OrdinalType                        getNumTotalNodes()             const { return mNumNodes; }
-    Plato::OrdinalType                        getNumCondensedNodes()         const { return mNumNodes - mNumChildNodes; }
-    Plato::OrdinalType                        getNumDofsPerNode()            const { return mNumDofsPerNode; }
+    const decltype(mTransformMatrix) getTransformMatrix() const { return mTransformMatrix; }
+    const decltype(mTransformMatrixTranspose) getTransformMatrixTranspose() const { return mTransformMatrixTranspose; }
+    const decltype(mRhs) getRhsVector() const { return mRhs; }
+    Plato::OrdinalType getNumTotalNodes() const { return mNumNodes; }
+    Plato::OrdinalType getNumCondensedNodes() const { return mNumNodes - mNumChildNodes; }
+    Plato::OrdinalType getNumDofsPerNode() const { return mNumDofsPerNode; }
 };
 
-} // namespace Plato
+}  // namespace Plato
 
 #endif
-

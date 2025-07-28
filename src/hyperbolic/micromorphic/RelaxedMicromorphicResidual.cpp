@@ -2,11 +2,11 @@
 
 #ifdef PLATOANALYZE_USE_EXPLICIT_INSTANTIATION
 
+#include "hyperbolic/ExpInstMacros.hpp"
+#include "hyperbolic/micromorphic/MicromorphicMechanicsElement.hpp"
 #include "hyperbolic/micromorphic/RelaxedMicromorphicResidual_def.hpp"
 
-#include "hyperbolic/micromorphic/MicromorphicMechanicsElement.hpp"
-#include "hyperbolic/ExpInstMacros.hpp"
-
-PLATO_HYPERBOLIC_EXP_INST(Plato::Hyperbolic::Micromorphic::RelaxedMicromorphicResidual, Plato::Hyperbolic::MicromorphicMechanicsElement)
+PLATO_HYPERBOLIC_EXP_INST(Plato::Hyperbolic::Micromorphic::RelaxedMicromorphicResidual,
+                          Plato::Hyperbolic::MicromorphicMechanicsElement)
 
 #endif

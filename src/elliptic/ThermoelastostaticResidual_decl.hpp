@@ -2,14 +2,13 @@
 
 #include <memory>
 
+#include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
 #include "NaturalBCs.hpp"
-#include "ApplyWeighting.hpp"
 #include "ThermoelasticMaterial.hpp"
-#include "elliptic/AbstractVectorFunction.hpp"
-
-#include "contact/AbstractSurfaceDisplacement.hpp"
 #include "contact/AbstractContactForce.hpp"
+#include "contact/AbstractSurfaceDisplacement.hpp"
+#include "elliptic/AbstractVectorFunction.hpp"
 
 namespace Plato
 {
@@ -18,26 +17,25 @@ namespace Elliptic
 {
 
 /******************************************************************************/
-template<typename EvaluationType, typename IndicatorFunctionType>
-class ThermoelastostaticResidual :
-        public EvaluationType::ElementType,
-        public Plato::Elliptic::AbstractVectorFunction<EvaluationType>
+template <typename EvaluationType, typename IndicatorFunctionType>
+class ThermoelastostaticResidual : public EvaluationType::ElementType,
+                                   public Plato::Elliptic::AbstractVectorFunction<EvaluationType>
 /******************************************************************************/
 {
-private:
+   private:
     using ElementType = typename EvaluationType::ElementType;
 
-    using ElementType::mNumVoigtTerms;
-    using ElementType::mNumNodesPerCell;
-    using ElementType::mNumDofsPerNode;
     using ElementType::mNumDofsPerCell;
+    using ElementType::mNumDofsPerNode;
+    using ElementType::mNumNodesPerCell;
     using ElementType::mNumSpatialDims;
+    using ElementType::mNumVoigtTerms;
 
     using FunctionBaseType = Plato::Elliptic::AbstractVectorFunction<EvaluationType>;
 
-    using FunctionBaseType::mSpatialDomain;
     using FunctionBaseType::mDataMap;
     using FunctionBaseType::mDofNames;
+    using FunctionBaseType::mSpatialDomain;
 
     static constexpr int NThrmDims = 1;
     static constexpr int NMechDims = mNumSpatialDims;
@@ -45,14 +43,14 @@ private:
     static constexpr int TDofOffset = mNumSpatialDims;
     static constexpr int MDofOffset = 0;
 
-    using StateScalarType   = typename EvaluationType::StateScalarType;
+    using StateScalarType = typename EvaluationType::StateScalarType;
     using ControlScalarType = typename EvaluationType::ControlScalarType;
-    using ConfigScalarType  = typename EvaluationType::ConfigScalarType;
-    using ResultScalarType  = typename EvaluationType::ResultScalarType;
+    using ConfigScalarType = typename EvaluationType::ConfigScalarType;
+    using ResultScalarType = typename EvaluationType::ResultScalarType;
 
     IndicatorFunctionType mIndicatorFunction;
     Plato::ApplyWeighting<mNumNodesPerCell, mNumSpatialDims, IndicatorFunctionType> mApplyFluxWeighting;
-    Plato::ApplyWeighting<mNumNodesPerCell, mNumVoigtTerms,  IndicatorFunctionType> mApplyStressWeighting;
+    Plato::ApplyWeighting<mNumNodesPerCell, mNumVoigtTerms, IndicatorFunctionType> mApplyStressWeighting;
 
     std::shared_ptr<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
 
@@ -63,42 +61,38 @@ private:
 
     std::vector<std::string> mPlottable;
 
-public:
+   public:
     /**************************************************************************/
-    ThermoelastostaticResidual(
-        const Plato::SpatialDomain   & aSpatialDomain,
-              Plato::DataMap         & aDataMap,
-              Teuchos::ParameterList & aProblemParams,
-              Teuchos::ParameterList & aPenaltyParams
-    );
+    ThermoelastostaticResidual(const Plato::SpatialDomain &aSpatialDomain,
+                               Plato::DataMap &aDataMap,
+                               Teuchos::ParameterList &aProblemParams,
+                               Teuchos::ParameterList &aPenaltyParams);
 
-    /****************************************************************************//**
-    * \brief Pure virtual function to get output solution data
-    * \param [in] state solution database
-    * \return output state solution database
-    ********************************************************************************/
+    /****************************************************************************/
+    /**
+     * \brief Pure virtual function to get output solution data
+     * \param [in] state solution database
+     * \return output state solution database
+     ********************************************************************************/
     Plato::Solutions getSolutionStateOutputData(const Plato::Solutions &aSolutions) const override;
 
     /**************************************************************************/
-    void evaluate(
-        const Plato::ScalarMultiVectorT <StateScalarType>   & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType> & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType>  & aConfig,
-              Plato::ScalarMultiVectorT <ResultScalarType>  & aResult,
-              Plato::Scalar aTimeStep = 0.0
-    ) const override;
+    void evaluate(const Plato::ScalarMultiVectorT<StateScalarType> &aState,
+                  const Plato::ScalarMultiVectorT<ControlScalarType> &aControl,
+                  const Plato::ScalarArray3DT<ConfigScalarType> &aConfig,
+                  Plato::ScalarMultiVectorT<ResultScalarType> &aResult,
+                  Plato::Scalar aTimeStep = 0.0) const override;
 
     /**************************************************************************/
-    void evaluate_boundary(
-        const Plato::SpatialModel                           & aSpatialModel,
-        const Plato::ScalarMultiVectorT <StateScalarType>   & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType> & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType>  & aConfig,
-              Plato::ScalarMultiVectorT <ResultScalarType>  & aResult,
-              Plato::Scalar aTimeStep = 0.0
-    ) const override;
+    void evaluate_boundary(const Plato::SpatialModel &aSpatialModel,
+                           const Plato::ScalarMultiVectorT<StateScalarType> &aState,
+                           const Plato::ScalarMultiVectorT<ControlScalarType> &aControl,
+                           const Plato::ScalarArray3DT<ConfigScalarType> &aConfig,
+                           Plato::ScalarMultiVectorT<ResultScalarType> &aResult,
+                           Plato::Scalar aTimeStep = 0.0) const override;
 
-    /******************************************************************************//**
+    /******************************************************************************/
+    /**
      * \brief Evaluate contact
      *
      * \param [in] aSpatialModel Plato Analyze spatial model
@@ -113,22 +107,19 @@ public:
      *
      * Nomenclature: C = number of cells, DOF = number of degrees of freedom per cell
      * N = number of nodes per cell, D = spatial dimensions
-    **********************************************************************************/
-    void
-    evaluate_contact(
-        const Plato::SpatialModel                                                       & aSpatialModel,
-        const std::string                                                               & aSideSet,
-              Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>>   aComputeSurfaceDisp,
-              Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>>          aComputeContactForce,
-        const Plato::ScalarMultiVectorT <StateScalarType>                               & aState,
-        const Plato::ScalarMultiVectorT <ControlScalarType>                             & aControl,
-        const Plato::ScalarArray3DT     <ConfigScalarType>                              & aConfig,
-              Plato::ScalarMultiVectorT <ResultScalarType>                              & aResult,
-              Plato::Scalar aTimeStep = 0.0
-    ) const override;
+     **********************************************************************************/
+    void evaluate_contact(const Plato::SpatialModel &aSpatialModel,
+                          const std::string &aSideSet,
+                          Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
+                          Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>> aComputeContactForce,
+                          const Plato::ScalarMultiVectorT<StateScalarType> &aState,
+                          const Plato::ScalarMultiVectorT<ControlScalarType> &aControl,
+                          const Plato::ScalarArray3DT<ConfigScalarType> &aConfig,
+                          Plato::ScalarMultiVectorT<ResultScalarType> &aResult,
+                          Plato::Scalar aTimeStep = 0.0) const override;
 };
 // class ThermoelastostaticResidual
 
-} // namespace Elliptic
+}  // namespace Elliptic
 
-} // namespace Plato
+}  // namespace Plato

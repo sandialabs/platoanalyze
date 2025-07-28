@@ -4,8 +4,9 @@
  *  Created on: Apr 6, 2021
  */
 
-#include "BLAS1.hpp"
 #include "Variables.hpp"
+
+#include "BLAS1.hpp"
 #include "PlatoUtilities.hpp"
 
 namespace Plato
@@ -15,7 +16,7 @@ Plato::Scalar Variables::scalar(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mScalars.find(tLowerTag);
-    if(tItr == mScalars.end())
+    if (tItr == mScalars.end())
     {
         ANALYZE_THROWERR(std::string("Scalar with tag '") + aTag + "' is not defined in the variables map.")
     }
@@ -32,7 +33,7 @@ Plato::ScalarVector Variables::vector(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tItr = mVectors.find(tLowerTag);
-    if(tItr == mVectors.end())
+    if (tItr == mVectors.end())
     {
         ANALYZE_THROWERR(std::string("Vector with tag '") + aTag + "' is not defined in the variables map.")
     }
@@ -45,17 +46,11 @@ void Variables::vector(const std::string& aTag, const Plato::ScalarVector& aInpu
     mVectors[tLowerTag] = aInput;
 }
 
-bool Variables::isVectorMapEmpty() const
-{
-    return mVectors.empty();
-}
+bool Variables::isVectorMapEmpty() const { return mVectors.empty(); }
 
-bool Variables::isScalarMapEmpty() const
-{
-    return mScalars.empty();
-}
+bool Variables::isScalarMapEmpty() const { return mScalars.empty(); }
 
-bool Variables::defined(const std::string & aTag) const
+bool Variables::defined(const std::string& aTag) const
 {
     auto tLowerTag = Plato::tolower(aTag);
     auto tScalarMapItr = mScalars.find(tLowerTag);
@@ -63,10 +58,14 @@ bool Variables::defined(const std::string & aTag) const
     auto tVectorMapItr = mVectors.find(tLowerTag);
     auto tFoundVectorTag = tVectorMapItr != mVectors.end();
 
-    if(tFoundScalarTag || tFoundVectorTag)
-    { return true; }
+    if (tFoundScalarTag || tFoundVectorTag)
+    {
+        return true;
+    }
     else
-    { return false; }
+    {
+        return false;
+    }
 }
 
 void Variables::print() const
@@ -77,13 +76,13 @@ void Variables::print() const
 
 void Variables::printVectorMap() const
 {
-    if(mVectors.empty())
+    if (mVectors.empty())
     {
         return;
     }
 
     std::cout << "Print Vector Map\n";
-    for(auto& tPair : mVectors)
+    for (auto& tPair : mVectors)
     {
         std::cout << "name = " << tPair.first << ", norm = " << Plato::blas1::norm(tPair.second) << "\n" << std::flush;
     }
@@ -91,33 +90,30 @@ void Variables::printVectorMap() const
 
 void Variables::printScalarMap() const
 {
-    if(mScalars.empty())
+    if (mScalars.empty())
     {
         return;
     }
 
     std::cout << "Print Scalar Map\n";
-    for(auto& tPair : mScalars)
+    for (auto& tPair : mScalars)
     {
         std::cout << "name = " << tPair.first << ", value = " << tPair.second << "\n" << std::flush;
     }
 }
 
-}
+}  // namespace Plato
 // namespace Plato
 
 namespace Plato
 {
 
-void FieldTags::set(const std::string& aTag, const std::string& aID)
-{
-    mFields[aTag] = aID;
-}
+void FieldTags::set(const std::string& aTag, const std::string& aID) { mFields[aTag] = aID; }
 
 std::vector<std::string> FieldTags::tags() const
 {
     std::vector<std::string> tTags;
-    for(auto& tPair : mFields)
+    for (auto& tPair : mFields)
     {
         tTags.push_back(tPair.first);
     }
@@ -127,12 +123,12 @@ std::vector<std::string> FieldTags::tags() const
 std::string FieldTags::id(const std::string& aTag) const
 {
     auto tItr = mFields.find(aTag);
-    if(tItr == mFields.end())
+    if (tItr == mFields.end())
     {
         ANALYZE_THROWERR(std::string("Field with tag '") + aTag + "' is not defined.")
     }
     return tItr->second;
 }
 
-}
+}  // namespace Plato
 // namespace Plato

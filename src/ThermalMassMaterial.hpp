@@ -1,81 +1,82 @@
 #pragma once
 
 #include <Teuchos_ParameterList.hpp>
+
 #include "PlatoStaticsTypes.hpp"
 #include "material/MaterialModel.hpp"
 
-namespace Plato {
+namespace Plato
+{
 
-  /******************************************************************************/
-  /*!
-    \brief Base class for ThermalMass material models
-  */
-    template<int SpatialDim>
-    class ThermalMassMaterial : public MaterialModel<SpatialDim>
-  /******************************************************************************/
-  {
-  
-    public:
-      ThermalMassMaterial(const Teuchos::ParameterList& paramList);
-  };
+/******************************************************************************/
+/*!
+  \brief Base class for ThermalMass material models
+*/
+template <int SpatialDim>
+class ThermalMassMaterial : public MaterialModel<SpatialDim>
+/******************************************************************************/
+{
+   public:
+    ThermalMassMaterial(const Teuchos::ParameterList& paramList);
+};
 
-  /******************************************************************************/
-  template<int SpatialDim>
-  ThermalMassMaterial<SpatialDim>::
-  ThermalMassMaterial(const Teuchos::ParameterList& paramList) : MaterialModel<SpatialDim>(paramList)
-  /******************************************************************************/
-  {
-      this->parseScalar("Mass Density", paramList);
-      this->parseScalar("Specific Heat", paramList);
-  }
+/******************************************************************************/
+template <int SpatialDim>
+ThermalMassMaterial<SpatialDim>::ThermalMassMaterial(const Teuchos::ParameterList& paramList)
+    : MaterialModel<SpatialDim>(paramList)
+/******************************************************************************/
+{
+    this->parseScalar("Mass Density", paramList);
+    this->parseScalar("Specific Heat", paramList);
+}
 
-  /******************************************************************************/
-  /*!
-    \brief Factory for creating material models
-  */
-    template<int SpatialDim>
-    class ThermalMassModelFactory
-  /******************************************************************************/
-  {
-    public:
-      ThermalMassModelFactory(const Teuchos::ParameterList& paramList) : mParamList(paramList) {}
-      Teuchos::RCP<Plato::MaterialModel<SpatialDim>> create(std::string aModelName);
-    private:
-      const Teuchos::ParameterList& mParamList;
-  };
+/******************************************************************************/
+/*!
+  \brief Factory for creating material models
+*/
+template <int SpatialDim>
+class ThermalMassModelFactory
+/******************************************************************************/
+{
+   public:
+    ThermalMassModelFactory(const Teuchos::ParameterList& paramList) : mParamList(paramList) {}
+    Teuchos::RCP<Plato::MaterialModel<SpatialDim>> create(std::string aModelName);
 
-  /******************************************************************************/
-  template<int SpatialDim>
-  Teuchos::RCP<MaterialModel<SpatialDim>>
-  ThermalMassModelFactory<SpatialDim>::create(std::string aModelName)
-  /******************************************************************************/
-  {
-      if (!mParamList.isSublist("Material Models"))
-      {
-          REPORT("'Material Models' list not found! Returning 'nullptr'");
-          return Teuchos::RCP<Plato::MaterialModel<SpatialDim>>(nullptr);
-      }
-      else
-      {
-          auto tModelsParamList = mParamList.get<Teuchos::ParameterList>("Material Models");
+   private:
+    const Teuchos::ParameterList& mParamList;
+};
 
-          if (!tModelsParamList.isSublist(aModelName))
-          {
-              std::stringstream ss;
-              ss << "Requested a material model ('" << aModelName << "') that isn't defined";
-              ANALYZE_THROWERR(ss.str());
-          }
+/******************************************************************************/
+template <int SpatialDim>
+Teuchos::RCP<MaterialModel<SpatialDim>> ThermalMassModelFactory<SpatialDim>::create(std::string aModelName)
+/******************************************************************************/
+{
+    if (!mParamList.isSublist("Material Models"))
+    {
+        REPORT("'Material Models' list not found! Returning 'nullptr'");
+        return Teuchos::RCP<Plato::MaterialModel<SpatialDim>>(nullptr);
+    }
+    else
+    {
+        auto tModelsParamList = mParamList.get<Teuchos::ParameterList>("Material Models");
 
-          auto tModelParamList = tModelsParamList.sublist(aModelName);
+        if (!tModelsParamList.isSublist(aModelName))
+        {
+            std::stringstream ss;
+            ss << "Requested a material model ('" << aModelName << "') that isn't defined";
+            ANALYZE_THROWERR(ss.str());
+        }
 
-          if( tModelParamList.isSublist("Thermal Mass") )
-          {
-              return Teuchos::rcp(new Plato::ThermalMassMaterial<SpatialDim>(tModelParamList.sublist("Thermal Mass")));
-          }
-          else
-          {
-              ANALYZE_THROWERR("Expected 'Thermal Mass' ParameterList");
-          }
-      }
-  }
-} // namespace Plato
+        auto tModelParamList = tModelsParamList.sublist(aModelName);
+
+        if (tModelParamList.isSublist("Thermal Mass"))
+        {
+            return Teuchos::rcp(new Plato::ThermalMassMaterial<SpatialDim>(tModelParamList.sublist("Thermal Mass")));
+        }
+        else
+        {
+            ANALYZE_THROWERR("Expected 'Thermal Mass' ParameterList");
+        }
+    }
+}
+}  // namespace Plato

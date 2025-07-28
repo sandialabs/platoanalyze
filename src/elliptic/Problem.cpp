@@ -2,11 +2,11 @@
 
 #ifdef PLATOANALYZE_USE_EXPLICIT_INSTANTIATION
 
-#include "Thermal.hpp"
-#include "Mechanics.hpp"
-#include "Thermomechanics.hpp"
-#include "Electromechanics.hpp"
 #include "BaseExpInstMacros.hpp"
+#include "Electromechanics.hpp"
+#include "Mechanics.hpp"
+#include "Thermal.hpp"
+#include "Thermomechanics.hpp"
 #include "elliptic/Problem_def.hpp"
 
 PLATO_ELEMENT_DEF(Plato::Elliptic::Problem, Plato::Thermal)

@@ -1,27 +1,27 @@
 #pragma once
 
-#include "PlatoStaticsTypes.hpp"
 #include "LinearTetCubRuleDegreeOne.hpp"
+#include "PlatoStaticsTypes.hpp"
 
 namespace Plato
 {
 
 /******************************************************************************/
 /*! Base class for simplex-based mechanics
-*/
+ */
 /******************************************************************************/
-template<Plato::OrdinalType SpaceDim>
+template <Plato::OrdinalType SpaceDim>
 class Simplex
 {
-  public:
-    static constexpr Plato::OrdinalType mNumSpatialDims       = SpaceDim;
-    static constexpr Plato::OrdinalType mNumNodesPerFace      = SpaceDim;
-    static constexpr Plato::OrdinalType mNumNodesPerCell      = SpaceDim+1;
-    static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = SpaceDim-1;
+   public:
+    static constexpr Plato::OrdinalType mNumSpatialDims = SpaceDim;
+    static constexpr Plato::OrdinalType mNumNodesPerFace = SpaceDim;
+    static constexpr Plato::OrdinalType mNumNodesPerCell = SpaceDim + 1;
+    static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = SpaceDim - 1;
 
     using CubatureType = Plato::LinearTetCubRuleDegreeOne<SpaceDim>;
-    using BoundaryCubatureType = Plato::LinearTetCubRuleDegreeOne<SpaceDim-1>;
+    using BoundaryCubatureType = Plato::LinearTetCubRuleDegreeOne<SpaceDim - 1>;
 };
 // class Simplex
 
-} // namespace Plato
+}  // namespace Plato
