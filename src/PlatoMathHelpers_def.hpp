@@ -547,7 +547,7 @@ MatrixMatrixMultiply( const Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOne,
 
     constexpr bool transpose = false;
     OrdinalView tOutRowMap ("output row map", tNumRowsOne + 1);
-    spgemm_symbolic ( &tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo,
+    KokkosSparse::Experimental::spgemm_symbolic ( &tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo,
         tMatOneRowMap, tMatOneColMap, transpose,
         tMatTwoRowMap, tMatTwoColMap, transpose,
         tOutRowMap
@@ -560,7 +560,7 @@ MatrixMatrixMultiply( const Teuchos::RCP<Plato::CrsMatrixType> & aInMatrixOne,
       tOutColMap = OrdinalView(Kokkos::ViewAllocateWithoutInitializing("out column map"), tNumOutValues);
       tOutValues = ScalarView (Kokkos::ViewAllocateWithoutInitializing("out values"),  tNumOutValues);
     }
-    spgemm_numeric( &tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo,
+    KokkosSparse::Experimental::spgemm_numeric( &tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo,
         tMatOneRowMap, tMatOneColMap, tMatOneValues, /*transpose=*/false,
         tMatTwoRowMap, tMatTwoColMap, tMatTwoValues, /*transpose=*/false,
         tOutRowMap, tOutColMap, tOutValues
