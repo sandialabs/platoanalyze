@@ -19,7 +19,6 @@
 
 #include "ApplyConstraints.hpp"
 #include "FadTypes.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "Geometrical.hpp"
 #include "GradientMatrix.hpp"
 #include "LinearStress.hpp"
@@ -32,6 +31,7 @@
 #include "WorksetBase.hpp"
 #include "alg/CrsLinearProblem.hpp"
 #include "alg/ParallelComm.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "elliptic/PhysicsScalarFunction.hpp"
 #include "elliptic/Problem.hpp"
 #include "elliptic/VectorFunction.hpp"
@@ -116,7 +116,8 @@ TEUCHOS_UNIT_TEST(ElastostaticTests, 3D)
     auto tCellStiffness = tMaterialModel->getStiffnessMatrix();
 
     Plato::LinearStress<Plato::Elliptic::ResidualTypes<ElementType>, ElementType> tVoigtStress(tCellStiffness);
-    Plato::GeneralStressDivergence<ElementType> tStressDivergence;
+    plato::composable_function_objects::shape_function_operations::GeneralStressDivergence<ElementType>
+        tStressDivergence;
 
     Kokkos::parallel_for(
         "gradients", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),

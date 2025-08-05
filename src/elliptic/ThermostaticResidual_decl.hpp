@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
 #include "NaturalBCs.hpp"
@@ -42,8 +44,8 @@ class ThermostaticResidual : public EvaluationType::ElementType,
     IndicatorFunctionType mIndicatorFunction;
     ApplyWeighting<mNumNodesPerCell, mNumSpatialDims, IndicatorFunctionType> mApplyWeighting;
 
-    std::shared_ptr<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
-    std::shared_ptr<Plato::NaturalBCs<ElementType, mNumDofsPerNode>> mBoundaryLoads;
+    std::optional<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
+    std::optional<Plato::NaturalBCs<ElementType, mNumDofsPerNode>> mBoundaryLoads;
 
     Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> mMaterialModel;
 

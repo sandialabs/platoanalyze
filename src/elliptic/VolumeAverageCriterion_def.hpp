@@ -143,7 +143,7 @@ template <typename PhysicsType>
 VolumeAverageCriterion<PhysicsType>::VolumeAverageCriterion(const Plato::SpatialModel& aSpatialModel,
                                                             Plato::DataMap& aDataMap,
                                                             Teuchos::ParameterList& aInputParams,
-                                                            std::string& aName)
+                                                            const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),

@@ -86,7 +86,7 @@ class Problem : public Plato::AbstractProblem
      * \brief Output solution to visualization file.
      * \param [in] aFilepath output/visualizaton file path
      **********************************************************************************/
-    void output(const std::string& aFilepath) override;
+    void output(const std::string& aFilepath) override final;
 
     /***************************************************************************/
     /**
@@ -126,7 +126,7 @@ class Problem : public Plato::AbstractProblem
      * \param [in] aControl 1D container of control variables
      * \param [in] aGlobalState 2D container of state variables
      **********************************************************************************/
-    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aGlobalSolution);
+    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aGlobalSolution) override final;
 
     /******************************************************************************/
     /**
@@ -134,7 +134,7 @@ class Problem : public Plato::AbstractProblem
      * \param [in] aControl 1D view of control variables
      * \return Plato::Solutions composed of state variables
      **********************************************************************************/
-    Plato::Solutions solution(const Plato::ScalarVector& aControl) override;
+    Plato::Solutions solution(const Plato::ScalarVector& aControl) override final;
 
     /******************************************************************************/
     /**
@@ -146,25 +146,7 @@ class Problem : public Plato::AbstractProblem
      **********************************************************************************/
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
                                  const Plato::Solutions& aSolution,
-                                 const std::string& aName) override;
-
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion function
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return criterion function value
-     **********************************************************************************/
-    Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) override;
-
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion partial derivative wrt control variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion partial derivative wrt control variables
-     **********************************************************************************/
-    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) override;
+                                 const std::string& aName) override final;
 
     /******************************************************************************/
     /**
@@ -176,7 +158,7 @@ class Problem : public Plato::AbstractProblem
      **********************************************************************************/
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
-                                          const std::string& aName) override;
+                                          const std::string& aName) override final;
 
     /******************************************************************************/
     /**
@@ -192,15 +174,6 @@ class Problem : public Plato::AbstractProblem
 
     /******************************************************************************/
     /**
-     * \brief Evaluate criterion partial derivative wrt configuration variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion partial derivative wrt configuration variables
-     **********************************************************************************/
-    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) override;
-
-    /******************************************************************************/
-    /**
      * \brief Evaluate criterion gradient wrt configuration variables
      * \param [in] aControl 1D view of control variables
      * \param [in] aSolution solution database
@@ -209,7 +182,7 @@ class Problem : public Plato::AbstractProblem
      **********************************************************************************/
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
-                                           const std::string& aName) override;
+                                           const std::string& aName) override final;
 
     /******************************************************************************/
     /**
@@ -232,11 +205,12 @@ class Problem : public Plato::AbstractProblem
      **********************************************************************************/
     void initialize(Teuchos::ParameterList& aProblemParams);
 
-    /******************************************************************************/ /**
-                                                                                      * \brief Return solution database.
-                                                                                      * \return solution database
-                                                                                      **********************************************************************************/
-    Plato::Solutions getSolution() const override;
+    /******************************************************************************/
+    /**
+     * \brief Return solution database.
+     * \return solution database
+     **********************************************************************************/
+    Plato::Solutions getSolution() const override final;
 };
 // class EllipticVMSProblem
 

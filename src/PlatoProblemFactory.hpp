@@ -34,6 +34,8 @@
 
 #ifdef PLATO_ELLIPTIC
 #include "elliptic/Problem.hpp"
+#include "elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
+#include "elliptic/finite_deformation_mechanics/Problem.hpp"
 #ifdef PLATO_HATCHING
 #include "elliptic/hatching/Mechanics.hpp"
 #include "elliptic/hatching/Problem.hpp"
@@ -443,6 +445,31 @@ inline std::shared_ptr<Plato::AbstractProblem> create_micromorphic_mechanics_pro
 }
 // function create_micromorphic_mechanics_problem
 
+/// @brief Create finite deformation* mechanics problem.
+/// @param[in] aMesh plato abstract mesh
+/// @param[in] aPlatoProb input xml metadata
+/// @param[in] aMachine mpi communicator interface
+/// @returns shared pointer to abstract problem of type mechanical finite deformation mechanics
+inline std::shared_ptr<Plato::AbstractProblem> create_finite_deformation_mechanics_problem(
+    Plato::Mesh aMesh, Teuchos::ParameterList& aPlatoProb, Comm::Machine aMachine)
+{
+    namespace pefdm = plato::elliptic::finite_deformation_mechanics;
+    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
+
+#ifdef PLATO_ELLIPTIC
+    if (tLowerPDE == "elliptic")
+    {
+        return makeProblem<pefdm::Problem, pefdm::FiniteDeformationMechanics>(aMesh, aPlatoProb, aMachine);
+    }
+    else
+    {
+        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE +
+                         "' is not supported for finite deformation mechanics. Only Elliptic is currently supported.");
+    }
+#endif
+}
+// function create_finite_deformation_mechanics_problem
+
 /******************************************************************************/
 /**
  * \brief This class is responsible for the creation of a Plato problem, which enables
@@ -469,6 +496,10 @@ class ProblemFactory
         if (tLowerPhysics == "mechanical")
         {
             return (Plato::create_mechanical_problem(aMesh, tInputData, aMachine));
+        }
+        if (tLowerPhysics == "finite deformation mechanics")
+        {
+            return (Plato::create_finite_deformation_mechanics_problem(aMesh, tInputData, aMachine));
         }
         if (tLowerPhysics == "plasticity")
         {

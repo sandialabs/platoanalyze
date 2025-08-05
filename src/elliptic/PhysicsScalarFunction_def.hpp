@@ -51,7 +51,7 @@ template <typename PhysicsType>
 PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const Plato::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap,
                                                           Teuchos::ParameterList& aProblemParams,
-                                                          std::string& aName)
+                                                          const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
@@ -82,7 +82,7 @@ PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const Plato::SpatialMo
  * \param [in] aInput scalar function
  **********************************************************************************/
 template <typename PhysicsType>
-void PhysicsScalarFunction<PhysicsType>::setEvaluator(const ValueFunction& aInput, std::string aName)
+void PhysicsScalarFunction<PhysicsType>::setEvaluator(const ValueFunction& aInput, const std::string& aName)
 {
     mValueFunctions[aName] = nullptr;  // ensures shared_ptr is decremented
     mValueFunctions[aName] = aInput;
@@ -94,7 +94,7 @@ void PhysicsScalarFunction<PhysicsType>::setEvaluator(const ValueFunction& aInpu
  * \param [in] aInput scalar function
  **********************************************************************************/
 template <typename PhysicsType>
-void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientUFunction& aInput, std::string aName)
+void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientUFunction& aInput, const std::string& aName)
 {
     mGradientUFunctions[aName] = nullptr;  // ensures shared_ptr is decremented
     mGradientUFunctions[aName] = aInput;
@@ -106,7 +106,7 @@ void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientUFunction& a
  * \param [in] aInput scalar function
  **********************************************************************************/
 template <typename PhysicsType>
-void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientZFunction& aInput, std::string aName)
+void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientZFunction& aInput, const std::string& aName)
 {
     mGradientZFunctions[aName] = nullptr;  // ensures shared_ptr is decremented
     mGradientZFunctions[aName] = aInput;
@@ -118,7 +118,7 @@ void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientZFunction& a
  * \param [in] aInput scalar function
  **********************************************************************************/
 template <typename PhysicsType>
-void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientXFunction& aInput, std::string aName)
+void PhysicsScalarFunction<PhysicsType>::setEvaluator(const GradientXFunction& aInput, const std::string& aName)
 {
     mGradientXFunctions[aName] = nullptr;  // ensures shared_ptr is decremented
     mGradientXFunctions[aName] = aInput;
@@ -433,7 +433,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
  * \param [in] function name
  **********************************************************************************/
 template <typename PhysicsType>
-void PhysicsScalarFunction<PhysicsType>::setFunctionName(const std::string aFunctionName)
+void PhysicsScalarFunction<PhysicsType>::setFunctionName(const std::string& aFunctionName)
 {
     mFunctionName = aFunctionName;
 }

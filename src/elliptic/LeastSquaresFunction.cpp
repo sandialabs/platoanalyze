@@ -8,11 +8,14 @@
 #include "Thermal.hpp"
 #include "Thermomechanics.hpp"
 #include "elliptic/LeastSquaresFunction_def.hpp"
+#include "elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
 
 PLATO_ELEMENT_DEF(Plato::Elliptic::LeastSquaresFunction, Plato::Thermal)
 PLATO_ELEMENT_DEF(Plato::Elliptic::LeastSquaresFunction, Plato::Mechanics)
 PLATO_ELEMENT_DEF(Plato::Elliptic::LeastSquaresFunction, Plato::Thermomechanics)
 PLATO_ELEMENT_DEF(Plato::Elliptic::LeastSquaresFunction, Plato::Electromechanics)
+PLATO_ELEMENT_DEF(Plato::Elliptic::LeastSquaresFunction,
+                  plato::elliptic::finite_deformation_mechanics::FiniteDeformationMechanics)
 
 #ifdef PLATO_STABILIZED
 #include "stabilized/Mechanics.hpp"

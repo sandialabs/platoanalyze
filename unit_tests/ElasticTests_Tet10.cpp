@@ -36,8 +36,8 @@
 
 #include <fenv.h>
 
-#include "GeneralStressDivergence.hpp"
 #include "SmallStrain.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 
 using ordType = typename Plato::ScalarMultiVector::size_type;
 
@@ -405,7 +405,8 @@ TEUCHOS_UNIT_TEST(Tet10, ComputeStresses)
 
     Plato::LinearStress<Plato::Elliptic::ResidualTypes<ElementType>, ElementType> voigtStress(tCellStiffness);
 
-    Plato::GeneralStressDivergence<ElementType> stressDivergence;
+    plato::composable_function_objects::shape_function_operations::GeneralStressDivergence<ElementType>
+        stressDivergence;
 
     auto tCubPoints = ElementType::getCubPoints();
     auto tCubWeights = ElementType::getCubWeights();

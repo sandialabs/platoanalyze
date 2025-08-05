@@ -17,7 +17,6 @@
 
 #include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "LinearStress.hpp"
@@ -28,6 +27,7 @@
 #include "Tet4.hpp"
 #include "alg/CrsLinearProblem.hpp"
 #include "alg/ParallelComm.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "hyperbolic/InertialContent.hpp"
 #include "hyperbolic/Mechanics.hpp"
 #include "hyperbolic/PhysicsScalarFunction.hpp"
@@ -160,7 +160,8 @@ TEUCHOS_UNIT_TEST(TransientMechanicsElementTests, ElementFunctors3D)
     auto tCellStiffness = tMaterialModel->getStiffnessMatrix();
 
     Plato::LinearStress<Plato::Hyperbolic::ResidualTypes<ElementType>, ElementType> computeVoigtStress(tCellStiffness);
-    Plato::GeneralStressDivergence<ElementType> computeStressDivergence;
+    plato::composable_function_objects::shape_function_operations::GeneralStressDivergence<ElementType>
+        computeStressDivergence;
 
     Plato::InertialContent<ElementType> computeInertialContent(tMaterialModel);
     Plato::InterpolateFromNodal<ElementType, tNumDofsPerNode, /*offset=*/0, tSpatialDims> interpolateFromNodal;
@@ -463,23 +464,16 @@ TEUCHOS_UNIT_TEST(TransientMechanicsProblemTests, 3D)
      Test Problem::criterionValue(aControl);
      *****************************************************/
 
-    auto tCriterionValue = tProblem.criterionValue(tControl, "Internal Energy");
+    auto tCriterionValue = tProblem.criterionValue(tControl, tSolution, "Internal Energy");
     Plato::Scalar tCriterionValue_gold = 2.31630684327942539090473e-10;
 
     TEST_FLOATING_EQUALITY(tCriterionValue, tCriterionValue_gold, 1e-4);
 
-    /*********************************************************
-     Test Problem::criterionValue(aControl, aState);
-     *********************************************************/
+    /************************************************************
+     Call Problem::criterionGradient(aControl, aState);
+     ************************************************************/
 
-    tCriterionValue = tProblem.criterionValue(tControl, tSolution, "Internal Energy");
-    TEST_FLOATING_EQUALITY(tCriterionValue, tCriterionValue_gold, 1e-4);
-
-    /*****************************************************
-     Test Problem::criterionGradient(aControl);
-     *****************************************************/
-
-    auto tCriterionGradient = tProblem.criterionGradient(tControl, "Internal Energy");
+    auto tCriterionGradient = tProblem.criterionGradient(tControl, tSolution, "Internal Energy");
 
     /**************************************************************
      The gradients below are verified with FD check elsewhere. The
@@ -487,46 +481,22 @@ TEUCHOS_UNIT_TEST(TransientMechanicsProblemTests, 3D)
      **************************************************************/
 
     /************************************************************
-     Call Problem::criterionGradient(aControl, aState);
-     ************************************************************/
-
-    tCriterionGradient = tProblem.criterionGradient(tControl, tSolution, "Internal Energy");
-
-    /*****************************************************
-     Call Problem::criterionGradientX(aControl);
-     *****************************************************/
-
-    auto tCriterionGradientX = tProblem.criterionGradientX(tControl, "Internal Energy");
-
-    /************************************************************
      Call Problem::criterionGradientX(aControl, aState);
      ************************************************************/
 
-    tCriterionGradientX = tProblem.criterionGradientX(tControl, tSolution, "Internal Energy");
+    auto tCriterionGradientX = tProblem.criterionGradientX(tControl, tSolution, "Internal Energy");
 
     // test criterionValue
     //
-    auto tConstraintValue = tProblem.criterionValue(tControl, "Internal Energy");
-
-    // test criterionValue
-    //
-    tConstraintValue = tProblem.criterionValue(tControl, tSolution, "Internal Energy");
+    auto tConstraintValue = tProblem.criterionValue(tControl, tSolution, "Internal Energy");
 
     // test criterionGradient
     //
-    auto tConstraintGradient = tProblem.criterionGradient(tControl, "Internal Energy");
-
-    // test criterionGradient
-    //
-    tConstraintGradient = tProblem.criterionGradient(tControl, tSolution, "Internal Energy");
+    auto tConstraintGradient = tProblem.criterionGradient(tControl, tSolution, "Internal Energy");
 
     // test criterionGradientX
     //
-    auto tConstraintGradientX = tProblem.criterionGradientX(tControl, "Internal Energy");
-
-    // test criterionGradientX
-    //
-    tConstraintGradientX = tProblem.criterionGradientX(tControl, tSolution, "Internal Energy");
+    auto tConstraintGradientX = tProblem.criterionGradientX(tControl, tSolution, "Internal Energy");
 }
 
 TEUCHOS_UNIT_TEST(TransientMechanicsResidualTests, 3D_NoMass)

@@ -143,20 +143,20 @@ Plato::Scalar testProblem_Total_z(ProblemT& aProblem,
 {
     // compute initial F and dFdz
     auto tSolution = aProblem.solution(aControl);
-    auto t_value = aProblem.criterionValue(aControl, aCriterionName);
-    auto t_dFdz = aProblem.criterionGradient(aControl, aCriterionName);
+    auto t_value = aProblem.criterionValue(aControl, tSolution, aCriterionName);
+    auto t_dFdz = aProblem.criterionGradient(aControl, tSolution, aCriterionName);
 
     auto tNorm = Plato::blas1::norm(t_dFdz);
 
     // compute F at z - deltaZ
     Plato::blas1::axpy(-aAlpha / tNorm, t_dFdz, aControl);
     auto tSolutionNeg = aProblem.solution(aControl);
-    auto t_valueNeg = aProblem.criterionValue(aControl, aCriterionName);
+    auto t_valueNeg = aProblem.criterionValue(aControl, tSolutionNeg, aCriterionName);
 
     // compute F at z + deltaZ
     Plato::blas1::axpy(2.0 * aAlpha / tNorm, t_dFdz, aControl);
     auto tSolutionPos = aProblem.solution(aControl);
-    auto t_valuePos = aProblem.criterionValue(aControl, aCriterionName);
+    auto t_valuePos = aProblem.criterionValue(aControl, tSolutionPos, aCriterionName);
     Plato::blas1::axpy(-aAlpha / tNorm, t_dFdz, aControl);
 
     // compute actual change in F over 2 * deltaZ
@@ -805,7 +805,7 @@ TEUCHOS_UNIT_TEST(EllipticHatchingProblemTests, 3D)
          Test Problem::criterionValue(aControl);
          *****************************************************/
 
-        auto tCriterionValue = tProblem.criterionValue(tControl, "Internal Energy");
+        auto tCriterionValue = tProblem.criterionValue(tControl, tSolution, "Internal Energy");
         Plato::Scalar tCriterionValue_gold = -0.00125;
 
         TEST_FLOATING_EQUALITY(tCriterionValue, tCriterionValue_gold, 1e-7);
@@ -824,7 +824,7 @@ TEUCHOS_UNIT_TEST(EllipticHatchingProblemTests, 3D)
 
         // compute initial F and dFdx
         tSolution = tProblem.solution(tControl);
-        t_dFdx = tProblem.criterionGradientX(tControl, tCriterionName);
+        t_dFdx = tProblem.criterionGradientX(tControl, tSolution, tCriterionName);
     }
 
     Plato::Scalar tAlpha = 1.0e-4;
@@ -840,14 +840,14 @@ TEUCHOS_UNIT_TEST(EllipticHatchingProblemTests, 3D)
         HatchingTestUtils::perturbMesh(tMesh, tStep);
         Plato::Elliptic::Hatching::Problem<PhysicsType> tProblem2(tMesh, *tInputParams, tMachine);
         tSolution = tProblem2.solution(tControl);
-        t_valueNeg = tProblem2.criterionValue(tControl, tCriterionName);
+        t_valueNeg = tProblem2.criterionValue(tControl, tSolution, tCriterionName);
     }
 
     Plato::Scalar t_valueNegToo(0);
     {
         Plato::Elliptic::Hatching::Problem<PhysicsType> tProblem3(tMesh, *tInputParams, tMachine);
         tSolution = tProblem3.solution(tControl);
-        t_valueNegToo = tProblem3.criterionValue(tControl, tCriterionName);
+        t_valueNegToo = tProblem3.criterionValue(tControl, tSolution, tCriterionName);
     }
     TEST_FLOATING_EQUALITY(t_valueNeg, t_valueNegToo, 1e-15);
 
@@ -858,7 +858,7 @@ TEUCHOS_UNIT_TEST(EllipticHatchingProblemTests, 3D)
         HatchingTestUtils::perturbMesh(tMesh, tStep);
         Plato::Elliptic::Hatching::Problem<PhysicsType> tProblem4(tMesh, *tInputParams, tMachine);
         tSolution = tProblem4.solution(tControl);
-        t_valuePos = tProblem4.criterionValue(tControl, tCriterionName);
+        t_valuePos = tProblem4.criterionValue(tControl, tSolution, tCriterionName);
     }
 
     // compute actual change in F over 2 * deltax
@@ -1135,12 +1135,12 @@ TEUCHOS_UNIT_TEST(EllipticHatchingProblemTests, 3D_full)
     delete tProblem;
     tProblem = new Plato::Elliptic::Hatching::Problem<PhysicsType>(tMesh, *tInputParams, tMachine);
     tSolution = tProblem->solution(tControl);
-    auto t_valueNeg = tProblem->criterionValue(tControl, tCriterionName);
+    auto t_valueNeg = tProblem->criterionValue(tControl, tSolution, tCriterionName);
 
     delete tProblem;
     tProblem = new Plato::Elliptic::Hatching::Problem<PhysicsType>(tMesh, *tInputParams, tMachine);
     tSolution = tProblem->solution(tControl);
-    auto t_valueNegToo = tProblem->criterionValue(tControl, tCriterionName);
+    auto t_valueNegToo = tProblem->criterionValue(tControl, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(t_valueNeg, t_valueNegToo, 1e-15);
 
     // compute F at x + deltax
@@ -1149,7 +1149,7 @@ TEUCHOS_UNIT_TEST(EllipticHatchingProblemTests, 3D_full)
     delete tProblem;
     tProblem = new Plato::Elliptic::Hatching::Problem<PhysicsType>(tMesh, *tInputParams, tMachine);
     tSolution = tProblem->solution(tControl);
-    auto t_valuePos = tProblem->criterionValue(tControl, tCriterionName);
+    auto t_valuePos = tProblem->criterionValue(tControl, tSolution, tCriterionName);
 
     // compute actual change in F over 2 * deltax
     auto tDeltaFD = (t_valuePos - t_valueNeg);

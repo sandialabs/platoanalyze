@@ -75,7 +75,7 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
     VolumeAverageCriterion(const Plato::SpatialModel& aSpatialModel,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aInputParams,
-                           std::string& aName);
+                           const std::string& aName);
 
     /******************************************************************************/
     /**
@@ -139,7 +139,7 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
      * \brief Return user defined function name
      * \return User defined function name
      **********************************************************************************/
-    std::string name() const;
+    std::string name() const override;
 };
 // class VolumeAverageCriterion
 

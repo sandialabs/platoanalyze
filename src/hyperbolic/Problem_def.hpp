@@ -543,37 +543,6 @@ Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aC
 }
 
 template <typename PhysicsType>
-Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl, const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        auto tSolution = this->getSolution();
-        Criterion tCriterion = mCriteria[aName];
-        return tCriterion->value(tSolution, aControl, mTimeStep);
-    }
-    else
-    {
-        ANALYZE_THROWERR("REQUESTED CRITERION NOT DEFINED BY USER.");
-    }
-}
-
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
-                                                            const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        auto tSolution = this->getSolution();
-        Criterion tCriterion = mCriteria[aName];
-        return criterionGradient(aControl, tSolution, tCriterion);
-    }
-    else
-    {
-        ANALYZE_THROWERR("REQUESTED CRITERION NOT DEFINED BY USER.");
-    }
-}
-
-template <typename PhysicsType>
 Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
                                                             const Plato::Solutions& aSolution,
                                                             const std::string& aName)
@@ -725,22 +694,6 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarV
     }
 
     return t_dFdz;
-}
-
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
-                                                             const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        auto tCriterion = mCriteria[aName];
-        auto tSolution = this->getSolution();
-        return criterionGradientX(aControl, tSolution, tCriterion);
-    }
-    else
-    {
-        ANALYZE_THROWERR("REQUESTED CRITERION NOT DEFINED BY USER.");
-    }
 }
 
 template <typename PhysicsType>

@@ -88,7 +88,7 @@ class DivisionFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aState 1D view of state variables
      * \param [in] aControl 1D view of control variables
      **********************************************************************************/
-    void updateProblem(const Plato::ScalarVector& aState, const Plato::ScalarVector& aControl) const;
+    void updateProblem(const Plato::ScalarVector& aState, const Plato::ScalarVector& aControl) const override;
 
     /******************************************************************************/
     /**
@@ -151,7 +151,7 @@ class DivisionFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \brief Return user defined function name
      * \return User defined function name
      **********************************************************************************/
-    std::string name() const;
+    std::string name() const override;
 };
 // class DivisionFunction
 

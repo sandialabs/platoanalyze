@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GeneralFluxDivergence.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "PlatoMathHelpers.hpp"
@@ -12,6 +11,7 @@
 #include "ThermalMassMaterial.hpp"
 #include "ThermoelasticMaterial.hpp"
 #include "ToMap.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 
 namespace Plato
 {
@@ -101,6 +101,8 @@ void TransientThermomechResidual<EvaluationType, IndicatorFunctionType>::evaluat
     Plato::Scalar aTimeStep) const
 /**************************************************************************/
 {
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
+
     auto tNumCells = mSpatialDomain.numCells();
 
     using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
@@ -123,7 +125,7 @@ void TransientThermomechResidual<EvaluationType, IndicatorFunctionType>::evaluat
     Plato::InterpolateFromNodal<ElementType, mNumDofsPerNode, TDofOffset> tInterpolateFromNodal;
 
     Plato::GeneralFluxDivergence<ElementType, mNumDofsPerNode, TDofOffset> tFluxDivergence;
-    Plato::GeneralStressDivergence<ElementType, mNumDofsPerNode, MDofOffset> tStressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType, mNumDofsPerNode, MDofOffset> tStressDivergence;
 
     Plato::ThermalContent<mNumSpatialDims> tComputeHeatRate(mThermalMassMaterialModel);
 

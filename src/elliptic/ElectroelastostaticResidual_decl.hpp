@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
 #include "LinearElectroelasticMaterial.hpp"
@@ -50,10 +52,10 @@ class ElectroelastostaticResidual : public EvaluationType::ElementType,
     ApplyWeighting<mNumNodesPerCell, mNumSpatialDims, IndicatorFunctionType> mApplyEDispWeighting;
     ApplyWeighting<mNumNodesPerCell, mNumVoigtTerms, IndicatorFunctionType> mApplyStressWeighting;
 
-    std::shared_ptr<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
+    std::optional<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
 
-    std::shared_ptr<Plato::NaturalBCs<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>> mBoundaryLoads;
-    std::shared_ptr<Plato::NaturalBCs<ElementType, NElecDims, mNumDofsPerNode, EDofOffset>> mBoundaryCharges;
+    std::optional<Plato::NaturalBCs<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>> mBoundaryLoads;
+    std::optional<Plato::NaturalBCs<ElementType, NElecDims, mNumDofsPerNode, EDofOffset>> mBoundaryCharges;
 
     Teuchos::RCP<Plato::LinearElectroelasticMaterial<mNumSpatialDims>> mMaterialModel;
 

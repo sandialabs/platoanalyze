@@ -5,11 +5,12 @@
 #include "EMKinetics.hpp"
 #include "FadTypes.hpp"
 #include "GeneralFluxDivergence.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "PlatoTypes.hpp"
 #include "ToMap.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "elliptic/ElectroelastostaticResidual_decl.hpp"
+#include "utilities/ProblemDataParsingUtilities.hpp"
 
 namespace Plato
 {
@@ -28,51 +29,21 @@ ElectroelastostaticResidual<EvaluationType, IndicatorFunctionType>::Electroelast
       mIndicatorFunction(aPenaltyParams),
       mApplyStressWeighting(mIndicatorFunction),
       mApplyEDispWeighting(mIndicatorFunction),
-      mBodyLoads(nullptr),
-      mBoundaryLoads(nullptr),
-      mBoundaryCharges(nullptr)
+      mBodyLoads(plato::utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
+      mBoundaryLoads(plato::utilities::get_boundary_loads<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>(
+          aProblemParams, "Mechanical Natural Boundary Conditions")),
+      mBoundaryCharges(plato::utilities::get_boundary_loads<ElementType, NElecDims, mNumDofsPerNode, EDofOffset>(
+          aProblemParams, "Electrical Natural Boundary Conditions")),
+      mPlottable{plato::utilities::get_plot_table(aProblemParams.sublist("Electroelastostatics"))}
 /**************************************************************************/
 {
-    // obligatory: define dof names in order
-    mDofNames.push_back("displacement X");
-    if (mNumSpatialDims > 1) mDofNames.push_back("displacement Y");
-    if (mNumSpatialDims > 2) mDofNames.push_back("displacement Z");
+    plato::utilities::get_displacement_dof_names(mNumSpatialDims, mDofNames);
     mDofNames.push_back("electric potential");
 
     // create material model and get stiffness
     //
     Plato::ElectroelasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
     mMaterialModel = mmfactory.create(mSpatialDomain.getMaterialName());
-
-    // parse body loads
-    //
-    if (aProblemParams.isSublist("Body Loads"))
-    {
-        mBodyLoads =
-            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-    }
-
-    // parse mechanical boundary Conditions
-    //
-    if (aProblemParams.isSublist("Mechanical Natural Boundary Conditions"))
-    {
-        mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>>(
-            aProblemParams.sublist("Mechanical Natural Boundary Conditions"));
-    }
-
-    // parse electrical boundary Conditions
-    //
-    if (aProblemParams.isSublist("Electrical Natural Boundary Conditions"))
-    {
-        mBoundaryCharges = std::make_shared<Plato::NaturalBCs<ElementType, NElecDims, mNumDofsPerNode, EDofOffset>>(
-            aProblemParams.sublist("Electrical Natural Boundary Conditions"));
-    }
-
-    auto tResidualParams = aProblemParams.sublist("Electroelastostatics");
-    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
-    {
-        mPlottable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-    }
 }
 
 /****************************************************************************/
@@ -98,6 +69,8 @@ void ElectroelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluat
     Plato::Scalar aTimeStep) const
 /**************************************************************************/
 {
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
+
     auto tNumCells = mSpatialDomain.numCells();
 
     using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
@@ -106,7 +79,7 @@ void ElectroelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluat
     Plato::EMKinematics<ElementType> kinematics;
     Plato::EMKinetics<ElementType> kinetics(mMaterialModel);
 
-    Plato::GeneralStressDivergence<ElementType, mNumDofsPerNode, MDofOffset> stressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType, mNumDofsPerNode, MDofOffset> stressDivergence;
     Plato::GeneralFluxDivergence<ElementType, mNumDofsPerNode, EDofOffset> edispDivergence;
 
     Plato::ScalarVectorT<ConfigScalarType> tCellVolume("cell weight", tNumCells);
@@ -188,7 +161,7 @@ void ElectroelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluat
             }
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aState, aControl, aConfig, aResult, -1.0);
     }
@@ -212,12 +185,12 @@ void ElectroelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluat
     Plato::Scalar aTimeStep) const
 /**************************************************************************/
 {
-    if (mBoundaryLoads != nullptr)
+    if (mBoundaryLoads.has_value())
     {
         mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0);
     }
 
-    if (mBoundaryCharges != nullptr)
+    if (mBoundaryCharges.has_value())
     {
         mBoundaryCharges->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0);
     }

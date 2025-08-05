@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
 #include "LinearThermoelasticMaterial.hpp"
@@ -53,10 +55,10 @@ class ThermoelastostaticResidual : public EvaluationType::ElementType,
     Plato::ApplyWeighting<mNumNodesPerCell, mNumSpatialDims, IndicatorFunctionType> mApplyVectorWeighting;
     Plato::ApplyWeighting<mNumNodesPerCell, /*num_dofs=*/1, IndicatorFunctionType> mApplyScalarWeighting;
 
-    std::shared_ptr<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
+    std::optional<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
 
-    std::shared_ptr<Plato::NaturalBCs<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>> mBoundaryLoads;
-    std::shared_ptr<Plato::NaturalBCs<ElementType, NThrmDims, mNumDofsPerNode, TDofOffset>> mBoundaryFluxes;
+    std::optional<Plato::NaturalBCs<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>> mBoundaryLoads;
+    std::optional<Plato::NaturalBCs<ElementType, NThrmDims, mNumDofsPerNode, TDofOffset>> mBoundaryFluxes;
 
     Teuchos::RCP<Plato::LinearThermoelasticMaterial<mNumSpatialDims>> mMaterialModel;
 

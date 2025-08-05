@@ -1,3 +1,5 @@
+include(./cmake/analyze_common_setup.cmake)
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/AnalyzeConfig.hpp.in
   ${CMAKE_CURRENT_BINARY_DIR}/AnalyzeConfig.hpp
@@ -21,10 +23,12 @@ set(ANALYZE_SOURCES
     AbstractTMKinetics.cpp
     LinearTMKinetics.cpp
     NonLinearTMKinetics.cpp
+    composable_function_objects/material/NeoHookeanModel.cpp
     NaturalBC.cpp
     NaturalBCs.cpp
     NaturalBCTypes.cpp
     NaturalBCData.cpp
+    utilities/ProblemDataParsingUtilities.cpp
 )
 
 ## criterion sources
@@ -55,6 +59,8 @@ set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
     alg/AmgXLinearSolver.cpp
     alg/PlatoSolverFactory.cpp
     alg/PlatoAbstractSolver.cpp
+    alg/nonlinear_solvers/NewtonSolver.cpp
+    composable_function_objects/shape_function_operations/GeneralStressDivergence.cpp
 )
 
 IF(OMEGA_H_PREFIX)
@@ -151,6 +157,11 @@ if(ELLIPTIC)
     elliptic/VolumeAverageCriterion.cpp
     elliptic/VolumeAverageCriterionDenominator.cpp
     IntermediateDensityPenalty.cpp
+    elliptic/finite_deformation_mechanics/HyperElastostaticResidual.cpp
+    elliptic/finite_deformation_mechanics/Problem.cpp
+    elliptic/finite_deformation_mechanics/StrainEnergy.cpp
+    elliptic/finite_deformation_mechanics/StrainInvariant.cpp
+    elliptic/finite_deformation_mechanics/VarianceFunction.cpp
   )
 
   if(HATCHING)
@@ -282,6 +293,11 @@ IF( AMGX_FOUND )
   target_include_directories(analyzelib PUBLIC ${AMGX_INCLUDE_DIRS})
   target_include_directories(analyzelib PUBLIC ${PROJECT_SOURCE_DIR}/src/solverInterfaces/AmgX/)
 ENDIF()
+
+add_subdirectory("./alg")
+add_subdirectory("./composable_function_objects")
+add_subdirectory("./elliptic")
+add_subdirectory("./utilities")
 
 IF( PLATOANALYZE_STK_ENABLED )
   add_subdirectory("./functional")

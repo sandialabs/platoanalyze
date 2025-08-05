@@ -110,7 +110,7 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageVonMisesStressAxial_
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("VolAvgMisesStress");
-    auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, 1000.0, tTolerance);
 
     auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
@@ -233,7 +233,7 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageVonMisesStressShear_
     Plato::Scalar tSimpPenalty = 1.0e-8 + (1.0 - 1.0e-8) * std::pow(tDensity, 3);
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("VolAvgMisesStress");
-    auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, tSimpPenalty * 1443.3756727, tTolerance);
 
     auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
@@ -445,7 +445,7 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageTensileEnergyAxial_3
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("VolAvgTensileEnergy");
-    auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, 46.666666666666, tTolerance);
 
     auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);
@@ -568,7 +568,7 @@ TEUCHOS_UNIT_TEST(VolumeAverageCriterionTests, VolumeAverageTensileEnergyShear_3
     Plato::Scalar tSimpPenalty = 1.0e-8 + (1.0 - 1.0e-8) * std::pow(tDensity, 3);
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("VolAvgTensileEnergy");
-    auto tCriterionValue = tProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, tSimpPenalty * 41.6666666666, tTolerance);
 
     auto tApproxError = Plato::test_criterion_grad_wrt_control(tProblem, tMesh, tCriterionName);

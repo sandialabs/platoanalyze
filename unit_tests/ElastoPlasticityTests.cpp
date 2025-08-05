@@ -3627,10 +3627,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_CriterionTest_2D)
     constexpr Plato::Scalar tTolerance = 1e-4;
     auto tSolution = tPlasticityProblem.solution(tControls);
     std::string tCriterionName("Plastic Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -1.07121, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {-1.128948e+00, -5.644739e-01, -5.644739e-01, -1.128948e+00};
     auto tHostGrad = Kokkos::create_mirror(tCriterionGrad);
     Kokkos::deep_copy(tHostGrad, tCriterionGrad);
@@ -3858,10 +3858,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, ElastoPlasticity_CriterionTest_3D)
 
     constexpr Plato::Scalar tTolerance = 1e-4;
     auto tSolution = tPlasticityProblem.solution(tControls);
-    auto tObjValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tObjValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tObjValue, -1.07121, tTolerance);
 
-    auto tObjGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tObjGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         -1.058389e-01, -1.411185e-01, -3.527962e-02, -1.411185e-01, -2.116777e-01, -7.055924e-02, -3.527962e-02,
         -7.055924e-02, -3.527962e-02, -1.411185e-01, -2.116777e-01, -7.055924e-02, -2.116777e-01, -4.233554e-01,

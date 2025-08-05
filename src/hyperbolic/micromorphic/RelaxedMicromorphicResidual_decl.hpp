@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
 #include "NaturalBCs.hpp"
@@ -41,8 +43,8 @@ class RelaxedMicromorphicResidual : public EvaluationType::ElementType,
     Plato::ApplyWeighting<mNumNodesPerCell, mNumVoigtTerms, IndicatorFunctionType> mApplyStressWeighting;
     Plato::ApplyWeighting<mNumNodesPerCell, mNumSpatialDims, IndicatorFunctionType> mApplyMassWeighting;
 
-    std::shared_ptr<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
-    std::shared_ptr<Plato::NaturalBCs<ElementType>> mBoundaryLoads;
+    std::optional<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
+    std::optional<Plato::NaturalBCs<ElementType>> mBoundaryLoads;
 
     bool mRayleighDamping;
 

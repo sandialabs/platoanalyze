@@ -1,11 +1,27 @@
 #include <AnalyzeMacros.hpp>
+#include <Kokkos_Core.hpp>
 #include <PlatoTestHelpers.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
+
+#include "Solutions.hpp"
 
 namespace Plato
 {
 namespace TestHelpers
 {
+Plato::Solutions single_step_solutions_from_vector(const std::vector<Plato::Scalar> &aStateVector)
+{
+    const auto tStateView = create_device_view(aStateVector);
+    const auto tNumDofs = aStateVector.size();
+    Plato::ScalarMultiVector tState("uniaxial state", static_cast<Plato::OrdinalType>(1), tNumDofs);
+    Kokkos::parallel_for(
+        "multidimensional view", Kokkos::RangePolicy<int>(0, tNumDofs),
+        KOKKOS_LAMBDA(Plato::OrdinalType tDofOrdinal) { tState(0, tDofOrdinal) = tStateView(tDofOrdinal); });
+    Plato::Solutions tSolution(std::string{}, std::string{});
+    tSolution.set("State", tState);
+
+    return tSolution;
+}
 
 void setControlWS(std::vector<std::vector<Plato::Scalar>> &aValues, Plato::ScalarMultiVectorT<Plato::Scalar> &aControl)
 {
