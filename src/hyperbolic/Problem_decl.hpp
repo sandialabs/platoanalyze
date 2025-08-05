@@ -92,7 +92,7 @@ class Problem : public Plato::AbstractProblem
 
     void parseLinearSolver(Teuchos::ParameterList& aProblemParams, Plato::Mesh aMesh, Comm::Machine aMachine);
 
-    void output(const std::string& aFilepath);
+    void output(const std::string& aFilepath) override final;
 
     void applyConstraints(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix, const Plato::ScalarVector& aVector);
 
@@ -101,9 +101,9 @@ class Problem : public Plato::AbstractProblem
                              const Plato::OrdinalVector& aBcDofs,
                              const Plato::ScalarVector& aBcValues);
 
-    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution);
+    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override final;
 
-    Plato::Solutions solution(const Plato::ScalarVector& aControl);
+    Plato::Solutions solution(const Plato::ScalarVector& aControl) override final;
 
     void forwardStepUForm(const Plato::ScalarVector& aControl,
                           Plato::Scalar& aCurrentTime,
@@ -130,32 +130,26 @@ class Problem : public Plato::AbstractProblem
 
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
                                  const Plato::Solutions& aSolution,
-                                 const std::string& aName) override;
-
-    Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) override;
-
-    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) override;
+                                 const std::string& aName) override final;
 
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
-                                          const std::string& aName) override;
+                                          const std::string& aName) override final;
 
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
                                           Criterion aCriterion);
 
-    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) override;
-
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
-                                           const std::string& aName) override;
+                                           const std::string& aName) override final;
 
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
                                            Criterion aCriterion);
 
    private:
-    Plato::Solutions getSolution() const override;
+    Plato::Solutions getSolution() const override final;
 };
 }  // namespace Hyperbolic
 

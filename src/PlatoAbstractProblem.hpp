@@ -86,15 +86,6 @@ class AbstractProblem
     /**
      * \brief Evaluate criterion function
      * \param [in] aControl 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return criterion function value
-     **********************************************************************************/
-    virtual Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) = 0;
-
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion function
-     * \param [in] aControl 1D view of control variables
      * \param [in] aSolution solution database
      * \param [in] aName Name of criterion.
      * \return criterion function value
@@ -102,24 +93,6 @@ class AbstractProblem
     virtual Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
                                          const Plato::Solutions& aSolution,
                                          const std::string& aName) = 0;
-
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion partial derivative wrt control variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion partial derivative wrt control variables
-     **********************************************************************************/
-    virtual Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) = 0;
-
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion partial derivative wrt configuration variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion partial derivative wrt configuration variables
-     **********************************************************************************/
-    virtual Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) = 0;
 
     /******************************************************************************/
     /**
@@ -154,10 +127,11 @@ class AbstractProblem
     Plato::DataMap mDataMap;
     decltype(mDataMap)& getDataMap() { return mDataMap; }
 
-    /******************************************************************************/ /**
-                                                                                      * \brief Return solution database.
-                                                                                      * \return solution database
-                                                                                      **********************************************************************************/
+    /******************************************************************************/
+    /**
+     * \brief Return solution database.
+     * \return solution database
+     **********************************************************************************/
     virtual Plato::Solutions getSolution() const = 0;
 };
 // end class AbstractProblem

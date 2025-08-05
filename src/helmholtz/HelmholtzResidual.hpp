@@ -94,7 +94,7 @@ class HelmholtzResidual : public EvaluationType::ElementType,
                   const Plato::ScalarMultiVectorT<ControlScalarType> &aControl,
                   const Plato::ScalarArray3DT<ConfigScalarType> &aConfig,
                   Plato::ScalarMultiVectorT<ResultScalarType> &aResult,
-                  Plato::Scalar aTimeStep = 0.0) const
+                  Plato::Scalar aTimeStep = 0.0) const override final
     /**************************************************************************/
     {
         using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
@@ -161,7 +161,7 @@ class HelmholtzResidual : public EvaluationType::ElementType,
                            const Plato::ScalarMultiVectorT<ControlScalarType> &aControl,
                            const Plato::ScalarArray3DT<ConfigScalarType> &aConfig,
                            Plato::ScalarMultiVectorT<ResultScalarType> &aResult,
-                           Plato::Scalar aTimeStep = 0.0) const
+                           Plato::Scalar aTimeStep = 0.0) const override final
     /**************************************************************************/
     {
         if (mSurfaceLengthScale <= static_cast<Plato::Scalar>(0.0))

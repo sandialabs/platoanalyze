@@ -75,7 +75,16 @@ Plato::Solutions AdjointProblem<PhysicsType>::solution(const Plato::ScalarVector
 }
 
 template <typename PhysicsType>
+Plato::Scalar AdjointProblem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl,
+                                                          const Plato::Solutions& aSolution,
+                                                          const std::string& aName)
+{
+    return mHelmholtzProblem->criterionValue(aControl, aSolution, aName);
+}
+
+template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
+                                                                   const Plato::Solutions&,
                                                                    const std::string& aName)
 {
     // Given `K \rho - M z = 0`, \rho = K^-1 M z
@@ -101,40 +110,11 @@ Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::
 }
 
 template <typename PhysicsType>
-Plato::Scalar AdjointProblem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl, const std::string& aName)
-{
-    return mHelmholtzProblem->criterionValue(aControl, aName);
-}
-
-template <typename PhysicsType>
-Plato::Scalar AdjointProblem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl,
-                                                          const Plato::Solutions& aSolution,
-                                                          const std::string& aName)
-{
-    return mHelmholtzProblem->criterionValue(aControl, aSolution, aName);
-}
-
-template <typename PhysicsType>
-Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
-                                                                   const Plato::Solutions& aSolution,
-                                                                   const std::string& aName)
-{
-    return mHelmholtzProblem->criterionGradient(aControl, aSolution, aName);
-}
-
-template <typename PhysicsType>
 Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
                                                                     const Plato::Solutions& aSolution,
                                                                     const std::string& aName)
 {
     return mHelmholtzProblem->criterionGradientX(aControl, aSolution, aName);
-}
-
-template <typename PhysicsType>
-Plato::ScalarVector AdjointProblem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
-                                                                    const std::string& aName)
-{
-    return mHelmholtzProblem->criterionGradientX(aControl, aName);
 }
 
 template <typename PhysicsType>

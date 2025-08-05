@@ -2,16 +2,17 @@
 
 #include "FadTypes.hpp"
 #include "GeneralFluxDivergence.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "PressureDivergence.hpp"
 #include "ProjectToNode.hpp"
 #include "ToMap.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "stabilized/Kinematics.hpp"
 #include "stabilized/Kinetics.hpp"
 #include "stabilized/MechanicsElement.hpp"
 #include "stabilized/Projection.hpp"
+#include "utilities/ProblemDataParsingUtilities.hpp"
 
 namespace Plato
 {
@@ -27,39 +28,13 @@ namespace Stabilized
 template <typename EvaluationType, typename IndicatorFunctionType>
 void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::initialize(Teuchos::ParameterList& aProblemParams)
 {
-    // obligatory: define dof names in order
-    mDofNames.push_back("displacement X");
-    if (mNumSpatialDims > 1) mDofNames.push_back("displacement Y");
-    if (mNumSpatialDims > 2) mDofNames.push_back("displacement Z");
+    plato::utilities::get_displacement_dof_names(mNumSpatialDims, mDofNames);
     mDofNames.push_back("pressure");
 
     // create material model and get stiffness
     //
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialFactory(aProblemParams);
     mMaterialModel = tMaterialFactory.create(mSpatialDomain.getMaterialName());
-
-    // parse body loads
-    //
-    if (aProblemParams.isSublist("Body Loads"))
-    {
-        mBodyLoads =
-            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-    }
-
-    // parse mechanical boundary Conditions
-    //
-    if (aProblemParams.isSublist("Mechanical Natural Boundary Conditions"))
-    {
-        mBoundaryLoads =
-            std::make_shared<Plato::NaturalBCs<ElementType, mNumMechDims, mNumDofsPerNode, mMechDofOffset>>(
-                aProblemParams.sublist("Mechanical Natural Boundary Conditions"));
-    }
-
-    auto tResidualParams = aProblemParams.sublist("Elliptic");
-    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
-    {
-        mPlottable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-    }
 }
 
 /******************************************************************************/
@@ -81,8 +56,10 @@ ElastostaticResidual<EvaluationType, IndicatorFunctionType>::ElastostaticResidua
       mApplyTensorWeighting(mIndicatorFunction),
       mApplyVectorWeighting(mIndicatorFunction),
       mApplyScalarWeighting(mIndicatorFunction),
-      mBodyLoads(nullptr),
-      mBoundaryLoads(nullptr)
+      mBodyLoads(plato::utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
+      mBoundaryLoads(plato::utilities::get_boundary_loads<ElementType, mNumMechDims, mNumDofsPerNode, mMechDofOffset>(
+          aProblemParams, "Mechanical Natural Boundary Conditions")),
+      mPlottable{plato::utilities::get_plot_table(aProblemParams.sublist("Elliptic"))}
 {
     this->initialize(aProblemParams);
 }
@@ -119,6 +96,8 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
     Plato::ScalarMultiVectorT<ResultScalarType>& aResultWS,
     Plato::Scalar aTimeStep) const
 {
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
+
     auto tNumCells = mSpatialDomain.numCells();
 
     using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
@@ -136,7 +115,7 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
         tInterpolatePGradFromNodal;
 
     Plato::PressureDivergence<ElementType, mNumDofsPerNode> tPressureDivergence;
-    Plato::GeneralStressDivergence<ElementType, mNumDofsPerNode, mMechDofOffset> tStressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType, mNumDofsPerNode, mMechDofOffset> tStressDivergence;
     Plato::GeneralFluxDivergence<ElementType, mNumDofsPerNode, mPressDofOffset> tStabilizedDivergence;
     Plato::ProjectToNode<ElementType, mNumDofsPerNode, mPressDofOffset> tProjectVolumeStrain;
 
@@ -206,7 +185,7 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
             Kokkos::atomic_add(&tCellPressure(iCellOrdinal), tPressure);
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aStateWS, aControlWS, aConfigWS, aResultWS, -1.0);
     }
@@ -250,7 +229,7 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_bound
     Plato::ScalarMultiVectorT<ResultScalarType>& aResultWS,
     Plato::Scalar aTimeStep) const
 {
-    if (mBoundaryLoads != nullptr)
+    if (mBoundaryLoads.has_value())
     {
         mBoundaryLoads->get(aSpatialModel, aStateWS, aControlWS, aConfigWS, aResultWS, -1.0);
     }

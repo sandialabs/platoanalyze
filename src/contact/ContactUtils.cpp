@@ -205,7 +205,7 @@ void check_for_missing_parent_elements(const Plato::OrdinalVector &aParentElemen
         KOKKOS_LAMBDA(const Plato::OrdinalType &aElemOrdinal, Plato::OrdinalType &aUpdate) {
             if (aParentElements(aElemOrdinal) == -2)
             {
-                Kokkos::atomic_increment(&aUpdate);
+                Kokkos::atomic_inc(&aUpdate);
             }
         },
         tNumMissingParent);

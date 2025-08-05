@@ -269,7 +269,7 @@ class MeshMap
             KOKKOS_LAMBDA(const OrdinalT& aElemOrdinal, OrdinalT& aUpdate) {
                 if (aParentElements(aElemOrdinal) == -2)
                 {
-                    Kokkos::atomic_increment(&aUpdate);
+                    Kokkos::atomic_inc(&aUpdate);
                 }
             },
             tNumMissingParent);
@@ -387,7 +387,7 @@ class MeshMap
                 for (auto tEntryIndex = tRowStart; tEntryIndex < tRowEnd; tEntryIndex++)
                 {
                     auto iColumnIndex = tColMap(tEntryIndex);
-                    Kokkos::atomic_increment(&tRowMapT(iColumnIndex));
+                    Kokkos::atomic_inc(&tRowMapT(iColumnIndex));
                 }
             });
 

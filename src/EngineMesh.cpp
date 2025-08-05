@@ -146,7 +146,7 @@ void EngineMesh::createNodeElementGraph()
                  tElemLocalNodeOrd++)
             {
                 auto tProcLocalNodeOrd = tConnectivity(aElemOrdinal * tNumNodesPerElement + tElemLocalNodeOrd);
-                Kokkos::atomic_increment(&tNumConnectedElems(tProcLocalNodeOrd));
+                Kokkos::atomic_inc(&tNumConnectedElems(tProcLocalNodeOrd));
             }
         });
 
@@ -604,7 +604,7 @@ void EngineMesh::createComplement(std::vector<std::string> aExcludeNames)
         KOKKOS_LAMBDA(const Plato::OrdinalType& aFaceOrdinal, Plato::OrdinalType& aUpdate) {
             if (tRemainingSurfaceArray(aFaceOrdinal) == 1)
             {
-                Kokkos::atomic_increment(&aUpdate);
+                Kokkos::atomic_inc(&aUpdate);
             }
         },
         tNumRemainingFaces);

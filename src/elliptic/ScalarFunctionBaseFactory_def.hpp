@@ -9,6 +9,7 @@
 #include "elliptic/SolutionFunction.hpp"
 #include "elliptic/VolumeAverageCriterion.hpp"
 #include "elliptic/WeightedSumFunction.hpp"
+#include "elliptic/finite_deformation_mechanics/VarianceFunction.hpp"
 
 namespace Plato
 {
@@ -19,17 +20,19 @@ namespace Elliptic
 /******************************************************************************/
 /**
  * \brief Create method
- * \param [in] aSpatialModel Plato Analyze spatial model
- * \param [in] aDataMap Plato and Analyze data map
- * \param [in] aProblemParams parameter input
- * \param [in] aFunctionName name of function in parameter list
+ * \param [in] aSpatialModel Plato
+ *Analyze spatial model \param [in]
+ *aDataMap Plato and Analyze data map
+ * \param [in] aProblemParams parameter
+ *input \param [in] aFunctionName name
+ *of function in parameter list
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> ScalarFunctionBaseFactory<PhysicsType>::create(
     const Plato::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
-    std::string& aFunctionName)
+    const std::string& aFunctionName) const
 {
     auto tFunctionParams = aProblemParams.sublist("Criteria").sublist(aFunctionName);
     auto tFunctionType = tFunctionParams.get<std::string>("Type", "Not Defined");
@@ -66,6 +69,11 @@ std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> ScalarFunctionBaseFactory<P
     {
         return std::make_shared<PhysicsScalarFunction<PhysicsType>>(aSpatialModel, aDataMap, aProblemParams,
                                                                     aFunctionName);
+    }
+    else if (tFunctionType == "Variance Function")
+    {
+        return std::make_shared<plato::elliptic::finite_deformation_mechanics::VarianceFunction<PhysicsType>>(
+            aSpatialModel, aDataMap, aProblemParams, aFunctionName);
     }
     else
     {

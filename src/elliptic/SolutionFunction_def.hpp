@@ -291,7 +291,7 @@ template <typename PhysicsType>
 SolutionFunction<PhysicsType>::SolutionFunction(const Plato::SpatialModel& aSpatialModel,
                                                 Plato::DataMap& aDataMap,
                                                 Teuchos::ParameterList& aProblemParams,
-                                                std::string& aName)
+                                                const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
       mSpatialModel(aSpatialModel),
       mFunctionName(aName),
@@ -667,7 +667,7 @@ void SolutionFunction<PhysicsType>::updateProblem(const Plato::ScalarVector& aSt
  * \param [in] function name
  **********************************************************************************/
 template <typename PhysicsType>
-void SolutionFunction<PhysicsType>::setFunctionName(const std::string aFunctionName)
+void SolutionFunction<PhysicsType>::setFunctionName(const std::string& aFunctionName)
 {
     mFunctionName = aFunctionName;
 }

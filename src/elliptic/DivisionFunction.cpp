@@ -8,11 +8,14 @@
 #include "Thermal.hpp"
 #include "Thermomechanics.hpp"
 #include "elliptic/DivisionFunction_def.hpp"
+#include "elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
 
 PLATO_ELEMENT_DEF(Plato::Elliptic::DivisionFunction, Plato::Thermal)
 PLATO_ELEMENT_DEF(Plato::Elliptic::DivisionFunction, Plato::Mechanics)
 PLATO_ELEMENT_DEF(Plato::Elliptic::DivisionFunction, Plato::Thermomechanics)
 PLATO_ELEMENT_DEF(Plato::Elliptic::DivisionFunction, Plato::Electromechanics)
+PLATO_ELEMENT_DEF(Plato::Elliptic::DivisionFunction,
+                  plato::elliptic::finite_deformation_mechanics::FiniteDeformationMechanics)
 
 #ifdef PLATO_STABILIZED
 #include "stabilized/Mechanics.hpp"

@@ -4,7 +4,6 @@
 #include "BLAS1.hpp"
 #include "ComputedField.hpp"
 #include "GeneralFluxDivergence.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "PressureDivergence.hpp"
@@ -15,6 +14,7 @@
 #include "Teuchos_UnitTestHarness.hpp"
 #include "ThermalContent.hpp"
 #include "WorksetBase.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "parabolic/AbstractVectorFunction.hpp"
 #include "stabilized/Projection.hpp"
 #include "stabilized/TMKinematics.hpp"
@@ -129,7 +129,8 @@ TEUCHOS_UNIT_TEST(StabilizedThermomechTests, 3D)
 
     Plato::GeneralFluxDivergence<ElementType, dofsPerNode, TDofOffset> fluxDivergence;
     Plato::GeneralFluxDivergence<ElementType, dofsPerNode, PDofOffset> stabDivergence;
-    Plato::GeneralStressDivergence<ElementType, dofsPerNode> stressDivergence;
+    plato::composable_function_objects::shape_function_operations::GeneralStressDivergence<ElementType, dofsPerNode>
+        stressDivergence;
 
     Plato::PressureDivergence<ElementType, dofsPerNode> pressureDivergence;
 

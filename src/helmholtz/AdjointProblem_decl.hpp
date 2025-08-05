@@ -28,30 +28,24 @@ class AdjointProblem : public Plato::AbstractProblem
     Plato::OrdinalType numDofsPerNode() const;
     Plato::OrdinalType numControlsPerNode() const;
 
-    void output(const std::string& aFilepath) override;
-    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override;
+    void output(const std::string& aFilepath) override final;
+    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override final;
 
-    Plato::Solutions solution(const Plato::ScalarVector& aControl) override;
-
-    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) override;
-
-    Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) override;
+    Plato::Solutions solution(const Plato::ScalarVector& aControl) override final;
 
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
                                  const Plato::Solutions& aSolution,
-                                 const std::string& aName) override;
+                                 const std::string& aName) override final;
 
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
-                                          const std::string& aName) override;
+                                          const std::string& aName) override final;
 
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
-                                           const std::string& aName) override;
+                                           const std::string& aName) override final;
 
-    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) override;
-
-    Plato::Solutions getSolution() const override;
+    Plato::Solutions getSolution() const override final;
 
    private:
     std::shared_ptr<Plato::Helmholtz::Problem<PhysicsType>> mHelmholtzProblem;

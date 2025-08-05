@@ -3,14 +3,15 @@
 #include "BLAS2.hpp"
 #include "FadTypes.hpp"
 #include "GeneralFluxDivergence.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "PlatoTypes.hpp"
 #include "TMKinematics.hpp"
 #include "TMKineticsFactory.hpp"
 #include "ToMap.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "elliptic/ThermoelastostaticResidual_decl.hpp"
+#include "utilities/ProblemDataParsingUtilities.hpp"
 
 namespace Plato
 {
@@ -29,51 +30,22 @@ ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::Thermoelastos
       mIndicatorFunction(aPenaltyParams),
       mApplyStressWeighting(mIndicatorFunction),
       mApplyFluxWeighting(mIndicatorFunction),
-      mBodyLoads(nullptr),
-      mBoundaryLoads(nullptr),
-      mBoundaryFluxes(nullptr)
+      mBodyLoads(plato::utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
+      mBoundaryLoads(plato::utilities::get_boundary_loads<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>(
+          aProblemParams, "Mechanical Natural Boundary Conditions")),
+      mBoundaryFluxes(plato::utilities::get_boundary_loads<ElementType, NThrmDims, mNumDofsPerNode, TDofOffset>(
+          aProblemParams, "Thermal Natural Boundary Conditions")),
+      mPlottable{plato::utilities::get_plot_table(aProblemParams.sublist("Elliptic"))}
 /**************************************************************************/
 {
     // obligatory: define dof names in order
-    mDofNames.push_back("displacement X");
-    if (mNumSpatialDims > 1) mDofNames.push_back("displacement Y");
-    if (mNumSpatialDims > 2) mDofNames.push_back("displacement Z");
+    plato::utilities::get_displacement_dof_names(mNumSpatialDims, mDofNames);
     mDofNames.push_back("temperature");
 
     // create material model and get stiffness
     //
     Plato::ThermoelasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
     mMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
-
-    // parse body loads
-    //
-    if (aProblemParams.isSublist("Body Loads"))
-    {
-        mBodyLoads =
-            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-    }
-
-    // parse mechanical boundary Conditions
-    //
-    if (aProblemParams.isSublist("Mechanical Natural Boundary Conditions"))
-    {
-        mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType, NMechDims, mNumDofsPerNode, MDofOffset>>(
-            aProblemParams.sublist("Mechanical Natural Boundary Conditions"));
-    }
-
-    // parse thermal boundary Conditions
-    //
-    if (aProblemParams.isSublist("Thermal Natural Boundary Conditions"))
-    {
-        mBoundaryFluxes = std::make_shared<Plato::NaturalBCs<ElementType, NThrmDims, mNumDofsPerNode, TDofOffset>>(
-            aProblemParams.sublist("Thermal Natural Boundary Conditions"));
-    }
-
-    auto tResidualParams = aProblemParams.sublist("Elliptic");
-    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
-    {
-        mPlottable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-    }
 }
 
 /****************************************************************************/
@@ -98,6 +70,8 @@ void ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate
     Plato::Scalar aTimeStep) const
 /**************************************************************************/
 {
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
+
     auto tNumCells = mSpatialDomain.numCells();
 
     using GradScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
@@ -108,7 +82,7 @@ void ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate
     Plato::TMKineticsFactory<EvaluationType, ElementType> tTMKineticsFactory;
     auto tTMKinetics = tTMKineticsFactory.create(mMaterialModel, mSpatialDomain, mDataMap);
 
-    Plato::GeneralStressDivergence<ElementType, mNumDofsPerNode, MDofOffset> stressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType, mNumDofsPerNode, MDofOffset> stressDivergence;
     Plato::GeneralFluxDivergence<ElementType, mNumDofsPerNode, TDofOffset> fluxDivergence;
 
     Plato::InterpolateFromNodal<ElementType, mNumDofsPerNode, TDofOffset> interpolateFromNodal;
@@ -205,7 +179,7 @@ void ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate
             }
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aState, aControl, aConfig, aResult, -1.0);
     }
@@ -228,12 +202,12 @@ void ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate
     Plato::Scalar aTimeStep) const
 /**************************************************************************/
 {
-    if (mBoundaryLoads != nullptr)
+    if (mBoundaryLoads.has_value())
     {
         mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0);
     }
 
-    if (mBoundaryFluxes != nullptr)
+    if (mBoundaryFluxes.has_value())
     {
         mBoundaryFluxes->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0);
     }

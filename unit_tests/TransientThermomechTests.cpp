@@ -20,7 +20,6 @@
 #include "ApplyWeighting.hpp"
 #include "ComputedField.hpp"
 #include "GeneralFluxDivergence.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "Mechanics.hpp"
@@ -35,6 +34,7 @@
 #include "WorksetBase.hpp"
 #include "alg/CrsLinearProblem.hpp"
 #include "alg/ParallelComm.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "parabolic/VectorFunction.hpp"
 
 TEUCHOS_UNIT_TEST(TransientThermomechTests, 3D)
@@ -134,7 +134,8 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, 3D)
     Plato::InterpolateFromNodal<ElementType, dofsPerNode, TDofOffset> interpolateFromNodal;
 
     Plato::GeneralFluxDivergence<ElementType, dofsPerNode, TDofOffset> fluxDivergence;
-    Plato::GeneralStressDivergence<ElementType, dofsPerNode> stressDivergence;
+    plato::composable_function_objects::shape_function_operations::GeneralStressDivergence<ElementType, dofsPerNode>
+        stressDivergence;
 
     Plato::ThermalContent<numSpaceDims> computeThermalContent(massMaterialModel);
     Plato::ProjectToNode<ElementType, dofsPerNode, TDofOffset> projectThermalContent;

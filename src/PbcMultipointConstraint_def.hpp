@@ -225,7 +225,7 @@ void Plato::PbcMultipointConstraint<ElementT>::getUniqueParentNodes(Plato::Mesh 
         KOKKOS_LAMBDA(const Plato::OrdinalType& aElemOrdinal, Plato::OrdinalType& aUpdate) {
             if (aParentElements(aElemOrdinal) == -2)
             {
-                Kokkos::atomic_increment(&aUpdate);
+                Kokkos::atomic_inc(&aUpdate);
             }
         },
         tNumMissingParent);

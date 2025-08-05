@@ -183,7 +183,7 @@ class QuasiImplicit : public Plato::AbstractProblem
      * \brief Output solution to visualization file.
      * \param [in] aFilePath output/visualization file path (default = ./output)
      **********************************************************************************/
-    void output(const std::string& aFilePath) override
+    void output(const std::string& aFilePath) override final
     {
         auto tWriter = Plato::MeshIOFactory::create(aFilePath, mSpatialModel.Mesh, "Write");
 
@@ -213,7 +213,10 @@ class QuasiImplicit : public Plato::AbstractProblem
      * \param [in] aControl 1D container of control variables
      * \param [in] aSolution solution database
      **********************************************************************************/
-    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override { return; }
+    void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override final
+    {
+        return;
+    }
 
     /******************************************************************************/
     /**
@@ -224,7 +227,7 @@ class QuasiImplicit : public Plato::AbstractProblem
      * \return Plato database with state solutions
      *
      **********************************************************************************/
-    Plato::Solutions solution(const Plato::ScalarVector& aControl) override
+    Plato::Solutions solution(const Plato::ScalarVector& aControl) override final
     {
         this->clear();
         this->checkProblemSetup();
@@ -283,23 +286,8 @@ class QuasiImplicit : public Plato::AbstractProblem
      *
      **********************************************************************************/
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
-                                 const Plato::Solutions& aSolution,
-                                 const std::string& aName) override
-    {
-        return (this->criterionValue(aControl, aName));
-    }
-
-    /******************************************************************************/
-    /**
-     * \fn Plato::Scalar criterionValue
-     *
-     * \brief Evaluate criterion.
-     * \param [in] aControl  vector of design/optimization variables
-     * \param [in] aName     criterion name/identifier
-     * \return criterion evaluation
-     *
-     **********************************************************************************/
-    Plato::Scalar criterionValue(const Plato::ScalarVector& aControl, const std::string& aName) override
+                                 const Plato::Solutions&,
+                                 const std::string& aName) override final
     {
         auto tItr = mCriteria.find(aName);
         if (tItr == mCriteria.end())
@@ -338,23 +326,8 @@ class QuasiImplicit : public Plato::AbstractProblem
      *
      **********************************************************************************/
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
-                                          const Plato::Solutions& aSolution,
-                                          const std::string& aName) override
-    {
-        return (this->criterionGradient(aControl, aName));
-    }
-
-    /******************************************************************************/
-    /**
-     * \fn Plato::Scalar criterionGradient
-     *
-     * \brief Evaluate criterion gradient with respect to design/optimization variables.
-     * \param [in] aControl vector of design/optimization variables
-     * \param [in] aName    criterion name/identifier
-     * \return criterion gradient with respect to design/optimization variables
-     *
-     **********************************************************************************/
-    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl, const std::string& aName) override
+                                          const Plato::Solutions&,
+                                          const std::string& aName) override final
     {
         auto tItr = mCriteria.find(aName);
         if (tItr == mCriteria.end())
@@ -417,12 +390,15 @@ class QuasiImplicit : public Plato::AbstractProblem
      * \fn Plato::Scalar criterionGradientX
      *
      * \brief Evaluate criterion gradient with respect to configuration variables.
-     * \param [in] aControl vector of design/optimization variables
-     * \param [in] aName    criterion name/identifier
+     * \param [in] aControl  vector of design/optimization variables
+     * \param [in] aSolution Plato database with state solutions
+     * \param [in] aName     criterion name/identifier
      * \return criterion gradient with respect to configuration variables
      *
      **********************************************************************************/
-    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl, const std::string& aName) override
+    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
+                                           const Plato::Solutions&,
+                                           const std::string& aName) override final
     {
         auto tItr = mCriteria.find(aName);
         if (tItr == mCriteria.end())
@@ -478,24 +454,6 @@ class QuasiImplicit : public Plato::AbstractProblem
             this->saveDual(tDual);
         }
         return tTotalDerivative;
-    }
-
-    /******************************************************************************/
-    /**
-     * \fn Plato::Scalar criterionGradientX
-     *
-     * \brief Evaluate criterion gradient with respect to configuration variables.
-     * \param [in] aControl  vector of design/optimization variables
-     * \param [in] aSolution Plato database with state solutions
-     * \param [in] aName     criterion name/identifier
-     * \return criterion gradient with respect to configuration variables
-     *
-     **********************************************************************************/
-    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
-                                           const Plato::Solutions& aSolution,
-                                           const std::string& aName) override
-    {
-        return (this->criterionGradientX(aControl, aName));
     }
 
    private:
@@ -2252,11 +2210,12 @@ class QuasiImplicit : public Plato::AbstractProblem
             Plato::MatrixTimesVectorPlusVector(tGradResTempWrtConfig, tCurrentTemperatureAdjoint, aTotalDerivative);
         }
     }
-    /******************************************************************************/ /**
-                                                                                      * \brief Return solution database.
-                                                                                      * \return solution database
-                                                                                      **********************************************************************************/
-    Plato::Solutions getSolution() const override { return this->setSolution(); }
+    /******************************************************************************/
+    /**
+     * \brief Return solution database.
+     * \return solution database
+     **********************************************************************************/
+    Plato::Solutions getSolution() const override final { return this->setSolution(); }
 };
 // class QuasiImplicit
 

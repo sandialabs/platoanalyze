@@ -65,7 +65,7 @@ plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::rowVector
         full_nodal_scalar_vector(aV.stdVector(), aAnalysisDomainMesh, mFunctionalInterface.mesh(), tFixedValueGradient);
 
     const Plato::ScalarVector tGradient =
-        mFunctionalInterface.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
+        mFunctionalInterface.problem().criterionGradient(tVAsScalarVector, Plato::Solutions{}, "Helmholtz Gradient");
 
     return plato::linear_algebra::DynamicVector<double>(
         design_variable_std_vector(tGradient, aAnalysisDomainMesh, mFunctionalInterface.mesh()));
@@ -82,8 +82,8 @@ plato::linear_algebra::DynamicVector<double> HelmholtzFilterInterface::rowVector
     const Plato::ScalarVector tVAsScalarVector = full_nodal_scalar_vector(
         aV.stdVector(), aAnalysisDomainMesh, mFunctionalInterfaceForAdjoint.mesh(), tFixedValueGradient);
 
-    const Plato::ScalarVector tGradient =
-        mFunctionalInterfaceForAdjoint.problem().criterionGradient(tVAsScalarVector, "Helmholtz Gradient");
+    const Plato::ScalarVector tGradient = mFunctionalInterfaceForAdjoint.problem().criterionGradient(
+        tVAsScalarVector, Plato::Solutions{}, "Helmholtz Gradient");
 
     return plato::linear_algebra::DynamicVector<double>(
         design_variable_std_vector(tGradient, aAnalysisDomainMesh, mFunctionalInterfaceForAdjoint.mesh()));

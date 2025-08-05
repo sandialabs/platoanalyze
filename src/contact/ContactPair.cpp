@@ -124,7 +124,7 @@ void check_for_repeated_child_nodes(const Plato::OrdinalVector& aChildNodes, Pla
     Kokkos::parallel_for(
         Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumChildNodes), KOKKOS_LAMBDA(Plato::OrdinalType nodeOrdinal) {
             auto tChildNode = aChildNodes(nodeOrdinal);
-            Kokkos::atomic_increment(&tCheckChildNodes(tChildNode));
+            Kokkos::atomic_inc(&tCheckChildNodes(tChildNode));
         });
 
     Plato::OrdinalType tNumRepeatedChild(0);
@@ -133,7 +133,7 @@ void check_for_repeated_child_nodes(const Plato::OrdinalVector& aChildNodes, Pla
         KOKKOS_LAMBDA(const Plato::OrdinalType& aOrdinal, Plato::OrdinalType& aUpdate) {
             if (tCheckChildNodes(aOrdinal) > 1)
             {
-                Kokkos::atomic_increment(&aUpdate);
+                Kokkos::atomic_inc(&aUpdate);
             }
         },
         tNumRepeatedChild);

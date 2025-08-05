@@ -139,6 +139,22 @@ Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aCont
 
 /******************************************************************************/
 /**
+ * \brief Evaluate criterion function
+ * \param [in] aControl 1D view of control variables
+ * \param [in] aSolution solution database
+ * \param [in] aName Name of criterion.
+ * \return criterion function value
+ **********************************************************************************/
+template <typename PhysicsType>
+Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl,
+                                                   const Plato::Solutions& aSolution,
+                                                   const std::string& aName)
+{
+    ANALYZE_THROWERR("CRITERION VALUE: NO CRITERION ASSOCIATED WITH HELMHOLTZ FILTER PROBLEM.")
+}
+
+/******************************************************************************/
+/**
  * \brief Solve system of equations related to chain rule of Helmholtz filter
  * for gradients
  * \param [in] aControl 1D view of criterion partial derivative
@@ -149,6 +165,7 @@ Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aCont
  **********************************************************************************/
 template <typename PhysicsType>
 Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
+                                                            const Plato::Solutions&,
                                                             const std::string& aName)
 {
     Plato::ScalarVector tSolution("derivative of criterion wrt unfiltered control", mPDE->size());
@@ -171,53 +188,6 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarV
 
 /******************************************************************************/
 /**
- * \brief Evaluate criterion function
- * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return criterion function value
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl, const std::string& aName)
-{
-    ANALYZE_THROWERR("CRITERION VALUE: NO CRITERION ASSOCIATED WITH HELMHOLTZ FILTER PROBLEM.")
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion function
- * \param [in] aControl 1D view of control variables
- * \param [in] aSolution solution database
- * \param [in] aName Name of criterion.
- * \return criterion function value
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl,
-                                                   const Plato::Solutions& aSolution,
-                                                   const std::string& aName)
-{
-    ANALYZE_THROWERR("CRITERION VALUE: NO CRITERION ASSOCIATED WITH HELMHOLTZ FILTER PROBLEM.")
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion gradient wrt control variables
- * \param [in] aControl 1D view of control variables
- * \param [in] aSolution solution database
- * \param [in] aName Name of criterion.
- * \return 1D view - criterion gradient wrt control variables
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
-                                                            const Plato::Solutions& aSolution,
-                                                            const std::string& aName)
-{
-    ANALYZE_THROWERR(
-        "CRITERION GRADIENT: NO INSTANCE OF THIS FUNCTION WITH SOLUTION INPUT IMPLEMENTED FOR HELMHOLTZ FILTER "
-        "PROBLEM.")
-}
-
-/******************************************************************************/
-/**
  * \brief Evaluate criterion gradient wrt configuration variables
  * \param [in] aControl 1D view of control variables
  * \param [in] aSolution solution database
@@ -234,22 +204,9 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
 
 /******************************************************************************/
 /**
- * \brief Evaluate criterion partial derivative wrt configuration variables
- * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return 1D view - criterion partial derivative wrt configuration variables
+ * \brief Return solution database.
+ * \return solution database
  **********************************************************************************/
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
-                                                             const std::string& aName)
-{
-    ANALYZE_THROWERR("CRITERION GRADIENT X: NO CRITERION ASSOCIATED WITH HELMHOLTZ FILTER PROBLEM.")
-}
-
-/******************************************************************************/ /**
-                                                                                  * \brief Return solution database.
-                                                                                  * \return solution database
-                                                                                  **********************************************************************************/
 template <typename PhysicsType>
 Plato::Solutions Problem<PhysicsType>::getSolution() const
 {

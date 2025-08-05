@@ -104,7 +104,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, HelmholtzProblemError)
     Kokkos::deep_copy(testControl, tFilteredControl);
 
     std::string tDummyString = "Helmholtz gradient";
-    Plato::ScalarVector tGradient = tProblem.criterionGradient(control, tDummyString);
+    Plato::ScalarVector tGradient = tProblem.criterionGradient(control, tSolution, tDummyString);
 }
 
 /******************************************************************************/
