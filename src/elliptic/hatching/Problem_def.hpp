@@ -274,34 +274,6 @@ Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aCont
 /**
  * \brief Evaluate criterion function
  * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return criterion function value
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl, const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        Plato::Solutions tSolutions;
-        tSolutions.set("State", mGlobalStates);
-        Criterion tCriterion = mCriteria[aName];
-        return tCriterion->value(tSolutions, mLocalStates, aControl);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->value(aControl);
-    }
-    else
-    {
-        ANALYZE_THROWERR("REQUESTED CRITERION NOT DEFINED BY USER.");
-    }
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion function
- * \param [in] aControl 1D view of control variables
  * \param [in] aSolution Plato::Solution composed of state variables
  * \param [in] aName Name of criterion.
  * \return criterion function value
@@ -610,64 +582,6 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
         Plato::MatrixTimesVectorPlusVector(t_dHdx, tAdjoint_C, t_dFdx);
     }
     return t_dFdx;
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion partial derivative wrt control variables
- * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return 1D view - criterion partial derivative wrt control variables
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
-                                                            const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        Plato::Solutions tSolution;
-        tSolution.set("State", mGlobalStates);
-        Criterion tCriterion = mCriteria[aName];
-        return criterionGradient(aControl, tSolution, tCriterion);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->gradient_z(aControl);
-    }
-    else
-    {
-        ANALYZE_THROWERR("REQUESTED CRITERION NOT DEFINED BY USER.");
-    }
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion partial derivative wrt configuration variables
- * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return 1D view - criterion partial derivative wrt configuration variables
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
-                                                             const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        Plato::Solutions Solutions;
-        Solutions.set("State", mGlobalStates);
-        Criterion tCriterion = mCriteria[aName];
-        return criterionGradientX(aControl, Solutions, tCriterion);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->gradient_x(aControl);
-    }
-    else
-    {
-        ANALYZE_THROWERR("REQUESTED CRITERION NOT DEFINED BY USER.");
-    }
 }
 
 /***************************************************************************/

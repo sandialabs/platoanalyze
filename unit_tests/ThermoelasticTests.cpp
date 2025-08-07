@@ -506,35 +506,16 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, VolAvgStressPNormAxial_3D)
     constexpr Plato::Scalar tTolerance = 1e-4;
 
     std::string tCriterionName1("volume avg stress pnorm");
-    auto tCriterionValue1 = tEllipticProblem.criterionValue(tControls, tCriterionName1);
+    auto tCriterionValue1 = tEllipticProblem.criterionValue(tControls, tSolution, tCriterionName1);
     TEST_FLOATING_EQUALITY(tCriterionValue1, tStress, tTolerance);
 
     std::string tCriterionName2("pnorm numerator");
-    auto tCriterionValue2 = tEllipticProblem.criterionValue(tControls, tCriterionName2);
+    auto tCriterionValue2 = tEllipticProblem.criterionValue(tControls, tSolution, tCriterionName2);
     TEST_FLOATING_EQUALITY(tCriterionValue2, tStress * tBoxVolume, tTolerance);
 
     std::string tCriterionName3("pnorm denominator");
-    auto tCriterionValue3 = tEllipticProblem.criterionValue(tControls, tCriterionName3);
+    auto tCriterionValue3 = tEllipticProblem.criterionValue(tControls, tSolution, tCriterionName3);
     TEST_FLOATING_EQUALITY(tCriterionValue3, tBoxVolume, tTolerance);
-
-    // auto tCriterionGrad = tEllipticProblem.criterionGradient(tControls, tCriterionName);
-    // std::vector<Plato::Scalar> tGold = { -8.23158e-01,-2.74211e-01,-2.74205e-01,-2.74211e-01,-5.46915e-01,
-    //                                      -1.09598e+00,-5.46915e-01,-1.09091e+00,-1.07737e+00,-5.40880e-01,
-    //                                      -1.08590e+00,-5.40880e-01,-1.05793e+00,-5.26599e-01,-1.04844e+00,
-    //                                      -5.26599e-01,-1.07226e+00,-5.33831e-01,-1.06304e+00,-5.33831e-01,
-    //                                      -5.04852e-01,-1.00493e+00,-5.04852e-01,-1.01433e+00,-5.12007e-01,
-    //                                      -1.01919e+00,-1.03386e+00,-5.19301e-01,-1.04332e+00,-5.19301e-01,
-    //                                      -5.12007e-01,-1.02878e+00,-4.98050e-01,-1.00060e+00,-4.98050e-01,
-    //                                      -9.91065e-01,-9.80656e-01,-4.92349e-01,-9.88215e-01,-4.92349e-01,
-    //                                      -2.44243e-01,-7.35025e-01,-2.44243e-01,-2.43315e-01};
-    // auto tHostGrad = Kokkos::create_mirror(tCriterionGrad);
-    // Kokkos::deep_copy(tHostGrad, tCriterionGrad);
-    // TEST_ASSERT( tHostGrad.size() == static_cast<Plato::OrdinalType>(tGold.size() ));
-    // for(Plato::OrdinalType tIndex = 0; tIndex < tHostGrad.size(); tIndex++)
-    // {
-    //     //printf("%12.5e\n", tHostGrad(tIndex));
-    //     TEST_FLOATING_EQUALITY(tHostGrad(tIndex), tGold[tIndex], tTolerance);
-    // }
 
     // 6. Output Data
     if (false)
@@ -672,15 +653,15 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, VolAvgStressPNormShear_3D)
     constexpr Plato::Scalar tTolerance = 1e-4;
 
     std::string tCriterionName1("volume avg stress pnorm");
-    auto tCriterionValue1 = tEllipticProblem.criterionValue(tControls, tCriterionName1);
+    auto tCriterionValue1 = tEllipticProblem.criterionValue(tControls, tSolution, tCriterionName1);
     TEST_FLOATING_EQUALITY(tCriterionValue1, tStress, tTolerance);
 
     std::string tCriterionName2("pnorm numerator");
-    auto tCriterionValue2 = tEllipticProblem.criterionValue(tControls, tCriterionName2);
+    auto tCriterionValue2 = tEllipticProblem.criterionValue(tControls, tSolution, tCriterionName2);
     TEST_FLOATING_EQUALITY(tCriterionValue2, tStress * tBoxVolume, tTolerance);
 
     std::string tCriterionName3("pnorm denominator");
-    auto tCriterionValue3 = tEllipticProblem.criterionValue(tControls, tCriterionName3);
+    auto tCriterionValue3 = tEllipticProblem.criterionValue(tControls, tSolution, tCriterionName3);
     TEST_FLOATING_EQUALITY(tCriterionValue3, tBoxVolume, tTolerance);
 
     // 6. Output Data

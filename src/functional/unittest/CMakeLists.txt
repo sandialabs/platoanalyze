@@ -1,10 +1,10 @@
-set(Test_SOURCES Test_FunctionalInterfaceUtilities.cpp
+set(Test_SOURCES ${UNIT_TEST_MAIN_CPP}
+                 Test_FunctionalInterfaceUtilities.cpp
                  Test_HelmholtzFilterInterface.cpp
                  Test_InputValidation.cpp
                  Test_ParameterListUtilities.cpp
                  Test_SolutionCache.cpp
-                 TestMeshSetupTeardown.cpp
-                 UnitMain.cpp)
+                 TestMeshSetupTeardown.cpp)
 
 set(Test_NAME "AnalyzeFunctional_UnitTests")
 add_executable(${Test_NAME} ${Test_SOURCES})

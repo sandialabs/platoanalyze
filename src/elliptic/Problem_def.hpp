@@ -248,34 +248,6 @@ Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aCont
 /**
  * \brief Evaluate criterion function
  * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return criterion function value
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aControl, const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        Plato::Solutions tSolution(mPhysics);
-        tSolution.set("State", mStates);
-        Criterion tCriterion = mCriteria[aName];
-        return tCriterion->value(tSolution, aControl);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->value(aControl);
-    }
-    else
-    {
-        ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE CRITERION MAP.")
-    }
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion function
- * \param [in] aControl 1D view of control variables
  * \param [in] aSolution solution database
  * \param [in] aName Name of criterion.
  * \return criterion function value
@@ -479,64 +451,6 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
         Plato::MatrixTimesVectorPlusVector(tPartialPDE_WRT_Config, tAdjointSubView, tPartialCriterionWRT_Config);
     }
     return tPartialCriterionWRT_Config;
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion partial derivative wrt control variables
- * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return 1D view - criterion partial derivative wrt control variables
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarVector& aControl,
-                                                            const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        Plato::Solutions tSolution(mPhysics);
-        tSolution.set("State", mStates);
-        Criterion tCriterion = mCriteria[aName];
-        return criterionGradient(aControl, tSolution, tCriterion);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->gradient_z(aControl);
-    }
-    else
-    {
-        ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE CRITERION MAP.");
-    }
-}
-
-/******************************************************************************/
-/**
- * \brief Evaluate criterion partial derivative wrt configuration variables
- * \param [in] aControl 1D view of control variables
- * \param [in] aName Name of criterion.
- * \return 1D view - criterion partial derivative wrt configuration variables
- **********************************************************************************/
-template <typename PhysicsType>
-Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::ScalarVector& aControl,
-                                                             const std::string& aName)
-{
-    if (mCriteria.count(aName))
-    {
-        Plato::Solutions tSolution(mPhysics);
-        tSolution.set("State", mStates);
-        Criterion tCriterion = mCriteria[aName];
-        return criterionGradientX(aControl, tSolution, tCriterion);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->gradient_x(aControl);
-    }
-    else
-    {
-        ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE CRITERION MAP.");
-    }
 }
 
 /***************************************************************************/

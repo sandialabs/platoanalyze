@@ -102,7 +102,7 @@ auto jacobian_matrix(Plato::AbstractProblem& aProblem, const std::size_t aNumber
         tControlOnHost[tIndex] = 1.0;
         Kokkos::deep_copy(tControlOnDevice, tControlOnHost);
 
-        const auto tJacobianRow = aProblem.criterionGradient(tControlOnDevice, "dummy-name");
+        const auto tJacobianRow = aProblem.criterionGradient(tControlOnDevice, Plato::Solutions{}, "dummy-name");
         Kokkos::deep_copy(tControlOnHost, tJacobianRow);
 
         tMatrix.emplace_back();
@@ -168,12 +168,8 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, UnimplementedAdjointCriterionFunctions)
 
     // Functions aren't implemented, just expect a throw
     const auto tDummyString = std::string{"dummy"};
-    TEST_THROW(tAdjointProblem.criterionValue(Plato::ScalarVector{}, tDummyString), std::runtime_error);
     TEST_THROW(tAdjointProblem.criterionValue(Plato::ScalarVector{}, Plato::Solutions{}, tDummyString),
                std::runtime_error);
-    TEST_THROW(tAdjointProblem.criterionGradient(Plato::ScalarVector{}, Plato::Solutions{}, tDummyString),
-               std::runtime_error);
-    TEST_THROW(tAdjointProblem.criterionGradientX(Plato::ScalarVector{}, tDummyString), std::runtime_error);
     TEST_THROW(tAdjointProblem.criterionGradientX(Plato::ScalarVector{}, Plato::Solutions{}, tDummyString),
                std::runtime_error);
 }

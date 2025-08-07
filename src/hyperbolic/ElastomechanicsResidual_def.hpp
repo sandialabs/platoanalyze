@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CellVolume.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "InterpolateFromNodal.hpp"
 #include "LinearStress.hpp"
@@ -10,9 +9,11 @@
 #include "ProjectToNode.hpp"
 #include "SmallStrain.hpp"
 #include "ToMap.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "hyperbolic/ElastomechanicsResidual_decl.hpp"
 #include "hyperbolic/InertialContent.hpp"
 #include "hyperbolic/RayleighStress.hpp"
+#include "utilities/ProblemDataParsingUtilities.hpp"
 
 namespace Plato
 {
@@ -29,8 +30,9 @@ TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::TransientMech
       mIndicatorFunction(aPenaltyParams),
       mApplyStressWeighting(mIndicatorFunction),
       mApplyMassWeighting(mIndicatorFunction),
-      mBodyLoads(nullptr),
-      mBoundaryLoads(nullptr)
+      mBodyLoads(plato::utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
+      mBoundaryLoads(plato::utilities::get_boundary_loads<ElementType>(aProblemParams, "Natural Boundary Conditions")),
+      mPlotTable{plato::utilities::get_plot_table(aProblemParams.sublist("Hyperbolic"))}
 {
     if (mNumSpatialDims == 1)
     {
@@ -55,24 +57,6 @@ TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::TransientMech
     mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
 
     mRayleighDamping = (mMaterialModel->getRayleighA() != 0.0) || (mMaterialModel->getRayleighB() != 0.0);
-
-    if (aProblemParams.isSublist("Body Loads"))
-    {
-        mBodyLoads =
-            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-    }
-
-    if (aProblemParams.isSublist("Natural Boundary Conditions"))
-    {
-        mBoundaryLoads =
-            std::make_shared<Plato::NaturalBCs<ElementType>>(aProblemParams.sublist("Natural Boundary Conditions"));
-    }
-
-    auto tResidualParams = aProblemParams.sublist("Hyperbolic");
-    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
-    {
-        mPlotTable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-    }
 }
 
 template <typename EvaluationType, typename IndicatorFunctionType>
@@ -148,13 +132,14 @@ void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate
     Plato::Scalar aCurrentTime) const
 {
     using StrainScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
 
     auto tNumCells = mSpatialDomain.numCells();
 
     Plato::ComputeGradientMatrix<ElementType> computeGradient;
     Plato::SmallStrain<ElementType> computeVoigtStrain;
     Plato::LinearStress<EvaluationType, ElementType> computeVoigtStress(mMaterialModel);
-    Plato::GeneralStressDivergence<ElementType> computeStressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType> computeStressDivergence;
 
     Plato::InertialContent<ElementType> computeInertialContent(mMaterialModel);
     Plato::InterpolateFromNodal<ElementType, mNumDofsPerNode, /*offset=*/0, mNumSpatialDims> interpolateFromNodal;
@@ -227,7 +212,7 @@ void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate
             }
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aState, aControl, aConfig, aResult, -1.0);
     }
@@ -255,13 +240,14 @@ void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate
 {
     using StrainScalarType = typename Plato::fad_type_t<ElementType, StateScalarType, ConfigScalarType>;
     using VelGradScalarType = typename Plato::fad_type_t<ElementType, StateDotScalarType, ConfigScalarType>;
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
 
     auto tNumCells = mSpatialDomain.numCells();
 
     Plato::ComputeGradientMatrix<ElementType> computeGradient;
     Plato::SmallStrain<ElementType> computeVoigtStrain;
     Plato::RayleighStress<EvaluationType, ElementType> computeVoigtStress(mMaterialModel);
-    Plato::GeneralStressDivergence<ElementType> computeStressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType> computeStressDivergence;
 
     Plato::InertialContent<ElementType> computeInertialContent(mMaterialModel);
     Plato::InterpolateFromNodal<ElementType, mNumDofsPerNode, /*offset=*/0, mNumSpatialDims> interpolateFromNodal;
@@ -344,7 +330,7 @@ void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate
             }
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aState, aControl, aConfig, aResult, -1.0);
     }
@@ -375,7 +361,7 @@ void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate
     Plato::Scalar aTimeStep,
     Plato::Scalar aCurrentTime) const
 {
-    if (mBoundaryLoads != nullptr)
+    if (mBoundaryLoads.has_value())
     {
         mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0, aCurrentTime);
     }

@@ -17,6 +17,7 @@
 #include "hyperbolic/micromorphic/MicromorphicKineticsFactory.hpp"
 #include "hyperbolic/micromorphic/ProjectStressToNode.hpp"
 #include "hyperbolic/micromorphic/RelaxedMicromorphicResidual_decl.hpp"
+#include "utilities/ProblemDataParsingUtilities.hpp"
 
 namespace Plato::Hyperbolic::Micromorphic
 {
@@ -31,8 +32,9 @@ RelaxedMicromorphicResidual<EvaluationType, IndicatorFunctionType>::RelaxedMicro
       mIndicatorFunction(aPenaltyParams),
       mApplyStressWeighting(mIndicatorFunction),
       mApplyMassWeighting(mIndicatorFunction),
-      mBodyLoads(nullptr),
-      mBoundaryLoads(nullptr)
+      mBodyLoads(plato::utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
+      mBoundaryLoads(plato::utilities::get_boundary_loads<ElementType>(aProblemParams, "Natural Boundary Conditions")),
+      mPlotTable{plato::utilities::get_plot_table(aProblemParams.sublist("Hyperbolic"))}
 {
     if (mNumSpatialDims == 1)
     {
@@ -76,24 +78,6 @@ RelaxedMicromorphicResidual<EvaluationType, IndicatorFunctionType>::RelaxedMicro
     mInertiaModel = tInertiaModelFactory.create(aSpatialDomain.getMaterialName());
 
     mRayleighDamping = false;
-
-    if (aProblemParams.isSublist("Body Loads"))
-    {
-        mBodyLoads =
-            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-    }
-
-    if (aProblemParams.isSublist("Natural Boundary Conditions"))
-    {
-        mBoundaryLoads =
-            std::make_shared<Plato::NaturalBCs<ElementType>>(aProblemParams.sublist("Natural Boundary Conditions"));
-    }
-
-    auto tResidualParams = aProblemParams.sublist("Hyperbolic");
-    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
-    {
-        mPlotTable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-    }
 }
 
 template <typename EvaluationType, typename IndicatorFunctionType>
@@ -364,7 +348,7 @@ void RelaxedMicromorphicResidual<EvaluationType, IndicatorFunctionType>::evaluat
             }
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aState, aControl, aConfig, aResult, -1.0);
     }
@@ -405,7 +389,7 @@ void RelaxedMicromorphicResidual<EvaluationType, IndicatorFunctionType>::evaluat
     Plato::Scalar aTimeStep,
     Plato::Scalar aCurrentTime) const
 {
-    if (mBoundaryLoads != nullptr)
+    if (mBoundaryLoads.has_value())
     {
         mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0, aCurrentTime);
     }

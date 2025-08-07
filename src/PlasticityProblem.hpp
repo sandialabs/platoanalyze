@@ -223,7 +223,7 @@ class PlasticityProblem : public Plato::AbstractProblem
      * \brief Save states to visualization file
      * \param [in] aFilepath output/viz directory path
      *******************************************************************************/
-    void output(const std::string& aFilepath)
+    void output(const std::string& aFilepath) override final
     {
         auto tNumNodes = mGlobalEquation->numNodes();
         Plato::ScalarMultiVector tPressure("pressure", mGlobalStates.extent(0), tNumNodes);
@@ -281,7 +281,7 @@ class PlasticityProblem : public Plato::AbstractProblem
      * \param [in] aControls 1D container of control variables
      * \param [in] aSolution solution database
      *******************************************************************************/
-    void updateProblem(const Plato::ScalarVector& aControls, const Plato::Solutions& aSolution) override
+    void updateProblem(const Plato::ScalarVector& aControls, const Plato::Solutions& aSolution) override final
     {
         auto tGlobalState = aSolution.get("State");
         mLocalEquation->updateProblem(tGlobalState, mLocalStates, aControls, *mTimeData);
@@ -300,7 +300,7 @@ class PlasticityProblem : public Plato::AbstractProblem
      * \param [in] aControls 1D view of control variables
      * \return solution database
      *******************************************************************************/
-    Plato::Solutions solution(const Plato::ScalarVector& aControls) override
+    Plato::Solutions solution(const Plato::ScalarVector& aControls) override final
     {
         // TODO: NOTES
         // 1. WRITE LOCAL STATES, PRESSURE, AND GLOBAL STATES HISTORY TO FILE - MEMORY CONCERNS
@@ -364,7 +364,7 @@ class PlasticityProblem : public Plato::AbstractProblem
      *******************************************************************************/
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControls,
                                  const Plato::Solutions& aSolution,
-                                 const std::string& aName) override
+                                 const std::string& aName) override final
     {
         if (aControls.size() <= static_cast<Plato::OrdinalType>(0))
         {
@@ -395,70 +395,6 @@ class PlasticityProblem : public Plato::AbstractProblem
 
     /***************************************************************************/
     /**
-     * \brief Evaluate criterion function and return its value
-     * \param [in] aControls 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return criterion function value
-     *******************************************************************************/
-    Plato::Scalar criterionValue(const Plato::ScalarVector& aControls, const std::string& aName) override
-    {
-        if (aControls.size() <= static_cast<Plato::OrdinalType>(0))
-        {
-            ANALYZE_THROWERR("PLASTICITY PROBLEM: CONTROL 1D VIEW IS EMPTY.");
-        }
-
-        if (mCriteria.count(aName))
-        {
-            Criterion tCriterion = mCriteria[aName];
-
-            this->shouldOptimizationProblemStop();
-            auto tOutput = this->evaluateCriterion(*tCriterion, mGlobalStates, mLocalStates, aControls);
-
-            return (tOutput);
-        }
-        else
-        {
-            const std::string tErrorMessage =
-                std::string("REQUESTED CRITERION '") + aName + "' NOT DEFINED BY THE USER.";
-            ANALYZE_THROWERR(tErrorMessage);
-        }
-    }
-
-    /***************************************************************************/
-    /**
-     * \brief Evaluate criterion partial derivative wrt control variables
-     * \param [in] aControls 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion partial derivative wrt control variables
-     *******************************************************************************/
-    Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControls, const std::string& aName) override
-    {
-        if (aControls.size() <= static_cast<Plato::OrdinalType>(0))
-        {
-            ANALYZE_THROWERR("PLASTICITY PROBLEM: CONTROL 1D VIEW IS EMPTY.");
-        }
-
-        if (mCriteria.count(aName))
-        {
-            Criterion tCriterion = mCriteria[aName];
-
-            Plato::Solutions tSolution(mPhysics);
-            tSolution.set("State", mGlobalStates);
-            this->shouldOptimizationProblemStop();
-            auto tTotalDerivative = this->criterionGradient(aControls, tSolution, tCriterion);
-
-            return tTotalDerivative;
-        }
-        else
-        {
-            const std::string tErrorMessage =
-                std::string("REQUESTED CRITERION '") + aName + "' NOT DEFINED BY THE USER.";
-            ANALYZE_THROWERR(tErrorMessage);
-        }
-    }
-
-    /***************************************************************************/
-    /**
      * \brief Evaluate criterion gradient wrt control variables
      * \param [in] aControls 1D view of control variables
      * \param [in] aSolution solution database
@@ -467,7 +403,7 @@ class PlasticityProblem : public Plato::AbstractProblem
      *******************************************************************************/
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControls,
                                           const Plato::Solutions& aSolution,
-                                          const std::string& aName) override
+                                          const std::string& aName) override final
     {
         if (aControls.size() <= static_cast<Plato::OrdinalType>(0))
         {
@@ -529,39 +465,6 @@ class PlasticityProblem : public Plato::AbstractProblem
 
     /***************************************************************************/
     /**
-     * \brief Evaluate criterion partial derivative wrt configuration variables
-     * \param [in] aControls 1D view of control variables
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion partial derivative wrt configuration variables
-     *******************************************************************************/
-    Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControls, const std::string& aName) override
-    {
-        if (aControls.size() <= static_cast<Plato::OrdinalType>(0))
-        {
-            ANALYZE_THROWERR("PLASTICITY PROBLEM: CONTROL 1D VIEW IS EMPTY.");
-        }
-
-        if (mCriteria.count(aName))
-        {
-            Criterion tCriterion = mCriteria[aName];
-
-            Plato::Solutions tSolution(mPhysics);
-            tSolution.set("State", mGlobalStates);
-            this->shouldOptimizationProblemStop();
-            auto tTotalDerivative = this->criterionGradientX(aControls, tSolution, tCriterion);
-
-            return tTotalDerivative;
-        }
-        else
-        {
-            const std::string tErrorMessage =
-                std::string("REQUESTED CRITERION '") + aName + "' NOT DEFINED BY THE USER.";
-            ANALYZE_THROWERR(tErrorMessage);
-        }
-    }
-
-    /***************************************************************************/
-    /**
      * \brief Evaluate criterion gradient wrt configuration variables
      * \param [in] aControls 1D view of control variables
      * \param [in] aSolution solution database
@@ -570,7 +473,7 @@ class PlasticityProblem : public Plato::AbstractProblem
      *******************************************************************************/
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControls,
                                            const Plato::Solutions& aSolution,
-                                           const std::string& aName) override
+                                           const std::string& aName) override final
     {
         if (aControls.size() <= static_cast<Plato::OrdinalType>(0))
         {
@@ -1195,7 +1098,7 @@ class PlasticityProblem : public Plato::AbstractProblem
                                                                                       * \brief Return solution database.
                                                                                       * \return solution database
                                                                                       **********************************************************************************/
-    Plato::Solutions getSolution() const override
+    Plato::Solutions getSolution() const override final
     {
         Plato::Solutions tSolution(mPhysics, mPDEType);
         tSolution.set("State", mGlobalStates);

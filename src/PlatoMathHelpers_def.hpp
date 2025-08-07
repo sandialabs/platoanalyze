@@ -697,7 +697,7 @@ void MatrixTranspose(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix,
             for (auto tEntryIndex = tRowStart; tEntryIndex < tRowEnd; tEntryIndex++)
             {
                 auto iColumnIndex = tColMap(tEntryIndex);
-                Kokkos::atomic_increment(&tRowMapT(iColumnIndex));
+                Kokkos::atomic_inc(&tRowMapT(iColumnIndex));
             }
         });
 

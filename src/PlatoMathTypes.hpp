@@ -145,6 +145,32 @@ template <Plato::OrdinalType N, typename ScalarType>
     return tRetVal;
 }
 
+/// \brief Returns an Array containing the flattened entries of the input Matrix
+/// Flattening is done row-wise, e.g. flattening a matrix A = [A11 A12
+///                                                            A21 A22]
+/// returns [A11 A12 A21 A22]
+template <Plato::OrdinalType M, Plato::OrdinalType N, typename ScalarType>
+[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION Array<M * N, ScalarType> flatten(Matrix<M, N, ScalarType> m1)
+{
+    Array<M * N, ScalarType> tRetVal(0.0);
+    for (Plato::OrdinalType i = 0; i < M; i++)
+    {
+        for (Plato::OrdinalType j = 0; j < N; j++)
+        {
+            tRetVal(i * N + j) = m1(i, j);
+        }
+    }
+    return tRetVal;
+}
+
+/// \brief Returns an Array containing the flattened entries of the input Array
+/// This is included for compatability with flatten(Plato::Matrix)
+template <Plato::OrdinalType N, typename ScalarType>
+[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION Array<N, ScalarType> flatten(Array<N, ScalarType> v1)
+{
+    return v1;
+}
+
 /******************************************************************************/
 /**
  * \brief Returns the norm (sqrt(dot(v,v))) of the input Array
@@ -201,15 +227,17 @@ template <Plato::OrdinalType N, typename ScalarType>
 
 /******************************************************************************/
 /**
- * \brief Returns the transpose (t_{i,j} = m_{j,i}) of the input matrix
+ * \brief Returns the transpose
+ *(t_{i,j} = m_{j,i}) of the input
+ *matrix
  **********************************************************************************/
-template <Plato::OrdinalType N, typename ScalarType>
-[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION Matrix<N, N, ScalarType> transpose(Matrix<N, N, ScalarType> m1)
+template <Plato::OrdinalType M, Plato::OrdinalType N, typename ScalarType>
+[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION Matrix<N, M, ScalarType> transpose(Matrix<M, N, ScalarType> m1)
 {
-    Matrix<N, N, ScalarType> tRetVal(0);
+    Matrix<N, M, ScalarType> tRetVal(0);
     for (Plato::OrdinalType i = 0; i < N; i++)
     {
-        for (Plato::OrdinalType j = 0; j < N; j++)
+        for (Plato::OrdinalType j = 0; j < M; j++)
         {
             tRetVal(i, j) = m1(j, i);
         }
@@ -234,6 +262,22 @@ template <Plato::OrdinalType N, typename ScalarType>
             {
                 tRetVal(i, j) += m1(i, k) * m2(k, j);
             }
+        }
+    }
+    return tRetVal;
+}
+
+/// \brief Returns the product of the input matrix and vector
+template <Plato::OrdinalType M, Plato::OrdinalType N, typename ScalarType>
+[[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION Array<M, ScalarType> times(Matrix<M, N, ScalarType> m1,
+                                                                          Array<N, ScalarType> v1)
+{
+    Array<M, ScalarType> tRetVal(0);
+    for (Plato::OrdinalType i = 0; i < M; i++)
+    {
+        for (Plato::OrdinalType j = 0; j < N; j++)
+        {
+            tRetVal(i) += m1(i, j) * v1(j);
         }
     }
     return tRetVal;
@@ -318,6 +362,7 @@ template <Plato::OrdinalType N, typename ScalarType>
     return Plato::times(1.0 / tMag, v1);
 }
 
+/// \brief Returns the determinant of the input matrix
 template <typename ScalarType>
 [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION ScalarType determinant(Matrix<1, 1, ScalarType> m)
 {
@@ -341,6 +386,7 @@ template <typename ScalarType>
     return (a * e * i) + (b * f * g) + (c * d * h) - (c * e * g) - (b * d * i) - (a * f * h);
 }
 
+/// \brief Returns the inverse of the input matrix
 template <typename ScalarType>
 [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION Matrix<1, 1, ScalarType> invert(Matrix<1, 1, ScalarType> const m)
 {

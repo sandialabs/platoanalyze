@@ -715,10 +715,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_PlasticWork_2D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Plastic Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -1.97983, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         7.79752e+00,  5.60363e+00,  3.04540e+00,  6.28221e+00,  1.29293e+01,  7.76341e+00,  5.16835e-01,
         9.36347e-01,  4.78934e+00,  -2.90131e-02, -1.93664e-01, 1.55728e-03,  -5.07596e-03, -1.34851e-02,
@@ -879,10 +879,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_PlasticWork_3D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Plastic Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -9.18505, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         -8.23158e-01, -2.74212e-01, -2.74212e-01, -2.74205e-01, -1.09091e+00, -5.46916e-01, -5.46916e-01, -1.09598e+00,
         -1.07737e+00, -5.40880e-01, -5.40880e-01, -1.08590e+00, -1.06304e+00, -5.33831e-01, -5.33831e-01, -1.07226e+00,
@@ -1300,10 +1300,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_ElasticWork_2D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Elastic Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -3.29438, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         1.51882e+00,  1.23924e+00,  6.69285e-01,  1.42785e+00,  2.76356e+00, 1.70847e+00, 4.91660e-01,
         7.67744e-01,  1.19109e+00,  3.52735e-01,  5.57690e-01,  3.76597e-01, 2.60058e-01, 4.24760e-01,
@@ -1464,10 +1464,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_ElasticWork_3D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Elastic Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -0.0921716, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         -1.91649e-02, -6.37505e-03, -6.37505e-03, -6.38078e-03, -2.44140e-02, -1.24456e-02, -1.24456e-02, -2.52712e-02,
         -2.26005e-02, -1.15857e-02, -1.15857e-02, -2.37084e-02, -2.08167e-02, -1.06993e-02, -1.06993e-02, -2.19789e-02,
@@ -2482,10 +2482,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_TotalWork_2D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Total Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, 5.06992, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         -9.28712e+00, -6.79736e+00, -3.70027e+00, -7.66478e+00, -1.56062e+01, -9.43036e+00, -9.62833e-01,
         -1.61888e+00, -5.94345e+00, -2.81570e-01, -2.87953e-01, -3.45369e-01, -2.18775e-01, -3.48212e-01,
@@ -2646,10 +2646,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_TotalWork_3D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Total Work");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -0.135556, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         -1.92313e-02, -6.39966e-03, -6.39966e-03, -6.40439e-03, -2.48132e-02, -1.25797e-02, -1.25797e-02, -2.54369e-02,
         -2.34758e-02, -1.19482e-02, -1.19482e-02, -2.42932e-02, -2.21578e-02, -1.12936e-02, -1.12936e-02, -2.30153e-02,
@@ -3061,10 +3061,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_ThermalEnergy_2D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Thermal Energy");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, 27777.8, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         -1.38889e+03, -2.08333e+03, -6.94444e+02, -2.08333e+03, -4.16667e+03, -2.08333e+03, -2.08333e+03,
         -4.16667e+03, -2.08333e+03, -2.08333e+03, -4.16667e+03, -2.08333e+03, -2.08333e+03, -4.16667e+03,
@@ -3225,10 +3225,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Thermoplasticity_ThermalEnergy_3D)
     // 5. Test results
     constexpr Plato::Scalar tTolerance = 1e-4;
     std::string tCriterionName("Thermal Energy");
-    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tCriterionName);
+    auto tCriterionValue = tPlasticityProblem.criterionValue(tControls, tSolution, tCriterionName);
     TEST_FLOATING_EQUALITY(tCriterionValue, -27777.8, tTolerance);
 
-    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tCriterionName);
+    auto tCriterionGrad = tPlasticityProblem.criterionGradient(tControls, tSolution, tCriterionName);
     std::vector<Plato::Scalar> tGold = {
         2.08333e+03, 6.94444e+02, 6.94444e+02, 6.94444e+02, 2.77778e+03, 1.38889e+03, 1.38889e+03, 2.77778e+03,
         2.77778e+03, 1.38889e+03, 1.38889e+03, 2.77778e+03, 2.77778e+03, 1.38889e+03, 1.38889e+03, 2.77778e+03,

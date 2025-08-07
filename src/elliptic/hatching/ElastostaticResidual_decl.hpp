@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 #include "ApplyWeighting.hpp"
 #include "BodyLoads.hpp"
 #include "ElasticModelFactory.hpp"
@@ -51,8 +53,8 @@ class ElastostaticResidual : public EvaluationType::ElementType,
     IndicatorFunctionType mIndicatorFunction;
     Plato::ApplyWeighting<mNumNodesPerCell, mNumVoigtTerms, IndicatorFunctionType> mApplyWeighting;
 
-    std::shared_ptr<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
-    std::shared_ptr<Plato::NaturalBCs<ElementType>> mBoundaryLoads;
+    std::optional<Plato::BodyLoads<EvaluationType, ElementType>> mBodyLoads;
+    std::optional<Plato::NaturalBCs<ElementType>> mBoundaryLoads;
 
     Teuchos::RCP<Plato::LinearElasticMaterial<mNumSpatialDims>> mMaterialModel;
 

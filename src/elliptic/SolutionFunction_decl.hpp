@@ -89,7 +89,7 @@ class SolutionFunction : public Plato::Elliptic::ScalarFunctionBase,
     SolutionFunction(const Plato::SpatialModel &aSpatialModel,
                      Plato::DataMap &aDataMap,
                      Teuchos::ParameterList &aProblemParams,
-                     std::string &aName);
+                     const std::string &aName);
 
     /******************************************************************************/
     /**
@@ -158,7 +158,7 @@ class SolutionFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \brief Set user defined function name
      * \param [in] function name
      **********************************************************************************/
-    void setFunctionName(const std::string aFunctionName);
+    void setFunctionName(const std::string &aFunctionName);
 
     /******************************************************************************/
     /**

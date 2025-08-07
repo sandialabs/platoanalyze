@@ -2,13 +2,15 @@
 #define PLATOTESTHELPERS_HPP_
 
 #include <BamG.hpp>
+#include <Kokkos_StdAlgorithms.hpp>
+#include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 #include <string>
 #include <vector>
 
 #include "PlatoMesh.hpp"
 #include "PlatoStaticsTypes.hpp"
-#include "Teuchos_ParameterList.hpp"
+#include "Solutions.hpp"
 
 namespace Plato
 {
@@ -38,11 +40,15 @@ typename ViewType::HostMirror get(ViewType aView)
  * @returns Mirror on device
  **********************************************************************************/
 template <typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(std::vector<ScalarT>& aVector)
+Plato::ScalarVectorT<ScalarT> create_device_view(const std::vector<ScalarT>& aVector)
 {
-    Kokkos::View<ScalarT*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tHostView(aVector.data(), aVector.size());
+    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aVector.size());
+    std::copy(aVector.begin(), aVector.end(), Kokkos::Experimental::begin(tHostView));
     return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
+
+/// @brief construct a Plato::Solutions object with a single solution from an input vector
+Plato::Solutions single_step_solutions_from_vector(const std::vector<Plato::Scalar>& aStateVector);
 
 /******************************************************************************/
 /*! Return a 2D view with specified control values.
@@ -51,8 +57,8 @@ void setControlWS(std::vector<std::vector<Plato::Scalar>>& aValues, Plato::Scala
 
 /******************************************************************************/
 /*! Return a box (cube) along with the spec used to generate it.
-/*! @sa get_box_mesh
-*/
+ * @sa get_box_mesh
+ */
 auto get_box_mesh_with_spec(const std::string& aMeshType,
                             Plato::OrdinalType aMeshIntervals,
                             const std::string& aFileName = "BamG_unit_test_mesh.exo")

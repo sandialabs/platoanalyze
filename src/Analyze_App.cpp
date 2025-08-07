@@ -1496,7 +1496,7 @@ void MPMD_App::ApplyHelmholtzGradient::operator()()
     }
 
     std::string tDummyString = "Helmholtz gradient";
-    mMyApp->mControl = mMyApp->mProblem->criterionGradient(mMyApp->mControl, tDummyString);
+    mMyApp->mControl = mMyApp->mProblem->criterionGradient(mMyApp->mControl, Plato::Solutions{}, tDummyString);
 
     if (mMyApp->mDebugAnalyzeApp == true)
     {

@@ -243,7 +243,7 @@ void UpdateGraphForContact::countNonzerosForTranspose(Plato::OrdinalVector& aOff
             for (auto tEntryIndex = tFrom; tEntryIndex < tTo; tEntryIndex++)
             {
                 auto iColumnIndex = tFullNodeOrds(tEntryIndex);
-                Kokkos::atomic_increment(&aOffsetMap(iColumnIndex));
+                Kokkos::atomic_inc(&aOffsetMap(iColumnIndex));
             }
         });
 }

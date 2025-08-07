@@ -73,7 +73,7 @@ class PhysicsScalarFunction : public ScalarFunctionBase, public Plato::WorksetBa
     PhysicsScalarFunction(const Plato::SpatialModel& aSpatialModel,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aProblemParams,
-                          std::string& aName);
+                          const std::string& aName);
 
     /******************************************************************************/
     /**
@@ -88,28 +88,28 @@ class PhysicsScalarFunction : public ScalarFunctionBase, public Plato::WorksetBa
      * \brief Allocate scalar function using the residual automatic differentiation type
      * \param [in] aInput scalar function
      **********************************************************************************/
-    void setEvaluator(const ValueFunction& aInput, std::string aName);
+    void setEvaluator(const ValueFunction& aInput, const std::string& aName);
 
     /******************************************************************************/
     /**
      * \brief Allocate scalar function using the Jacobian automatic differentiation type
      * \param [in] aInput scalar function
      **********************************************************************************/
-    void setEvaluator(const GradientUFunction& aInput, std::string aName);
+    void setEvaluator(const GradientUFunction& aInput, const std::string& aName);
 
     /******************************************************************************/
     /**
      * \brief Allocate scalar function using the GradientZ automatic differentiation type
      * \param [in] aInput scalar function
      **********************************************************************************/
-    void setEvaluator(const GradientZFunction& aInput, std::string aName);
+    void setEvaluator(const GradientZFunction& aInput, const std::string& aName);
 
     /******************************************************************************/
     /**
      * \brief Allocate scalar function using the GradientX automatic differentiation type
      * \param [in] aInput scalar function
      **********************************************************************************/
-    void setEvaluator(const GradientXFunction& aInput, std::string aName);
+    void setEvaluator(const GradientXFunction& aInput, const std::string& aName);
 
     /******************************************************************************/
     /**
@@ -173,14 +173,14 @@ class PhysicsScalarFunction : public ScalarFunctionBase, public Plato::WorksetBa
      * \brief Set user defined function name
      * \param [in] function name
      **********************************************************************************/
-    void setFunctionName(const std::string aFunctionName);
+    void setFunctionName(const std::string& aFunctionName);
 
     /******************************************************************************/
     /**
      * \brief Return user defined function name
      * \return User defined function name
      **********************************************************************************/
-    std::string name() const;
+    std::string name() const override;
 };
 // class PhysicsScalarFunction
 

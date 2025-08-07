@@ -2,13 +2,14 @@
 
 #include "ApplyWeighting.hpp"
 #include "ElasticModelFactory.hpp"
-#include "GeneralStressDivergence.hpp"
 #include "GradientMatrix.hpp"
 #include "PlatoTypes.hpp"
 #include "SmallStrain.hpp"
 #include "ToMap.hpp"
 #include "VonMisesYieldFunction.hpp"
+#include "composable_function_objects/shape_function_operations/GeneralStressDivergence.hpp"
 #include "elliptic/hatching/LinearStress.hpp"
+#include "utilities/ProblemDataParsingUtilities.hpp"
 
 namespace Plato
 {
@@ -36,40 +37,16 @@ ElastostaticResidual<EvaluationType, IndicatorFunctionType>::ElastostaticResidua
     : FunctionBaseType(aSpatialDomain, aDataMap),
       mIndicatorFunction(aPenaltyParams),
       mApplyWeighting(mIndicatorFunction),
-      mBodyLoads(nullptr),
-      mBoundaryLoads(nullptr)
+      mBodyLoads(plato::utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
+      mBoundaryLoads(plato::utilities::get_boundary_loads<ElementType>(aProblemParams, "Natural Boundary Conditions")),
+      mPlotTable{plato::utilities::get_plot_table(aProblemParams.sublist("Updated Lagrangian Elliptic"))}
 {
-    // obligatory: define dof names in order
-    mDofNames.push_back("displacement X");
-    if (mNumSpatialDims > 1) mDofNames.push_back("displacement Y");
-    if (mNumSpatialDims > 2) mDofNames.push_back("displacement Z");
+    plato::utilities::get_displacement_dof_names(mNumSpatialDims, mDofNames);
 
     // create material model and get stiffness
     //
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aProblemParams);
     mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
-
-    // parse body loads
-    //
-    if (aProblemParams.isSublist("Body Loads"))
-    {
-        mBodyLoads =
-            std::make_shared<Plato::BodyLoads<EvaluationType, ElementType>>(aProblemParams.sublist("Body Loads"));
-    }
-
-    // parse boundary Conditions
-    //
-    if (aProblemParams.isSublist("Natural Boundary Conditions"))
-    {
-        mBoundaryLoads =
-            std::make_shared<Plato::NaturalBCs<ElementType>>(aProblemParams.sublist("Natural Boundary Conditions"));
-    }
-
-    auto tResidualParams = aProblemParams.sublist("Updated Lagrangian Elliptic");
-    if (tResidualParams.isType<Teuchos::Array<std::string>>("Plottable"))
-    {
-        mPlotTable = tResidualParams.get<Teuchos::Array<std::string>>("Plottable").toVector();
-    }
 }
 
 /****************************************************************************/
@@ -113,12 +90,13 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
     Plato::Scalar aTimeStep) const
 {
     using StrainScalarType = typename Plato::fad_type_t<ElementType, GlobalStateScalarType, ConfigScalarType>;
+    namespace shape_function_operations = plato::composable_function_objects::shape_function_operations;
 
     auto tNumCells = mSpatialDomain.numCells();
 
     Plato::ComputeGradientMatrix<ElementType> tComputeGradient;
     Plato::SmallStrain<ElementType> tComputeVoigtStrainIncrement;
-    Plato::GeneralStressDivergence<ElementType> tComputeStressDivergence;
+    shape_function_operations::GeneralStressDivergence<ElementType> tComputeStressDivergence;
 
     Plato::Elliptic::Hatching::LinearStress<ElementType> tComputeVoigtStress(mMaterialModel);
 
@@ -184,7 +162,7 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
             }
         });
 
-    if (mBodyLoads != nullptr)
+    if (mBodyLoads.has_value())
     {
         mBodyLoads->get(mSpatialDomain, aGlobalState, aControl, aConfig, aResult, -1.0);
     }
@@ -227,7 +205,7 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_bound
     Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
     Plato::Scalar aTimeStep) const
 {
-    if (mBoundaryLoads != nullptr)
+    if (mBoundaryLoads.has_value())
     {
         mBoundaryLoads->get(aSpatialModel, aGlobalState, aControl, aConfig, aResult, -1.0);
     }
