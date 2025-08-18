@@ -8,17 +8,10 @@ enable_language(C)
 
 option(PLATOANALYZE_ENABLE_CUDA "Build for Nvidia GPUs using CUDA" OFF)
 
-option(PLATOANALYZE_ENABLE_MPMD "Enable the Plato interface MPMD executable" OFF)
-
-if(PLATOANALYZE_ENABLE_MPMD)
-  option(PLATOANALYZE_ENABLE_ESP      "Enable ESP"            OFF)
-endif()
-
 option(PLATOANALYZE_ENABLE_MESHMAP  "Enable Plato MeshMap"  ON )
 
 option(PLATOANALYZE_ENABLE_ENGINEMESH "Enable EngineMesh"           ON )
 option(PLATOANALYZE_ENABLE_TPETRA     "Enable Tpetra"               OFF)
-option(PLATOANALYZE_ENABLE_PYTHON     "Enable the Python interface" OFF)
 
 option(ELLIPTIC        "Compile with Elliptic physics"       ON )
 option(PARABOLIC       "Compile with Parabolic physics"      ON )
@@ -321,7 +314,6 @@ if (PLATOANALYZE_ENABLE_MESHMAP)
   find_package(ArborX REQUIRED)
 endif()
 
-
 IF(PLATOANALYZE_ENABLE_ENGINEMESH)
   FIND_PROGRAM( EXODIFF NAMES exodiff PATHS ${Trilinos_PREFIX}/bin NO_DEFAULT_PATH)
   IF(EXODIFF)
@@ -347,101 +339,45 @@ if (PLATOANALYZE_ENABLE_TPETRA)
 endif()
 target_link_libraries(analyze ${PLATO_LIBS} Trilinos::all_selected_libs)
 
-###### PLATO ANALYZE APP + PLATO ENGINE EXECUTABLE ######
-if (PLATOANALYZE_ENABLE_MPMD)
-  set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
-  find_package(PlatoEngine REQUIRED HINTS ${PLATOENGINE_PREFIX})
-  find_package(SEACASExodus REQUIRED)
-  find_package(SEACASNemesis REQUIRED)
-  find_package(Shards REQUIRED)
-  find_package(TeuchosCore REQUIRED)
+set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
+find_package(PlatoEngine REQUIRED HINTS ${PLATOENGINE_PREFIX})
+find_package(SEACASExodus REQUIRED)
+find_package(SEACASNemesis REQUIRED)
+find_package(Shards REQUIRED)
+find_package(TeuchosCore REQUIRED)
 
-  set(PLATO_LIBS
-      PlatoEngine::PlatoDataLayer
-      PlatoEngine::PlatoInterface
-      PlatoEngine::PlatoParser
-      Shards::shards
-      Sacado::sacado
-      TeuchosCore::teuchoscore
-      SEACASNemesis::nemesis
-      SEACASExodus::exodus
-     )
+set(PLATO_LIBS
+    Shards::shards
+    Sacado::sacado
+    TeuchosCore::teuchoscore
+    SEACASNemesis::nemesis
+    SEACASExodus::exodus
+    )
 
-  add_library( Analyze_App src/Analyze_App.cpp )
-  target_include_directories(Analyze_App PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-  if( CMAKE_INSTALL_PREFIX )
-    install( TARGETS Analyze_App DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
-  endif()
+if (PLATOANALYZE_ENABLE_ENGINEMESH)
+  message("Default mesh is EngineMesh")
+else()
+  add_definitions(-DUSE_OMEGAH_MESH)
+  message("Default mesh is Omega-h mesh")
+endif()
 
-  find_package(HDF5 REQUIRED)
-  find_package(Boost REQUIRED)
-  target_link_libraries(Analyze_App HDF5::HDF5 Boost::boost)
+option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
+if (PLATOANALYZE_ENABLE_TACHO)
+  find_package(ShyLU_NodeTacho REQUIRED)
+  message("adding define: -DPLATO_TACHO")
+  add_definitions(-DPLATO_TACHO)
+  set(PLATO_LIBS ${PLATO_LIBS}
+                  $<$<BOOL:${PLATOANALYZE_ENABLE_CUDA}>:CUDA::cusparse> # This is a work-around for tacho not linking cuda properly.
+                  ${ShyLU_NodeTacho_LIBRARIES} )
+endif()
 
-  add_executable( analyze_MPMD src/Analyze_MPMD.cpp)
-  if( CMAKE_INSTALL_PREFIX )
-    install( TARGETS analyze_MPMD DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
-  endif()
-  target_include_directories(analyze_MPMD PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-
-  if (PLATOANALYZE_ENABLE_ENGINEMESH)
-    message("Default mesh is EngineMesh")
-  else()
-    add_definitions(-DUSE_OMEGAH_MESH)
-    message("Default mesh is Omega-h mesh")
-  endif()
-
-  if (PLATOANALYZE_ENABLE_MESHMAP)
-    target_link_libraries(Analyze_App ArborX::ArborX)
-  endif()
-
-  if (PLATOANALYZE_ENABLE_ESP)
-    find_library(PLATO_GEOMETRY_ESP_LIB NAMES PlatoGeometryESP PATHS ${PLATOENGINE_PREFIX}/lib)
-    find_library(ESP_LIB NAMES egads PATHS ${ESP_LIB_DIR})
-    find_library(OCSM_LIB NAMES ocsm PATHS ${ESP_LIB_DIR})
-    message("adding define: -DPLATO_ESP")
-    add_definitions(-DPLATO_ESP)
-    include_directories( ${ESP_INC_DIR} )
-    set(PLATO_LIBS ${PLATO_LIBS} PlatoEngine::PlatoGeometryESP ${ESP_LIB} ${OCSM_LIB})
-  endif()
-
-  option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
-  if (PLATOANALYZE_ENABLE_TACHO)
-    find_package(ShyLU_NodeTacho REQUIRED)
-    message("adding define: -DPLATO_TACHO")
-    add_definitions(-DPLATO_TACHO)
-    set(PLATO_LIBS ${PLATO_LIBS}
-                   $<$<BOOL:${PLATOANALYZE_ENABLE_CUDA}>:CUDA::cusparse> # This is a work-around for tacho not linking cuda properly.
-                   ${ShyLU_NodeTacho_LIBRARIES} )
-  endif()
-
-  option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
-  if (PLATOANALYZE_ENABLE_UMFPACK)
-    find_library(UMFPACK NAMES umfpack PATHS ${UMFPACK_LIB_DIR})
-    message("adding define: -DPLATO_UMFPACK")
-    add_definitions(-DPLATO_UMFPACK)
-    include_directories( ${UMFPACK_INC_DIR} )
-    set(PLATO_LIBS ${PLATO_LIBS} ${UMFPACK})
-  endif()
-
-  target_link_libraries(Analyze_App ${PLATO_LIBS} analyzelib)
-  target_link_libraries(analyze_MPMD Analyze_App ${PLATO_LIBS} analyzelib Boost::serialization)
-  target_compile_definitions(analyze_MPMD PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
-
-  if (PLATOANALYZE_ENABLE_PYTHON)
-      find_package(Python3 COMPONENTS Development)
-      include_directories( ${Python3_INCLUDE_DIRS} )
-      add_library( PlatoPython SHARED src/PlatoPythonModule.cpp )
-      target_include_directories( PlatoPython PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-      target_include_directories( PlatoPython PRIVATE "${PLATOENGINE_PREFIX}/include")
-      target_link_libraries( PlatoPython Analyze_App analyzelib ${PLATO_LIBS} Trilinos::all_selected_libs ${Python3_LIBRARIES} )
-      target_compile_definitions( PlatoPython PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
-      set_target_properties( PlatoPython PROPERTIES PREFIX "" )
-      target_compile_options( PlatoPython PRIVATE "-lmpi" )
-      if( CMAKE_INSTALL_PREFIX )
-        install( TARGETS PlatoPython DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
-      endif()
-  endif()
-
+option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
+if (PLATOANALYZE_ENABLE_UMFPACK)
+  find_library(UMFPACK NAMES umfpack PATHS ${UMFPACK_LIB_DIR})
+  message("adding define: -DPLATO_UMFPACK")
+  add_definitions(-DPLATO_UMFPACK)
+  include_directories( ${UMFPACK_INC_DIR} )
+  set(PLATO_LIBS ${PLATO_LIBS} ${UMFPACK})
 endif()
 
 IF(OMEGA_H_PREFIX)
