@@ -104,55 +104,32 @@ if(PLATOANALYZE_ENABLE_UMFPACK)
   Plato_add_test(UMFPACKSolver UMFPACKSolverTests.cpp)
 endif()
 
-if(PLATOANALYZE_ENABLE_MPMD)
-  set(AnalyzeApp_SOURCES
-    AnalyzeAppIntxTests.cpp
+if (PLATOANALYZE_ENABLE_ENGINEMESH)
+  set(EngineMesh_SOURCES
+    EngineMeshIntxTests.cpp
     PlatoUnitTestMain.cpp
   )
-  add_executable(AnalyzeAppIntxTests
-    ${AnalyzeApp_SOURCES}
+  if(PLATOANALYZE_STK_ENABLED)
+    # Tests requiring stk
+    Plato_add_test(EngineMeshStk EngineMeshStkTests.cpp)
+  endif()
+
+  add_executable(EngineMeshIntxTests
+    ${EngineMesh_SOURCES}
   )
-  target_link_libraries(AnalyzeAppIntxTests
-    Analyze_App
+  target_link_libraries(EngineMeshIntxTests
     analyzelib
+    BamGlib
     ${PLATO_LIBS}
     Trilinos::all_selected_libs
+    Analyze_UnitTestUtils
     )
 
-  target_include_directories(AnalyzeAppIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
-  target_include_directories(AnalyzeAppIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
-  target_include_directories(AnalyzeAppIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-  target_compile_definitions(AnalyzeAppIntxTests PRIVATE BOOST_NO_AUTO_PTR=1) # Suppress warnings on nvcc build
+  target_include_directories(EngineMeshIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
+  target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
+  target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
+endif()
 
-  if (PLATOANALYZE_ENABLE_ENGINEMESH)
-    set(EngineMesh_SOURCES
-      EngineMeshIntxTests.cpp
-      PlatoUnitTestMain.cpp
-    )
-    if(PLATOANALYZE_STK_ENABLED)
-      # Tests requiring stk
-      Plato_add_test(EngineMeshStk EngineMeshStkTests.cpp)
-    endif()
-
-    add_executable(EngineMeshIntxTests
-      ${EngineMesh_SOURCES}
-    )
-    target_link_libraries(EngineMeshIntxTests
-      analyzelib
-      BamGlib
-      ${PLATO_LIBS}
-      Trilinos::all_selected_libs
-      Analyze_UnitTestUtils
-      )
-
-    target_include_directories(EngineMeshIntxTests PRIVATE "${PLATOENGINE_PREFIX}/include")
-    target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_SOURCE_DIR}/src")
-    target_include_directories(EngineMeshIntxTests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/BamG")
-  endif()
-
-  if(PLATOANALYZE_ENABLE_MESHMAP)
-    Plato_add_test(PlatoMeshMap PlatoMeshMapTests.cpp)
-    Plato_add_test(Contact ContactTests.cpp)
-  endif()
-
+if(PLATOANALYZE_ENABLE_MESHMAP)
+  Plato_add_test(Contact ContactTests.cpp)
 endif()
