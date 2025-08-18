@@ -14,7 +14,7 @@ function( create_analyze_unittester TEST_LIB DIRECTORIES)
     set(TEST_EXE "${TEST_LIB}_UnitTests")
     add_executable(${TEST_EXE} ${TEST_SRCS})
 
-    target_link_libraries(${TEST_EXE} PRIVATE Analyze_UnitTestUtils Trilinos::all_selected_libs )
+    target_link_libraries(${TEST_EXE} PUBLIC PlatoEngine::PlatoTestUtilitiesInterface PRIVATE Analyze_UnitTestUtils Trilinos::all_selected_libs)
     target_include_directories(${TEST_EXE} PRIVATE ${PROJECT_SOURCE_DIR}/unit_tests/util )
 
     add_test(NAME ${TEST_EXE} COMMAND ${TEST_EXE})
