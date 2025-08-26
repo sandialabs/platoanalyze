@@ -42,10 +42,10 @@ Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
 Plato_add_test(Assembly AssemblyTests.cpp)
 Plato_add_test(NaturalBCsTests NaturalBCsTests.cpp)
 Plato_add_test(NaturalBCDataTests NaturalBCDataTests.cpp)
-if( PLATOANALYZE_STK_ENABLED ) 
-  # This unit tester uses a test fixture that requires stk
-  Plato_add_test(SpatialDomainTests SpatialDomainTests.cpp)
-endif()
+
+# This unit tester uses a test fixture that requires stk
+Plato_add_test(SpatialDomainTests SpatialDomainTests.cpp)
+
 
 if(ELLIPTIC)
 Plato_add_test(MultipointConstraint PlatoMultipointConstraintTests.cpp)
@@ -109,10 +109,10 @@ if (PLATOANALYZE_ENABLE_ENGINEMESH)
     EngineMeshIntxTests.cpp
     PlatoUnitTestMain.cpp
   )
-  if(PLATOANALYZE_STK_ENABLED)
-    # Tests requiring stk
-    Plato_add_test(EngineMeshStk EngineMeshStkTests.cpp)
-  endif()
+
+  # Tests requiring stk
+  Plato_add_test(EngineMeshStk EngineMeshStkTests.cpp)
+
 
   add_executable(EngineMeshIntxTests
     ${EngineMesh_SOURCES}
