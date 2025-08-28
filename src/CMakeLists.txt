@@ -299,6 +299,4 @@ add_subdirectory("./composable_function_objects")
 add_subdirectory("./elliptic")
 add_subdirectory("./utilities")
 
-IF( PLATOANALYZE_STK_ENABLED )
-  add_subdirectory("./functional")
-ENDIF()
+add_subdirectory("./functional")

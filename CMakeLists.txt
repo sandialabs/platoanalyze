@@ -340,7 +340,7 @@ endif()
 target_link_libraries(analyze ${PLATO_LIBS} Trilinos::all_selected_libs)
 
 set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
-find_package(PlatoEngine REQUIRED HINTS ${PLATOENGINE_PREFIX})
+find_package(PlatoEngine REQUIRED COMPONENTS PlatoEngine::PlatoCommonInterface PlatoEngine::PlatoUtilitiesInterface PlatoEngine::PlatoTestUtilitiesInterface PlatoEngine::PlatoCommonTestUtilitiesInterface HINTS ${PLATOENGINE_PREFIX})
 find_package(SEACASExodus REQUIRED)
 find_package(SEACASNemesis REQUIRED)
 find_package(Shards REQUIRED)
@@ -406,6 +406,7 @@ endif()
 
 if(PLATOANALYZE_SMOKE_TESTS)
   add_subdirectory(tests)
+  add_subdirectory(python)
 endif()
 
 set(INTEGRATION_TESTS_DIR ${PROJECT_SOURCE_DIR}/../plato-integration-tests ) # Assumes we cloned from the plato super-project
