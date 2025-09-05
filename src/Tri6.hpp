@@ -17,21 +17,22 @@ class Tri6
     static constexpr Plato::OrdinalType mNumSpatialDims = 2;
     static constexpr Plato::OrdinalType mNumNodesPerCell = 6;
     static constexpr Plato::OrdinalType mNumNodesPerFace = 3;
-    static constexpr Plato::OrdinalType mNumGaussPoints = 3;
+    static constexpr Plato::OrdinalType mNumGaussPoints = 6;
 
     static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims - 1;
 
     [[nodiscard]] static constexpr Plato::Array<mNumGaussPoints> getCubWeights()
     {
-        return Plato::Array<mNumGaussPoints>(
-            {Plato::Scalar(1.0) / 6.0, Plato::Scalar(1.0) / 6.0, Plato::Scalar(1.0) / 6.0});
+        return Plato::Array<mNumGaussPoints>({1.116907948390055e-01, 1.116907948390055e-01, 1.116907948390055e-01,
+                                              5.497587182766100e-02, 5.497587182766100e-02, 5.497587182766100e-02});
     }
 
     [[nodiscard]] static constexpr Plato::Matrix<mNumGaussPoints, mNumSpatialDims> getCubPoints()
     {
-        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>{Plato::Scalar(2.0) / 3, Plato::Scalar(1.0) / 6,
-                                                               Plato::Scalar(1.0) / 6, Plato::Scalar(2.0) / 3,
-                                                               Plato::Scalar(1.0) / 6, Plato::Scalar(1.0) / 6};
+        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>{
+            4.459484909159650e-01, 4.459484909159650e-01, 4.459484909159650e-01, 1.081030181680700e-01,
+            1.081030181680700e-01, 4.459484909159650e-01, 9.157621350977102e-02, 9.157621350977102e-02,
+            9.157621350977102e-02, 8.168475729804590e-01, 8.168475729804590e-01, 9.157621350977102e-02};
     }
 
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static Plato::Array<mNumNodesPerCell> basisValues(

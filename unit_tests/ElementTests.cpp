@@ -1614,3 +1614,72 @@ TEUCHOS_UNIT_TEST(Tet10, SurfaceArea)
         TEST_FLOATING_EQUALITY(tAreasHost(i), tAreasGold[i], 1e-13);
     }
 }
+
+namespace
+{
+template <typename ElementType, typename Function>
+[[nodiscard]] auto integrate_two_d_function(const Function aFunction) -> double
+{
+    constexpr auto tQuadratureWeights = ElementType::getCubWeights();
+    constexpr auto tQuadraturePoints = ElementType::getCubPoints();
+    auto tQuadratureSum = 0.0;
+    Kokkos::parallel_reduce(
+        "Quadrature", Kokkos::RangePolicy<int>(0, ElementType::mNumGaussPoints),
+        KOKKOS_LAMBDA(const int aQuadraturePointIndex, double& aQuadratureSum) {
+            aQuadratureSum +=
+                tQuadratureWeights(aQuadraturePointIndex) *
+                aFunction(tQuadraturePoints(aQuadraturePointIndex, 0), tQuadraturePoints(aQuadraturePointIndex, 1));
+        },
+        tQuadratureSum);
+    return tQuadratureSum;
+}
+
+struct TwoDPolynomial
+{
+    int mXPower;
+    int mYPower;
+
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto operator()(const double aX, const double aY) const -> double
+    {
+        return Kokkos::pow(aX, mXPower) * Kokkos::pow(aY, mYPower);
+    }
+};
+
+using MonomialIntegral = std::tuple<int, int, double>;
+
+constexpr auto kQuadraticMonomialIntegrals = std::array{
+    MonomialIntegral{0, 0, 1.0 / 2.0},  MonomialIntegral{1, 0, 1.0 / 6.0},  MonomialIntegral{0, 1, 1.0 / 6.0},
+    MonomialIntegral{2, 0, 1.0 / 12.0}, MonomialIntegral{1, 1, 1.0 / 24.0}, MonomialIntegral{0, 2, 1.0 / 12.0},
+};
+
+constexpr auto kQuarticMonomialIntegrals = std::array{
+    kQuadraticMonomialIntegrals[0],      kQuadraticMonomialIntegrals[1],      kQuadraticMonomialIntegrals[2],
+    kQuadraticMonomialIntegrals[3],      kQuadraticMonomialIntegrals[4],      kQuadraticMonomialIntegrals[5],
+    MonomialIntegral{3, 0, 1.0 / 20.0},  MonomialIntegral{2, 1, 1.0 / 60.0},  MonomialIntegral{1, 2, 1.0 / 60.0},
+    MonomialIntegral{0, 3, 1.0 / 20.0},  MonomialIntegral{4, 0, 1.0 / 30.0},  MonomialIntegral{3, 1, 1.0 / 120.0},
+    MonomialIntegral{2, 2, 1.0 / 180.0}, MonomialIntegral{1, 3, 1.0 / 120.0}, MonomialIntegral{0, 4, 1.0 / 30.0}};
+}  // namespace
+
+TEUCHOS_UNIT_TEST(Tri3, Quadrature)
+{
+    // Test integration of all monomials up to twice the basis function order, which is order 2 for Tri3
+    constexpr auto tTolerance = 1e-15;
+
+    for (const auto& [tXPower, tYPower, tExpected] : kQuadraticMonomialIntegrals)
+    {
+        const auto tComputed = integrate_two_d_function<Plato::Tri3>(TwoDPolynomial{tXPower, tYPower});
+        TEST_FLOATING_EQUALITY(tComputed, tExpected, tTolerance);
+    }
+}
+
+TEUCHOS_UNIT_TEST(Tri6, Quadrature)
+{
+    // Test integration of all monomials up to twice the basis function order, which is order 4 for Tri6
+    constexpr auto tTolerance = 1e-14;
+
+    for (const auto& [tXPower, tYPower, tExpected] : kQuarticMonomialIntegrals)
+    {
+        const auto tComputed = integrate_two_d_function<Plato::Tri6>(TwoDPolynomial{tXPower, tYPower});
+        TEST_FLOATING_EQUALITY(tComputed, tExpected, tTolerance);
+    }
+}
