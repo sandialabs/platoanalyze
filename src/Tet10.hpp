@@ -20,22 +20,27 @@ class Tet10
     static constexpr Plato::OrdinalType mNumSpatialDims = 3;
     static constexpr Plato::OrdinalType mNumNodesPerCell = 10;
     static constexpr Plato::OrdinalType mNumNodesPerFace = 6;
-    static constexpr Plato::OrdinalType mNumGaussPoints = 4;
+    static constexpr Plato::OrdinalType mNumGaussPoints = 16;
 
     static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims - 1;
 
     static constexpr Plato::Array<mNumGaussPoints> getCubWeights()
     {
-        return Plato::Array<mNumGaussPoints>({Plato::Scalar(1.0) / 24.0, Plato::Scalar(1.0) / 24.0,
-                                              Plato::Scalar(1.0) / 24.0, Plato::Scalar(1.0) / 24.0});
+        constexpr double w1 = 8.395632350020469e-03;
+        constexpr double w2 = 1.109034477221540e-02;
+        return Plato::Array<mNumGaussPoints>({w1, w1, w1, w1, w2, w2, w2, w2, w2, w2, w2, w2, w2, w2, w2, w2});
     }
 
     static constexpr Plato::Matrix<mNumGaussPoints, mNumSpatialDims> getCubPoints()
     {
+        constexpr double u1 = 0.7716429020672371;
+        constexpr double u2 = 0.07611903264425430;
+        constexpr double u3 = 0.4042339134672644;
+        constexpr double u4 = 0.1197005277978019;
+        constexpr double u5 = 0.07183164526766925;
         return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>(
-            {0.585410196624969, 0.138196601125011, 0.138196601125011, 0.138196601125011, 0.585410196624969,
-             0.138196601125011, 0.138196601125011, 0.138196601125011, 0.585410196624969, 0.138196601125011,
-             0.138196601125011, 0.138196601125011});
+            {u1, u2, u2, u2, u1, u2, u2, u2, u1, u2, u2, u2, u3, u5, u4, u3, u4, u5, u4, u5, u3, u4, u3, u5,
+             u5, u4, u3, u5, u3, u4, u3, u5, u3, u5, u3, u3, u3, u3, u5, u4, u3, u3, u3, u4, u3, u3, u3, u4});
     }
 
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static auto basisValues(
