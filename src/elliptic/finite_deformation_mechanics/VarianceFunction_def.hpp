@@ -186,7 +186,6 @@ auto VarianceFunction<PhysicsType>::computeElementWiseField(const Plato::ScalarV
 
         // create result view
         Plato::ScalarVectorT<ResultScalar> tResult("result workset", tNumCells);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResult);
 
         // evaluate function
         aFunctionMap.at(tName)->evaluate(tStateWS, tControlWS, tConfigWS, tResult, aTimeStep);

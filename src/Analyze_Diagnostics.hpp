@@ -179,28 +179,24 @@ inline void test_partial_control(Plato::Mesh aMesh,
         Plato::blas1::update(1.0, tControl, 0.0, tTrialControl);
         Plato::blas1::update(tEpsilon, tStep, 1.0, tTrialControl);
         tWorksetBase.worksetControl(tTrialControl, tControlWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueOne = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
         Plato::blas1::update(1.0, tControl, 0.0, tTrialControl);
         Plato::blas1::update(-tEpsilon, tStep, 1.0, tTrialControl);
         tWorksetBase.worksetControl(tTrialControl, tControlWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueTwo = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
         Plato::blas1::update(1.0, tControl, 0.0, tTrialControl);
         Plato::blas1::update(2.0 * tEpsilon, tStep, 1.0, tTrialControl);
         tWorksetBase.worksetControl(tTrialControl, tControlWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueThree = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
         Plato::blas1::update(1.0, tControl, 0.0, tTrialControl);
         Plato::blas1::update(-2.0 * tEpsilon, tStep, 1.0, tTrialControl);
         tWorksetBase.worksetControl(tTrialControl, tControlWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueFour = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
@@ -290,28 +286,24 @@ inline void test_partial_state(Plato::Mesh aMesh, Plato::Elliptic::AbstractScala
         Plato::blas1::update(1.0, tState, 0.0, tTrialState);
         Plato::blas1::update(tEpsilon, tStep, 1.0, tTrialState);
         tWorksetBase.worksetState(tTrialState, tStateWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueOne = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
         Plato::blas1::update(1.0, tState, 0.0, tTrialState);
         Plato::blas1::update(-tEpsilon, tStep, 1.0, tTrialState);
         tWorksetBase.worksetState(tTrialState, tStateWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueTwo = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
         Plato::blas1::update(1.0, tState, 0.0, tTrialState);
         Plato::blas1::update(2.0 * tEpsilon, tStep, 1.0, tTrialState);
         tWorksetBase.worksetState(tTrialState, tStateWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueThree = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
         Plato::blas1::update(1.0, tState, 0.0, tTrialState);
         Plato::blas1::update(-2.0 * tEpsilon, tStep, 1.0, tTrialState);
         tWorksetBase.worksetState(tTrialState, tStateWS);
-        Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tResultWS);
         aCriterion.evaluate(tStateWS, tControlWS, tConfigWS, tResultWS);
         Plato::Scalar tObjFuncValueFour = Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResultWS);
 
