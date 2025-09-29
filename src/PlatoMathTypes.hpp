@@ -22,14 +22,15 @@ class Array
 
    public:
     constexpr KOKKOS_INLINE_FUNCTION Array() noexcept {}
-    constexpr KOKKOS_INLINE_FUNCTION Array(ScalarType aInit) noexcept
+    constexpr KOKKOS_INLINE_FUNCTION Array(ScalarType aInit) noexcept : mData{}
     {
         for (ScalarType& v : mData)
         {
             v = aInit;
         }
     }
-    constexpr KOKKOS_INLINE_FUNCTION Array(Array<N, ScalarType> const& aArray) noexcept
+
+    constexpr KOKKOS_INLINE_FUNCTION Array(Array<N, ScalarType> const& aArray) noexcept : mData{}
     {
         int k = 0;
         for (ScalarType v : aArray.mData)
@@ -38,7 +39,8 @@ class Array
             ++k;
         }
     }
-    constexpr KOKKOS_INLINE_FUNCTION Array(std::initializer_list<ScalarType> l) noexcept
+
+    constexpr KOKKOS_INLINE_FUNCTION Array(std::initializer_list<ScalarType> l) noexcept : mData{}
     {
         int k = 0;
         for (ScalarType v : l)
@@ -47,6 +49,7 @@ class Array
             ++k;
         }
     }
+
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION ScalarType& operator()(int i) { return mData[i]; }
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION ScalarType operator()(int i) const { return mData[i]; }
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION ScalarType& operator[](int i) { return mData[i]; }
@@ -65,7 +68,7 @@ class Matrix
     ScalarType mData[M * N];
 
    public:
-    constexpr KOKKOS_INLINE_FUNCTION Matrix() noexcept
+    constexpr KOKKOS_INLINE_FUNCTION Matrix() noexcept : mData{}
     {
         for (ScalarType& v : mData)
         {
@@ -73,14 +76,15 @@ class Matrix
         }
     }
 
-    explicit constexpr KOKKOS_INLINE_FUNCTION Matrix(ScalarType aInit) noexcept
+    explicit constexpr KOKKOS_INLINE_FUNCTION Matrix(ScalarType aInit) noexcept : mData{}
     {
         for (ScalarType& v : mData)
         {
             v = aInit;
         }
     }
-    constexpr KOKKOS_INLINE_FUNCTION Matrix(Matrix<M, N> const& aMatrix) noexcept
+
+    constexpr KOKKOS_INLINE_FUNCTION Matrix(Matrix<M, N> const& aMatrix) noexcept : mData{}
     {
         int k = 0;
         for (ScalarType v : aMatrix.mData)
@@ -89,7 +93,8 @@ class Matrix
             ++k;
         }
     }
-    constexpr KOKKOS_INLINE_FUNCTION Matrix(std::initializer_list<ScalarType> l) noexcept
+
+    constexpr KOKKOS_INLINE_FUNCTION Matrix(std::initializer_list<ScalarType> l) noexcept : mData{}
     {
         int k = 0;
         for (ScalarType v : l)
@@ -98,6 +103,7 @@ class Matrix
             ++k;
         }
     }
+
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION ScalarType& operator()(int i, int j) { return mData[i * N + j]; }
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION ScalarType operator()(int i, int j) const
     {
