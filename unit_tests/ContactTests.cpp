@@ -546,18 +546,35 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     (*tComputeSurfaceDispB)(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
 
     // test surface displacement child face cell 0
+    // To test surface displacement, the nodal values on child faces are needed.
+    // These are obtained as follows:
+    //
+    // Child A cell 0 is cell 2, which has connectivity [0 5 6 3] and local nodes 0, 2, 1 on the face
+    // The displacement values for the first DOF at nodes 0, 6, 5 are (0.0001, 0.0019, 0.0016)
+    //
+    // Child A cell 1 is cell 4, which has connectivity [0 7 5 2] and local nodes 0, 2, 1 on the face
+    // The displacement values for the first DOF at nodes 0, 5, 7 are (0.0001, 0.0016, 0.0022)
+    //
+    // Child A cell 0 is cell 6, which has connectivity [8, 9, 10, 11] and local nodes 1, 2, 3 on the face
+    // The displacement values for the first DOF at nodes 9, 10, 11 are (0.0028, 0.0031, 0.0034)
+    //
+    // Child A cell 1 is cell 7, which has connectivity [8, 9, 11, 12] and local nodes 1, 2, 3 on the face
+    // The displacement values for the first DOF at nodes 9, 11, 12 are (0.0028, 0.0034, 0.0037)
+    //
+    // Gold values are obtained by multiplying these values by the basis function values of the Tri3 element and summing
+    //
     Plato::OrdinalType tChildCellOrdinal = 0;
 
     auto tSurfaceDisp_Host =
         Plato::TestHelpers::get(Kokkos::subview(tSurfaceDispA, tChildCellOrdinal, 0, Kokkos::ALL()));
-    std::vector<double> tSurfaceDisp_Gold = {-0.0012, -0.0013, -0.0014};
+    std::vector<double> tSurfaceDisp_Gold = {-0.00065, -0.00075, -0.00085};
     for (int iDof = 0; iDof < tSurfaceDisp_Gold.size(); iDof++)
     {
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
     }
 
     tSurfaceDisp_Host = Plato::TestHelpers::get(Kokkos::subview(tSurfaceDispB, tChildCellOrdinal, 0, Kokkos::ALL()));
-    tSurfaceDisp_Gold = {-0.0031, -0.0032, -0.0033};
+    tSurfaceDisp_Gold = {-0.00295, -0.00305, -0.00315};
     for (int iDof = 0; iDof < tSurfaceDisp_Gold.size(); iDof++)
     {
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
@@ -567,14 +584,14 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     tChildCellOrdinal = 1;
 
     tSurfaceDisp_Host = Plato::TestHelpers::get(Kokkos::subview(tSurfaceDispA, tChildCellOrdinal, 0, Kokkos::ALL()));
-    tSurfaceDisp_Gold = {-0.0013, -0.0014, -0.0015};
+    tSurfaceDisp_Gold = {-0.0007, -0.0008, -0.0009};
     for (int iDof = 0; iDof < tSurfaceDisp_Gold.size(); iDof++)
     {
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
     }
 
     tSurfaceDisp_Host = Plato::TestHelpers::get(Kokkos::subview(tSurfaceDispB, tChildCellOrdinal, 0, Kokkos::ALL()));
-    tSurfaceDisp_Gold = {-0.0033, -0.0034, -0.0035};
+    tSurfaceDisp_Gold = {-0.00305, -0.00315, -0.00325};
     for (int iDof = 0; iDof < tSurfaceDisp_Gold.size(); iDof++)
     {
         TEST_FLOATING_EQUALITY(tSurfaceDisp_Host(iDof), tSurfaceDisp_Gold[iDof], 1e-12);
@@ -620,10 +637,14 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
 
     // test surface displacement terms for each child node on child cell 0
     Plato::OrdinalType tChildCellOrdinal = 0;
+    constexpr double tBasisValue0{2. / 3};  // Basis function value at quadrature point 0 (the only one we're checking)
+    constexpr double tBasisValue1{1. / 6};  // Basis function value at quadrature point 0 (the only one we're checking)
+    constexpr double tBasisValue2{1. / 6};  // Basis function value at quadrature point 0 (the only one we're checking)
 
-    std::vector<std::vector<double>> tSurfaceDisp_Gold = {{0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
-                                                          {0.0034 / 3.0, 0.0035 / 3.0, 0.0036 / 3.0},
-                                                          {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0}};
+    std::vector<std::vector<double>> tSurfaceDisp_Gold = {
+        {tBasisValue0 * 0.0037, tBasisValue0 * 0.0038, tBasisValue0 * 0.0039},
+        {tBasisValue1 * 0.0034, tBasisValue1 * 0.0035, tBasisValue1 * 0.0036},
+        {tBasisValue2 * 0.0031, tBasisValue2 * 0.0032, tBasisValue2 * 0.0033}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -641,9 +662,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
         }
     }
 
-    tSurfaceDisp_Gold = {{0.0022 / 3.0, 0.0023 / 3.0, 0.0024 / 3.0},
-                         {0.0016 / 3.0, 0.0017 / 3.0, 0.0018 / 3.0},
-                         {0.0019 / 3.0, 0.0020 / 3.0, 0.0021 / 3.0}};
+    tSurfaceDisp_Gold = {{tBasisValue0 * 0.0022, tBasisValue0 * 0.0023, tBasisValue0 * 0.0024},
+                         {tBasisValue1 * 0.0016, tBasisValue1 * 0.0017, tBasisValue1 * 0.0018},
+                         {tBasisValue2 * 0.0019, tBasisValue2 * 0.0020, tBasisValue2 * 0.0021}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -664,9 +685,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     // test surface displacement terms for each child node on child cell 1
     tChildCellOrdinal = 1;
 
-    tSurfaceDisp_Gold = {{0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
-                         {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0},
-                         {0.0028 / 3.0, 0.0029 / 3.0, 0.0030 / 3.0}};
+    tSurfaceDisp_Gold = {{tBasisValue0 * 0.0037, tBasisValue0 * 0.0038, tBasisValue0 * 0.0039},
+                         {tBasisValue1 * 0.0031, tBasisValue1 * 0.0032, tBasisValue1 * 0.0033},
+                         {tBasisValue2 * 0.0028, tBasisValue2 * 0.0029, tBasisValue2 * 0.0030}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -684,9 +705,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
         }
     }
 
-    tSurfaceDisp_Gold = {{0.0022 / 3.0, 0.0023 / 3.0, 0.0024 / 3.0},
-                         {0.0019 / 3.0, 0.0020 / 3.0, 0.0021 / 3.0},
-                         {0.0001 / 3.0, 0.0002 / 3.0, 0.0003 / 3.0}};
+    tSurfaceDisp_Gold = {{tBasisValue0 * 0.0022, tBasisValue0 * 0.0023, tBasisValue0 * 0.0024},
+                         {tBasisValue1 * 0.0019, tBasisValue1 * 0.0020, tBasisValue1 * 0.0021},
+                         {tBasisValue2 * 0.0001, tBasisValue2 * 0.0002, tBasisValue2 * 0.0003}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
