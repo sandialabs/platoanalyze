@@ -26,10 +26,11 @@ class IntegrateContactForce
                           const std::string& aSideSet,
                           Teuchos::RCP<AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
                           Teuchos::RCP<AbstractContactForce<EvaluationType>> aComputeContactForce)
-        : mComputeSurfaceDisplacement(aComputeSurfaceDisp), mComputeContactForce(aComputeContactForce)
+        : mComputeSurfaceDisplacement(aComputeSurfaceDisp),
+          mComputeContactForce(aComputeContactForce),
+          mElementOrds(aSpatialModel.Mesh->GetSideSetElements(aSideSet)),
+          mLocalNodeOrds(aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet))
     {
-        mElementOrds = aSpatialModel.Mesh->GetSideSetElements(aSideSet);
-        mLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
     }
 
     void operator()(const Plato::ScalarMultiVectorT<StateScalarType>& aState,
@@ -37,10 +38,10 @@ class IntegrateContactForce
                     Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
                     Plato::Scalar aTimeStep) const
     {
-        Plato::OrdinalType tNumFaces = mElementOrds.size();
-        auto tCubaturePoints = ElementType::Face::getCubPoints();
-        auto tCubatureWeights = ElementType::Face::getCubWeights();
-        auto tNumPoints = tCubatureWeights.size();
+        const Plato::OrdinalType tNumFaces = mElementOrds.size();
+        const auto tCubaturePoints = ElementType::Face::getCubPoints();
+        const auto tCubatureWeights = ElementType::Face::getCubWeights();
+        const auto tNumPoints = tCubatureWeights.size();
 
         Plato::SurfaceArea<ElementType> surfaceArea;
 
@@ -57,10 +58,10 @@ class IntegrateContactForce
         Kokkos::parallel_for(
             "project contact force to nodes", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumFaces, tNumPoints}),
             KOKKOS_LAMBDA(const Plato::OrdinalType& iCellOrdinal, const Plato::OrdinalType& iGPOrdinal) {
-                auto tCellOrdinal = tElementOrds(iCellOrdinal);
-                auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
-                auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
-                auto tBasisGrads = ElementType::Face::basisGrads(tCubaturePoint);
+                const auto tCellOrdinal = tElementOrds(iCellOrdinal);
+                const auto tCubaturePoint = tCubaturePoints(iGPOrdinal);
+                const auto tBasisValues = ElementType::Face::basisValues(tCubaturePoint);
+                const auto tBasisGrads = ElementType::Face::basisGrads(tCubaturePoint);
 
                 Plato::Array<ElementType::mNumNodesPerFace, Plato::OrdinalType> tLocalNodes;
                 for (Plato::OrdinalType tNodeOrd = 0; tNodeOrd < ElementType::mNumNodesPerFace; tNodeOrd++)

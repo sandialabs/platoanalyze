@@ -23,7 +23,7 @@ class ContactForceFactory
     ContactForceFactory() {}
 
     Teuchos::RCP<AbstractContactForce<EvaluationType>> create(const std::string& aType,
-                                                              const Teuchos::Array<Plato::Scalar>& aPenaltyValue)
+                                                              const Teuchos::Array<Plato::Scalar>& aPenaltyValue) const
     {
         auto tType = Plato::tolower(aType);
 
