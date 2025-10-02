@@ -222,10 +222,8 @@ Teuchos::RCP<Teuchos::ParameterList> get_2box_mesh_params()
         "    <ParameterList name='Pairs'>                                                     \n"
         "      <ParameterList name='Pair 1'>                                                  \n"
         "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
-        // "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
-        // "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
-        "        <Parameter name='Penalty Value' type='double' value='1.0e4' />  \n"
-        "        <Parameter name='Penalty Type' type='string' value='normal' />  \n"
+        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
         "        <ParameterList name='A Surface'>                                                  \n"
         "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
         "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
@@ -1274,7 +1272,93 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
     }
 }
 
-TEUCHOS_UNIT_TEST(FunctorTests, IntegrateContactForce_Value)
+TEUCHOS_UNIT_TEST(FunctorTests, IntegrateContactForce)
+{
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
+
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(tMesh, *get_2box_mesh_params(), tDataMap);
+
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
+
+    Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType> tConfigWS(
+        "Config Workset", tMesh->NumElements(), ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims);
+    tWorksetBase.worksetConfig(tConfigWS);
+
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * tMesh->NumNodes());
+    Plato::Scalar disp = 0.0, dval = 0.0001;
+    for (auto& val : u_host) val = (disp += dval);
+    auto u = Plato::TestHelpers::create_device_view(u_host);
+    Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType> tDispWS("state workset", tMesh->NumElements(),
+                                                                                ElementType::mNumDofsPerCell);
+    tWorksetBase.worksetState(u, tDispWS);
+
+    const auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    const auto tPair = tPairs[0];  // there is only 1 pair
+
+    Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tSurfaceDisplacementFactory;
+    auto tComputeChildSurfaceDispA = tSurfaceDisplacementFactory.createChildContribution(tPair.surfaceA);
+
+    Plato::Contact::ContactForceFactory<EvaluationType> tFactory;
+    auto tComputeContactForce = tFactory.create(tPair.penaltyType, tPair.penaltyValue);
+
+    Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType> tValues("", tMesh->NumElements(),
+                                                                                 ElementType::mNumDofsPerCell);
+
+    const auto tSideSet = tPair.surfaceA.childSideSet();
+    Plato::Contact::IntegrateContactForce<EvaluationType> tIntegrateContactForceChildA(
+        tSpatialModel, tSideSet, tComputeChildSurfaceDispA, tComputeContactForce);
+    tIntegrateContactForceChildA(tDispWS, tConfigWS, tValues, /*aTimeStep=*/0.0);
+
+    constexpr std::size_t tNumFaceNodes{3};
+    const Plato::Array<tNumFaceNodes, Plato::Scalar> tShapeValues{
+        1. / 3, 1. / 3, 1. / 3};  // Shape function values at the only quadrature point
+
+    // Child A cell 0 is cell 2, which has connectivity [0 5 6 3] and local nodes 0, 2, 1 on the face
+    // The displacement values for the first DOF at nodes 0, 6, 5 are (0.0001, 0.0019, 0.0016)
+    //
+    constexpr std::size_t tFirstChildCell{2};
+    const Plato::Matrix<tNumFaceNodes, ElementType::mNumSpatialDims, Plato::Scalar> tFaceDisplacements{
+        0.0001, 0.0019, 0.0016, 0.0002, 0.0020, 0.0017, 0.0003, 0.0021, 0.0018};  // [dofs X dims]
+    const Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tSurfaceDisplacements =
+        Plato::times(tFaceDisplacements, tShapeValues);
+
+    constexpr double tPenaltyValue{1.0e4};  // assuming the same value for all DOFs, must match value in input
+    const Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tContactForces =
+        Plato::times(tPenaltyValue, tSurfaceDisplacements);
+
+    constexpr double tWeightedSurfaceArea{
+        0.5};  // Surface area for these elements is 1, quadrature weight for single point element is 0.5
+    const auto tFirstChildCellValues_host =
+        Plato::TestHelpers::get(Kokkos::subview(tValues, tFirstChildCell, Kokkos::ALL()));
+    const std::vector<Plato::Scalar> tGoldFirstChildCellValues{
+        tWeightedSurfaceArea * tShapeValues[0] * tContactForces[0],
+        tWeightedSurfaceArea * tShapeValues[1] * tContactForces[1],
+        tWeightedSurfaceArea * tShapeValues[2] * tContactForces[2],
+        tWeightedSurfaceArea * tShapeValues[0] * tContactForces[0],
+        tWeightedSurfaceArea * tShapeValues[1] * tContactForces[1],
+        tWeightedSurfaceArea * tShapeValues[2] * tContactForces[2],
+        tWeightedSurfaceArea * tShapeValues[0] * tContactForces[0],
+        tWeightedSurfaceArea * tShapeValues[1] * tContactForces[1],
+        tWeightedSurfaceArea * tShapeValues[2] * tContactForces[2],
+        0.0,
+        0.0,
+        0.0};
+    TEST_EQUALITY(tFirstChildCellValues_host.size(), tGoldFirstChildCellValues.size());
+    for (int iVal = 0; iVal < tGoldFirstChildCellValues.size(); iVal++)
+    {
+        TEST_FLOATING_EQUALITY(tFirstChildCellValues_host(iVal), tGoldFirstChildCellValues[iVal], 1e-12);
+    }
+}
+
+TEUCHOS_UNIT_TEST(FunctorTests, IntegrateAllContactForces_Value)
 {
     using ElementType = typename Plato::MechanicsElement<Tet4Test>;
     using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
