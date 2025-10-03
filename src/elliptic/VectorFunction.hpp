@@ -6,8 +6,7 @@
 #include "MatrixGraphUtils.hpp"
 #include "NaturalBCs.hpp"
 #include "WorksetBase.hpp"
-#include "contact/ContactForceFactory.hpp"
-#include "contact/SurfaceDisplacementFactory.hpp"
+#include "contact/EvaluateElementContactForces.hpp"
 #include "elliptic/AbstractVectorFunction.hpp"
 #include "elliptic/EvaluationTypes.hpp"
 
@@ -291,159 +290,6 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         return tValues;
     }
 
-    template <typename EvaluationType>
-    Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType> contactForceContribution(
-        const EvaluationFunction<EvaluationType>& aFunction,
-        const Plato::ScalarVector& aState,
-        const Plato::ScalarVector& aControl,
-        Plato::Scalar aTimeStep = 0.0) const
-    {
-        using ConfigScalar = typename EvaluationType::ConfigScalarType;
-        using StateScalar = typename EvaluationType::StateScalarType;
-        using ControlScalar = typename EvaluationType::ControlScalarType;
-        using ResultScalar = typename EvaluationType::ResultScalarType;
-
-        Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", mNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS);
-
-        Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", mNumCells, mNumDofsPerCell);
-        Plato::WorksetBase<ElementType>::worksetState(aState, tStateWS);
-
-        Plato::ScalarMultiVectorT<ControlScalar> tControlWS("Control Workset", mNumCells, mNumNodesPerCell);
-        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
-
-        auto tPairs = mSpatialModel.contactPairs();
-        Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tSurfaceDispFactory;
-        Plato::Contact::ContactForceFactory<EvaluationType> tContactForceFactory;
-
-        Plato::ScalarMultiVectorT<ResultScalar> tValues("", mNumCells, mNumDofsPerCell);
-
-        for (auto tPair : tPairs)
-        {
-            auto computeContactForce = tContactForceFactory.create(tPair.penaltyType, tPair.penaltyValue);
-
-            auto tSideSet = tPair.surfaceA.childSideSet();
-            auto computeChildSurfaceDispA = tSurfaceDispFactory.createChildContribution(tPair.surfaceA);
-            aFunction->evaluate_contact(mSpatialModel, tSideSet, computeChildSurfaceDispA, computeContactForce,
-                                        tStateWS, tControlWS, tConfigWS, tValues, aTimeStep);
-
-            auto computeParentSurfaceDispA =
-                tSurfaceDispFactory.createParentContribution(tPair.surfaceA, mSpatialModel.Mesh, -1.0);
-            for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
-            {
-                computeParentSurfaceDispA->setChildNode(iChildNode);
-                aFunction->evaluate_contact(mSpatialModel, tSideSet, computeParentSurfaceDispA, computeContactForce,
-                                            tStateWS, tControlWS, tConfigWS, tValues, aTimeStep);
-            }
-
-            tSideSet = tPair.surfaceB.childSideSet();
-            auto computeChildSurfaceDispB = tSurfaceDispFactory.createChildContribution(tPair.surfaceB);
-            aFunction->evaluate_contact(mSpatialModel, tSideSet, computeChildSurfaceDispB, computeContactForce,
-                                        tStateWS, tControlWS, tConfigWS, tValues, aTimeStep);
-
-            auto computeParentSurfaceDispB =
-                tSurfaceDispFactory.createParentContribution(tPair.surfaceB, mSpatialModel.Mesh, -1.0);
-            for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
-            {
-                computeParentSurfaceDispB->setChildNode(iChildNode);
-                aFunction->evaluate_contact(mSpatialModel, tSideSet, computeParentSurfaceDispB, computeContactForce,
-                                            tStateWS, tControlWS, tConfigWS, tValues, aTimeStep);
-            }
-        }
-
-        return tValues;
-    }
-
-    template <typename EvaluationType, typename EntryOrdinalType>
-    void contactForceNonlocalGradient(const EvaluationFunction<EvaluationType>& aFunction,
-                                      Teuchos::RCP<Plato::CrsMatrixType> aInputMatrix,
-                                      const EntryOrdinalType& aEntryOrdinal,
-                                      const Plato::ScalarVector& aState,
-                                      const Plato::ScalarVector& aControl,
-                                      Plato::Scalar aTimeStep = 0.0) const
-    {
-        using ConfigScalar = typename EvaluationType::ConfigScalarType;
-        using StateScalar = typename EvaluationType::StateScalarType;
-        using ControlScalar = typename EvaluationType::ControlScalarType;
-        using ResultScalar = typename EvaluationType::ResultScalarType;
-
-        Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", mNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS);
-
-        Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", mNumCells, mNumDofsPerCell);
-        Plato::WorksetBase<ElementType>::worksetState(aState, tStateWS);
-
-        Plato::ScalarMultiVectorT<ControlScalar> tControlWS("Control Workset", mNumCells, mNumNodesPerCell);
-        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
-
-        auto tPairs = mSpatialModel.contactPairs();
-        Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tSurfaceDispFactory;
-        Plato::Contact::ContactForceFactory<EvaluationType> tContactForceFactory;
-
-        auto tMatEntries = aInputMatrix->entries();
-
-        for (auto tPair : tPairs)
-        {
-            auto computeContactForce = tContactForceFactory.create(tPair.penaltyType, tPair.penaltyValue);
-
-            auto tSideSet = tPair.surfaceA.childSideSet();
-            auto tChildCells = tPair.surfaceA.childElements();
-            auto tParentCells = tPair.surfaceA.parentElements();
-            auto tElementWiseChildMap = tPair.surfaceA.elementWiseChildMap();
-            auto tChildFaceLocalNodes = tPair.surfaceA.childFaceLocalNodes();
-
-            auto computeChildSurfaceDispA = tSurfaceDispFactory.createChildContribution(tPair.surfaceA);
-            Plato::ScalarMultiVectorT<ResultScalar> tResultA("Results side A", mNumCells, mNumDofsPerCell);
-            aFunction->evaluate_contact(mSpatialModel, tSideSet, computeChildSurfaceDispA, computeContactForce,
-                                        tStateWS, tControlWS, tConfigWS, tResultA, aTimeStep);
-
-            Plato::WorksetBase<ElementType>::assembleJacobianFad(mNumDofsPerCell, mNumDofsPerCell, aEntryOrdinal,
-                                                                 tResultA, tMatEntries);
-
-            auto computeParentSurfaceDispA =
-                tSurfaceDispFactory.createParentContribution(tPair.surfaceA, mSpatialModel.Mesh, -1.0);
-            for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
-            {
-                computeParentSurfaceDispA->setChildNode(iChildNode);
-                Plato::ScalarMultiVectorT<ResultScalar> tResultA("Results side A", mNumCells, mNumDofsPerCell);
-                aFunction->evaluate_contact(mSpatialModel, tSideSet, computeParentSurfaceDispA, computeContactForce,
-                                            tStateWS, tControlWS, tConfigWS, tResultA, aTimeStep);
-
-                Plato::WorksetBase<ElementType>::assembleJacobianFad(mNumDofsPerCell, tChildCells, tParentCells,
-                                                                     tElementWiseChildMap, tChildFaceLocalNodes,
-                                                                     iChildNode, aEntryOrdinal, tResultA, tMatEntries);
-            }
-
-            tSideSet = tPair.surfaceB.childSideSet();
-            tChildCells = tPair.surfaceB.childElements();
-            tParentCells = tPair.surfaceB.parentElements();
-            tElementWiseChildMap = tPair.surfaceB.elementWiseChildMap();
-            tChildFaceLocalNodes = tPair.surfaceB.childFaceLocalNodes();
-
-            auto computeChildSurfaceDispB = tSurfaceDispFactory.createChildContribution(tPair.surfaceB);
-            Plato::ScalarMultiVectorT<ResultScalar> tResultB("Results side B", mNumCells, mNumDofsPerCell);
-            aFunction->evaluate_contact(mSpatialModel, tSideSet, computeChildSurfaceDispB, computeContactForce,
-                                        tStateWS, tControlWS, tConfigWS, tResultB, aTimeStep);
-
-            Plato::WorksetBase<ElementType>::assembleJacobianFad(mNumDofsPerCell, mNumDofsPerCell, aEntryOrdinal,
-                                                                 tResultB, tMatEntries);
-
-            auto computeParentSurfaceDispB =
-                tSurfaceDispFactory.createParentContribution(tPair.surfaceB, mSpatialModel.Mesh, -1.0);
-            for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
-            {
-                computeParentSurfaceDispB->setChildNode(iChildNode);
-                Plato::ScalarMultiVectorT<ResultScalar> tResultB("Results side B", mNumCells, mNumDofsPerCell);
-                aFunction->evaluate_contact(mSpatialModel, tSideSet, computeParentSurfaceDispB, computeContactForce,
-                                            tStateWS, tControlWS, tConfigWS, tResultB, aTimeStep);
-
-                Plato::WorksetBase<ElementType>::assembleJacobianFad(mNumDofsPerCell, tChildCells, tParentCells,
-                                                                     tElementWiseChildMap, tChildFaceLocalNodes,
-                                                                     iChildNode, aEntryOrdinal, tResultB, tMatEntries);
-            }
-        }
-    }
-
     /**************************************************************************/
     Plato::ScalarVector value(const Plato::ScalarVector& aState,
                               const Plato::ScalarVector& aControl,
@@ -469,8 +315,8 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         if (mSpatialModel.hasContact())
         {
-            auto tContactForceValues = this->template contactForceContribution<Residual>(
-                mResidualFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
+            const auto tContactForceValues =
+                Plato::Contact::element_contact_force_contribution<Residual>(mSpatialModel, aState);
             Plato::WorksetBase<ElementType>::assembleResidual(tContactForceValues, tReturnValue);
         }
 
@@ -509,8 +355,8 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         if (mSpatialModel.hasContact())
         {
-            auto tContactForceValues = this->template contactForceContribution<GradientX>(
-                mGradientXFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
+            const auto tContactForceValues =
+                Plato::Contact::element_contact_force_contribution<GradientX>(mSpatialModel, aState);
             Plato::WorksetBase<ElementType>::assembleJacobianFad(
                 mNumDofsPerCell, mNumConfigDofsPerCell, tGradientXMatEntryOrdinal, tContactForceValues, tMatEntries);
         }
@@ -549,9 +395,8 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         if (mSpatialModel.hasContact())
         {
-            this->template contactForceNonlocalGradient<Jacobian>(mJacobianFunctions.at(tFirstBlockName), tJacobianMat,
-                                                                  tJacobianMatEntryOrdinal, aState, aControl,
-                                                                  aTimeStep);
+            Plato::Contact::assemble_contact_force_nonlocal_jacobian<Jacobian>(mSpatialModel, tJacobianMat,
+                                                                               tJacobianMatEntryOrdinal, aState);
         }
 
         return tJacobianMat;
@@ -588,9 +433,8 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         if (mSpatialModel.hasContact())
         {
-            this->template contactForceNonlocalGradient<Jacobian>(mJacobianFunctions.at(tFirstBlockName), tJacobianMat,
-                                                                  tJacobianMatEntryOrdinal, aState, aControl,
-                                                                  aTimeStep);
+            Plato::Contact::assemble_contact_force_nonlocal_jacobian<Jacobian>(mSpatialModel, tJacobianMat,
+                                                                               tJacobianMatEntryOrdinal, aState);
         }
 
         return tJacobianMat;
@@ -628,8 +472,8 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         if (mSpatialModel.hasContact())
         {
-            auto tContactForceValues = this->template contactForceContribution<GradientZ>(
-                mGradientZFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
+            const auto tContactForceValues =
+                Plato::Contact::element_contact_force_contribution<GradientZ>(mSpatialModel, aState);
             Plato::WorksetBase<ElementType>::assembleJacobianFad(
                 mNumDofsPerCell, mNumNodesPerCell, tGradientZMatEntryOrdinal, tContactForceValues, tMatEntries);
         }
