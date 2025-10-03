@@ -144,19 +144,5 @@ void HyperElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_
         mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0, aTimeStep);
     }
 }
-
-template <typename EvaluationType, typename IndicatorFunctionType>
-void HyperElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_contact(
-    const Plato::SpatialModel& aSpatialModel,
-    const std::string& aSideSet,
-    Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
-    Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>> aComputeContactForce,
-    const Plato::ScalarMultiVectorT<StateScalarType>& aState,
-    const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
-    const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
-    Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
-    Plato::Scalar aTimeStep) const
-{
-}
 }  // namespace plato::elliptic::finite_deformation_mechanics
 #endif

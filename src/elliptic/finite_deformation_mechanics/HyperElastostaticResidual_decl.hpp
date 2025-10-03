@@ -73,17 +73,6 @@ class HyperElastostaticResidual : public EvaluationType::ElementType,
                            Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
                            Plato::Scalar aTimeStep = 0.0) const override final;
 
-    /// @brief function to compute contact contributions for the residual.
-    void evaluate_contact(const Plato::SpatialModel& aSpatialModel,
-                          const std::string& aSideSet,
-                          Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
-                          Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>> aComputeContactForce,
-                          const Plato::ScalarMultiVectorT<StateScalarType>& aState,
-                          const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
-                          const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
-                          Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
-                          Plato::Scalar aTimeStep = 0.0) const override final;
-
    private:
     IndicatorFunctionType mIndicatorFunction;
     Plato::ApplyWeighting<mNumNodesPerCell, 1, IndicatorFunctionType> mApplyWeighting;
