@@ -16,6 +16,7 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
 {
    public:
     CHOLMODLinearSolver(const Teuchos::ParameterList& aSolverParams,
+                        Plato::LinearSystemType aLinearSystemType,
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = {});
 
     ~CHOLMODLinearSolver();

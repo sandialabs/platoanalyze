@@ -73,12 +73,13 @@ const auto kTriDiagonalColMap4x4 = std::vector<Plato::OrdinalType>{0, 1, 0, 1, 2
 
 void solve_and_check_solution(const Plato::CrsMatrixType aMatrix,
                               const Plato::ScalarVector aRHS,
+                              const Plato::LinearSystemType aSystemType,
                               const std::vector<double>& aExpectedSolution,
                               Teuchos::FancyOStream& aOutStream,
                               bool& aSuccess)
 {
     const auto tSolutionView = Plato::ScalarVector{"Solution", aRHS.size()};
-    auto tCholmodSolver = Plato::alg::CHOLMODLinearSolver{Teuchos::ParameterList{}};
+    auto tCholmodSolver = Plato::alg::CHOLMODLinearSolver{Teuchos::ParameterList{}, aSystemType};
     tCholmodSolver.innerSolve(aMatrix, tSolutionView, aRHS);
 
     const auto tTestResult = Plato::TestHelpers::is_near(tSolutionView, aExpectedSolution, kTolerance);
@@ -91,18 +92,21 @@ void solve_and_check_solution(const Plato::CrsMatrixType aMatrix,
 TEUCHOS_UNIT_TEST(CHOLMODSolver, SymmetricPositiveDefinite)
 {
     const auto tExpected = std::vector{1.0, 2.0, 2.0, 1.0};
-    solve_and_check_solution(symmetric_positive_definite_matrix(), rhs(), tExpected, out, success);
+    solve_and_check_solution(symmetric_positive_definite_matrix(), rhs(),
+                             Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE, tExpected, out, success);
 }
 
 TEUCHOS_UNIT_TEST(CHOLMODSolver, SymmetricNegativeDefinite)
 {
     const auto tExpected = std::vector{0.2, -0.4, -0.4, 0.2};
-    solve_and_check_solution(symmetric_negative_definite_matrix(), rhs(), tExpected, out, success);
+    solve_and_check_solution(symmetric_negative_definite_matrix(), rhs(), Plato::LinearSystemType::SYMMETRIC_INDEFINITE,
+                             tExpected, out, success);
 }
 
 TEUCHOS_UNIT_TEST(CHOLMODSolver, SymmetricIndefinite)
 {
     const auto tExpected =
         std::vector{7.692307692307694e-02, 1.538461538461539e-01, -7.692307692307692e-01, 3.846153846153846e-01};
-    solve_and_check_solution(symmetric_indefinite_matrix(), rhs(), tExpected, out, success);
+    solve_and_check_solution(symmetric_indefinite_matrix(), rhs(), Plato::LinearSystemType::SYMMETRIC_INDEFINITE,
+                             tExpected, out, success);
 }

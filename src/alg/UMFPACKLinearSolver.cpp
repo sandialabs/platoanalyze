@@ -42,6 +42,7 @@ namespace
 template <typename ReturnType, typename ViewType>
 std::vector<ReturnType> kokkosViewToStdVector(ViewType v)
 {
+    // TODO: This won't work with device memory
     std::vector<ReturnType> vec;
 
     static_assert(ViewType::rank() == 1, "invalid usage of kokkosViewToStdVector: requires one dimension");

@@ -42,10 +42,13 @@ using kCholmodIndexType = std::int32_t;
 }  // namespace
 
 CHOLMODLinearSolver::CHOLMODLinearSolver(const Teuchos::ParameterList &aSolverParams,
+                                         const Plato::LinearSystemType aLinearSystemType,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs)
 {
     cholmod_start(&mCholmodCommon);
+    mCholmodCommon.supernodal =
+        aLinearSystemType != LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE ? CHOLMOD_SIMPLICIAL : CHOLMOD_AUTO;
 }
 
 CHOLMODLinearSolver::~CHOLMODLinearSolver()
@@ -57,7 +60,9 @@ CHOLMODLinearSolver::~CHOLMODLinearSolver()
     cholmod_finish(&mCholmodCommon);
 }
 
-void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
+void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrix<int> aA,
+                                     const Plato::ScalarVector aX,
+                                     const Plato::ScalarVector aB)
 {
     auto *tCholmodSparseA = convertCSRtoCHOLMODSparse(aA, &mCholmodCommon);
 
