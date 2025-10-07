@@ -39,6 +39,36 @@ using kCholmodIndexType = std::int32_t;
     cholmod_free_triplet(&tCholmodTriplet, aCholmodCommon);
     return tCholmodSparse;
 }
+
+/// @brief A wrapper for a `cholmod_dense` struct representing a vector. Cleans up its allocation on destruction.
+class CHOLMODVector
+{
+   public:
+    CHOLMODVector(const Plato::ScalarVector aPlatoVector, cholmod_common *const aCholmodCommon)
+        : mCholmodCommon{aCholmodCommon},
+          mVector{cholmod_allocate_dense(
+              aPlatoVector.size(), 1, aPlatoVector.size(), CHOLMOD_DOUBLE + CHOLMOD_REAL, aCholmodCommon)}
+    {
+        const auto tMirror = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aPlatoVector);
+        std::copy_n(tMirror.data(), tMirror.size(), static_cast<double *>(mVector->x));
+    }
+
+    ~CHOLMODVector() { cholmod_free_dense(&mVector, mCholmodCommon); }
+
+    [[nodiscard]] auto get() -> cholmod_dense * { return mVector; }
+
+   private:
+    cholmod_common *mCholmodCommon;
+    cholmod_dense *mVector;
+};
+
+void cholmod_to_scalar_vector(const cholmod_dense &aCHOLMODDense, const Plato::ScalarVector aPlatoVector)
+{
+    const auto tSolutionMirror = Kokkos::create_mirror_view(aPlatoVector);
+    std::copy_n(static_cast<double *>(aCHOLMODDense.x), aCHOLMODDense.nrow, tSolutionMirror.data());
+    Kokkos::deep_copy(aPlatoVector, tSolutionMirror);
+}
+
 }  // namespace
 
 CHOLMODLinearSolver::CHOLMODLinearSolver(const Teuchos::ParameterList &aSolverParams,
@@ -71,18 +101,11 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrix<int> aA,
     mCholmodFactor = cholmod_analyze(tCholmodSparseA, &mCholmodCommon);
     cholmod_factorize(tCholmodSparseA, mCholmodFactor, &mCholmodCommon);
 
-    auto *tRHS =
-        cholmod_allocate_dense(tNumberOfRows, 1, tNumberOfRows, CHOLMOD_DOUBLE + CHOLMOD_REAL, &mCholmodCommon);
-    // TODO: Use a kokkos mirror for copying solution
-    std::copy_n(aB.data(), aB.size(), static_cast<double *>(tRHS->x));
+    auto tRHS = CHOLMODVector{aB, &mCholmodCommon};
+    auto tSolution = cholmod_solve(CHOLMOD_A, mCholmodFactor, tRHS.get(), &mCholmodCommon);
 
-    auto tSolution = cholmod_solve(CHOLMOD_A, mCholmodFactor, tRHS, &mCholmodCommon);
-
-    // TODO: Use a kokkos mirror for copying solution
-    std::copy_n(static_cast<double *>(tSolution->x), tNumberOfRows, aX.data());
-
+    cholmod_to_scalar_vector(*tSolution, aX);
     cholmod_free_dense(&tSolution, &mCholmodCommon);
-    cholmod_free_dense(&tRHS, &mCholmodCommon);
 }
 
 }  // namespace Plato::alg
