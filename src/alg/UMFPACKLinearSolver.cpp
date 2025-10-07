@@ -4,35 +4,37 @@
 
 #include "CrsMatrixUtils.hpp"
 
-namespace Plato::UMFPACK
+namespace Plato::alg
 {
 
-CSCMatrix convertCSRtoCSC(const CSRMatrix &A)
+CSCMatrix convertCSRtoCSC(const CSRMatrix &aMatrix)
 {
-    assert(A.rowBegin.size() > 0);
-    assert(A.columns.size() == A.values.size());
-    const SuiteSparse_long nRows = A.nRows();
-    const SuiteSparse_long nEntries = A.columns.size();
+    assert(aMatrix.rowBegin.size() > 0);
+    assert(aMatrix.columns.size() == aMatrix.values.size());
+    const auto tNumberOfRows = aMatrix.numberOfRows();
+    const auto tNumberOfEntries = aMatrix.mColumns.size();
 
-    std::vector<SuiteSparse_long> rows(nEntries);
+    auto rows = std::vector<SuiteSparse_long>(tNumberOfEntries);
 
-    if (UMFPACK_OK != umfpack_dl_col_to_triplet(nRows, A.rowBegin.data(), rows.data()))
+    if (UMFPACK_OK != umfpack_dl_col_to_triplet(tNumberOfRows, aMatrix.mRowBegin.data(), rows.data()))
     {
         ANALYZE_THROWERR("Column to triplet conversion failed.");
     }
 
-    CSCMatrix B;
-    B.colBegin.resize(nRows + 1);
-    B.rows.resize(nEntries);
-    B.values.resize(nEntries);
+    auto tCSCMatrix = CSCMatrix{};
+    tCSCMatrix.mColumnBegin.resize(tNumberOfRows + 1);
+    tCSCMatrix.mRows.resize(tNumberOfEntries);
+    tCSCMatrix.mValues.resize(tNumberOfEntries);
 
-    if (UMFPACK_OK != umfpack_dl_triplet_to_col(nRows, nRows, nEntries, rows.data(), A.columns.data(), A.values.data(),
-                                                B.colBegin.data(), B.rows.data(), B.values.data(), nullptr))
+    if (UMFPACK_OK != umfpack_dl_triplet_to_col(tNumberOfRows, tNumberOfRows, tNumberOfEntries, rows.data(),
+                                                aMatrix.mColumns.data(), aMatrix.mValues.data(),
+                                                tCSCMatrix.mColumnBegin.data(), tCSCMatrix.mRows.data(),
+                                                tCSCMatrix.mValues.data(), nullptr))
     {
         ANALYZE_THROWERR("Triplet to column conversion failed.");
     }
 
-    return B;
+    return tCSCMatrix;
 }
 
 namespace
@@ -85,26 +87,22 @@ void UMFPACKLinearSolver::clear()
 
 void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
 {
-    const CSRMatrix A = constructCSRMatrix(aA);
+    /*
+        umfpack_dl_symbolic(tNumberOfRows, tNumberOfRows, mMatrix.colBegin.data(), mMatrix.rows.data(),
+       mMatrix.values.data(), &mSymbolic, nullptr, mInfo.data()); check_umfpack("Symbolic factorization");
 
-    mMatrix = convertCSRtoCSC(A);
-    const SuiteSparse_long nRows = mMatrix.nCols();
+        umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), mSymbolic, &mNumeric,
+                           nullptr, mInfo.data());
+        check_umfpack("Numeric factorization");
 
-    umfpack_dl_symbolic(nRows, nRows, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), &mSymbolic,
-                        nullptr, mInfo.data());
-    check_umfpack("Symbolic factorization");
+        umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(),
+                         aB.data(), mNumeric, nullptr, mInfo.data());
+        check_umfpack("matrix solve");
 
-    umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), mSymbolic, &mNumeric,
-                       nullptr, mInfo.data());
-    check_umfpack("Numeric factorization");
+        report_memory_usage();
 
-    umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(),
-                     aB.data(), mNumeric, nullptr, mInfo.data());
-    check_umfpack("matrix solve");
-
-    report_memory_usage();
-
-    clear();
+        clear();
+    */
 }
 
 void UMFPACKLinearSolver::report_memory_usage()
@@ -122,4 +120,4 @@ void UMFPACKLinearSolver::check_umfpack(const std::string &msg)
     }
 }
 
-}  // namespace Plato::UMFPACK
+}  // namespace Plato::alg

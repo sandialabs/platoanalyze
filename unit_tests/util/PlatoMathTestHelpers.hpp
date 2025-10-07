@@ -1,6 +1,7 @@
 #ifndef PLATOMATHTESTHELPERS_HPP_
 #define PLATOMATHTESTHELPERS_HPP_
 
+#include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_RCP.hpp>
 #include <vector>
 
@@ -11,13 +12,27 @@ namespace Plato
 namespace TestHelpers
 {
 
+/// @brief A return type for comparision tests providing if the comparison was `true` or `false`, and also the reason if
+/// `false`.
+using TestComparisonResult = std::pair<bool, std::string>;
+
 template <typename DataType>
 void set_view_from_vector(Plato::ScalarVectorT<DataType> aView, const std::vector<DataType> &aVector);
+
+/// @brief Returns a vector with a copy of the data in @a aView.
+template <typename DataType>
+[[nodiscard]] auto to_vector(Plato::ScalarVectorT<DataType> aView) -> std::vector<DataType>;
 
 void set_matrix_data(Teuchos::RCP<Plato::CrsMatrixType> aMatrix,
                      const std::vector<Plato::OrdinalType> &aRowMap,
                      const std::vector<Plato::OrdinalType> &aColMap,
                      const std::vector<Plato::Scalar> &aValues);
+
+/// @brief Creates a square CRS matrix with number of rows and columns @a aNumberOfRows.
+[[nodiscard]] auto square_crs_matrix(const OrdinalType aNumberOfRows,
+                                     const std::vector<Plato::OrdinalType> &aRowMap,
+                                     const std::vector<Plato::OrdinalType> &aColMap,
+                                     const std::vector<Plato::Scalar> &aValues) -> Plato::CrsMatrixType;
 
 void from_full(Teuchos::RCP<Plato::CrsMatrixType> aOutMatrix, const std::vector<std::vector<Plato::Scalar>> &aInMatrix);
 
@@ -49,6 +64,20 @@ bool is_same(const Plato::ScalarVectorT<DataType> &aView, const std::vector<Data
 template <typename DataType>
 bool is_same(const Plato::ScalarVectorT<DataType> &aViewA, const Plato::ScalarVectorT<DataType> &aViewB);
 
+/// @brief Compares all entries of @a aViewA and @a aViewB and returns `true` if all are within @a aTolerance using
+/// absolute difference.
+template <typename DataType>
+[[nodiscard]] auto is_near(const Plato::ScalarVectorT<DataType> &aViewA,
+                           const Plato::ScalarVectorT<DataType> &aViewB,
+                           double aTolerance) -> TestComparisonResult;
+
+/// @brief Compares all entries of @a aViewA and @a aViewB and returns `true` if all are within @a aTolerance using
+/// absolute difference.
+template <typename DataType>
+[[nodiscard]] auto is_near(const Plato::ScalarVectorT<DataType> &aView,
+                           const std::vector<DataType> &aVec,
+                           double aTolerance) -> TestComparisonResult;
+
 bool is_sequential(const Plato::ScalarVectorT<Plato::OrdinalType> &aRowMap,
                    const Plato::ScalarVectorT<Plato::OrdinalType> &aColMap);
 
@@ -74,6 +103,17 @@ void set_view_from_vector(Plato::ScalarVectorT<DataType> aView, const std::vecto
     Kokkos::View<const DataType *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tHostView(aVector.data(),
                                                                                          aVector.size());
     Kokkos::deep_copy(aView, tHostView);
+}
+
+template <typename DataType>
+auto to_vector(const Plato::ScalarVectorT<DataType> aView) -> std::vector<DataType>
+{
+    auto tMirrorView = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), aView);
+    auto tVector = std::vector<DataType>{};
+    tVector.reserve(tMirrorView.size());
+    std::copy(Kokkos::Experimental::begin(tMirrorView), Kokkos::Experimental::end(tMirrorView),
+              std::back_inserter(tVector));
+    return tVector;
 }
 
 template <typename DataType>
@@ -105,6 +145,39 @@ bool is_same(const Plato::ScalarVectorT<DataType> &aView, const std::vector<Data
         }
     }
     return true;
+}
+
+template <typename DataType>
+auto is_near(const Plato::ScalarVectorT<DataType> &aViewA,
+             const Plato::ScalarVectorT<DataType> &aViewB,
+             double aTolerance) -> TestComparisonResult
+{
+    if (aViewA.extent(0) != aViewB.extent(0))
+    {
+        return {false, "Sizes don't match"};
+    }
+
+    auto tMirrorViewA = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), aViewA);
+    auto tMirrorViewB = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), aViewB);
+    for (auto tIndex = 0U; tIndex < aViewA.extent(0); ++tIndex)
+    {
+        if (std::fabs(tMirrorViewA(tIndex) - tMirrorViewB(tIndex)) > aTolerance)
+        {
+            return {false, "Entries don't match at index " + std::to_string(tIndex) + ": " +
+                               std::to_string(tMirrorViewA(tIndex)) + " vs. " + std::to_string(tMirrorViewB(tIndex))};
+        }
+    }
+    return {true, ""};
+}
+
+template <typename DataType>
+auto is_near(const Plato::ScalarVectorT<DataType> &aView,
+             const std::vector<DataType> &aVector,
+             double aTolerance) -> TestComparisonResult
+{
+    auto tViewB = Plato::ScalarVectorT<DataType>{"View b", aView.size()};
+    set_view_from_vector(tViewB, aVector);
+    return is_near(aView, tViewB, aTolerance);
 }
 
 template <typename DataType>

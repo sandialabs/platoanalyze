@@ -9,28 +9,10 @@
 
 #include "PlatoAbstractSolver.hpp"
 #include "PlatoStaticsTypes.hpp"
+#include "alg/SuiteSparseUtils.hpp"
 
-namespace Plato::UMFPACK
+namespace Plato::alg
 {
-
-struct CSRMatrix
-{
-    std::vector<SuiteSparse_long> rowBegin;
-    std::vector<SuiteSparse_long> columns;
-    std::vector<double> values;
-    SuiteSparse_long nRows() const { return rowBegin.size() - 1; }
-};
-
-struct CSCMatrix
-{
-    std::vector<SuiteSparse_long> colBegin;
-    std::vector<SuiteSparse_long> rows;
-    std::vector<double> values;
-    SuiteSparse_long nCols() const { return colBegin.size() - 1; }
-};
-
-CSCMatrix convertCSRtoCSC(const CSRMatrix &A);
-CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int> &aA);
 
 class UMFPACKLinearSolver : public Plato::AbstractSolver
 {
@@ -44,12 +26,13 @@ class UMFPACKLinearSolver : public Plato::AbstractSolver
    private:
     void check_umfpack(const std::string &msg);
     void clear();
+
     CSCMatrix mMatrix;
     std::array<double, UMFPACK_INFO> mInfo;
     void *mSymbolic = nullptr;
     void *mNumeric = nullptr;
 };
 
-}  // namespace Plato::UMFPACK
+}  // namespace Plato::alg
 
 #endif

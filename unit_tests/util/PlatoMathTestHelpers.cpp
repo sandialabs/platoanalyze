@@ -19,28 +19,51 @@ namespace Plato
 {
 namespace TestHelpers
 {
-
 using namespace KokkosSparse;
 using namespace KokkosSparse::Experimental;
 using namespace KokkosKernels;
 using namespace KokkosKernels::Experimental;
 
-void set_matrix_data(Teuchos::RCP<Plato::CrsMatrixType> aMatrix,
+namespace
+{
+
+void set_matrix_data(Plato::CrsMatrixType &aMatrix,
                      const std::vector<Plato::OrdinalType> &aRowMap,
                      const std::vector<Plato::OrdinalType> &aColMap,
                      const std::vector<Plato::Scalar> &aValues)
 {
     Plato::ScalarVectorT<Plato::OrdinalType> tRowMap("row map", aRowMap.size());
     set_view_from_vector(tRowMap, aRowMap);
-    aMatrix->setRowMap(tRowMap);
+    aMatrix.setRowMap(tRowMap);
 
     Plato::ScalarVectorT<Plato::OrdinalType> tColMap("col map", aColMap.size());
     set_view_from_vector(tColMap, aColMap);
-    aMatrix->setColumnIndices(tColMap);
+    aMatrix.setColumnIndices(tColMap);
 
     Plato::ScalarVectorT<Plato::Scalar> tValues("values", aValues.size());
     set_view_from_vector(tValues, aValues);
-    aMatrix->setEntries(tValues);
+    aMatrix.setEntries(tValues);
+}
+
+}  // namespace
+
+void set_matrix_data(Teuchos::RCP<Plato::CrsMatrixType> aMatrix,
+                     const std::vector<Plato::OrdinalType> &aRowMap,
+                     const std::vector<Plato::OrdinalType> &aColMap,
+                     const std::vector<Plato::Scalar> &aValues)
+{
+    set_matrix_data(*aMatrix, aRowMap, aColMap, aValues);
+}
+
+auto square_crs_matrix(const OrdinalType aNumberOfRows,
+                       const std::vector<Plato::OrdinalType> &aRowMap,
+                       const std::vector<Plato::OrdinalType> &aColMap,
+                       const std::vector<Plato::Scalar> &aValues) -> Plato::CrsMatrixType
+{
+    constexpr auto tNumberOfBlocks = 1;
+    auto tMatrix = Plato::CrsMatrixType(aNumberOfRows, aNumberOfRows, tNumberOfBlocks, tNumberOfBlocks);
+    set_matrix_data(tMatrix, aRowMap, aColMap, aValues);
+    return tMatrix;
 }
 
 void from_full(Teuchos::RCP<Plato::CrsMatrixType> aOutMatrix, const std::vector<std::vector<Plato::Scalar>> &aInMatrix)

@@ -79,7 +79,7 @@ rcp<AbstractSolver> SolverFactory::create(Plato::OrdinalType aNumNodes,
     else if (tLowerSolverStack == "umfpack")
     {
 #ifdef PLATO_UMFPACK
-        return std::make_shared<Plato::UMFPACK::UMFPACKLinearSolver>(mSolverParams, aMPCs);
+        return std::make_shared<Plato::alg::UMFPACKLinearSolver>(mSolverParams, aMPCs);
 #else
         ANALYZE_THROWERR("Not compiled with UMFPACK");
 #endif
