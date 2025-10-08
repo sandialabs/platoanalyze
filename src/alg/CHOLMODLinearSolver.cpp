@@ -1,39 +1,40 @@
 #include "alg/CHOLMODLinearSolver.hpp"
 
+#include "CrsMatrixUtils.hpp"
 #include "alg/SuiteSparseUtils.hpp"
 
 namespace Plato::alg
 {
 namespace
 {
+using PlatoOrdinalType = int;
 using kCholmodIndexType = std::int32_t;
 
-[[nodiscard]] auto convertCSRtoCHOLMODSparse(const Plato::CrsMatrix<int> &aMatrix, cholmod_common *aCholmodCommon)
+[[nodiscard]] auto convertCSRtoCHOLMODSparse(const CSRMatrix &aMatrix, cholmod_common *const aCholmodCommon)
 {
-    const auto tCSRMatrix = constructCSRMatrix(aMatrix);
-
-    auto *tCholmodTriplet = cholmod_allocate_triplet(tCSRMatrix.numberOfRows(), tCSRMatrix.numberOfRows(),
-                                                     tCSRMatrix.mValues.size(), 0, CHOLMOD_REAL, aCholmodCommon);
+    constexpr auto tCholmodSTypeLowerDiagonal = -1;
+    auto *tCholmodTriplet =
+        cholmod_allocate_triplet(aMatrix.numberOfRows(), aMatrix.numberOfRows(), aMatrix.mValues.size(),
+                                 tCholmodSTypeLowerDiagonal, CHOLMOD_REAL, aCholmodCommon);
 
     auto tCholmodCounter = kCholmodIndexType{0};
-    for (auto tRowIndex = 0; tRowIndex < tCSRMatrix.mRowBegin.size() - 1; ++tRowIndex)
+    for (auto tRowIndex = 0; tRowIndex < aMatrix.mRowBegin.size() - 1; ++tRowIndex)
     {
-        const auto tStartIndex = tCSRMatrix.mRowBegin[tRowIndex];
-        const auto tEndIndex = tCSRMatrix.mRowBegin[tRowIndex + 1];
+        const auto tStartIndex = aMatrix.mRowBegin[tRowIndex];
+        const auto tEndIndex = aMatrix.mRowBegin[tRowIndex + 1];
         for (auto tIndexIntoEntries = tStartIndex; tIndexIntoEntries < tEndIndex; ++tIndexIntoEntries)
         {
-            const auto tColIndex = tCSRMatrix.mColumns[tIndexIntoEntries];
+            const auto tColIndex = aMatrix.mColumns[tIndexIntoEntries];
             if (tColIndex <= tRowIndex)
             {
                 static_cast<kCholmodIndexType *>(tCholmodTriplet->i)[tCholmodCounter] = tRowIndex;
                 static_cast<kCholmodIndexType *>(tCholmodTriplet->j)[tCholmodCounter] = tColIndex;
-                static_cast<double *>(tCholmodTriplet->x)[tCholmodCounter] = tCSRMatrix.mValues[tIndexIntoEntries];
+                static_cast<double *>(tCholmodTriplet->x)[tCholmodCounter] = aMatrix.mValues[tIndexIntoEntries];
                 ++tCholmodCounter;
             }
         }
     }
 
-    tCholmodTriplet->stype = -1;
     tCholmodTriplet->nnz = tCholmodCounter;
     auto *tCholmodSparse = cholmod_triplet_to_sparse(tCholmodTriplet, tCholmodCounter, aCholmodCommon);
     cholmod_free_triplet(&tCholmodTriplet, aCholmodCommon);
@@ -90,15 +91,28 @@ CHOLMODLinearSolver::~CHOLMODLinearSolver()
     cholmod_finish(&mCholmodCommon);
 }
 
-void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrix<int> aA,
+void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrix<PlatoOrdinalType> aA,
                                      const Plato::ScalarVector aX,
                                      const Plato::ScalarVector aB)
 {
-    auto *tCholmodSparseA = convertCSRtoCHOLMODSparse(aA, &mCholmodCommon);
+    const auto [tRowBegin, tColumns, tValues] = crs_matrix_non_block_form<PlatoOrdinalType>(aA);
+    if (!has_symmetric_sparsity_pattern<PlatoOrdinalType>(tRowBegin, tColumns))
+    {
+        throw std::runtime_error(
+            "CHOLMOD was given a matrix with a non-symmetric sparsity pattern.\n"
+            "CHOLMOD must only be used with symmetric matrices, for general matrices use UMFPACK.");
+    }
+    auto *tCholmodSparseA =
+        convertCSRtoCHOLMODSparse(constructCSRMatrix(tRowBegin, tColumns, tValues), &mCholmodCommon);
 
     const auto tNumberOfRows = aA.numRows();
 
-    mCholmodFactor = cholmod_analyze(tCholmodSparseA, &mCholmodCommon);
+    if (const auto tNewMatrixPatternHash = crs_matrix_row_column_hash<int>(aA.rowMap(), aA.columnIndices());
+        !mCurrentMatrixPatternHash.has_value() || mCurrentMatrixPatternHash.value() != tNewMatrixPatternHash)
+    {
+        mCurrentMatrixPatternHash = tNewMatrixPatternHash;
+        mCholmodFactor = cholmod_analyze(tCholmodSparseA, &mCholmodCommon);
+    }
     cholmod_factorize(tCholmodSparseA, mCholmodFactor, &mCholmodCommon);
 
     auto tRHS = CHOLMODVector{aB, &mCholmodCommon};

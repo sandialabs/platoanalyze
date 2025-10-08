@@ -4,6 +4,7 @@
 #include <array>
 
 #include "Teuchos_UnitTestHarness.hpp"
+#include "alg/CrsMatrixUtils.hpp"
 #include "alg/SuiteSparseUtils.hpp"
 #include "util/PlatoMathTestHelpers.hpp"
 #include "util/PlatoTestHelpers.hpp"
@@ -94,22 +95,32 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, constructCSRMatrix)
 
     namespace pth = Plato::TestHelpers;
 
-    const unsigned nummRows = 4;
-    auto tMatrixA = Teuchos::rcp(new Plato::CrsMatrixType(nummRows, nummRows, 1, 1));
+    const unsigned tNumberOfRows = 4;
+    auto tMatrixA = Teuchos::rcp(new Plato::CrsMatrixType(tNumberOfRows, tNumberOfRows, 1, 1));
     std::vector<Plato::OrdinalType> tRowMapA = {0, 2, 5, 8, 10};
     std::vector<Plato::OrdinalType> tColMapA = {0, 1, 0, 1, 2, 1, 2, 3, 2, 3};
     std::vector<Plato::Scalar> tValuesA = {2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0};
     pth::set_matrix_data(tMatrixA, tRowMapA, tColMapA, tValuesA);
 
     namespace pa = Plato::alg;
-    const auto A = pa::constructCSRMatrix(*tMatrixA);
-
     const pa::CSRMatrix tAAsCSRExpected = {
         /* .mRowBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 8, 10},
         /* .mColumns = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
         /* .mValues = */ std::vector<double>{2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0}};
 
-    TEST_ASSERT(A.mRowBegin == tAAsCSRExpected.mRowBegin);
-    TEST_ASSERT(A.mColumns == tAAsCSRExpected.mColumns);
-    TEST_ASSERT(A.mValues == tAAsCSRExpected.mValues);
+    // Direct from CrsMatrix
+    {
+        const auto tA = pa::constructCSRMatrix(*tMatrixA);
+        TEST_ASSERT(tA.mRowBegin == tAAsCSRExpected.mRowBegin);
+        TEST_ASSERT(tA.mColumns == tAAsCSRExpected.mColumns);
+        TEST_ASSERT(tA.mValues == tAAsCSRExpected.mValues);
+    }
+    // Overload
+    {
+        const auto [tRowIndexSpans, tColumns, tEntries] = Plato::crs_matrix_non_block_form<int>(*tMatrixA);
+        const auto tA = pa::constructCSRMatrix(tRowIndexSpans, tColumns, tEntries);
+        TEST_ASSERT(tA.mRowBegin == tAAsCSRExpected.mRowBegin);
+        TEST_ASSERT(tA.mColumns == tAAsCSRExpected.mColumns);
+        TEST_ASSERT(tA.mValues == tAAsCSRExpected.mValues);
+    }
 }

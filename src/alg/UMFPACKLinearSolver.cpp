@@ -6,66 +6,6 @@
 
 namespace Plato::alg
 {
-
-CSCMatrix convertCSRtoCSC(const CSRMatrix &aMatrix)
-{
-    assert(aMatrix.rowBegin.size() > 0);
-    assert(aMatrix.columns.size() == aMatrix.values.size());
-    const auto tNumberOfRows = aMatrix.numberOfRows();
-    const auto tNumberOfEntries = aMatrix.mColumns.size();
-
-    auto rows = std::vector<SuiteSparse_long>(tNumberOfEntries);
-
-    if (UMFPACK_OK != umfpack_dl_col_to_triplet(tNumberOfRows, aMatrix.mRowBegin.data(), rows.data()))
-    {
-        ANALYZE_THROWERR("Column to triplet conversion failed.");
-    }
-
-    auto tCSCMatrix = CSCMatrix{};
-    tCSCMatrix.mColumnBegin.resize(tNumberOfRows + 1);
-    tCSCMatrix.mRows.resize(tNumberOfEntries);
-    tCSCMatrix.mValues.resize(tNumberOfEntries);
-
-    if (UMFPACK_OK != umfpack_dl_triplet_to_col(tNumberOfRows, tNumberOfRows, tNumberOfEntries, rows.data(),
-                                                aMatrix.mColumns.data(), aMatrix.mValues.data(),
-                                                tCSCMatrix.mColumnBegin.data(), tCSCMatrix.mRows.data(),
-                                                tCSCMatrix.mValues.data(), nullptr))
-    {
-        ANALYZE_THROWERR("Triplet to column conversion failed.");
-    }
-
-    return tCSCMatrix;
-}
-
-namespace
-{
-template <typename ReturnType, typename ViewType>
-std::vector<ReturnType> kokkosViewToStdVector(ViewType v)
-{
-    // TODO: This won't work with device memory
-    std::vector<ReturnType> vec;
-
-    static_assert(ViewType::rank() == 1, "invalid usage of kokkosViewToStdVector: requires one dimension");
-
-    vec.reserve(v.size());
-    std::copy(v.data(), v.data() + v.size(), std::back_inserter(vec));
-
-    return vec;
-}
-}  // namespace
-
-CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int> &aA)
-{
-    using CrsOrdinal = int;
-    Plato::CrsMatrix<CrsOrdinal>::RowMapVectorT tRowBegin;
-    Plato::CrsMatrix<CrsOrdinal>::OrdinalVectorT tColumns;
-    Plato::CrsMatrix<CrsOrdinal>::ScalarVectorT tValues;
-    std::tie(tRowBegin, tColumns, tValues) = Plato::crs_matrix_non_block_form<CrsOrdinal>(aA);
-
-    return CSRMatrix{kokkosViewToStdVector<SuiteSparse_long>(tRowBegin),
-                     kokkosViewToStdVector<SuiteSparse_long>(tColumns), kokkosViewToStdVector<double>(tValues)};
-}
-
 UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs)

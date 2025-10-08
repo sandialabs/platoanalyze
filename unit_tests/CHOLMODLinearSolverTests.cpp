@@ -1,3 +1,4 @@
+#include <Kokkos_StdAlgorithms.hpp>
 
 #include "Teuchos_UnitTestHarness.hpp"
 #include "alg/CHOLMODLinearSolver.hpp"
@@ -109,4 +110,52 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, SymmetricIndefinite)
         std::vector{7.692307692307694e-02, 1.538461538461539e-01, -7.692307692307692e-01, 3.846153846153846e-01};
     solve_and_check_solution(symmetric_indefinite_matrix(), rhs(), Plato::LinearSystemType::SYMMETRIC_INDEFINITE,
                              tExpected, out, success);
+}
+
+TEUCHOS_UNIT_TEST(CHOLMODSolver, TwoSolvesDifferentMatricesSameSparsityPattern)
+{
+    auto tMatrix = symmetric_positive_definite_matrix();
+
+    const auto tSolutionView = Plato::ScalarVector{"Solution", static_cast<unsigned>(tMatrix.numRows())};
+    auto tCholmodSolver =
+        Plato::alg::CHOLMODLinearSolver{Teuchos::ParameterList{}, Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
+
+    const auto tExpected = std::vector{1.0, 2.0, 2.0, 1.0};
+    {
+        tCholmodSolver.innerSolve(tMatrix, tSolutionView, rhs());
+        const auto tTestResult = Plato::TestHelpers::is_near(tSolutionView, tExpected, kTolerance);
+        TEST_ASSERT(tTestResult.first);
+        out << tTestResult.second;
+    }
+    {
+        constexpr auto tMultiplier = 4.0;
+        auto tMatrixEntries = tMatrix.entries();
+        std::transform(Kokkos::Experimental::begin(tMatrixEntries), Kokkos::Experimental::end(tMatrixEntries),
+                       Kokkos::Experimental::begin(tMatrixEntries),
+                       [](const double tValue) { return tMultiplier * tValue; });
+        tMatrix.setEntries(tMatrixEntries);
+
+        tCholmodSolver.innerSolve(tMatrix, tSolutionView, rhs());
+        auto tExpectedWithMultiplier = tExpected;
+        std::transform(tExpectedWithMultiplier.begin(), tExpectedWithMultiplier.end(), tExpectedWithMultiplier.begin(),
+                       [](const double tValue) { return tValue / tMultiplier; });
+
+        const auto tTestResult = Plato::TestHelpers::is_near(tSolutionView, tExpectedWithMultiplier, kTolerance);
+        TEST_ASSERT(tTestResult.first);
+        out << tTestResult.second;
+    }
+}
+
+TEUCHOS_UNIT_TEST(CHOLMODSolver, NonSymmetricMatrix)
+{
+    const auto kTriDiagonalColMap4x4 = std::vector<Plato::OrdinalType>{0, 1, 0, 1, 3, 1, 2, 3, 2, 3};
+    const auto tValuesA = std::vector<Plato::Scalar>{2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0};
+    const auto tNonsymmetricMatrix =
+        Plato::TestHelpers::square_crs_matrix(kNumberOfRows, kTriDiagonalRowMap4x4, kTriDiagonalColMap4x4, tValuesA);
+
+    const auto tSolutionView = Plato::ScalarVector{"Solution", static_cast<unsigned>(tNonsymmetricMatrix.numRows())};
+    auto tCholmodSolver =
+        Plato::alg::CHOLMODLinearSolver{Teuchos::ParameterList{}, Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
+
+    TEST_THROW(tCholmodSolver.innerSolve(tNonsymmetricMatrix, tSolutionView, rhs()), std::runtime_error);
 }

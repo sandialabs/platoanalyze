@@ -302,7 +302,7 @@ void TachoLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector
 
     try
     {
-        if (!mCurrentMatrixHash.has_value() || tNewMatrixHash != mCurrentMatrixHash.get())
+        if (!mCurrentMatrixHash.has_value() || tNewMatrixHash != mCurrentMatrixHash.value())
         {
             // Initialize on first call or sparsity pattern change
             mSolver.Initialize(aA.numRows(), tRowBegin, tColumns, tValues);
