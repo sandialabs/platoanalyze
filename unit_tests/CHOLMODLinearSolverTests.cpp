@@ -90,6 +90,72 @@ void solve_and_check_solution(const Plato::CrsMatrixType aMatrix,
 
 }  // namespace
 
+TEUCHOS_UNIT_TEST(CHOLMODSolver, ConvertCSRtoCHOLMODSparse)
+{
+    auto tCholmodCommon = Plato::alg::CholmodCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
+    const auto tCRSMatrix = Plato::alg::constructCSRMatrix(symmetric_positive_definite_matrix());
+    const auto* const tCholmodSparse =
+        Plato::alg::convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &tCholmodCommon.mValue);
+
+    TEST_INEQUALITY_CONST(tCholmodSparse, nullptr);
+    TEST_EQUALITY(tCholmodSparse->nrow, kNumberOfRows);
+    TEST_EQUALITY(tCholmodSparse->ncol, kNumberOfRows);
+
+    constexpr auto tExpectedNumberOfNonZero = 7U;
+    const auto tExpectedEntries = std::vector{2.0, -1.0, 2.0, -1.0, 2.0, -1.0, 2.0};
+    for (auto tIndex = 0U; tIndex < tExpectedNumberOfNonZero; ++tIndex)
+    {
+        TEST_EQUALITY(tExpectedEntries.at(tIndex), static_cast<double*>(tCholmodSparse->x)[tIndex]);
+    }
+}
+
+TEUCHOS_UNIT_TEST(CHOLMODSolver, CholmodCommonSetupTeardown)
+{
+    {
+        const auto tCholmodCommon =
+            Plato::alg::CholmodCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
+        TEST_EQUALITY(tCholmodCommon.mValue.supernodal, CHOLMOD_AUTO);
+    }
+    {
+        const auto tCholmodCommon =
+            Plato::alg::CholmodCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_INDEFINITE};
+        TEST_EQUALITY(tCholmodCommon.mValue.supernodal, CHOLMOD_SIMPLICIAL);
+    }
+}
+
+TEUCHOS_UNIT_TEST(CHOLMODSolver, CholmodFactorSetupTeardown)
+{
+    auto tCholmodCommon = Plato::alg::CholmodCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
+    auto tMatrix = symmetric_positive_definite_matrix();
+    const auto tCRSMatrix = Plato::alg::constructCSRMatrix(tMatrix);
+
+    // Move ctor
+    {
+        auto tCholmodFactor1 = Plato::alg::CholmodFactorSetupTeardown{
+            convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &tCholmodCommon.mValue), std::ref(tCholmodCommon)};
+
+        const auto* const tCholmodFactorPtr = tCholmodFactor1.mValue;
+        const auto tCholmodFactor2 = std::move(tCholmodFactor1);
+
+        TEST_EQUALITY_CONST(tCholmodFactor1.mValue, nullptr);
+        TEST_EQUALITY(tCholmodFactor2.mValue, tCholmodFactorPtr);
+    }
+    // Move assignment
+    {
+        auto tCholmodFactor1 = Plato::alg::CholmodFactorSetupTeardown{
+            convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &tCholmodCommon.mValue), std::ref(tCholmodCommon)};
+        const auto* const tCholmodFactor1Ptr = tCholmodFactor1.mValue;
+
+        auto tCholmodFactor2 = Plato::alg::CholmodFactorSetupTeardown{
+            convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &tCholmodCommon.mValue), std::ref(tCholmodCommon)};
+
+        tCholmodFactor2 = std::move(tCholmodFactor1);
+
+        TEST_EQUALITY_CONST(tCholmodFactor1.mValue, nullptr);
+        TEST_EQUALITY(tCholmodFactor2.mValue, tCholmodFactor1Ptr);
+    }
+}
+
 TEUCHOS_UNIT_TEST(CHOLMODSolver, SymmetricPositiveDefinite)
 {
     const auto tExpected = std::vector{1.0, 2.0, 2.0, 1.0};

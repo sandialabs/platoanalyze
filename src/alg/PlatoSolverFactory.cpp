@@ -22,10 +22,10 @@ std::string determine_solver_stack(const Teuchos::ParameterList& tSolverParams)
     }
     else
     {
-#ifdef PLATO_TACHO
-        tSolverStack = "Tacho";
-#elif PLATO_UMFPACK
+#ifdef PLATO_UMFPACK
         tSolverStack = "UMFPACK";
+#elif PLATO_TACHO
+        tSolverStack = "Tacho";
 #elif HAVE_AMGX
         tSolverStack = "AmgX";
 #elif PLATO_TPETRA

@@ -22,9 +22,9 @@ using CrsRowsColumnsValues = std::tuple<typename Plato::CrsMatrix<Ordinal>::RowM
 template <typename Ordinal>
 CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(const CrsMatrix<Ordinal>& aMatrix);
 
-template <typename Ordinal>
-std::size_t crs_matrix_row_column_hash(typename Plato::CrsMatrix<Ordinal>::RowMapVectorT aRowBegin,
-                                       typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT aColumns);
+/// @brief Computes a unique hash based on the row index spans in @a aRowSpan and column indices in @a aColumns.
+template <typename Container>
+[[nodiscard]] auto crs_matrix_row_column_hash(const Container& aRowBegin, const Container& aColumns) -> std::size_t;
 
 template <typename Ordinal>
 void print_vector_to_file(typename Plato::CrsMatrix<Ordinal>::ScalarVectorT aValues, const std::string& aFileName);
@@ -103,6 +103,17 @@ std::size_t hash_vector(const KokkosLike& aVector)
     return tSeed;
 }
 
+template <typename Ordinal>
+auto hash_vector(const std::vector<Ordinal>& aVector) -> std::size_t
+{
+    return std::accumulate(aVector.begin(), aVector.end(), std::size_t{0},
+                           [](std::size_t aSeed, const Ordinal aIndex)
+                           {
+                               boost::hash_combine(aSeed, aIndex);
+                               return aSeed;
+                           });
+}
+
 template <typename Ordinal, typename Callable>
 void for_each_row_column(const RowVectorOnHost<Ordinal>& aRowBegin,
                          const OrdinalVectorOnHost<Ordinal>& aColumns,
@@ -170,11 +181,10 @@ CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(const CrsMatrix<Ordinal>
     return std::make_tuple(tRowBegin, tColumns, tValues);
 }
 
-template <typename Ordinal>
-std::size_t crs_matrix_row_column_hash(typename Plato::CrsMatrix<Ordinal>::RowMapVectorT aRowBegin,
-                                       typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT aColumns)
+template <typename Container>
+auto crs_matrix_row_column_hash(const Container& aRowBegin, const Container& aColumns) -> std::size_t
 {
-    std::size_t tSeed = detail::hash_vector(aRowBegin);
+    auto tSeed = detail::hash_vector(aRowBegin);
     boost::hash_combine(tSeed, detail::hash_vector(aColumns));
     return tSeed;
 }
