@@ -57,11 +57,6 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
                         Plato::LinearSystemType aLinearSystemType,
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = {});
 
-    CHOLMODLinearSolver(const CHOLMODLinearSolver&) = delete;
-    CHOLMODLinearSolver(CHOLMODLinearSolver&&) = delete;
-    CHOLMODLinearSolver& operator=(const CHOLMODLinearSolver&) = delete;
-    CHOLMODLinearSolver& operator=(CHOLMODLinearSolver&&) = delete;
-
     /// @brief Solves `Ax = b` with `A` given by @a aA, `b` by @a aB, and `x` stored in @a aX.
     ///
     /// @pre @a aA is symmetric and either positive definite, or if it is indefinite, this object was constructed with
