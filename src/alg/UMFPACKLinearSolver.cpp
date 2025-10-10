@@ -6,59 +6,46 @@
 
 namespace Plato::alg
 {
+namespace
+{
+void check_umfpack(const std::string &aMessage, const std::array<double, UMFPACK_INFO> &aInfo)
+{
+    if (aInfo[UMFPACK_STATUS] != UMFPACK_OK)
+    {
+        ANALYZE_THROWERR("UMFPACK: error in " + aMessage +
+                         ": status = " + std::to_string(static_cast<int>(aInfo[UMFPACK_STATUS])));
+    }
+}
+}  // namespace
+
 UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs)
 {
 }
 
-void UMFPACKLinearSolver::clear()
-{
-    if (mSymbolic != nullptr)
-    {
-        umfpack_dl_free_symbolic(&mSymbolic);
-        mSymbolic = nullptr;
-    }
-    if (mNumeric != nullptr)
-    {
-        umfpack_dl_free_numeric(&mNumeric);
-        mNumeric = nullptr;
-    }
-}
-
 void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
 {
-    /*
-        umfpack_dl_symbolic(tNumberOfRows, tNumberOfRows, mMatrix.colBegin.data(), mMatrix.rows.data(),
-       mMatrix.values.data(), &mSymbolic, nullptr, mInfo.data()); check_umfpack("Symbolic factorization");
+    const auto tNumberOfRows = aA.numRows();
+    auto tMatrix = convertCSRtoCSC(constructCSRMatrix(aA));
 
-        umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), mSymbolic, &mNumeric,
-                           nullptr, mInfo.data());
-        check_umfpack("Numeric factorization");
+    auto tInfo = std::array<double, UMFPACK_INFO>{};
+    void *tSymbolic = nullptr;
+    umfpack_dl_symbolic(tNumberOfRows, tNumberOfRows, tMatrix.mColumnBegin.data(), tMatrix.mRows.data(),
+                        tMatrix.mValues.data(), &tSymbolic, nullptr, tInfo.data());
+    check_umfpack("Symbolic factorization", tInfo);
 
-        umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(),
-                         aB.data(), mNumeric, nullptr, mInfo.data());
-        check_umfpack("matrix solve");
+    void *tNumeric = nullptr;
+    umfpack_dl_numeric(tMatrix.mColumnBegin.data(), tMatrix.mRows.data(), tMatrix.mValues.data(), tSymbolic, &tNumeric,
+                       nullptr, tInfo.data());
+    check_umfpack("Numeric factorization", tInfo);
 
-        report_memory_usage();
+    umfpack_dl_solve(UMFPACK_A, tMatrix.mColumnBegin.data(), tMatrix.mRows.data(), tMatrix.mValues.data(), aX.data(),
+                     aB.data(), tNumeric, nullptr, tInfo.data());
+    check_umfpack("matrix solve", tInfo);
 
-        clear();
-    */
-}
-
-void UMFPACKLinearSolver::report_memory_usage()
-{
-    std::cout << "UMFPACK peak memory usage: "
-              << mInfo[UMFPACK_SIZE_OF_UNIT] * mInfo[UMFPACK_PEAK_MEMORY] / (1024.0 * 1024.0) << " MB." << std::endl;
-}
-
-void UMFPACKLinearSolver::check_umfpack(const std::string &msg)
-{
-    if (mInfo[UMFPACK_STATUS] != UMFPACK_OK)
-    {
-        ANALYZE_THROWERR("UMFPACK: error in " + msg +
-                         ": status = " + std::to_string(static_cast<int>(mInfo[UMFPACK_STATUS])));
-    }
+    umfpack_dl_free_symbolic(&tSymbolic);
+    umfpack_dl_free_numeric(&tNumeric);
 }
 
 }  // namespace Plato::alg

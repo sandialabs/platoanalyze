@@ -13,7 +13,9 @@
 
 namespace Plato::alg
 {
-
+/// @brief Interface to the UMFPACK sparse direct linear solver. May be used for any type of sparse system.
+///
+/// For symmetric matrices, see CHOLMODLinearSolver.
 class UMFPACKLinearSolver : public Plato::AbstractSolver
 {
    public:
@@ -21,16 +23,6 @@ class UMFPACKLinearSolver : public Plato::AbstractSolver
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = nullptr);
 
     void innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB) override;
-    void report_memory_usage();
-
-   private:
-    void check_umfpack(const std::string &msg);
-    void clear();
-
-    CSCMatrix mMatrix;
-    std::array<double, UMFPACK_INFO> mInfo;
-    void *mSymbolic = nullptr;
-    void *mNumeric = nullptr;
 };
 
 }  // namespace Plato::alg
