@@ -19,32 +19,32 @@ using ColumnVector = typename Plato::CrsMatrixType::OrdinalVectorT;
 using EntriesVector = typename Plato::CrsMatrixType::ScalarVectorT;
 
 /// @brief RAII wrapper for setting up and destroying a `cholmod_common` object.
-struct CholmodCommonSetupTeardown
+struct CHOLMODCommonSetupTeardown
 {
-    CholmodCommonSetupTeardown(Plato::LinearSystemType aLinearSystemType);
-    ~CholmodCommonSetupTeardown();
+    CHOLMODCommonSetupTeardown(Plato::LinearSystemType aLinearSystemType);
+    ~CHOLMODCommonSetupTeardown();
 
-    CholmodCommonSetupTeardown(const CholmodCommonSetupTeardown&) = delete;
-    CholmodCommonSetupTeardown(CholmodCommonSetupTeardown&&) = delete;
-    CholmodCommonSetupTeardown& operator=(const CholmodCommonSetupTeardown&) = delete;
-    CholmodCommonSetupTeardown& operator=(CholmodCommonSetupTeardown&&) = delete;
+    CHOLMODCommonSetupTeardown(const CHOLMODCommonSetupTeardown&) = delete;
+    CHOLMODCommonSetupTeardown(CHOLMODCommonSetupTeardown&&) = delete;
+    CHOLMODCommonSetupTeardown& operator=(const CHOLMODCommonSetupTeardown&) = delete;
+    CHOLMODCommonSetupTeardown& operator=(CHOLMODCommonSetupTeardown&&) = delete;
 
     cholmod_common mValue;
 };
 
 /// @brief RAII wrapper for setting up and destroying a `cholmod_factor` object.
-struct CholmodFactorSetupTeardown
+struct CHOLMODFactorSetupTeardown
 {
-    CholmodFactorSetupTeardown(cholmod_sparse* aCholmodSparse,
-                               std::reference_wrapper<CholmodCommonSetupTeardown>&& aCholmodCommon);
-    ~CholmodFactorSetupTeardown();
+    CHOLMODFactorSetupTeardown(cholmod_sparse* aCHOLMODSparse,
+                               std::reference_wrapper<CHOLMODCommonSetupTeardown>&& aCHOLMODCommon);
+    ~CHOLMODFactorSetupTeardown();
 
-    CholmodFactorSetupTeardown(const CholmodFactorSetupTeardown&) = delete;
-    CholmodFactorSetupTeardown(CholmodFactorSetupTeardown&&) noexcept;
-    CholmodFactorSetupTeardown& operator=(const CholmodFactorSetupTeardown&) = delete;
-    CholmodFactorSetupTeardown& operator=(CholmodFactorSetupTeardown&&) noexcept;
+    CHOLMODFactorSetupTeardown(const CHOLMODFactorSetupTeardown&) = delete;
+    CHOLMODFactorSetupTeardown(CHOLMODFactorSetupTeardown&&) noexcept;
+    CHOLMODFactorSetupTeardown& operator=(const CHOLMODFactorSetupTeardown&) = delete;
+    CHOLMODFactorSetupTeardown& operator=(CHOLMODFactorSetupTeardown&&) noexcept;
 
-    std::reference_wrapper<CholmodCommonSetupTeardown> mCholmodCommon;
+    std::reference_wrapper<CHOLMODCommonSetupTeardown> mCHOLMODCommon;
     cholmod_factor* mValue = nullptr;
 };
 
@@ -67,17 +67,17 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
     void innerSolve(Plato::CrsMatrixType aA, Plato::ScalarVector aX, Plato::ScalarVector aB) override;
 
    private:
-    using CholmodFactorCache =
-        plato::utilities::StateCache<CholmodFactorSetupTeardown, const CSRMatrix&, cholmod_sparse*>;
+    using CHOLMODFactorCache =
+        plato::utilities::StateCache<CHOLMODFactorSetupTeardown, const CSRMatrix&, cholmod_sparse*>;
 
-    CholmodCommonSetupTeardown mCholmodCommon;
-    CholmodFactorCache mCholmodFactorCache;
+    CHOLMODCommonSetupTeardown mCHOLMODCommon;
+    CHOLMODFactorCache mCHOLMODFactorCache;
 };
 
 /// @brief Converts a CSRMatrix to a cholmod_sparse object in lower triangular form, and assumes that @a aMatrix is
 /// symmetric.
 [[nodiscard]] auto convertSymmetricCSRtoCHOLMODSparse(const CSRMatrix& aMatrix,
-                                                      cholmod_common* const aCholmodCommon) -> cholmod_sparse*;
+                                                      cholmod_common* const aCHOLMODCommon) -> cholmod_sparse*;
 
 }  // namespace Plato::alg
 

@@ -8,27 +8,27 @@ namespace Plato::alg
 namespace
 {
 using PlatoOrdinalType = int;
-using CholmodIndexType = std::int32_t;
+using CHOLMODIndexType = std::int32_t;
 
 /// @brief A wrapper for a `cholmod_dense` struct representing a vector. Cleans up its allocation on destruction.
 class CHOLMODVector
 {
    public:
-    CHOLMODVector(const Plato::ScalarVector aPlatoVector, cholmod_common *const aCholmodCommon)
-        : mCholmodCommon{aCholmodCommon},
+    CHOLMODVector(const Plato::ScalarVector aPlatoVector, cholmod_common *const aCHOLMODCommon)
+        : mCHOLMODCommon{aCHOLMODCommon},
           mVector{cholmod_allocate_dense(
-              aPlatoVector.size(), 1, aPlatoVector.size(), CHOLMOD_DOUBLE + CHOLMOD_REAL, aCholmodCommon)}
+              aPlatoVector.size(), 1, aPlatoVector.size(), CHOLMOD_DOUBLE + CHOLMOD_REAL, aCHOLMODCommon)}
     {
         const auto tMirror = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aPlatoVector);
         std::copy_n(tMirror.data(), tMirror.size(), static_cast<double *>(mVector->x));
     }
 
-    ~CHOLMODVector() { cholmod_free_dense(&mVector, mCholmodCommon); }
+    ~CHOLMODVector() { cholmod_free_dense(&mVector, mCHOLMODCommon); }
 
     [[nodiscard]] auto get() -> cholmod_dense * { return mVector; }
 
    private:
-    cholmod_common *mCholmodCommon;
+    cholmod_common *mCHOLMODCommon;
     cholmod_dense *mVector;
 };
 
@@ -41,41 +41,41 @@ void cholmod_to_scalar_vector(const cholmod_dense &aCHOLMODDense, const Plato::S
 
 }  // namespace
 
-CholmodCommonSetupTeardown::CholmodCommonSetupTeardown(const Plato::LinearSystemType aLinearSystemType)
+CHOLMODCommonSetupTeardown::CHOLMODCommonSetupTeardown(const Plato::LinearSystemType aLinearSystemType)
 {
     cholmod_start(&mValue);
     mValue.supernodal =
         aLinearSystemType != LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE ? CHOLMOD_SIMPLICIAL : CHOLMOD_AUTO;
 }
 
-CholmodCommonSetupTeardown::~CholmodCommonSetupTeardown() { cholmod_finish(&mValue); }
+CHOLMODCommonSetupTeardown::~CHOLMODCommonSetupTeardown() { cholmod_finish(&mValue); }
 
-CholmodFactorSetupTeardown::CholmodFactorSetupTeardown(
-    cholmod_sparse *const aCholmodSparse, std::reference_wrapper<CholmodCommonSetupTeardown> &&aCholmodCommon)
-    : mCholmodCommon{std::move(aCholmodCommon)}, mValue{cholmod_analyze(aCholmodSparse, &aCholmodCommon.get().mValue)}
+CHOLMODFactorSetupTeardown::CHOLMODFactorSetupTeardown(
+    cholmod_sparse *const aCHOLMODSparse, std::reference_wrapper<CHOLMODCommonSetupTeardown> &&aCHOLMODCommon)
+    : mCHOLMODCommon{std::move(aCHOLMODCommon)}, mValue{cholmod_analyze(aCHOLMODSparse, &aCHOLMODCommon.get().mValue)}
 {
 }
 
-CholmodFactorSetupTeardown::~CholmodFactorSetupTeardown()
+CHOLMODFactorSetupTeardown::~CHOLMODFactorSetupTeardown()
 {
     if (mValue)
     {
-        cholmod_free_factor(&mValue, &mCholmodCommon.get().mValue);
+        cholmod_free_factor(&mValue, &mCHOLMODCommon.get().mValue);
     }
 }
 
-CholmodFactorSetupTeardown::CholmodFactorSetupTeardown(CholmodFactorSetupTeardown &&aOther) noexcept
-    : mValue{aOther.mValue}, mCholmodCommon{aOther.mCholmodCommon}
+CHOLMODFactorSetupTeardown::CHOLMODFactorSetupTeardown(CHOLMODFactorSetupTeardown &&aOther) noexcept
+    : mValue{aOther.mValue}, mCHOLMODCommon{aOther.mCHOLMODCommon}
 {
     aOther.mValue = nullptr;
 }
 
-auto CholmodFactorSetupTeardown::operator=(CholmodFactorSetupTeardown &&aOther) noexcept -> CholmodFactorSetupTeardown &
+auto CHOLMODFactorSetupTeardown::operator=(CHOLMODFactorSetupTeardown &&aOther) noexcept -> CHOLMODFactorSetupTeardown &
 {
     if (this != &aOther)
     {
         mValue = aOther.mValue;
-        mCholmodCommon = aOther.mCholmodCommon;
+        mCHOLMODCommon = aOther.mCHOLMODCommon;
         aOther.mValue = nullptr;
     }
     return *this;
@@ -85,9 +85,9 @@ CHOLMODLinearSolver::CHOLMODLinearSolver(const Teuchos::ParameterList &aSolverPa
                                          const Plato::LinearSystemType aLinearSystemType,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs),
-      mCholmodCommon{aLinearSystemType},
-      mCholmodFactorCache{[this](const CSRMatrix &, cholmod_sparse *const aCholmodSparse)
-                          { return CholmodFactorSetupTeardown{aCholmodSparse, std::ref(mCholmodCommon)}; },
+      mCHOLMODCommon{aLinearSystemType},
+      mCHOLMODFactorCache{[this](const CSRMatrix &, cholmod_sparse *const aCHOLMODSparse)
+                          { return CHOLMODFactorSetupTeardown{aCHOLMODSparse, std::ref(mCHOLMODCommon)}; },
                           [](const CSRMatrix &aMatrix, cholmod_sparse *const)
                           { return crs_matrix_row_column_hash(aMatrix.mRowBegin, aMatrix.mColumns); }}
 {
@@ -107,27 +107,27 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
     }
 
     const auto tCRSMatrix = constructCSRMatrix(tRowBegin, tColumns, tValues);
-    auto *tCholmodSparseA = convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &mCholmodCommon.mValue);
+    auto *tCHOLMODSparseA = convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &mCHOLMODCommon.mValue);
 
-    const auto &tCholmodFactor = mCholmodFactorCache.compute(tCRSMatrix, tCholmodSparseA);
-    cholmod_factorize(tCholmodSparseA, tCholmodFactor.mValue, &mCholmodCommon.mValue);
+    const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tCRSMatrix, tCHOLMODSparseA);
+    cholmod_factorize(tCHOLMODSparseA, tCHOLMODFactor.mValue, &mCHOLMODCommon.mValue);
 
-    auto tRHS = CHOLMODVector{aB, &mCholmodCommon.mValue};
-    auto tSolution = cholmod_solve(CHOLMOD_A, tCholmodFactor.mValue, tRHS.get(), &mCholmodCommon.mValue);
+    auto tRHS = CHOLMODVector{aB, &mCHOLMODCommon.mValue};
+    auto tSolution = cholmod_solve(CHOLMOD_A, tCHOLMODFactor.mValue, tRHS.get(), &mCHOLMODCommon.mValue);
 
     cholmod_to_scalar_vector(*tSolution, aX);
-    cholmod_free_dense(&tSolution, &mCholmodCommon.mValue);
+    cholmod_free_dense(&tSolution, &mCHOLMODCommon.mValue);
 }
 
 auto convertSymmetricCSRtoCHOLMODSparse(const CSRMatrix &aMatrix,
-                                        cholmod_common *const aCholmodCommon) -> cholmod_sparse *
+                                        cholmod_common *const aCHOLMODCommon) -> cholmod_sparse *
 {
-    constexpr auto tCholmodSTypeLowerDiagonal = -1;
-    auto *tCholmodTriplet =
+    constexpr auto tCHOLMODSTypeLowerDiagonal = -1;
+    auto *tCHOLMODTriplet =
         cholmod_allocate_triplet(aMatrix.numberOfRows(), aMatrix.numberOfRows(), aMatrix.mValues.size(),
-                                 tCholmodSTypeLowerDiagonal, CHOLMOD_REAL, aCholmodCommon);
+                                 tCHOLMODSTypeLowerDiagonal, CHOLMOD_REAL, aCHOLMODCommon);
 
-    auto tCholmodCounter = CholmodIndexType{0};
+    auto tCHOLMODCounter = CHOLMODIndexType{0};
     for (auto tRowIndex = 0; tRowIndex < aMatrix.mRowBegin.size() - 1; ++tRowIndex)
     {
         const auto tStartIndex = aMatrix.mRowBegin[tRowIndex];
@@ -137,18 +137,18 @@ auto convertSymmetricCSRtoCHOLMODSparse(const CSRMatrix &aMatrix,
             const auto tColIndex = aMatrix.mColumns[tIndexIntoEntries];
             if (tColIndex <= tRowIndex)
             {
-                static_cast<CholmodIndexType *>(tCholmodTriplet->i)[tCholmodCounter] = tRowIndex;
-                static_cast<CholmodIndexType *>(tCholmodTriplet->j)[tCholmodCounter] = tColIndex;
-                static_cast<double *>(tCholmodTriplet->x)[tCholmodCounter] = aMatrix.mValues[tIndexIntoEntries];
-                ++tCholmodCounter;
+                static_cast<CHOLMODIndexType *>(tCHOLMODTriplet->i)[tCHOLMODCounter] = tRowIndex;
+                static_cast<CHOLMODIndexType *>(tCHOLMODTriplet->j)[tCHOLMODCounter] = tColIndex;
+                static_cast<double *>(tCHOLMODTriplet->x)[tCHOLMODCounter] = aMatrix.mValues[tIndexIntoEntries];
+                ++tCHOLMODCounter;
             }
         }
     }
 
-    tCholmodTriplet->nnz = tCholmodCounter;
-    auto *tCholmodSparse = cholmod_triplet_to_sparse(tCholmodTriplet, tCholmodCounter, aCholmodCommon);
-    cholmod_free_triplet(&tCholmodTriplet, aCholmodCommon);
-    return tCholmodSparse;
+    tCHOLMODTriplet->nnz = tCHOLMODCounter;
+    auto *tCHOLMODSparse = cholmod_triplet_to_sparse(tCHOLMODTriplet, tCHOLMODCounter, aCHOLMODCommon);
+    cholmod_free_triplet(&tCHOLMODTriplet, aCHOLMODCommon);
+    return tCHOLMODSparse;
 }
 
 }  // namespace Plato::alg
