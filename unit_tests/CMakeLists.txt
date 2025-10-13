@@ -101,7 +101,7 @@ if(PLATOANALYZE_ENABLE_TACHO)
 endif()
 
 if(PLATOANALYZE_ENABLE_UMFPACK)
-  set(UMFPACK_CPP_FILES SuiteSparseUtilsTests.cpp CHOLMODLinearSolverTests.cpp UMFPACKLinearSolverTests.cpp)
+  set(UMFPACK_CPP_FILES SuiteSparseUtilsTests.cpp SuiteSparseSolverFactoryTests.cpp CHOLMODLinearSolverTests.cpp UMFPACKLinearSolverTests.cpp)
   Plato_add_test(UMFPACKSolver "${UMFPACK_CPP_FILES}")
 endif()
 

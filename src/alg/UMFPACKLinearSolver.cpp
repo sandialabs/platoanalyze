@@ -43,6 +43,7 @@ UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverPa
 
 void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
 {
+    std::cout << "Using UMFPACK\n";
     const auto tNumberOfRows = aA.numRows();
     auto tMatrix = convertCSRtoCSC(constructCSRMatrix(aA));
 

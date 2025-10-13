@@ -97,6 +97,7 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
                                      const Plato::ScalarVector aX,
                                      const Plato::ScalarVector aB)
 {
+    std::cout << "Using CHOLMOD\n";
     const auto [tRowBegin, tColumns, tValues] = crs_matrix_non_block_form<Plato::OrdinalType>(aA);
     if (!has_symmetric_sparsity_pattern<PlatoOrdinalType>(tRowBegin, tColumns))
     {
