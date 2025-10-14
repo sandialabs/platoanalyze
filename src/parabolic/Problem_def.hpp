@@ -158,9 +158,9 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList &aProble
             }
         }
     }
-
-    Plato::SolverFactory tSolverFactory(aProblemParams.sublist("Linear Solver"),
-                                        LinearSystemType::SYMMETRIC_INDEFINITE);
+    const auto tSystemType =
+        mPhysics == "Thermomechanical" ? LinearSystemType::SYMMETRIC_PATTERN : LinearSystemType::SYMMETRIC_INDEFINITE;
+    auto tSolverFactory = Plato::SolverFactory{aProblemParams.sublist("Linear Solver"), tSystemType};
     mSolver = tSolverFactory.create(aMesh->NumNodes(), aMachine, ElementType::mNumDofsPerNode, mMPCs);
 }
 

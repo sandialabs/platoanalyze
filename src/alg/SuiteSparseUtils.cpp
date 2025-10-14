@@ -45,8 +45,8 @@ auto constructCSRMatrix(typename Plato::CrsMatrix<int>::RowMapVectorT aRowBegin,
 
 CSCMatrix convertCSRtoCSC(const CSRMatrix& aMatrix)
 {
-    assert(aMatrix.rowBegin.size() > 0);
-    assert(aMatrix.columns.size() == aMatrix.values.size());
+    assert(aMatrix.mRowBegin.size() > 0);
+    assert(aMatrix.mColumns.size() == aMatrix.mValues.size());
     const auto tNumberOfRows = aMatrix.numberOfRows();
     const auto tNumberOfEntries = aMatrix.mColumns.size();
 
