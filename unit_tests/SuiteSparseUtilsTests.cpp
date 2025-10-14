@@ -24,7 +24,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, Symmetric)
                       /* .mColumns = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
                       /* .mValues = */ std::vector<double>{2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0, -1.0, -1.0, 2.0}};
 
-    const auto tAAsCSC = convertCSRtoCSC(tAAsCSR);
+    const auto tAAsCSC = to_CSC(tAAsCSR);
 
     TEST_ASSERT(tAAsCSC.mColumnBegin == tAAsCSR.mRowBegin);
     TEST_ASSERT(tAAsCSC.mRows == tAAsCSR.mColumns);
@@ -45,7 +45,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricEntries)
         /* .mColumns = */ std::vector<SuiteSparse_long>{0, 1, 0, 1, 2, 1, 2, 3, 2, 3},
         /* .mValues = */ std::vector<double>{2.0, 1.0, -1.0, 2.0, 1.0, -1.0, 2.0, 1.0, -1.0, 2.0}};
 
-    const pa::CSCMatrix tAAsCSC = convertCSRtoCSC(tAAsCSR);
+    const pa::CSCMatrix tAAsCSC = to_CSC(tAAsCSR);
 
     const pa::CSCMatrix tAAsCSCExpected = {
         /* .mColumnBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 8, 10},
@@ -72,7 +72,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricSparsity)
                       /* .mColumns = */ std::vector<SuiteSparse_long>{0, 1, 2, 1, 2, 3, 1, 2, 3, 0, 2, 3},
                       /* .mValues = */ std::vector<double>{1, 3, 2, 1, 1, 2, 4, 3, 2, 4, 3, 3}};
 
-    const auto tAAsCSC = convertCSRtoCSC(tAAsCSR);
+    const auto tAAsCSC = to_CSC(tAAsCSR);
 
     const auto tAAsCSCExpected =
         pa::CSCMatrix{/* .mColumnBegin = */ std::vector<SuiteSparse_long>{0, 2, 5, 9, 12},
@@ -84,7 +84,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricSparsity)
     TEST_ASSERT(tAAsCSC.mValues == tAAsCSCExpected.mValues);
 }
 
-TEUCHOS_UNIT_TEST(UMFPACKSolver, constructCSRMatrix)
+TEUCHOS_UNIT_TEST(UMFPACKSolver, make_CSR_matrix)
 {
     /*
          2    -1     0     0
@@ -110,7 +110,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, constructCSRMatrix)
 
     // Direct from CrsMatrix
     {
-        const auto tA = pa::constructCSRMatrix(*tMatrixA);
+        const auto tA = pa::make_CSR_matrix(*tMatrixA);
         TEST_ASSERT(tA.mRowBegin == tAAsCSRExpected.mRowBegin);
         TEST_ASSERT(tA.mColumns == tAAsCSRExpected.mColumns);
         TEST_ASSERT(tA.mValues == tAAsCSRExpected.mValues);
@@ -118,7 +118,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, constructCSRMatrix)
     // Overload
     {
         const auto [tRowIndexSpans, tColumns, tEntries] = Plato::crs_matrix_non_block_form<int>(*tMatrixA);
-        const auto tA = pa::constructCSRMatrix(tRowIndexSpans, tColumns, tEntries);
+        const auto tA = pa::make_CSR_matrix(tRowIndexSpans, tColumns, tEntries);
         TEST_ASSERT(tA.mRowBegin == tAAsCSRExpected.mRowBegin);
         TEST_ASSERT(tA.mColumns == tAAsCSRExpected.mColumns);
         TEST_ASSERT(tA.mValues == tAAsCSRExpected.mValues);

@@ -19,6 +19,7 @@ namespace Plato
 {
 namespace TestHelpers
 {
+
 using namespace KokkosSparse;
 using namespace KokkosSparse::Experimental;
 using namespace KokkosKernels;

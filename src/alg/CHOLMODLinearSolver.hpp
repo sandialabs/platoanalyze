@@ -4,6 +4,7 @@
 
 #include <cholmod.h>
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <plato/utilities/StateCache.hpp>
@@ -24,28 +25,37 @@ struct CHOLMODCommonSetupTeardown
     CHOLMODCommonSetupTeardown(Plato::LinearSystemType aLinearSystemType);
     ~CHOLMODCommonSetupTeardown();
 
-    CHOLMODCommonSetupTeardown(const CHOLMODCommonSetupTeardown&) = delete;
-    CHOLMODCommonSetupTeardown(CHOLMODCommonSetupTeardown&&) = delete;
-    CHOLMODCommonSetupTeardown& operator=(const CHOLMODCommonSetupTeardown&) = delete;
-    CHOLMODCommonSetupTeardown& operator=(CHOLMODCommonSetupTeardown&&) = delete;
+    CHOLMODCommonSetupTeardown(const CHOLMODCommonSetupTeardown &) = delete;
+    CHOLMODCommonSetupTeardown(CHOLMODCommonSetupTeardown &&) = delete;
+    CHOLMODCommonSetupTeardown &operator=(const CHOLMODCommonSetupTeardown &) = delete;
+    CHOLMODCommonSetupTeardown &operator=(CHOLMODCommonSetupTeardown &&) = delete;
 
     cholmod_common mValue;
 };
 
-/// @brief RAII wrapper for setting up and destroying a `cholmod_factor` object.
-struct CHOLMODFactorSetupTeardown
+/// @brief A generic RAII wrapper for a pointer to a CHOLMOD object that is freed on destruction.
+template <typename CHOLMODObject>
+class CHOLMODObjectWrapper
 {
-    CHOLMODFactorSetupTeardown(cholmod_sparse* aCHOLMODSparse,
-                               std::reference_wrapper<CHOLMODCommonSetupTeardown>&& aCHOLMODCommon);
-    ~CHOLMODFactorSetupTeardown();
+   public:
+    /// @brief On destruction @a aDeleter is executed with @a aObject passed as an argument. @a aDeleter should call the
+    /// appropriate cholmod free function to deallocate the object.
+    template <typename Deleter>
+    CHOLMODObjectWrapper(CHOLMODObject *const aObject,
+                         std::reference_wrapper<CHOLMODCommonSetupTeardown> &&aCHOLMODCommon,
+                         Deleter &&aDeleter);
 
-    CHOLMODFactorSetupTeardown(const CHOLMODFactorSetupTeardown&) = delete;
-    CHOLMODFactorSetupTeardown(CHOLMODFactorSetupTeardown&&) noexcept;
-    CHOLMODFactorSetupTeardown& operator=(const CHOLMODFactorSetupTeardown&) = delete;
-    CHOLMODFactorSetupTeardown& operator=(CHOLMODFactorSetupTeardown&&) noexcept;
+    CHOLMODObjectWrapper(const CHOLMODObjectWrapper &) = delete;
+    CHOLMODObjectWrapper(CHOLMODObjectWrapper &&) noexcept;
+    CHOLMODObjectWrapper &operator=(const CHOLMODObjectWrapper &) = delete;
+    CHOLMODObjectWrapper &operator=(CHOLMODObjectWrapper &&) noexcept;
+    ~CHOLMODObjectWrapper();
 
+    CHOLMODObject *mObject = nullptr;
+
+   private:
     std::reference_wrapper<CHOLMODCommonSetupTeardown> mCHOLMODCommon;
-    cholmod_factor* mValue = nullptr;
+    std::function<void(CHOLMODObject **, cholmod_common *)> mDeleter;
 };
 
 /// @brief Interface for the cholmod solver. This only solves symmetric matrices, and only indefinite matrices if it is
@@ -53,7 +63,7 @@ struct CHOLMODFactorSetupTeardown
 class CHOLMODLinearSolver : public Plato::AbstractSolver
 {
    public:
-    CHOLMODLinearSolver(const Teuchos::ParameterList& aSolverParams,
+    CHOLMODLinearSolver(const Teuchos::ParameterList &aSolverParams,
                         Plato::LinearSystemType aLinearSystemType,
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = {});
 
@@ -68,7 +78,7 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
 
    private:
     using CHOLMODFactorCache =
-        plato::utilities::StateCache<CHOLMODFactorSetupTeardown, const CSRMatrix&, cholmod_sparse*>;
+        plato::utilities::StateCache<CHOLMODObjectWrapper<cholmod_factor>, const CSRMatrix &, cholmod_sparse *>;
 
     CHOLMODCommonSetupTeardown mCHOLMODCommon;
     CHOLMODFactorCache mCHOLMODFactorCache;
@@ -76,8 +86,47 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
 
 /// @brief Converts a CSRMatrix to a cholmod_sparse object in lower triangular form, and assumes that @a aMatrix is
 /// symmetric.
-[[nodiscard]] auto convertSymmetricCSRtoCHOLMODSparse(const CSRMatrix& aMatrix,
-                                                      cholmod_common* const aCHOLMODCommon) -> cholmod_sparse*;
+[[nodiscard]] auto convert_symmetric_CSR_to_CHOLMOD_sparse(
+    const CSRMatrix &aMatrix, CHOLMODCommonSetupTeardown &aCHOLMODCommon) -> CHOLMODObjectWrapper<cholmod_sparse>;
+
+template <typename CHOLMODObject>
+template <typename Deleter>
+CHOLMODObjectWrapper<CHOLMODObject>::CHOLMODObjectWrapper(
+    CHOLMODObject *const aObject,
+    std::reference_wrapper<CHOLMODCommonSetupTeardown> &&aCHOLMODCommon,
+    Deleter &&aDeleter)
+    : mObject{aObject}, mCHOLMODCommon{std::move(aCHOLMODCommon)}, mDeleter{std::forward<Deleter>(aDeleter)}
+{
+}
+
+template <typename CHOLMODObject>
+CHOLMODObjectWrapper<CHOLMODObject>::~CHOLMODObjectWrapper()
+{
+    if (mObject)
+    {
+        mDeleter(&mObject, &mCHOLMODCommon.get().mValue);
+    }
+}
+
+template <typename CHOLMODObject>
+CHOLMODObjectWrapper<CHOLMODObject>::CHOLMODObjectWrapper(CHOLMODObjectWrapper &&aOther) noexcept
+    : mObject{aOther.mObject}, mCHOLMODCommon{aOther.mCHOLMODCommon}, mDeleter{std::move(aOther.mDeleter)}
+{
+    aOther.mObject = nullptr;
+}
+
+template <typename CHOLMODObject>
+auto CHOLMODObjectWrapper<CHOLMODObject>::operator=(CHOLMODObjectWrapper &&aOther) noexcept -> CHOLMODObjectWrapper &
+{
+    if (this != &aOther)
+    {
+        mObject = aOther.mObject;
+        mCHOLMODCommon = aOther.mCHOLMODCommon;
+        mDeleter = std::move(aOther.mDeleter);
+        aOther.mObject = nullptr;
+    }
+    return *this;
+}
 
 }  // namespace Plato::alg
 

@@ -45,7 +45,7 @@ void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVect
 {
     std::cout << "Using UMFPACK\n";
     const auto tNumberOfRows = aA.numRows();
-    auto tMatrix = convertCSRtoCSC(constructCSRMatrix(aA));
+    auto tMatrix = to_CSC(make_CSR_matrix(aA));
 
     auto tInfo = std::array<double, UMFPACK_INFO>{};
 

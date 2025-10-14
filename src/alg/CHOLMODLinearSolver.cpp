@@ -7,8 +7,34 @@ namespace Plato::alg
 {
 namespace
 {
-using PlatoOrdinalType = int;
 using CHOLMODIndexType = std::int32_t;
+
+template <typename CHOLMODObject>
+[[nodiscard]] auto make_cholmod_wrapper(CHOLMODObject *const aCHOLMODObject,
+                                        std::reference_wrapper<CHOLMODCommonSetupTeardown> &&aCHOLMODCommon)
+    -> CHOLMODObjectWrapper<CHOLMODObject>
+{
+    if constexpr (std::is_same_v<CHOLMODObject, cholmod_sparse>)
+    {
+        return CHOLMODObjectWrapper{aCHOLMODObject, std::move(aCHOLMODCommon), cholmod_free_sparse};
+    }
+    else if constexpr (std::is_same_v<CHOLMODObject, cholmod_dense>)
+    {
+        return CHOLMODObjectWrapper{aCHOLMODObject, std::move(aCHOLMODCommon), cholmod_free_dense};
+    }
+    else if constexpr (std::is_same_v<CHOLMODObject, cholmod_triplet>)
+    {
+        return CHOLMODObjectWrapper{aCHOLMODObject, std::move(aCHOLMODCommon), cholmod_free_triplet};
+    }
+}
+
+[[nodiscard]] auto make_cholmod_factor_wrapper(cholmod_sparse *const aCHOLMODSparse,
+                                               std::reference_wrapper<CHOLMODCommonSetupTeardown> &&aCHOLMODCommon)
+    -> CHOLMODObjectWrapper<cholmod_factor>
+{
+    return CHOLMODObjectWrapper<cholmod_factor>{cholmod_analyze(aCHOLMODSparse, &aCHOLMODCommon.get().mValue),
+                                                std::move(aCHOLMODCommon), cholmod_free_factor};
+}
 
 /// @brief A wrapper for a `cholmod_dense` struct representing a vector. Cleans up its allocation on destruction.
 class CHOLMODVector
@@ -50,44 +76,13 @@ CHOLMODCommonSetupTeardown::CHOLMODCommonSetupTeardown(const Plato::LinearSystem
 
 CHOLMODCommonSetupTeardown::~CHOLMODCommonSetupTeardown() { cholmod_finish(&mValue); }
 
-CHOLMODFactorSetupTeardown::CHOLMODFactorSetupTeardown(
-    cholmod_sparse *const aCHOLMODSparse, std::reference_wrapper<CHOLMODCommonSetupTeardown> &&aCHOLMODCommon)
-    : mCHOLMODCommon{std::move(aCHOLMODCommon)}, mValue{cholmod_analyze(aCHOLMODSparse, &aCHOLMODCommon.get().mValue)}
-{
-}
-
-CHOLMODFactorSetupTeardown::~CHOLMODFactorSetupTeardown()
-{
-    if (mValue)
-    {
-        cholmod_free_factor(&mValue, &mCHOLMODCommon.get().mValue);
-    }
-}
-
-CHOLMODFactorSetupTeardown::CHOLMODFactorSetupTeardown(CHOLMODFactorSetupTeardown &&aOther) noexcept
-    : mValue{aOther.mValue}, mCHOLMODCommon{aOther.mCHOLMODCommon}
-{
-    aOther.mValue = nullptr;
-}
-
-auto CHOLMODFactorSetupTeardown::operator=(CHOLMODFactorSetupTeardown &&aOther) noexcept -> CHOLMODFactorSetupTeardown &
-{
-    if (this != &aOther)
-    {
-        mValue = aOther.mValue;
-        mCHOLMODCommon = aOther.mCHOLMODCommon;
-        aOther.mValue = nullptr;
-    }
-    return *this;
-}
-
 CHOLMODLinearSolver::CHOLMODLinearSolver(const Teuchos::ParameterList &aSolverParams,
                                          const Plato::LinearSystemType aLinearSystemType,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs),
       mCHOLMODCommon{aLinearSystemType},
       mCHOLMODFactorCache{[this](const CSRMatrix &, cholmod_sparse *const aCHOLMODSparse)
-                          { return CHOLMODFactorSetupTeardown{aCHOLMODSparse, std::ref(mCHOLMODCommon)}; },
+                          { return make_cholmod_factor_wrapper(aCHOLMODSparse, std::ref(mCHOLMODCommon)); },
                           [](const CSRMatrix &aMatrix, cholmod_sparse *const)
                           { return crs_matrix_row_column_hash(aMatrix.mRowBegin, aMatrix.mColumns); }}
 {
@@ -98,33 +93,34 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
                                      const Plato::ScalarVector aB)
 {
     const auto [tRowBegin, tColumns, tValues] = crs_matrix_non_block_form<Plato::OrdinalType>(aA);
-    if (!has_symmetric_sparsity_pattern<PlatoOrdinalType>(tRowBegin, tColumns))
+    if (!has_symmetric_sparsity_pattern<Plato::OrdinalType>(tRowBegin, tColumns))
     {
         throw std::runtime_error(
             "CHOLMOD was given a matrix with a non-symmetric sparsity pattern.\n"
             "CHOLMOD must only be used with symmetric matrices, for general matrices use UMFPACK.");
     }
 
-    const auto tCRSMatrix = constructCSRMatrix(tRowBegin, tColumns, tValues);
-    auto *tCHOLMODSparseA = convertSymmetricCSRtoCHOLMODSparse(tCRSMatrix, &mCHOLMODCommon.mValue);
+    const auto tCRSMatrix = make_CSR_matrix(tRowBegin, tColumns, tValues);
+    auto tCHOLMODSparseA = convert_symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, mCHOLMODCommon);
 
-    const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tCRSMatrix, tCHOLMODSparseA);
-    cholmod_factorize(tCHOLMODSparseA, tCHOLMODFactor.mValue, &mCHOLMODCommon.mValue);
+    const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tCRSMatrix, tCHOLMODSparseA.mObject);
+    cholmod_factorize(tCHOLMODSparseA.mObject, tCHOLMODFactor.mObject, &mCHOLMODCommon.mValue);
 
     auto tRHS = CHOLMODVector{aB, &mCHOLMODCommon.mValue};
-    auto tSolution = cholmod_solve(CHOLMOD_A, tCHOLMODFactor.mValue, tRHS.get(), &mCHOLMODCommon.mValue);
+    auto tSolution = make_cholmod_wrapper(
+        cholmod_solve(CHOLMOD_A, tCHOLMODFactor.mObject, tRHS.get(), &mCHOLMODCommon.mValue), std::ref(mCHOLMODCommon));
 
-    cholmod_to_scalar_vector(*tSolution, aX);
-    cholmod_free_dense(&tSolution, &mCHOLMODCommon.mValue);
+    cholmod_to_scalar_vector(*tSolution.mObject, aX);
 }
 
-auto convertSymmetricCSRtoCHOLMODSparse(const CSRMatrix &aMatrix,
-                                        cholmod_common *const aCHOLMODCommon) -> cholmod_sparse *
+auto convert_symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix, CHOLMODCommonSetupTeardown &aCHOLMODCommon)
+    -> CHOLMODObjectWrapper<cholmod_sparse>
 {
     constexpr auto tCHOLMODSTypeLowerDiagonal = -1;
-    auto *tCHOLMODTriplet =
+    auto tCHOLMODTriplet = make_cholmod_wrapper(
         cholmod_allocate_triplet(aMatrix.numberOfRows(), aMatrix.numberOfRows(), aMatrix.mValues.size(),
-                                 tCHOLMODSTypeLowerDiagonal, CHOLMOD_REAL, aCHOLMODCommon);
+                                 tCHOLMODSTypeLowerDiagonal, CHOLMOD_REAL, &aCHOLMODCommon.mValue),
+        std::ref(aCHOLMODCommon));
 
     auto tCHOLMODCounter = CHOLMODIndexType{0};
     for (auto tRowIndex = 0; tRowIndex < aMatrix.mRowBegin.size() - 1; ++tRowIndex)
@@ -136,18 +132,18 @@ auto convertSymmetricCSRtoCHOLMODSparse(const CSRMatrix &aMatrix,
             const auto tColIndex = aMatrix.mColumns[tIndexIntoEntries];
             if (tColIndex <= tRowIndex)
             {
-                static_cast<CHOLMODIndexType *>(tCHOLMODTriplet->i)[tCHOLMODCounter] = tRowIndex;
-                static_cast<CHOLMODIndexType *>(tCHOLMODTriplet->j)[tCHOLMODCounter] = tColIndex;
-                static_cast<double *>(tCHOLMODTriplet->x)[tCHOLMODCounter] = aMatrix.mValues[tIndexIntoEntries];
+                static_cast<CHOLMODIndexType *>(tCHOLMODTriplet.mObject->i)[tCHOLMODCounter] = tRowIndex;
+                static_cast<CHOLMODIndexType *>(tCHOLMODTriplet.mObject->j)[tCHOLMODCounter] = tColIndex;
+                static_cast<double *>(tCHOLMODTriplet.mObject->x)[tCHOLMODCounter] = aMatrix.mValues[tIndexIntoEntries];
                 ++tCHOLMODCounter;
             }
         }
     }
 
-    tCHOLMODTriplet->nnz = tCHOLMODCounter;
-    auto *tCHOLMODSparse = cholmod_triplet_to_sparse(tCHOLMODTriplet, tCHOLMODCounter, aCHOLMODCommon);
-    cholmod_free_triplet(&tCHOLMODTriplet, aCHOLMODCommon);
-    return tCHOLMODSparse;
+    tCHOLMODTriplet.mObject->nnz = tCHOLMODCounter;
+    return make_cholmod_wrapper(
+        cholmod_triplet_to_sparse(tCHOLMODTriplet.mObject, tCHOLMODCounter, &aCHOLMODCommon.mValue),
+        std::ref(aCHOLMODCommon));
 }
 
 }  // namespace Plato::alg

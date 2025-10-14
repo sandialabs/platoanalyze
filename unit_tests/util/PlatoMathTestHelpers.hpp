@@ -19,10 +19,6 @@ using TestComparisonResult = std::pair<bool, std::string>;
 template <typename DataType>
 void set_view_from_vector(Plato::ScalarVectorT<DataType> aView, const std::vector<DataType> &aVector);
 
-/// @brief Returns a vector with a copy of the data in @a aView.
-template <typename DataType>
-[[nodiscard]] auto to_vector(Plato::ScalarVectorT<DataType> aView) -> std::vector<DataType>;
-
 void set_matrix_data(Teuchos::RCP<Plato::CrsMatrixType> aMatrix,
                      const std::vector<Plato::OrdinalType> &aRowMap,
                      const std::vector<Plato::OrdinalType> &aColMap,
@@ -103,17 +99,6 @@ void set_view_from_vector(Plato::ScalarVectorT<DataType> aView, const std::vecto
     Kokkos::View<const DataType *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> tHostView(aVector.data(),
                                                                                          aVector.size());
     Kokkos::deep_copy(aView, tHostView);
-}
-
-template <typename DataType>
-auto to_vector(const Plato::ScalarVectorT<DataType> aView) -> std::vector<DataType>
-{
-    auto tMirrorView = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace(), aView);
-    auto tVector = std::vector<DataType>{};
-    tVector.reserve(tMirrorView.size());
-    std::copy(Kokkos::Experimental::begin(tMirrorView), Kokkos::Experimental::end(tMirrorView),
-              std::back_inserter(tVector));
-    return tVector;
 }
 
 template <typename DataType>

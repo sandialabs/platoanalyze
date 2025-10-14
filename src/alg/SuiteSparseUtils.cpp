@@ -10,9 +10,9 @@ namespace Plato::alg
 namespace
 {
 template <typename ReturnType, typename ViewType>
-[[nodiscard]] auto kokkosViewToStdVector(ViewType aView) -> std::vector<ReturnType>
+[[nodiscard]] auto kokkos_view_to_std_vector(ViewType aView) -> std::vector<ReturnType>
 {
-    static_assert(ViewType::rank() == 1, "invalid usage of kokkosViewToStdVector: requires one dimension");
+    static_assert(ViewType::rank() == 1, "invalid usage of kokkos_view_to_std_vector: requires one dimension");
 
     const auto tMirror = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aView);
     auto tVectorCopy = std::vector<ReturnType>{};
@@ -28,22 +28,22 @@ auto CSRMatrix::numberOfRows() const -> SuiteSparse_long { return mRowBegin.size
 
 auto CSCMatrix::numberOfColumns() const -> SuiteSparse_long { return mColumnBegin.size() - 1; }
 
-CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int>& aA)
+CSRMatrix make_CSR_matrix(const Plato::CrsMatrix<int>& aA)
 {
     using CrsOrdinal = int;
     const auto [tRowBegin, tColumns, tValues] = Plato::crs_matrix_non_block_form<CrsOrdinal>(aA);
-    return constructCSRMatrix(tRowBegin, tColumns, tValues);
+    return make_CSR_matrix(tRowBegin, tColumns, tValues);
 }
 
-auto constructCSRMatrix(typename Plato::CrsMatrix<int>::RowMapVectorT aRowBegin,
-                        typename Plato::CrsMatrix<int>::OrdinalVectorT aColumns,
-                        typename Plato::CrsMatrix<int>::ScalarVectorT aValues) -> CSRMatrix
+auto make_CSR_matrix(typename Plato::CrsMatrix<int>::RowMapVectorT aRowBegin,
+                     typename Plato::CrsMatrix<int>::OrdinalVectorT aColumns,
+                     typename Plato::CrsMatrix<int>::ScalarVectorT aValues) -> CSRMatrix
 {
-    return CSRMatrix{kokkosViewToStdVector<SuiteSparse_long>(aRowBegin),
-                     kokkosViewToStdVector<SuiteSparse_long>(aColumns), kokkosViewToStdVector<double>(aValues)};
+    return CSRMatrix{kokkos_view_to_std_vector<SuiteSparse_long>(aRowBegin),
+                     kokkos_view_to_std_vector<SuiteSparse_long>(aColumns), kokkos_view_to_std_vector<double>(aValues)};
 }
 
-CSCMatrix convertCSRtoCSC(const CSRMatrix& aMatrix)
+CSCMatrix to_CSC(const CSRMatrix& aMatrix)
 {
     assert(aMatrix.mRowBegin.size() > 0);
     assert(aMatrix.mColumns.size() == aMatrix.mValues.size());
