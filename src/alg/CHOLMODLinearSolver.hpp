@@ -86,8 +86,8 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
 
 /// @brief Converts a CSRMatrix to a cholmod_sparse object in lower triangular form, and assumes that @a aMatrix is
 /// symmetric.
-[[nodiscard]] auto convert_symmetric_CSR_to_CHOLMOD_sparse(
-    const CSRMatrix &aMatrix, CHOLMODCommonSetupTeardown &aCHOLMODCommon) -> CHOLMODObjectWrapper<cholmod_sparse>;
+[[nodiscard]] auto symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix, CHOLMODCommonSetupTeardown &aCHOLMODCommon)
+    -> CHOLMODObjectWrapper<cholmod_sparse>;
 
 template <typename CHOLMODObject>
 template <typename Deleter>
@@ -120,10 +120,9 @@ auto CHOLMODObjectWrapper<CHOLMODObject>::operator=(CHOLMODObjectWrapper &&aOthe
 {
     if (this != &aOther)
     {
-        mObject = aOther.mObject;
-        mCHOLMODCommon = aOther.mCHOLMODCommon;
-        mDeleter = std::move(aOther.mDeleter);
-        aOther.mObject = nullptr;
+        std::swap(aOther.mObject, mObject);
+        std::swap(aOther.mCHOLMODCommon, mCHOLMODCommon);
+        std::swap(aOther.mDeleter, mDeleter);
     }
     return *this;
 }

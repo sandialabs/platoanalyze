@@ -101,7 +101,7 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
     }
 
     const auto tCRSMatrix = make_CSR_matrix(tRowBegin, tColumns, tValues);
-    auto tCHOLMODSparseA = convert_symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, mCHOLMODCommon);
+    auto tCHOLMODSparseA = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, mCHOLMODCommon);
 
     const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tCRSMatrix, tCHOLMODSparseA.mObject);
     cholmod_factorize(tCHOLMODSparseA.mObject, tCHOLMODFactor.mObject, &mCHOLMODCommon.mValue);
@@ -113,8 +113,8 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
     cholmod_to_scalar_vector(*tSolution.mObject, aX);
 }
 
-auto convert_symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix, CHOLMODCommonSetupTeardown &aCHOLMODCommon)
-    -> CHOLMODObjectWrapper<cholmod_sparse>
+auto symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix,
+                                     CHOLMODCommonSetupTeardown &aCHOLMODCommon) -> CHOLMODObjectWrapper<cholmod_sparse>
 {
     constexpr auto tCHOLMODSTypeLowerDiagonal = -1;
     auto tCHOLMODTriplet = make_cholmod_wrapper(

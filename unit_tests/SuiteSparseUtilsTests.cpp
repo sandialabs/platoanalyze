@@ -84,7 +84,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, NonSymmetricSparsity)
     TEST_ASSERT(tAAsCSC.mValues == tAAsCSCExpected.mValues);
 }
 
-TEUCHOS_UNIT_TEST(UMFPACKSolver, make_CSR_matrix)
+TEUCHOS_UNIT_TEST(UMFPACKSolver, MakeCSRMatrix)
 {
     /*
          2    -1     0     0

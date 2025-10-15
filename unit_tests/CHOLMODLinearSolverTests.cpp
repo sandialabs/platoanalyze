@@ -94,7 +94,7 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, ConvertCSRtoCHOLMODSparse)
 {
     auto tCHOLMODCommon = Plato::alg::CHOLMODCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
     const auto tCRSMatrix = Plato::alg::make_CSR_matrix(symmetric_positive_definite_matrix());
-    const auto tCHOLMODSparse = Plato::alg::convert_symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+    const auto tCHOLMODSparse = Plato::alg::symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
 
     TEST_INEQUALITY_CONST(tCHOLMODSparse.mObject, nullptr);
     TEST_EQUALITY(tCHOLMODSparse.mObject->nrow, kNumberOfRows);
@@ -130,7 +130,7 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, CHOLMODObjectWrapper)
 
     // Move ctor
     {
-        auto tCHOLMODFactor1 = convert_symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        auto tCHOLMODFactor1 = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
 
         const auto* const tCHOLMODFactorPtr = tCHOLMODFactor1.mObject;
         const auto tCHOLMODFactor2 = std::move(tCHOLMODFactor1);
@@ -140,14 +140,15 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, CHOLMODObjectWrapper)
     }
     // Move assignment
     {
-        auto tCHOLMODFactor1 = convert_symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        auto tCHOLMODFactor1 = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
         const auto* const tCHOLMODFactor1Ptr = tCHOLMODFactor1.mObject;
 
-        auto tCHOLMODFactor2 = convert_symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        auto tCHOLMODFactor2 = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        const auto* const tCHOLMODFactor2Ptr = tCHOLMODFactor2.mObject;
 
         tCHOLMODFactor2 = std::move(tCHOLMODFactor1);
 
-        TEST_EQUALITY_CONST(tCHOLMODFactor1.mObject, nullptr);
+        TEST_EQUALITY_CONST(tCHOLMODFactor1.mObject, tCHOLMODFactor2Ptr);
         TEST_EQUALITY(tCHOLMODFactor2.mObject, tCHOLMODFactor1Ptr);
     }
 }
