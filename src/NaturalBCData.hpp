@@ -112,7 +112,7 @@ class UniformNaturalBCData : public NaturalBCData<NumDofs>
         else if (aSublist.isType<Teuchos::Array<Scalar>>(kValuesParameterName))
         {
             const auto& tValues = aSublist.get<Teuchos::Array<Scalar>>(kValuesParameterName);
-            std::copy(tValues.begin(), tValues.end(), std::begin(mValues));
+            std::copy_n(tValues.begin(), kNumComponents, std::begin(mValues));
         }
     }
 
