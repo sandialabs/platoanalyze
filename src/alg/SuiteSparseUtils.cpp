@@ -28,19 +28,16 @@ auto CSRMatrix::numberOfRows() const -> SuiteSparse_long { return mRowBegin.size
 
 auto CSCMatrix::numberOfColumns() const -> SuiteSparse_long { return mColumnBegin.size() - 1; }
 
-CSRMatrix make_CSR_matrix(const Plato::CrsMatrix<int>& aA)
+CSRMatrix make_CSR_matrix(const Plato::CrsMatrix<Plato::OrdinalType>& aA)
 {
-    using CrsOrdinal = int;
-    const auto [tRowBegin, tColumns, tValues] = Plato::crs_matrix_non_block_form<CrsOrdinal>(aA);
-    return make_CSR_matrix(tRowBegin, tColumns, tValues);
+    return make_CSR_matrix(Plato::crs_matrix_non_block_form<Plato::OrdinalType>(aA));
 }
 
-auto make_CSR_matrix(typename Plato::CrsMatrix<int>::RowMapVectorT aRowBegin,
-                     typename Plato::CrsMatrix<int>::OrdinalVectorT aColumns,
-                     typename Plato::CrsMatrix<int>::ScalarVectorT aValues) -> CSRMatrix
+auto make_CSR_matrix(const CrsRowsColumnsValues<Plato::OrdinalType>& aRowsColumnsAndValues) -> CSRMatrix
 {
-    return CSRMatrix{kokkos_view_to_std_vector<SuiteSparse_long>(aRowBegin),
-                     kokkos_view_to_std_vector<SuiteSparse_long>(aColumns), kokkos_view_to_std_vector<double>(aValues)};
+    const auto& [tRowBegin, tColumns, tValues] = aRowsColumnsAndValues;
+    return CSRMatrix{kokkos_view_to_std_vector<SuiteSparse_long>(tRowBegin),
+                     kokkos_view_to_std_vector<SuiteSparse_long>(tColumns), kokkos_view_to_std_vector<double>(tValues)};
 }
 
 CSCMatrix to_CSC(const CSRMatrix& aMatrix)

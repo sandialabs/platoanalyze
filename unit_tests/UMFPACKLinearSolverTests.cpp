@@ -73,9 +73,12 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, MultipleSolves)
         //          1     2     1     0
         //          0    -1     2     1
         //          0     4     1     2];
-        auto tMatrixEntries = tMatrix.entries();
+        auto tMatrixEntries =
+            Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tMatrix.entries());
         tMatrixEntries[6] = 2.0;
         tMatrixEntries[10] = 2.0;
+        Kokkos::deep_copy(tMatrix.entries(), tMatrixEntries);
+
         const auto tExpected = std::vector{-2.375, 1.09375, 2.1875, 0.71875};
         const auto tResult = solve_and_check_solution(tMatrix, tExpected);
 
@@ -89,13 +92,38 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, MultipleSolves)
         //          1     2     1     0
         //          0    -1     2     1
         //          4     0     1     2];
-        auto tColumns = tMatrix.columnIndices();
+        auto tColumns =
+            Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tMatrix.columnIndices());
         tColumns[1] = 2;
         tColumns[8] = 0;
+        Kokkos::deep_copy(tMatrix.columnIndices(), tColumns);
+
         const auto tExpected = std::vector{-0.375, 1.078125, 0.21875, 4.640625};
         const auto tResult = solve_and_check_solution(tMatrix, tExpected);
 
         TEST_ASSERT(tResult.first);
         out << tResult.second;
     }
+}
+
+TEUCHOS_UNIT_TEST(UMFPACKSolver, ThrowsForSingularMatrix)
+{
+    TEST_ASSERT(!std::filesystem::exists(Plato::alg::bad_umfpack_matrix_file_path()));
+
+    auto tMatrix = asymmetric_matrix();
+    // Changes matrix to:
+    //    A = [ 0     0     0     8
+    //          1     2     1     0
+    //          0    -1    -2     1
+    //          0     4     1    -2];
+    auto tMatrixEntries = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tMatrix.entries());
+    tMatrixEntries[0] = 0.0;
+    tMatrixEntries[1] = 0.0;
+    Kokkos::deep_copy(tMatrix.entries(), tMatrixEntries);
+
+    const auto tExpected = std::vector{0.0, 0.0, 0.0, 0.0};
+    TEST_THROW([[maybe_unused]] const auto tResult = solve_and_check_solution(tMatrix, tExpected), std::runtime_error);
+
+    TEST_ASSERT(std::filesystem::exists(Plato::alg::bad_umfpack_matrix_file_path()));
+    std::filesystem::remove(Plato::alg::bad_umfpack_matrix_file_path());
 }

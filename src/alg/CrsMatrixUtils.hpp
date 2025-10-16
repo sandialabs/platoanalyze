@@ -15,11 +15,6 @@
 namespace Plato
 {
 template <typename Ordinal>
-using CrsRowsColumnsValues = std::tuple<typename Plato::CrsMatrix<Ordinal>::RowMapVectorT,
-                                        typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT,
-                                        typename Plato::CrsMatrix<Ordinal>::ScalarVectorT>;
-
-template <typename Ordinal>
 CrsRowsColumnsValues<Ordinal> crs_matrix_non_block_form(const CrsMatrix<Ordinal>& aMatrix);
 
 /// @brief Computes a unique hash based on the row index spans in @a aRowSpan and column indices in @a aColumns.

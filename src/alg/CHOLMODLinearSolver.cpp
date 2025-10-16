@@ -65,6 +65,27 @@ void cholmod_to_scalar_vector(const cholmod_dense &aCHOLMODDense, const Plato::S
     Kokkos::deep_copy(aPlatoVector, tSolutionMirror);
 }
 
+void check_cholmod_errors(const CHOLMODCommonSetupTeardown &aCHOLMODCommon,
+                          const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix)
+{
+    if (aCHOLMODCommon.mValue.status != CHOLMOD_OK)
+    {
+        const auto &[tRowBegin, tColumns, tValues] = aMatrix;
+        Plato::print_matrix_to_file<Plato::OrdinalType>(tRowBegin, tColumns, tValues,
+                                                        bad_cholmod_matrix_file_path().string());
+    }
+    if (aCHOLMODCommon.mValue.status == CHOLMOD_NOT_POSDEF)
+    {
+        throw std::runtime_error{
+            "CHOLMOD encountered an indefinite matrix, but expected a positive definite matrix. Aborting"};
+    }
+    else if (aCHOLMODCommon.mValue.status != CHOLMOD_OK)
+    {
+        throw std::runtime_error{"CHOLMOD encountered an error and will abort. Error code: " +
+                                 std::to_string(aCHOLMODCommon.mValue.status)};
+    }
+}
+
 }  // namespace
 
 CHOLMODCommonSetupTeardown::CHOLMODCommonSetupTeardown(const Plato::LinearSystemType aLinearSystemType)
@@ -81,10 +102,13 @@ CHOLMODLinearSolver::CHOLMODLinearSolver(const Teuchos::ParameterList &aSolverPa
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs),
       mCHOLMODCommon{aLinearSystemType},
-      mCHOLMODFactorCache{[this](const CSRMatrix &, cholmod_sparse *const aCHOLMODSparse)
+      mCHOLMODFactorCache{[this](const CrsRowsColumnsValues<Plato::OrdinalType> &, cholmod_sparse *const aCHOLMODSparse)
                           { return make_cholmod_factor_wrapper(aCHOLMODSparse, std::ref(mCHOLMODCommon)); },
-                          [](const CSRMatrix &aMatrix, cholmod_sparse *const)
-                          { return crs_matrix_row_column_hash(aMatrix.mRowBegin, aMatrix.mColumns); }}
+                          [](const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix, cholmod_sparse *const)
+                          {
+                              const auto &[tRowEntrySpans, tColumns, tValues] = aMatrix;
+                              return crs_matrix_row_column_hash(tRowEntrySpans, tColumns);
+                          }}
 {
 }
 
@@ -92,7 +116,8 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
                                      const Plato::ScalarVector aX,
                                      const Plato::ScalarVector aB)
 {
-    const auto [tRowBegin, tColumns, tValues] = crs_matrix_non_block_form<Plato::OrdinalType>(aA);
+    const auto tRowsColumnsAndValues = crs_matrix_non_block_form<Plato::OrdinalType>(aA);
+    const auto &[tRowBegin, tColumns, tValues] = tRowsColumnsAndValues;
     if (!has_symmetric_sparsity_pattern<Plato::OrdinalType>(tRowBegin, tColumns))
     {
         throw std::runtime_error(
@@ -100,41 +125,51 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
             "CHOLMOD must only be used with symmetric matrices, for general matrices use UMFPACK.");
     }
 
-    const auto tCRSMatrix = make_CSR_matrix(tRowBegin, tColumns, tValues);
-    auto tCHOLMODSparseA = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, mCHOLMODCommon);
+    auto tCHOLMODSparseA = symmetric_CSR_to_CHOLMOD_sparse(tRowsColumnsAndValues, mCHOLMODCommon);
 
-    const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tCRSMatrix, tCHOLMODSparseA.mObject);
+    const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tRowsColumnsAndValues, tCHOLMODSparseA.mObject);
+    check_cholmod_errors(mCHOLMODCommon, tRowsColumnsAndValues);
+
     cholmod_factorize(tCHOLMODSparseA.mObject, tCHOLMODFactor.mObject, &mCHOLMODCommon.mValue);
+    check_cholmod_errors(mCHOLMODCommon, tRowsColumnsAndValues);
 
     auto tRHS = CHOLMODVector{aB, &mCHOLMODCommon.mValue};
     auto tSolution = make_cholmod_wrapper(
         cholmod_solve(CHOLMOD_A, tCHOLMODFactor.mObject, tRHS.get(), &mCHOLMODCommon.mValue), std::ref(mCHOLMODCommon));
+    check_cholmod_errors(mCHOLMODCommon, tRowsColumnsAndValues);
 
     cholmod_to_scalar_vector(*tSolution.mObject, aX);
 }
 
-auto symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix,
+auto symmetric_CSR_to_CHOLMOD_sparse(const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix,
                                      CHOLMODCommonSetupTeardown &aCHOLMODCommon) -> CHOLMODObjectWrapper<cholmod_sparse>
 {
+    const auto &[tRowEntrySpansDevice, tColumnsDevice, tValuesDevice] = aMatrix;
+    auto tRowEntrySpans =
+        Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tRowEntrySpansDevice);
+    auto tColumns = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tColumnsDevice);
+    auto tValues = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, tValuesDevice);
+    const auto tNumberOfRows = tRowEntrySpans.size() - 1;
+
     constexpr auto tCHOLMODSTypeLowerDiagonal = -1;
-    auto tCHOLMODTriplet = make_cholmod_wrapper(
-        cholmod_allocate_triplet(aMatrix.numberOfRows(), aMatrix.numberOfRows(), aMatrix.mValues.size(),
-                                 tCHOLMODSTypeLowerDiagonal, CHOLMOD_REAL, &aCHOLMODCommon.mValue),
-        std::ref(aCHOLMODCommon));
+    auto tCHOLMODTriplet =
+        make_cholmod_wrapper(cholmod_allocate_triplet(tNumberOfRows, tNumberOfRows, tValues.size(),
+                                                      tCHOLMODSTypeLowerDiagonal, CHOLMOD_REAL, &aCHOLMODCommon.mValue),
+                             std::ref(aCHOLMODCommon));
 
     auto tCHOLMODCounter = CHOLMODIndexType{0};
-    for (auto tRowIndex = 0; tRowIndex < aMatrix.mRowBegin.size() - 1; ++tRowIndex)
+    for (auto tRowIndex = 0; tRowIndex < tNumberOfRows; ++tRowIndex)
     {
-        const auto tStartIndex = aMatrix.mRowBegin[tRowIndex];
-        const auto tEndIndex = aMatrix.mRowBegin[tRowIndex + 1];
+        const auto tStartIndex = tRowEntrySpans[tRowIndex];
+        const auto tEndIndex = tRowEntrySpans[tRowIndex + 1];
         for (auto tIndexIntoEntries = tStartIndex; tIndexIntoEntries < tEndIndex; ++tIndexIntoEntries)
         {
-            const auto tColIndex = aMatrix.mColumns[tIndexIntoEntries];
+            const auto tColIndex = tColumns[tIndexIntoEntries];
             if (tColIndex <= tRowIndex)
             {
                 static_cast<CHOLMODIndexType *>(tCHOLMODTriplet.mObject->i)[tCHOLMODCounter] = tRowIndex;
                 static_cast<CHOLMODIndexType *>(tCHOLMODTriplet.mObject->j)[tCHOLMODCounter] = tColIndex;
-                static_cast<double *>(tCHOLMODTriplet.mObject->x)[tCHOLMODCounter] = aMatrix.mValues[tIndexIntoEntries];
+                static_cast<double *>(tCHOLMODTriplet.mObject->x)[tCHOLMODCounter] = tValues[tIndexIntoEntries];
                 ++tCHOLMODCounter;
             }
         }
@@ -146,4 +181,5 @@ auto symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix,
         std::ref(aCHOLMODCommon));
 }
 
+auto bad_cholmod_matrix_file_path() -> std::filesystem::path { return std::filesystem::path{"bad_cholmod_matrix.m"}; }
 }  // namespace Plato::alg

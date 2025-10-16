@@ -146,6 +146,11 @@ class CrsMatrix
     KOKKOS_INLINE_FUNCTION void setEntries(decltype(mEntries) aEntries) { mEntries = aEntries; }
 };
 
+template <typename Ordinal>
+using CrsRowsColumnsValues = std::tuple<typename Plato::CrsMatrix<Ordinal>::RowMapVectorT,
+                                        typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT,
+                                        typename Plato::CrsMatrix<Ordinal>::ScalarVectorT>;
+
 }  // namespace Plato
 
 #endif /* CrsMatrix_h */

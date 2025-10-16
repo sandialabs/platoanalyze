@@ -36,14 +36,12 @@ struct CSCMatrix
 [[nodiscard]] auto to_CSC(const CSRMatrix& aA) -> CSCMatrix;
 
 /// @brief Converts a plato CrsMatrix that may have a block form. Copies the data to `std::vector`s.
-[[nodiscard]] auto make_CSR_matrix(const Plato::CrsMatrix<int>& aA) -> CSRMatrix;
+[[nodiscard]] auto make_CSR_matrix(const Plato::CrsMatrix<Plato::OrdinalType>& aA) -> CSRMatrix;
 
 /// @brief Converts a plato CrsMatrix that may have a block form. Copies the data to `std::vector`s.
 ///
 /// This overload can be used with crs_matrix_non_block_form, so that properties of the matrix may be checked first,
 /// such as symmetry.
-[[nodiscard]] auto make_CSR_matrix(typename Plato::CrsMatrix<int>::RowMapVectorT aRowBegin,
-                                   typename Plato::CrsMatrix<int>::OrdinalVectorT aColumns,
-                                   typename Plato::CrsMatrix<int>::ScalarVectorT aValues) -> CSRMatrix;
+[[nodiscard]] auto make_CSR_matrix(const CrsRowsColumnsValues<Plato::OrdinalType>& aRowsColumnsAndValues) -> CSRMatrix;
 
 }  // namespace Plato::alg

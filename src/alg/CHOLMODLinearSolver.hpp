@@ -4,6 +4,7 @@
 
 #include <cholmod.h>
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -77,8 +78,9 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
     void innerSolve(Plato::CrsMatrixType aA, Plato::ScalarVector aX, Plato::ScalarVector aB) override;
 
    private:
-    using CHOLMODFactorCache =
-        plato::utilities::StateCache<CHOLMODObjectWrapper<cholmod_factor>, const CSRMatrix &, cholmod_sparse *>;
+    using CHOLMODFactorCache = plato::utilities::StateCache<CHOLMODObjectWrapper<cholmod_factor>,
+                                                            const CrsRowsColumnsValues<Plato::OrdinalType> &,
+                                                            cholmod_sparse *>;
 
     CHOLMODCommonSetupTeardown mCHOLMODCommon;
     CHOLMODFactorCache mCHOLMODFactorCache;
@@ -86,8 +88,12 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
 
 /// @brief Converts a CSRMatrix to a cholmod_sparse object in lower triangular form, and assumes that @a aMatrix is
 /// symmetric.
-[[nodiscard]] auto symmetric_CSR_to_CHOLMOD_sparse(const CSRMatrix &aMatrix, CHOLMODCommonSetupTeardown &aCHOLMODCommon)
+[[nodiscard]] auto symmetric_CSR_to_CHOLMOD_sparse(const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix,
+                                                   CHOLMODCommonSetupTeardown &aCHOLMODCommon)
     -> CHOLMODObjectWrapper<cholmod_sparse>;
+
+/// @brief Returns the filename used to print unsolvable matrices to from CHOLMOD.
+[[nodiscard]] auto bad_cholmod_matrix_file_path() -> std::filesystem::path;
 
 template <typename CHOLMODObject>
 template <typename Deleter>

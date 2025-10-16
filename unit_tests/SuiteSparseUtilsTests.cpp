@@ -117,8 +117,7 @@ TEUCHOS_UNIT_TEST(UMFPACKSolver, MakeCSRMatrix)
     }
     // Overload
     {
-        const auto [tRowIndexSpans, tColumns, tEntries] = Plato::crs_matrix_non_block_form<int>(*tMatrixA);
-        const auto tA = pa::make_CSR_matrix(tRowIndexSpans, tColumns, tEntries);
+        const auto tA = pa::make_CSR_matrix(Plato::crs_matrix_non_block_form<Plato::OrdinalType>(*tMatrixA));
         TEST_ASSERT(tA.mRowBegin == tAAsCSRExpected.mRowBegin);
         TEST_ASSERT(tA.mColumns == tAAsCSRExpected.mColumns);
         TEST_ASSERT(tA.mValues == tAAsCSRExpected.mValues);

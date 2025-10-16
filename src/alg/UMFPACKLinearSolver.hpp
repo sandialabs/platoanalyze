@@ -2,6 +2,7 @@
 
 #ifdef PLATO_UMFPACK
 
+#include <filesystem>
 #include <plato/utilities/StateCache.hpp>
 #include <string>
 #include <vector>
@@ -27,14 +28,17 @@ class UMFPACKLinearSolver : public Plato::AbstractSolver
     UMFPACKLinearSolver(const Teuchos::ParameterList& aSolverParams,
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = nullptr);
 
-    void innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB) override;
+    void innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aA, Plato::ScalarVector aX, Plato::ScalarVector aB) override;
 
    private:
     using UMFPACKSymbolic = std::unique_ptr<void, UMFPACKSymbolicDeleter>;
-    using UMFPACKSymbolicCache = plato::utilities::StateCache<UMFPACKSymbolic, const CSCMatrix&>;
+    using UMFPACKSymbolicCache = plato::utilities::StateCache<UMFPACKSymbolic, const CSCMatrix&, const CrsMatrixType&>;
 
     UMFPACKSymbolicCache mUMFPACKSymbolicCache;
 };
+
+/// @brief Returns the filename used to print unsolvable matrices to from UMFPACK.
+[[nodiscard]] auto bad_umfpack_matrix_file_path() -> std::filesystem::path;
 
 }  // namespace Plato::alg
 

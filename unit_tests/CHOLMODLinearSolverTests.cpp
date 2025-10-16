@@ -1,7 +1,9 @@
 #include <Kokkos_StdAlgorithms.hpp>
+#include <filesystem>
 
 #include "Teuchos_UnitTestHarness.hpp"
 #include "alg/CHOLMODLinearSolver.hpp"
+#include "alg/CrsMatrixUtils.hpp"
 #include "util/PlatoMathTestHelpers.hpp"
 
 namespace
@@ -42,7 +44,7 @@ const auto kTriDiagonalColMap4x4 = std::vector<Plato::OrdinalType>{0, 1, 0, 1, 2
     return Plato::TestHelpers::square_crs_matrix(tNumberOfRows, kTriDiagonalRowMap4x4, kTriDiagonalColMap4x4, tValuesA);
 }
 
-/// @brief Returns a 4x4 symmetric negative definite matrix.
+/// @brief Returns a 4x4 symmetric indefinite matrix.
 ///
 /// The entries are:
 /// @code
@@ -55,6 +57,22 @@ const auto kTriDiagonalColMap4x4 = std::vector<Plato::OrdinalType>{0, 1, 0, 1, 2
 {
     const auto tNumberOfRows = 4U;
     const auto tValuesA = std::vector<Plato::Scalar>{2.0, -1.0, -1.0, 2.0, -1.0, -1.0, -2.0, -1.0, -1.0, -2.0};
+    return Plato::TestHelpers::square_crs_matrix(tNumberOfRows, kTriDiagonalRowMap4x4, kTriDiagonalColMap4x4, tValuesA);
+}
+
+/// @brief Returns a 4x4 symmetric, singular matrix.
+///
+/// The entries are:
+/// @code
+///    A = [ 0   0    0    0
+///          0   2   -1    0
+///          0  -1   -2   -1
+///          0   0   -1   -2];
+/// @endcode
+[[nodiscard]] auto symmetric_singular_matrix()
+{
+    const auto tNumberOfRows = 4U;
+    const auto tValuesA = std::vector<Plato::Scalar>{0.0, 0.0, 0.0, 2.0, -1.0, -1.0, -2.0, -1.0, -1.0, -2.0};
     return Plato::TestHelpers::square_crs_matrix(tNumberOfRows, kTriDiagonalRowMap4x4, kTriDiagonalColMap4x4, tValuesA);
 }
 
@@ -93,7 +111,7 @@ void solve_and_check_solution(const Plato::CrsMatrixType aMatrix,
 TEUCHOS_UNIT_TEST(CHOLMODSolver, ConvertCSRtoCHOLMODSparse)
 {
     auto tCHOLMODCommon = Plato::alg::CHOLMODCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
-    const auto tCRSMatrix = Plato::alg::make_CSR_matrix(symmetric_positive_definite_matrix());
+    const auto tCRSMatrix = Plato::crs_matrix_non_block_form<Plato::OrdinalType>(symmetric_positive_definite_matrix());
     const auto tCHOLMODSparse = Plato::alg::symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
 
     TEST_INEQUALITY_CONST(tCHOLMODSparse.mObject, nullptr);
@@ -126,7 +144,7 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, CHOLMODObjectWrapper)
 {
     auto tCHOLMODCommon = Plato::alg::CHOLMODCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
     auto tMatrix = symmetric_positive_definite_matrix();
-    const auto tCRSMatrix = Plato::alg::make_CSR_matrix(tMatrix);
+    const auto tCRSMatrix = Plato::crs_matrix_non_block_form<Plato::OrdinalType>(tMatrix);
 
     // Move ctor
     {
@@ -221,4 +239,16 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, NonSymmetricMatrix)
         Plato::alg::CHOLMODLinearSolver{Teuchos::ParameterList{}, Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
 
     TEST_THROW(tCHOLMODSolver.innerSolve(tNonsymmetricMatrix, tSolutionView, rhs()), std::runtime_error);
+}
+
+TEUCHOS_UNIT_TEST(CHOLMODSolver, ThrowsForSingularMatrix)
+{
+    TEST_ASSERT(!std::filesystem::exists(Plato::alg::bad_cholmod_matrix_file_path()));
+
+    const auto tExpected = std::vector{0.0, 0.0, 0.0, 0.0};
+    TEST_THROW(solve_and_check_solution(symmetric_singular_matrix(), rhs(),
+                                        Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE, tExpected, out, success),
+               std::runtime_error);
+    TEST_ASSERT(std::filesystem::exists(Plato::alg::bad_cholmod_matrix_file_path()));
+    std::filesystem::remove(Plato::alg::bad_cholmod_matrix_file_path());
 }
