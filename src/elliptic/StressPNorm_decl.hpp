@@ -60,11 +60,11 @@ class StressPNorm : public EvaluationType::ElementType, public Plato::Elliptic::
                               Plato::Scalar aTimeStep = 0.0) const override;
 
     /**************************************************************************/
-    void postEvaluate(Plato::ScalarVector resultVector, Plato::Scalar resultScalar);
+    void postEvaluate(Plato::ScalarVector resultVector, Plato::Scalar resultScalar) override;
     /**************************************************************************/
 
     /**************************************************************************/
-    void postEvaluate(Plato::Scalar& resultValue);
+    void postEvaluate(Plato::Scalar& resultValue) override;
     /**************************************************************************/
 };
 // class StressPNorm

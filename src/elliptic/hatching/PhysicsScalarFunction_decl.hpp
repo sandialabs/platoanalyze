@@ -222,7 +222,7 @@ class PhysicsScalarFunction : public ScalarFunctionBase, public Plato::WorksetBa
      * \brief Return user defined function name
      * \return User defined function name
      **********************************************************************************/
-    std::string name() const;
+    std::string name() const override;
 };
 // class PhysicsScalarFunction
 
