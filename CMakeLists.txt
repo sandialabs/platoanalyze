@@ -101,8 +101,11 @@ endif()
 
 MESSAGE("-- BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 
-message(STATUS "Additional warnings: ${ADDITIONAL_WARNINGS}")
-add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:${ADDITIONAL_WARNINGS}>")
+message(STATUS "Additional gcc warnings: ${GCC_ADDITIONAL_WARNINGS}")
+add_compile_options("$<$<CXX_COMPILER_ID:GNU>:${GCC_ADDITIONAL_WARNINGS}>")
+
+message(STATUS "Additional clang warnings: ${CLANG_ADDITIONAL_WARNINGS}")
+add_compile_options("$<$<CXX_COMPILER_ID:Clang>:${CLANG_ADDITIONAL_WARNINGS}>")
 
 if(WARNINGS_AS_ERRORS)
   message(STATUS "Using -Werror")
