@@ -7,7 +7,7 @@
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
         "GCC_ADDITIONAL_WARNINGS": "-Wcomment;-Woverloaded-virtual;-Wswitch;-Wunused-value",
-        "CLANG_ADDITIONAL_WARNINGS": "-Wnoreturn-type-c-linkage",
+        "CLANG_ADDITIONAL_WARNINGS": "-Wno-return-type-c-linkage",
         "WARNINGS_AS_ERRORS": true
       }
     },
