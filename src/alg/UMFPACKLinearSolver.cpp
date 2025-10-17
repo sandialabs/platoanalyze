@@ -10,6 +10,22 @@ namespace Plato::alg
 {
 namespace
 {
+/// @brief Used for custom deleter of UMFPACK numeric object.
+struct UMFPACKNumericDeleter
+{
+    void operator()(void *aUMFPACKSymbolic);
+};
+
+using UMFPACKNumeric = std::unique_ptr<void, UMFPACKNumericDeleter>;
+
+void UMFPACKNumericDeleter::operator()(void *aUMFPACKNumeric)
+{
+    if (aUMFPACKNumeric)
+    {
+        umfpack_dl_free_numeric(&aUMFPACKNumeric);
+    }
+}
+
 void check_umfpack(const std::string &aMessage,
                    const std::array<double, UMFPACK_INFO> &aInfo,
                    const Plato::CrsMatrix<Plato::OrdinalType> &aMatrix)
@@ -22,9 +38,29 @@ void check_umfpack(const std::string &aMessage,
                          ": status = " + std::to_string(static_cast<int>(aInfo[UMFPACK_STATUS])));
     }
 }
+
+[[nodiscard]] auto numeric_factorization(const CSCMatrix &aCSCMatrix,
+                                         const CrsMatrixType &aCSRMatrix,
+                                         void *const aUMFPACKSymbolic) -> UMFPACKNumeric
+{
+    auto tInfo = std::array<double, UMFPACK_INFO>{};
+    void *tNumeric = nullptr;
+    umfpack_dl_numeric(aCSCMatrix.mColumnBegin.data(), aCSCMatrix.mRows.data(), aCSCMatrix.mValues.data(),
+                       aUMFPACKSymbolic, &tNumeric, nullptr, tInfo.data());
+    auto tWrappedNumeric = UMFPACKNumeric{tNumeric};
+    check_umfpack("Numeric factorization", tInfo, aCSRMatrix);
+    return tWrappedNumeric;
+}
+
 }  // namespace
 
-void UMFPACKSymbolicDeleter::operator()(void *aUMFPACKSymbolic) { umfpack_dl_free_symbolic(&aUMFPACKSymbolic); }
+void UMFPACKSymbolicDeleter::operator()(void *aUMFPACKSymbolic)
+{
+    if (aUMFPACKSymbolic)
+    {
+        umfpack_dl_free_symbolic(&aUMFPACKSymbolic);
+    }
+}
 
 UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
@@ -37,35 +73,33 @@ UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverPa
                                 umfpack_dl_symbolic(tNumberOfRows, tNumberOfRows, aMatrix.mColumnBegin.data(),
                                                     aMatrix.mRows.data(), aMatrix.mValues.data(), &tSymbolic, nullptr,
                                                     tInfo.data());
-
+                                auto tWrappedSymbolic = UMFPACKSymbolic{tSymbolic};
                                 check_umfpack("Symbolic factorization", tInfo, aCRSMatrix);
-                                return UMFPACKSymbolic{tSymbolic};
+                                return tWrappedSymbolic;
                             },
                             [](const CSCMatrix &aMatrix, const CrsMatrixType &)
                             { return crs_matrix_row_column_hash(aMatrix.mColumnBegin, aMatrix.mRows); }}
 {
 }
 
-void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aA,
+void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aCSRMatrix,
                                      Plato::ScalarVector aX,
                                      Plato::ScalarVector aB)
 {
-    const auto tNumberOfRows = aA.numRows();
-    auto tMatrix = to_CSC(make_CSR_matrix(aA));
+    const auto tNumberOfRows = aCSRMatrix.numRows();
+    auto tMatrix = to_CSC(make_CSR_matrix(aCSRMatrix));
 
+    const auto &tSymbolic = mUMFPACKSymbolicCache.compute(tMatrix, aCSRMatrix);
+    const auto tNumeric = numeric_factorization(tMatrix, aCSRMatrix, tSymbolic.get());
+
+    const auto tRHSOnHost = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aB);
+    const auto tSolutionOnHost = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aX);
     auto tInfo = std::array<double, UMFPACK_INFO>{};
+    umfpack_dl_solve(UMFPACK_A, tMatrix.mColumnBegin.data(), tMatrix.mRows.data(), tMatrix.mValues.data(),
+                     tSolutionOnHost.data(), tRHSOnHost.data(), tNumeric.get(), nullptr, tInfo.data());
+    check_umfpack("matrix solve", tInfo, aCSRMatrix);
 
-    const auto &tSymbolic = mUMFPACKSymbolicCache.compute(tMatrix, aA);
-    void *tNumeric = nullptr;
-    umfpack_dl_numeric(tMatrix.mColumnBegin.data(), tMatrix.mRows.data(), tMatrix.mValues.data(), tSymbolic.get(),
-                       &tNumeric, nullptr, tInfo.data());
-    check_umfpack("Numeric factorization", tInfo, aA);
-
-    umfpack_dl_solve(UMFPACK_A, tMatrix.mColumnBegin.data(), tMatrix.mRows.data(), tMatrix.mValues.data(), aX.data(),
-                     aB.data(), tNumeric, nullptr, tInfo.data());
-    check_umfpack("matrix solve", tInfo, aA);
-
-    umfpack_dl_free_numeric(&tNumeric);
+    Kokkos::deep_copy(aX, tSolutionOnHost);
 }
 
 auto bad_umfpack_matrix_file_path() -> std::filesystem::path { return std::filesystem::path{"bad_umfpack_matrix.m"}; }

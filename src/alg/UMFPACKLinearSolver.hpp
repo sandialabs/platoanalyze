@@ -28,7 +28,9 @@ class UMFPACKLinearSolver : public Plato::AbstractSolver
     UMFPACKLinearSolver(const Teuchos::ParameterList& aSolverParams,
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = nullptr);
 
-    void innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aA, Plato::ScalarVector aX, Plato::ScalarVector aB) override;
+    void innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aCSRMatrix,
+                    Plato::ScalarVector aX,
+                    Plato::ScalarVector aB) override;
 
    private:
     using UMFPACKSymbolic = std::unique_ptr<void, UMFPACKSymbolicDeleter>;
