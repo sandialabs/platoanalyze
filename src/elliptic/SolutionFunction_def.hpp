@@ -163,6 +163,11 @@ void SolutionFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProblemP
             REPORT(ss.str());
         }
         break;
+        case solution_type_t::UNKNOWN_TYPE:
+        {
+            ANALYZE_THROWERR("Unknown solution type.");
+        }
+        break;
     }
 }
 
@@ -446,6 +451,11 @@ Plato::Scalar SolutionFunction<PhysicsType>::value(const Plato::Solutions& aSolu
             REPORT(ss.str());
         }
         break;
+        case solution_type_t::UNKNOWN_TYPE:
+        {
+            ANALYZE_THROWERR("Unknown solution type");
+        }
+        break;
     }
 
     return tReturnValue;
@@ -619,6 +629,9 @@ Plato::ScalarVector SolutionFunction<PhysicsType>::gradient_u(const Plato::Solut
                         tGradientU(tNumDofsPerNode * tIndex + iDof) = tSign * tNormal[iDof] / tNumNodes;
                     }
                 });
+            break;
+        case solution_type_t::UNKNOWN_TYPE:
+            ANALYZE_THROWERR("Unknown solution type");
             break;
     }
 

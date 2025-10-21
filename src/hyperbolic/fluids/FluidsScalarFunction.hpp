@@ -152,7 +152,7 @@ class ScalarFunction : public Plato::Fluids::CriterionBase
      * \brief Return scalar function name.
      * \return scalar function name
      ******************************************************************************/
-    std::string name() const { return mFuncName; }
+    std::string name() const override { return mFuncName; }
 
     /***************************************************************************/
     /**

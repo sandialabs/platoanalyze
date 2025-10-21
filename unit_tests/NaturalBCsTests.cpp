@@ -56,7 +56,9 @@ void testBCDataConstruction(Teuchos::ParameterList& aBCParameters, Teuchos::Fanc
     TEUCHOS_TEST_EQUALITY(tTestBC.numNaturalBCs(), 1, aOut, tSizeSuccess);
 
     bool tCastSuccess = true;
-    TEUCHOS_TEST_NOTHROW(dynamic_cast<const BCType&>(tTestBC.getNaturalBC(0).getNaturalBCData()), aOut, tCastSuccess);
+    TEUCHOS_TEST_NOTHROW(
+        [[maybe_unused]] const auto& tResult = dynamic_cast<const BCType&>(tTestBC.getNaturalBC(0).getNaturalBCData()),
+        aOut, tCastSuccess);
 
     aSuccess = tCtorSuccess && tSizeSuccess && tCastSuccess;
 }

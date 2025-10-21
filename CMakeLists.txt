@@ -6,6 +6,9 @@ project(PLATOANALYZE VERSION 0.0.0 LANGUAGES CXX)
 # hdf5 dependency (introduced by exodus) needs C
 enable_language(C)
 
+option( WARNINGS_AS_ERRORS "Builds platoanalyze with warnings as errors" OFF )
+option( BUILD_WITH_SANITIZER_FLAGS "Builds platoanalyze with sanitizers" OFF )
+
 option(PLATOANALYZE_ENABLE_CUDA "Build for Nvidia GPUs using CUDA" OFF)
 
 option(PLATOANALYZE_ENABLE_MESHMAP  "Enable Plato MeshMap"  ON )
@@ -98,25 +101,23 @@ endif()
 
 MESSAGE("-- BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
 
-set(SANITIZER_FLAGS "")
+message(STATUS "Additional gcc warnings: ${GCC_ADDITIONAL_WARNINGS}")
+add_compile_options("$<$<CXX_COMPILER_ID:GNU>:${GCC_ADDITIONAL_WARNINGS}>")
+
+message(STATUS "Additional clang warnings: ${CLANG_ADDITIONAL_WARNINGS}")
+add_compile_options("$<$<CXX_COMPILER_ID:Clang>:${CLANG_ADDITIONAL_WARNINGS}>")
+
+if(WARNINGS_AS_ERRORS)
+  message(STATUS "Using -Werror")
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Werror>")
+endif()
+
 if(BUILD_WITH_SANITIZER_FLAGS)
-  message( "-- Compiling with sanitizer flags turned on ")
-  set(SANITIZER_FLAGS -fsanitize=address 
-                      -fno-omit-frame-pointer 
-                      -fsanitize=undefined 
-                      -fno-sanitize-recover=all 
-                      -fsanitize=float-divide-by-zero 
-                      -fsanitize=float-cast-overflow  
-                      -fsanitize=null 
-                      -fsanitize=alignment 
-                      -fsanitize=enum)
-  message("Sanitizer flags: ${SANITIZER_FLAGS}")
+  message(STATUS "Compiling with sanitizer flags turned on")
+  message(STATUS "Sanitizer flags: ${SANITIZER_FLAGS}")
   add_compile_options(${SANITIZER_FLAGS})
   add_link_options(${SANITIZER_FLAGS})
 endif()
-
-SET(CMAKE_C_FLAGS ${Trilinos_C_COMPILER_FLAGS} )
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Trilinos_CXX_COMPILER_FLAGS} ${CUSTOM_CXX_FLAGS}")
 
 ## this has to be conditional, or building without cuda fails
 if (PLATOANALYZE_ENABLE_CUDA)

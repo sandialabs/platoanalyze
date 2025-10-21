@@ -555,9 +555,8 @@ void MatrixMatrixMultiply(const Teuchos::RCP<Plato::CrsMatrixType>& aInMatrixOne
 
     constexpr bool transpose = false;
     OrdinalView tOutRowMap("output row map", tNumRowsOne + 1);
-    KokkosSparse::Experimental::spgemm_symbolic(&tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo, tMatOneRowMap,
-                                                tMatOneColMap, transpose, tMatTwoRowMap, tMatTwoColMap, transpose,
-                                                tOutRowMap);
+    KokkosSparse::spgemm_symbolic(&tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo, tMatOneRowMap, tMatOneColMap,
+                                  transpose, tMatTwoRowMap, tMatTwoColMap, transpose, tOutRowMap);
 
     OrdinalView tOutColMap;
     ScalarView tOutValues;
@@ -567,10 +566,9 @@ void MatrixMatrixMultiply(const Teuchos::RCP<Plato::CrsMatrixType>& aInMatrixOne
         tOutColMap = OrdinalView(Kokkos::ViewAllocateWithoutInitializing("out column map"), tNumOutValues);
         tOutValues = ScalarView(Kokkos::ViewAllocateWithoutInitializing("out values"), tNumOutValues);
     }
-    KokkosSparse::Experimental::spgemm_numeric(&tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo, tMatOneRowMap,
-                                               tMatOneColMap, tMatOneValues, /*transpose=*/false, tMatTwoRowMap,
-                                               tMatTwoColMap, tMatTwoValues, /*transpose=*/false, tOutRowMap,
-                                               tOutColMap, tOutValues);
+    KokkosSparse::spgemm_numeric(&tKernel, tNumRowsOne, tNumRowsTwo, tNumColsTwo, tMatOneRowMap, tMatOneColMap,
+                                 tMatOneValues, /*transpose=*/false, tMatTwoRowMap, tMatTwoColMap, tMatTwoValues,
+                                 /*transpose=*/false, tOutRowMap, tOutColMap, tOutValues);
 
     // update out matrix
     if (aOutMatrix->isBlockMatrix())
@@ -628,16 +626,15 @@ void MatrixMinusMatrix(Teuchos::RCP<Plato::CrsMatrixType>& aInMatrixOne,
     KernelHandle tKernel;
     tKernel.create_spadd_handle(/*sort rows=*/false);
     auto tAddHandle = tKernel.get_spadd_handle();
-    KokkosSparse::Experimental::spadd_symbolic(&tKernel, tNumRowsOne, tNumColsOne, tMatOneRowMap, tMatOneColMap,
-                                               tMatTwoRowMap, tMatTwoColMap, tOutRowMap);
+    KokkosSparse::spadd_symbolic(&tKernel, tNumRowsOne, tNumColsOne, tMatOneRowMap, tMatOneColMap, tMatTwoRowMap,
+                                 tMatTwoColMap, tOutRowMap);
 
     auto t_nnz = tAddHandle->get_c_nnz();
 
     OrdinalView tOutColMap("output graph", t_nnz);
     ScalarView tOutValues("output values", t_nnz);
-    KokkosSparse::Experimental::spadd_numeric(&tKernel, tNumRowsOne, tNumColsOne, tMatOneRowMap, tMatOneColMap,
-                                              tMatOneValues, 1.0, tMatTwoRowMap, tMatTwoColMap, tMatTwoValues, -1.0,
-                                              tOutRowMap, tOutColMap, tOutValues);
+    KokkosSparse::spadd_numeric(&tKernel, tNumRowsOne, tNumColsOne, tMatOneRowMap, tMatOneColMap, tMatOneValues, 1.0,
+                                tMatTwoRowMap, tMatTwoColMap, tMatTwoValues, -1.0, tOutRowMap, tOutColMap, tOutValues);
 
     Plato::setDataFromNonBlock(aInMatrixOne, tOutRowMap, tOutColMap, tOutValues);
     tKernel.destroy_spadd_handle();
