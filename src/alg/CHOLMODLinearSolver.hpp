@@ -86,9 +86,9 @@ class CHOLMODLinearSolver : public Plato::AbstractSolver
     CHOLMODFactorCache mCHOLMODFactorCache;
 };
 
-/// @brief Converts a CSRMatrix to a cholmod_sparse object in lower triangular form, and assumes that @a aMatrix is
+/// @brief Converts a CRSMatrix to a cholmod_sparse object in lower triangular form, and assumes that @a aMatrix is
 /// symmetric.
-[[nodiscard]] auto symmetric_CSR_to_CHOLMOD_sparse(const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix,
+[[nodiscard]] auto symmetric_CRS_to_CHOLMOD_sparse(const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix,
                                                    CHOLMODCommonSetupTeardown &aCHOLMODCommon)
     -> CHOLMODObjectWrapper<cholmod_sparse>;
 

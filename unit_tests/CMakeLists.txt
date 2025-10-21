@@ -38,7 +38,6 @@ Plato_add_test(PlatoSpatialModel PlatoSpatialModelTests.cpp)
 Plato_add_test(Element ElementTests.cpp)
 Plato_add_test(PlatoMathTypes PlatoMathTypesTests.cpp)
 Plato_add_test(TensorNorm TensorNormTests.cpp)
-Plato_add_test(CrsMatrixUtils CrsMatrixUtilsTests.cpp)
 Plato_add_test(Assembly AssemblyTests.cpp)
 Plato_add_test(NaturalBCsTests NaturalBCsTests.cpp)
 Plato_add_test(NaturalBCDataTests NaturalBCDataTests.cpp)
@@ -94,15 +93,6 @@ if(HELMHOLTZ)
   Plato_add_test(HelmholtzFilter "PlatoHelmholtzFilterTests.cpp;PlatoAdjointHelmholtzFilterTests.cpp")
   Plato_add_test(HelmholtzMatrix PlatoHelmholtzMatrixTests.cpp)
   set_tests_properties(runHelmholtzMatrixUnitTests PROPERTIES WILL_FAIL true) # until quadrature rules for tet4, tri3 are fixed
-endif()
-
-if(PLATOANALYZE_ENABLE_TACHO)
-  Plato_add_test(TachoSolver TachoSolverTests.cpp)
-endif()
-
-if(PLATOANALYZE_ENABLE_UMFPACK)
-  set(UMFPACK_CPP_FILES SuiteSparseUtilsTests.cpp SuiteSparseSolverFactoryTests.cpp CHOLMODLinearSolverTests.cpp UMFPACKLinearSolverTests.cpp)
-  Plato_add_test(UMFPACKSolver "${UMFPACK_CPP_FILES}")
 endif()
 
 if (PLATOANALYZE_ENABLE_ENGINEMESH)

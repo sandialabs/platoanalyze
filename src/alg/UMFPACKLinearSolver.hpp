@@ -28,13 +28,13 @@ class UMFPACKLinearSolver : public Plato::AbstractSolver
     UMFPACKLinearSolver(const Teuchos::ParameterList& aSolverParams,
                         std::shared_ptr<Plato::MultipointConstraints> aMPCs = nullptr);
 
-    void innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aCSRMatrix,
+    void innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aCRSMatrix,
                     Plato::ScalarVector aX,
                     Plato::ScalarVector aB) override;
 
    private:
     using UMFPACKSymbolic = std::unique_ptr<void, UMFPACKSymbolicDeleter>;
-    using UMFPACKSymbolicCache = plato::utilities::StateCache<UMFPACKSymbolic, const CSCMatrix&, const CrsMatrixType&>;
+    using UMFPACKSymbolicCache = plato::utilities::StateCache<UMFPACKSymbolic, const CCSMatrix&, const CrsMatrixType&>;
 
     UMFPACKSymbolicCache mUMFPACKSymbolicCache;
 };

@@ -24,23 +24,23 @@ template <typename ReturnType, typename ViewType>
 }
 }  // namespace
 
-auto CSRMatrix::numberOfRows() const -> SuiteSparse_long { return mRowBegin.size() - 1; }
+auto CRSMatrix::numberOfRows() const -> SuiteSparse_long { return mRowBegin.size() - 1; }
 
-auto CSCMatrix::numberOfColumns() const -> SuiteSparse_long { return mColumnBegin.size() - 1; }
+auto CCSMatrix::numberOfColumns() const -> SuiteSparse_long { return mColumnBegin.size() - 1; }
 
-CSRMatrix make_CSR_matrix(const Plato::CrsMatrix<Plato::OrdinalType>& aA)
+CRSMatrix make_CRS_matrix(const Plato::CrsMatrix<Plato::OrdinalType>& aA)
 {
-    return make_CSR_matrix(Plato::crs_matrix_non_block_form<Plato::OrdinalType>(aA));
+    return make_CRS_matrix(Plato::crs_matrix_non_block_form<Plato::OrdinalType>(aA));
 }
 
-auto make_CSR_matrix(const CrsRowsColumnsValues<Plato::OrdinalType>& aRowsColumnsAndValues) -> CSRMatrix
+auto make_CRS_matrix(const CrsRowsColumnsValues<Plato::OrdinalType>& aRowsColumnsAndValues) -> CRSMatrix
 {
     const auto& [tRowBegin, tColumns, tValues] = aRowsColumnsAndValues;
-    return CSRMatrix{kokkos_view_to_std_vector<SuiteSparse_long>(tRowBegin),
+    return CRSMatrix{kokkos_view_to_std_vector<SuiteSparse_long>(tRowBegin),
                      kokkos_view_to_std_vector<SuiteSparse_long>(tColumns), kokkos_view_to_std_vector<double>(tValues)};
 }
 
-CSCMatrix to_CSC(const CSRMatrix& aMatrix)
+CCSMatrix to_CCS(const CRSMatrix& aMatrix)
 {
     assert(aMatrix.mRowBegin.size() > 0);
     assert(aMatrix.mColumns.size() == aMatrix.mValues.size());
@@ -54,20 +54,20 @@ CSCMatrix to_CSC(const CSRMatrix& aMatrix)
         ANALYZE_THROWERR("Column to triplet conversion failed.");
     }
 
-    auto tCSCMatrix = CSCMatrix{};
-    tCSCMatrix.mColumnBegin.resize(tNumberOfRows + 1);
-    tCSCMatrix.mRows.resize(tNumberOfEntries);
-    tCSCMatrix.mValues.resize(tNumberOfEntries);
+    auto tCCSMatrix = CCSMatrix{};
+    tCCSMatrix.mColumnBegin.resize(tNumberOfRows + 1);
+    tCCSMatrix.mRows.resize(tNumberOfEntries);
+    tCCSMatrix.mValues.resize(tNumberOfEntries);
 
     if (UMFPACK_OK != umfpack_dl_triplet_to_col(tNumberOfRows, tNumberOfRows, tNumberOfEntries, rows.data(),
                                                 aMatrix.mColumns.data(), aMatrix.mValues.data(),
-                                                tCSCMatrix.mColumnBegin.data(), tCSCMatrix.mRows.data(),
-                                                tCSCMatrix.mValues.data(), nullptr))
+                                                tCCSMatrix.mColumnBegin.data(), tCCSMatrix.mRows.data(),
+                                                tCCSMatrix.mValues.data(), nullptr))
     {
         ANALYZE_THROWERR("Triplet to column conversion failed.");
     }
 
-    return tCSCMatrix;
+    return tCCSMatrix;
 }
 
 }  // namespace Plato::alg

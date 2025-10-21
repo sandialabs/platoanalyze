@@ -51,6 +51,11 @@ class CHOLMODVector
 
     ~CHOLMODVector() { cholmod_free_dense(&mVector, mCHOLMODCommon); }
 
+    CHOLMODVector(const CHOLMODVector &) = delete;
+    CHOLMODVector(CHOLMODVector &&) = delete;
+    CHOLMODVector &operator=(const CHOLMODVector &) = delete;
+    CHOLMODVector &operator=(CHOLMODVector &&) = delete;
+
     [[nodiscard]] auto get() -> cholmod_dense * { return mVector; }
 
    private:
@@ -125,7 +130,7 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
             "CHOLMOD must only be used with symmetric matrices, for general matrices use UMFPACK.");
     }
 
-    auto tCHOLMODSparseA = symmetric_CSR_to_CHOLMOD_sparse(tRowsColumnsAndValues, mCHOLMODCommon);
+    auto tCHOLMODSparseA = symmetric_CRS_to_CHOLMOD_sparse(tRowsColumnsAndValues, mCHOLMODCommon);
 
     const auto &tCHOLMODFactor = mCHOLMODFactorCache.compute(tRowsColumnsAndValues, tCHOLMODSparseA.mObject);
     check_cholmod_errors(mCHOLMODCommon, tRowsColumnsAndValues);
@@ -141,7 +146,7 @@ void CHOLMODLinearSolver::innerSolve(const Plato::CrsMatrixType aA,
     cholmod_to_scalar_vector(*tSolution.mObject, aX);
 }
 
-auto symmetric_CSR_to_CHOLMOD_sparse(const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix,
+auto symmetric_CRS_to_CHOLMOD_sparse(const CrsRowsColumnsValues<Plato::OrdinalType> &aMatrix,
                                      CHOLMODCommonSetupTeardown &aCHOLMODCommon) -> CHOLMODObjectWrapper<cholmod_sparse>
 {
     const auto &[tRowEntrySpansDevice, tColumnsDevice, tValuesDevice] = aMatrix;

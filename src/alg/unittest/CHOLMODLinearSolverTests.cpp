@@ -1,7 +1,7 @@
 #include <Kokkos_StdAlgorithms.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
 #include <filesystem>
 
-#include "Teuchos_UnitTestHarness.hpp"
 #include "alg/CHOLMODLinearSolver.hpp"
 #include "alg/CrsMatrixUtils.hpp"
 #include "util/PlatoMathTestHelpers.hpp"
@@ -108,11 +108,11 @@ void solve_and_check_solution(const Plato::CrsMatrixType aMatrix,
 
 }  // namespace
 
-TEUCHOS_UNIT_TEST(CHOLMODSolver, ConvertCSRtoCHOLMODSparse)
+TEUCHOS_UNIT_TEST(CHOLMODSolver, ConvertCRStoCHOLMODSparse)
 {
     auto tCHOLMODCommon = Plato::alg::CHOLMODCommonSetupTeardown{Plato::LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE};
     const auto tCRSMatrix = Plato::crs_matrix_non_block_form<Plato::OrdinalType>(symmetric_positive_definite_matrix());
-    const auto tCHOLMODSparse = Plato::alg::symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+    const auto tCHOLMODSparse = Plato::alg::symmetric_CRS_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
 
     TEST_INEQUALITY_CONST(tCHOLMODSparse.mObject, nullptr);
     TEST_EQUALITY(tCHOLMODSparse.mObject->nrow, kNumberOfRows);
@@ -148,7 +148,7 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, CHOLMODObjectWrapper)
 
     // Move ctor
     {
-        auto tCHOLMODFactor1 = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        auto tCHOLMODFactor1 = symmetric_CRS_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
 
         const auto* const tCHOLMODFactorPtr = tCHOLMODFactor1.mObject;
         const auto tCHOLMODFactor2 = std::move(tCHOLMODFactor1);
@@ -158,10 +158,10 @@ TEUCHOS_UNIT_TEST(CHOLMODSolver, CHOLMODObjectWrapper)
     }
     // Move assignment
     {
-        auto tCHOLMODFactor1 = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        auto tCHOLMODFactor1 = symmetric_CRS_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
         const auto* const tCHOLMODFactor1Ptr = tCHOLMODFactor1.mObject;
 
-        auto tCHOLMODFactor2 = symmetric_CSR_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
+        auto tCHOLMODFactor2 = symmetric_CRS_to_CHOLMOD_sparse(tCRSMatrix, tCHOLMODCommon);
         const auto* const tCHOLMODFactor2Ptr = tCHOLMODFactor2.mObject;
 
         tCHOLMODFactor2 = std::move(tCHOLMODFactor1);
