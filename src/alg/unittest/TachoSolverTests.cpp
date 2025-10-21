@@ -1,9 +1,9 @@
 #include <math.h>
 
+#include <Teuchos_UnitTestHarness.hpp>
 #include <algorithm>
 #include <array>
 
-#include "Teuchos_UnitTestHarness.hpp"
 #include "alg/TachoLinearSolver.hpp"
 
 namespace tachoSolverTest

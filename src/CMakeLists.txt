@@ -258,7 +258,11 @@ if (PLATOANALYZE_ENABLE_TACHO)
 endif()
 
 if (PLATOANALYZE_ENABLE_UMFPACK)
-  set(ANALYZE_SOURCES ${ANALYZE_SOURCES} alg/UMFPACKLinearSolver.cpp)
+  set(ANALYZE_SOURCES ${ANALYZE_SOURCES}
+                      alg/UMFPACKLinearSolver.cpp
+                      alg/CHOLMODLinearSolver.cpp
+                      alg/SuiteSparseUtils.cpp
+                      alg/SuiteSparseSolverFactory.cpp)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/src)

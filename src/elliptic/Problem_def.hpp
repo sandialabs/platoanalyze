@@ -52,7 +52,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
     LinearSystemType systemType = LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE;
     if (mPhysics == "Electromechanical" || mPhysics == "Thermomechanical")
     {
-        systemType = LinearSystemType::SYMMETRIC_INDEFINITE;
+        systemType = LinearSystemType::SYMMETRIC_PATTERN;
     }
 
     Plato::SolverFactory tSolverFactory(aProblemParams.sublist("Linear Solver"), systemType);

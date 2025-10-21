@@ -38,10 +38,9 @@ class AbstractSolver
                             Plato::ScalarVector aX,
                             Plato::ScalarVector aB) = 0;
 
-    virtual ~AbstractSolver() = default;
-
    public:
     AbstractSolver(const Teuchos::ParameterList& aSolverParams, std::shared_ptr<Plato::MultipointConstraints> aMPCs);
+    virtual ~AbstractSolver() = default;
 
     void solve(Plato::CrsMatrix<int> aAf, Plato::ScalarVector aX, Plato::ScalarVector aB, bool aAdjointFlag = false);
 };

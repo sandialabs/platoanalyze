@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/optional.hpp>
+#include <optional>
 #include <vector>
 
 #include "PlatoAbstractSolver.hpp"
@@ -108,7 +108,7 @@ class TachoLinearSolver : public Plato::AbstractSolver
 
    private:
     tachoSolver<Plato::Scalar> mSolver;
-    boost::optional<std::size_t> mCurrentMatrixHash;
+    std::optional<std::size_t> mCurrentMatrixHash;
 };
 
 }  // namespace tacho

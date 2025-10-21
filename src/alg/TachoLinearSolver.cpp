@@ -298,11 +298,11 @@ void TachoLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector
                                                 "tacho_matrix_" + std::to_string(iter) + ".m");
         ++iter;
     }
-    const std::size_t tNewMatrixHash = Plato::crs_matrix_row_column_hash<CrsOrdinal>(tRowBegin, tColumns);
+    const std::size_t tNewMatrixHash = Plato::crs_matrix_row_column_hash(tRowBegin, tColumns);
 
     try
     {
-        if (!mCurrentMatrixHash.has_value() || tNewMatrixHash != mCurrentMatrixHash.get())
+        if (!mCurrentMatrixHash.has_value() || tNewMatrixHash != mCurrentMatrixHash.value())
         {
             // Initialize on first call or sparsity pattern change
             mSolver.Initialize(aA.numRows(), tRowBegin, tColumns, tValues);

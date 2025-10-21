@@ -83,9 +83,9 @@ TEUCHOS_UNIT_TEST(CrsMatrixUtils, SparsityPatternHash)
     typename Plato::CrsMatrix<int>::OrdinalVectorT tColumnsAsVector =
         deviceView<int, tNumValues>({0, 1, 0, 1, 2, 0, 1, 2, 3, 2, 3});
 
-    const std::size_t tHash1 = Plato::crs_matrix_row_column_hash<int>(tRowBeginAsVector, tColumnsAsVector);
+    const std::size_t tHash1 = Plato::crs_matrix_row_column_hash(tRowBeginAsVector, tColumnsAsVector);
     {
-        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash<int>(tRowBeginAsVector, tColumnsAsVector);
+        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash(tRowBeginAsVector, tColumnsAsVector);
         TEST_EQUALITY(tHash1, tHash2);
     }
 
@@ -93,14 +93,14 @@ TEUCHOS_UNIT_TEST(CrsMatrixUtils, SparsityPatternHash)
     {
         typename Plato::CrsMatrix<int>::OrdinalVectorT tColumnsAsVector2 =
             deviceView<int, tNumValues>({0, 2, 0, 1, 2, 0, 1, 2, 3, 2, 3});
-        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash<int>(tRowBeginAsVector, tColumnsAsVector2);
+        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash(tRowBeginAsVector, tColumnsAsVector2);
         TEST_INEQUALITY(tHash1, tHash2)
     }
     // Different row counts
     {
         typename Plato::CrsMatrix<int>::RowMapVectorT tRowBeginAsVector2 =
             deviceView<int, tNumRows + 1>({0, 3, 5, 9, tNumValues});
-        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash<int>(tRowBeginAsVector2, tColumnsAsVector);
+        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash(tRowBeginAsVector2, tColumnsAsVector);
         TEST_INEQUALITY(tHash1, tHash2)
     }
     // Different total number of entries
@@ -110,8 +110,42 @@ TEUCHOS_UNIT_TEST(CrsMatrixUtils, SparsityPatternHash)
             deviceView<int, tNumRows + 1>({0, 4, 8, 12, tNumValues2});
         typename Plato::CrsMatrix<int>::OrdinalVectorT tColumnsAsVector2 =
             deviceView<int, tNumValues2>({0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3});
-        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash<int>(tRowBeginAsVector2, tColumnsAsVector2);
+        const std::size_t tHash2 = Plato::crs_matrix_row_column_hash(tRowBeginAsVector2, tColumnsAsVector2);
         TEST_INEQUALITY(tHash1, tHash2)
+    }
+}
+
+TEUCHOS_UNIT_TEST(CrsMatrixUtils, SparsityPatternHashVector)
+{
+    const auto tRowsVector1 = std::vector<int>{1, 2, 3};
+    const auto tColumns1 = std::vector<int>{0, 5, 7, 9, 100};
+
+    const auto tHash11 = Plato::crs_matrix_row_column_hash(tRowsVector1, tColumns1);
+    {
+        TEST_EQUALITY(tHash11, Plato::crs_matrix_row_column_hash(tRowsVector1, tColumns1));
+    }
+
+    const auto tRowsVector2 = std::vector<int>{1, 2, 3, 4};
+    const auto tHash21 = Plato::crs_matrix_row_column_hash(tRowsVector2, tColumns1);
+    {
+        TEST_INEQUALITY(tHash21, tHash11);
+        TEST_EQUALITY(tHash21, Plato::crs_matrix_row_column_hash(tRowsVector2, tColumns1));
+    }
+
+    const auto tColumns2 = tRowsVector1;
+    const auto tHash12 = Plato::crs_matrix_row_column_hash(tRowsVector1, tColumns2);
+    {
+        TEST_INEQUALITY(tHash12, tHash11);
+        TEST_INEQUALITY(tHash12, tHash21);
+        TEST_EQUALITY(tHash12, Plato::crs_matrix_row_column_hash(tRowsVector1, tColumns2));
+    }
+
+    const auto tHash22 = Plato::crs_matrix_row_column_hash(tRowsVector2, tColumns2);
+    {
+        TEST_INEQUALITY(tHash22, tHash11);
+        TEST_INEQUALITY(tHash22, tHash21);
+        TEST_INEQUALITY(tHash22, tHash12);
+        TEST_EQUALITY(tHash22, Plato::crs_matrix_row_column_hash(tRowsVector2, tColumns2));
     }
 }
 

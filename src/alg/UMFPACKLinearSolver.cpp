@@ -1,125 +1,107 @@
 #include "UMFPACKLinearSolver.hpp"
 
+#include <umfpack.h>
+
 #include <iostream>
 
 #include "CrsMatrixUtils.hpp"
 
-namespace Plato::UMFPACK
+namespace Plato::alg
 {
-
-CSCMatrix convertCSRtoCSC(const CSRMatrix &A)
-{
-    assert(A.rowBegin.size() > 0);
-    assert(A.columns.size() == A.values.size());
-    const SuiteSparse_long nRows = A.nRows();
-    const SuiteSparse_long nEntries = A.columns.size();
-
-    std::vector<SuiteSparse_long> rows(nEntries);
-
-    if (UMFPACK_OK != umfpack_dl_col_to_triplet(nRows, A.rowBegin.data(), rows.data()))
-    {
-        ANALYZE_THROWERR("Column to triplet conversion failed.");
-    }
-
-    CSCMatrix B;
-    B.colBegin.resize(nRows + 1);
-    B.rows.resize(nEntries);
-    B.values.resize(nEntries);
-
-    if (UMFPACK_OK != umfpack_dl_triplet_to_col(nRows, nRows, nEntries, rows.data(), A.columns.data(), A.values.data(),
-                                                B.colBegin.data(), B.rows.data(), B.values.data(), nullptr))
-    {
-        ANALYZE_THROWERR("Triplet to column conversion failed.");
-    }
-
-    return B;
-}
-
 namespace
 {
-template <typename ReturnType, typename ViewType>
-std::vector<ReturnType> kokkosViewToStdVector(ViewType v)
+/// @brief Used for custom deleter of UMFPACK numeric object.
+struct UMFPACKNumericDeleter
 {
-    std::vector<ReturnType> vec;
+    void operator()(void *aUMFPACKSymbolic);
+};
 
-    static_assert(ViewType::rank() == 1, "invalid usage of kokkosViewToStdVector: requires one dimension");
+using UMFPACKNumeric = std::unique_ptr<void, UMFPACKNumericDeleter>;
 
-    vec.reserve(v.size());
-    std::copy(v.data(), v.data() + v.size(), std::back_inserter(vec));
-
-    return vec;
+void UMFPACKNumericDeleter::operator()(void *aUMFPACKNumeric)
+{
+    if (aUMFPACKNumeric)
+    {
+        umfpack_dl_free_numeric(&aUMFPACKNumeric);
+    }
 }
+
+void check_umfpack(const std::string &aMessage,
+                   const std::array<double, UMFPACK_INFO> &aInfo,
+                   const Plato::CrsMatrix<Plato::OrdinalType> &aMatrix)
+{
+    if (aInfo[UMFPACK_STATUS] != UMFPACK_OK)
+    {
+        const auto [tRowEntrySpans, tColumns, tValues] = crs_matrix_non_block_form(aMatrix);
+        print_matrix_to_file<Plato::OrdinalType>(tRowEntrySpans, tColumns, tValues, bad_umfpack_matrix_file_path());
+        ANALYZE_THROWERR("UMFPACK: error in " + aMessage +
+                         ": status = " + std::to_string(static_cast<int>(aInfo[UMFPACK_STATUS])));
+    }
+}
+
+[[nodiscard]] auto numeric_factorization(const CCSMatrix &aCCSMatrix,
+                                         const CrsMatrixType &aCRSMatrix,
+                                         void *const aUMFPACKSymbolic) -> UMFPACKNumeric
+{
+    auto tInfo = std::array<double, UMFPACK_INFO>{};
+    void *tNumeric = nullptr;
+    umfpack_dl_numeric(aCCSMatrix.mColumnBegin.data(), aCCSMatrix.mRows.data(), aCCSMatrix.mValues.data(),
+                       aUMFPACKSymbolic, &tNumeric, nullptr, tInfo.data());
+    auto tWrappedNumeric = UMFPACKNumeric{tNumeric};
+    check_umfpack("Numeric factorization", tInfo, aCRSMatrix);
+    return tWrappedNumeric;
+}
+
 }  // namespace
 
-CSRMatrix constructCSRMatrix(const Plato::CrsMatrix<int> &aA)
+void UMFPACKSymbolicDeleter::operator()(void *aUMFPACKSymbolic)
 {
-    using CrsOrdinal = int;
-    Plato::CrsMatrix<CrsOrdinal>::RowMapVectorT tRowBegin;
-    Plato::CrsMatrix<CrsOrdinal>::OrdinalVectorT tColumns;
-    Plato::CrsMatrix<CrsOrdinal>::ScalarVectorT tValues;
-    std::tie(tRowBegin, tColumns, tValues) = Plato::crs_matrix_non_block_form<CrsOrdinal>(aA);
-
-    return CSRMatrix{kokkosViewToStdVector<SuiteSparse_long>(tRowBegin),
-                     kokkosViewToStdVector<SuiteSparse_long>(tColumns), kokkosViewToStdVector<double>(tValues)};
+    if (aUMFPACKSymbolic)
+    {
+        umfpack_dl_free_symbolic(&aUMFPACKSymbolic);
+    }
 }
 
 UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
-    : Plato::AbstractSolver(aSolverParams, aMPCs)
+    : Plato::AbstractSolver(aSolverParams, aMPCs),
+      mUMFPACKSymbolicCache{[](const CCSMatrix &aMatrix, const CrsMatrixType &aCRSMatrix)
+                            {
+                                void *tSymbolic = nullptr;
+                                const auto tNumberOfRows = aMatrix.numberOfColumns();
+                                auto tInfo = std::array<double, UMFPACK_INFO>{};
+                                umfpack_dl_symbolic(tNumberOfRows, tNumberOfRows, aMatrix.mColumnBegin.data(),
+                                                    aMatrix.mRows.data(), aMatrix.mValues.data(), &tSymbolic, nullptr,
+                                                    tInfo.data());
+                                auto tWrappedSymbolic = UMFPACKSymbolic{tSymbolic};
+                                check_umfpack("Symbolic factorization", tInfo, aCRSMatrix);
+                                return tWrappedSymbolic;
+                            },
+                            [](const CCSMatrix &aMatrix, const CrsMatrixType &)
+                            { return crs_matrix_row_column_hash(aMatrix.mColumnBegin, aMatrix.mRows); }}
 {
 }
 
-void UMFPACKLinearSolver::clear()
+void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aCRSMatrix,
+                                     Plato::ScalarVector aX,
+                                     Plato::ScalarVector aB)
 {
-    if (mSymbolic != nullptr)
-    {
-        umfpack_dl_free_symbolic(&mSymbolic);
-        mSymbolic = nullptr;
-    }
-    if (mNumeric != nullptr)
-    {
-        umfpack_dl_free_numeric(&mNumeric);
-        mNumeric = nullptr;
-    }
+    const auto tNumberOfRows = aCRSMatrix.numRows();
+    auto tMatrix = to_CCS(make_CRS_matrix(aCRSMatrix));
+
+    const auto &tSymbolic = mUMFPACKSymbolicCache.compute(tMatrix, aCRSMatrix);
+    const auto tNumeric = numeric_factorization(tMatrix, aCRSMatrix, tSymbolic.get());
+
+    const auto tRHSOnHost = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aB);
+    const auto tSolutionOnHost = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aX);
+    auto tInfo = std::array<double, UMFPACK_INFO>{};
+    umfpack_dl_solve(UMFPACK_A, tMatrix.mColumnBegin.data(), tMatrix.mRows.data(), tMatrix.mValues.data(),
+                     tSolutionOnHost.data(), tRHSOnHost.data(), tNumeric.get(), nullptr, tInfo.data());
+    check_umfpack("matrix solve", tInfo, aCRSMatrix);
+
+    Kokkos::deep_copy(aX, tSolutionOnHost);
 }
 
-void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<int> aA, Plato::ScalarVector aX, Plato::ScalarVector aB)
-{
-    const CSRMatrix A = constructCSRMatrix(aA);
+auto bad_umfpack_matrix_file_path() -> std::filesystem::path { return std::filesystem::path{"bad_umfpack_matrix.m"}; }
 
-    mMatrix = convertCSRtoCSC(A);
-    const SuiteSparse_long nRows = mMatrix.nCols();
-
-    umfpack_dl_symbolic(nRows, nRows, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), &mSymbolic,
-                        nullptr, mInfo.data());
-    check_umfpack("Symbolic factorization");
-
-    umfpack_dl_numeric(mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), mSymbolic, &mNumeric,
-                       nullptr, mInfo.data());
-    check_umfpack("Numeric factorization");
-
-    umfpack_dl_solve(UMFPACK_A, mMatrix.colBegin.data(), mMatrix.rows.data(), mMatrix.values.data(), aX.data(),
-                     aB.data(), mNumeric, nullptr, mInfo.data());
-    check_umfpack("matrix solve");
-
-    report_memory_usage();
-
-    clear();
-}
-
-void UMFPACKLinearSolver::report_memory_usage()
-{
-    std::cout << "UMFPACK peak memory usage: "
-              << mInfo[UMFPACK_SIZE_OF_UNIT] * mInfo[UMFPACK_PEAK_MEMORY] / (1024.0 * 1024.0) << " MB." << std::endl;
-}
-
-void UMFPACKLinearSolver::check_umfpack(const std::string &msg)
-{
-    if (mInfo[UMFPACK_STATUS] != UMFPACK_OK)
-    {
-        ANALYZE_THROWERR("UMFPACK: error in " + msg +
-                         ": status = " + std::to_string(static_cast<int>(mInfo[UMFPACK_STATUS])));
-    }
-}
-
-}  // namespace Plato::UMFPACK
+}  // namespace Plato::alg
