@@ -34,7 +34,7 @@ class BodyLoad
 
    public:
     /**************************************************************************/
-    BodyLoad<EvaluationType, ElementType>(const std::string &aName, Teuchos::ParameterList &aParam)
+    BodyLoad(const std::string &aName, Teuchos::ParameterList &aParam)
         : mName(aName),
           mDof(aParam.get<Plato::OrdinalType>("Index", 0)),
           mFuncString(aParam.get<std::string>("Function"))
