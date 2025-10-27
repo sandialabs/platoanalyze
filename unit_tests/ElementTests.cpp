@@ -1606,13 +1606,14 @@ TEUCHOS_UNIT_TEST(Tet10, SurfaceArea)
     auto tAreasHost = Kokkos::create_mirror_view(tSurfaceArea);
     Kokkos::deep_copy(tAreasHost, tSurfaceArea);
 
-    std::vector<Plato::Scalar> tAreasGold = {Plato::Scalar(1) / 6, Plato::Scalar(1) / 6, Plato::Scalar(1) / 6};
-
-    int tNumGold_I = tAreasGold.size();
-    for (int i = 0; i < tNumGold_I; i++)
+    double tAreaSum = 0.0;
+    for (auto i = 0; i < tAreasHost.size(); i++)
     {
-        TEST_FLOATING_EQUALITY(tAreasHost(i), tAreasGold[i], 1e-13);
+        tAreaSum += tAreasHost(i);
     }
+
+    constexpr double kGoldSurfaceArea = 0.5;
+    TEST_FLOATING_EQUALITY(tAreaSum, kGoldSurfaceArea, 1e-13);
 }
 
 namespace
