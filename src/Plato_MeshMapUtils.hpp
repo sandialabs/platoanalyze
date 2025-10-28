@@ -9,7 +9,11 @@
 #ifndef PLATO_MESHMAP_UTILS_HPP_
 #define PLATO_MESHMAP_UTILS_HPP_
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <ArborX.hpp>
+#pragma clang diagnostic pop
+
 #include <Kokkos_Core.hpp>
 
 #include "ElementBase.hpp"

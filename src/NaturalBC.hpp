@@ -59,8 +59,7 @@ class NaturalBC
      * \param [in] aLoadName user-defined name for natural boundary condition sublist
      * \param [in] aSubList  natural boundary condition input parameter sublist
      *******************************************************************************/
-    NaturalBC<ElementType, NumDofs, DofsPerNode, DofOffset>(const std::string& aLoadName,
-                                                            const Teuchos::ParameterList& aSublist)
+    NaturalBC(const std::string& aLoadName, const Teuchos::ParameterList& aSublist)
         : mName(aLoadName),
           mType(naturalBoundaryCondition(getStringDataAndAffirmExists("Type", aSublist, mName))),
           mSidesetName(getStringDataAndAffirmExists("Sides", aSublist, mName)),

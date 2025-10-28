@@ -22,7 +22,7 @@ class ComputedField
 
    public:
     /**************************************************************************/
-    ComputedField<SpaceDim, ScalarType>(const Plato::Mesh aMesh, const std::string& aName, const std::string& aFunc)
+    ComputedField(const Plato::Mesh aMesh, const std::string& aName, const std::string& aFunc)
         : mName(aName), mFuncString(aFunc), mValues(aName, aMesh->NumNodes())
     /**************************************************************************/
     {

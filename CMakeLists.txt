@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.21)
 CMAKE_POLICY(SET CMP0057 NEW)
 
 project(PLATOANALYZE VERSION 0.0.0 LANGUAGES CXX)
 
 # hdf5 dependency (introduced by exodus) needs C
 enable_language(C)
+
+set (CMAKE_CXX_STANDARD 20)
 
 option( WARNINGS_AS_ERRORS "Builds platoanalyze with warnings as errors" OFF )
 option( BUILD_WITH_SANITIZER_FLAGS "Builds platoanalyze with sanitizers" OFF )
@@ -60,10 +62,6 @@ IF (DEFINED Trilinos_PREFIX)
   SET(CMAKE_PREFIX_PATH ${Trilinos_PREFIX} ${CMAKE_PREFIX_PATH})
 ENDIF()
 
-#IF (DEFINED SuperLU_PREFIX)
-#  SET(CMAKE_PREFIX_PATH ${SuperLU_PREFIX} ${CMAKE_PREFIX_PATH})
-#ENDIF()
-
 #silences warnings about the system not supporting shared libraries
 #http://stackoverflow.com/questions/12264299/cmake-on-linux-target-platform-does-not-support-dynamic-linking
 SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
@@ -90,16 +88,7 @@ set(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
 set(CMAKE_C_COMPILER ${Trilinos_C_COMPILER})
 set(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
 
-find_package(Boost REQUIRED COMPONENTS serialization)
-
-set(THREAD_COUNT "" CACHE STRING "Default number of threads to use")
-if(THREAD_COUNT)
-  set(ALL_THREAD_ARGS "--kokkos-threads=${THREAD_COUNT}")
-else()
-  set(ALL_THREAD_ARGS "")
-endif()
-
-MESSAGE("-- BUILD_SHARED_LIBS: ${BUILD_SHARED_LIBS}")
+find_package(Boost REQUIRED)
 
 message(STATUS "Additional gcc warnings: ${GCC_ADDITIONAL_WARNINGS}")
 add_compile_options("$<$<CXX_COMPILER_ID:GNU>:${GCC_ADDITIONAL_WARNINGS}>")
@@ -220,7 +209,6 @@ if( CMAKE_INSTALL_PREFIX )
   install( TARGETS analyze DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 endif()
 target_include_directories(analyze PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-#target_link_libraries(analyze analyzelib)
 target_link_libraries( analyze analyzelib Trilinos::all_selected_libs )
 
 IF (DEFINED AMGX_PREFIX)
@@ -413,10 +401,6 @@ endif()
 set(INTEGRATION_TESTS_DIR ${PROJECT_SOURCE_DIR}/../plato-integration-tests ) # Assumes we cloned from the plato super-project
 if(PLATOANALYZE_INTEGRATION_TESTS)
   add_subdirectory(${INTEGRATION_TESTS_DIR}/analyze ${PROJECT_BINARY_DIR}/integration_tests/analyze)
-endif()
-
-if(PLATOANALYZE_DAKOTA_TESTS)
-  add_subdirectory(${INTEGRATION_TESTS_DIR}/dakota_analyze ${PROJECT_BINARY_DIR}/integration_tests/dakota_analyze)
 endif()
 
 set(PLATOANALYZE_KEY_INTS
