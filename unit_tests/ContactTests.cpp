@@ -262,8 +262,15 @@ auto element_contact_forces_for_test_case(const std::shared_ptr<Plato::EngineMes
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * aMesh->NumNodes());
-    Plato::Scalar disp = 0.0, dval = 0.0001;
-    for (auto& val : u_host) val = (disp += dval);
+    Plato::Scalar tDisp = 0.0;
+    constexpr Plato::Scalar tDval = 0.0001;
+    std::generate(Kokkos::Experimental::begin(tDisplacementHost), Kokkos::Experimental::end(tDisplacementHost),
+                  [tCount = 0]() mutable
+                  {
+                      constexpr auto tIncrement = 0.0001;
+                      return ++tCount * tIncrement;
+                  });
+
     auto u = Plato::TestHelpers::create_device_view(u_host);
 
     auto tPairs = Plato::Contact::parse_contact(aInputs->sublist("Contact"), aMesh);

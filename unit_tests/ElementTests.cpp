@@ -1606,12 +1606,8 @@ TEUCHOS_UNIT_TEST(Tet10, SurfaceArea)
     auto tAreasHost = Kokkos::create_mirror_view(tSurfaceArea);
     Kokkos::deep_copy(tAreasHost, tSurfaceArea);
 
-    double tAreaSum = 0.0;
-    for (auto i = 0; i < tAreasHost.size(); i++)
-    {
-        tAreaSum += tAreasHost(i);
-    }
-
+    const auto tAreaSum =
+        std::accumulate(Kokkos::Experimental::begin(tAreasHost), Kokkos::Experimental::end(tAreasHost), 0.0);
     constexpr double kGoldSurfaceArea = 0.5;
     TEST_FLOATING_EQUALITY(tAreaSum, kGoldSurfaceArea, 1e-13);
 }
