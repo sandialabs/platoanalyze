@@ -280,15 +280,17 @@ TEUCHOS_UNIT_TEST(Tet10, ComputeGradientMatrix)
 
     Plato::Array<tSpaceDims> kEvaluationPoint{0.546881519204984, 0.433864042622832, 0.018578386644044};
 
-    Kokkos::View<Plato::Scalar**, Plato::Layout, Plato::MemSpace> tGradientsView(
-        "gradient at evaluation point", tNodesPerCell, tSpaceDims);
+    Kokkos::View<Plato::Scalar**, Plato::Layout, Plato::MemSpace> tGradientsView("gradient at evaluation point",
+                                                                                 tNodesPerCell, tSpaceDims);
 
     Plato::Scalar tVolume(0.0);
     Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, Plato::Scalar> tGradient;
     computeGradientMatrix(0, kEvaluationPoint, tConfigWS, tGradient, tVolume);
 
-    for (int I = 0; I < ElementType::mNumNodesPerCell; I++) {
-        for (int i = 0; i < ElementType::mNumSpatialDims; i++) {
+    for (int I = 0; I < ElementType::mNumNodesPerCell; I++)
+    {
+        for (int i = 0; i < ElementType::mNumSpatialDims; i++)
+        {
             tGradientsView(I, i) = tGradient(I, i);
         }
     }
@@ -941,6 +943,58 @@ TEUCHOS_UNIT_TEST(Tet10, ElastostaticResidual3D)
         else
         {
             TEST_FLOATING_EQUALITY(jac_entriesHost(i), gold_jac_entries[i], 1.0e-12);
+        }
+    }
+
+    // compute and test gradient wrt control, z
+    //
+    auto gradient_z = tVectorFunction.gradient_z(u, z);
+
+    auto grad_entries = gradient_z->entries();
+    auto grad_entriesHost = Kokkos::create_mirror_view(grad_entries);
+    Kokkos::deep_copy(grad_entriesHost, grad_entries);
+
+    std::vector<Plato::Scalar> gold_grad_entries = {-22.43589743589744,
+                                                    -9.615384615384613,
+                                                    -9.615384615384615,
+                                                    0.0,
+                                                    0.0,
+                                                    12.82051282051282,
+                                                    3.739316239316239,
+                                                    1.602564102564102,
+                                                    -3.205128205128204,
+                                                    0.0,
+                                                    12.82051282051282,
+                                                    0.0,
+                                                    0.0,
+                                                    6.410256410256412,
+                                                    6.410256410256412,
+                                                    14.95726495726496,
+                                                    0.0,
+                                                    -6.410256410256411,
+                                                    3.739316239316238,
+                                                    -3.205128205128204,
+                                                    1.602564102564102,
+                                                    14.95726495726496,
+                                                    -6.410256410256409,
+                                                    0.0,
+                                                    7.47863247863248,
+                                                    -1.602564102564103,
+                                                    -1.602564102564102,
+                                                    29.91452991452993,
+                                                    0.0,
+                                                    0.0};
+
+    int grad_entriesSize = gold_grad_entries.size();
+    for (int i = 0; i < grad_entriesSize; i++)
+    {
+        if (gold_grad_entries[i] == 0.0)
+        {
+            TEST_ASSERT(fabs(grad_entriesHost(i)) < 1e-12);
+        }
+        else
+        {
+            TEST_FLOATING_EQUALITY(grad_entriesHost(i), gold_grad_entries[i], 2.0e-14);
         }
     }
 }
