@@ -18,18 +18,20 @@ class Tri3
     static constexpr Plato::OrdinalType mNumSpatialDims = 2;
     static constexpr Plato::OrdinalType mNumNodesPerCell = 3;
     static constexpr Plato::OrdinalType mNumNodesPerFace = 2;
-    static constexpr Plato::OrdinalType mNumGaussPoints = 1;
+    static constexpr Plato::OrdinalType mNumGaussPoints = 3;
 
     static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims - 1;
 
     static constexpr Plato::Array<mNumGaussPoints> getCubWeights()
     {
-        return Plato::Array<mNumGaussPoints>({Plato::Scalar(1) / 2});
+        return Plato::Array<mNumGaussPoints>({Plato::Scalar(1) / 6, Plato::Scalar(1) / 6, Plato::Scalar(1) / 6});
     }
 
     static constexpr Plato::Matrix<mNumGaussPoints, mNumSpatialDims> getCubPoints()
     {
-        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>({Plato::Scalar(1) / 3, Plato::Scalar(1) / 3});
+        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>({Plato::Scalar(1) / 6, Plato::Scalar(1) / 6,
+                                                                Plato::Scalar(1) / 6, Plato::Scalar(2) / 3,
+                                                                Plato::Scalar(2) / 3, Plato::Scalar(1) / 6});
     }
 
     [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static auto basisValues(

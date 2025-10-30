@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
 #include "Hex27.hpp"
@@ -9,6 +11,7 @@
 #include "Tet10.hpp"
 #include "Tet4.hpp"
 #include "Teuchos_UnitTestHarness.hpp"
+#include "Kokkos_StdAlgorithms.hpp"
 #include "Tri3.hpp"
 #include "Tri6.hpp"
 #include "WorksetBase.hpp"
@@ -1606,11 +1609,136 @@ TEUCHOS_UNIT_TEST(Tet10, SurfaceArea)
     auto tAreasHost = Kokkos::create_mirror_view(tSurfaceArea);
     Kokkos::deep_copy(tAreasHost, tSurfaceArea);
 
-    std::vector<Plato::Scalar> tAreasGold = {Plato::Scalar(1) / 6, Plato::Scalar(1) / 6, Plato::Scalar(1) / 6};
+    const auto tAreaSum =
+        std::accumulate(Kokkos::Experimental::begin(tAreasHost), Kokkos::Experimental::end(tAreasHost), 0.0);
+    constexpr double kGoldSurfaceArea = 0.5;
+    TEST_FLOATING_EQUALITY(tAreaSum, kGoldSurfaceArea, 1e-13);
+}
 
-    int tNumGold_I = tAreasGold.size();
-    for (int i = 0; i < tNumGold_I; i++)
+namespace
+{
+template <typename Function, typename Matrix, std::size_t... kIndices>
+[[nodiscard]] KOKKOS_INLINE_FUNCTION auto evaluate_impl(const Function aFunction,
+                                                        const int aQuadraturePointIndex,
+                                                        const Matrix& aQuadraturePoints,
+                                                        std::index_sequence<kIndices...>)
+{
+    return aFunction(aQuadraturePoints(aQuadraturePointIndex, kIndices)...);
+}
+
+template <typename ElementType, std::size_t kDimensions, typename Function>
+[[nodiscard]] auto integrate_n_d_function(const Function aFunction) -> double
+{
+    constexpr auto tQuadratureWeights = ElementType::getCubWeights();
+    constexpr auto tQuadraturePoints = ElementType::getCubPoints();
+    auto tQuadratureSum = 0.0;
+    Kokkos::parallel_reduce(
+        "Quadrature", Kokkos::RangePolicy<int>(0, ElementType::mNumGaussPoints),
+        KOKKOS_LAMBDA(const int aQuadraturePointIndex, double& aQuadratureSum) {
+            aQuadratureSum += tQuadratureWeights(aQuadraturePointIndex) *
+                              evaluate_impl(aFunction, aQuadraturePointIndex, tQuadraturePoints,
+                                            std::make_index_sequence<kDimensions>());
+        },
+        tQuadratureSum);
+    return tQuadratureSum;
+}
+
+template <std::size_t kDimensions>
+struct NDMonomial
+{
+    std::array<int, kDimensions> mPowers;
+
+    template <std::size_t... kIndices, typename... Args>
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto evaluate_impl(const std::index_sequence<kIndices...>,
+                                                            const Args... aArgs) const
     {
-        TEST_FLOATING_EQUALITY(tAreasHost(i), tAreasGold[i], 1e-13);
+        return (std::pow(aArgs, mPowers[kIndices]) * ...);
+    }
+
+    template <typename... Args>
+    [[nodiscard]] KOKKOS_INLINE_FUNCTION auto operator()(const Args... aArgs) const -> double
+    {
+        return evaluate_impl(std::make_index_sequence<kDimensions>(), aArgs...);
+    }
+};
+
+using TwoDMonomialIntegral = std::tuple<int, int, double>;
+
+constexpr auto kQuadraticTwoDMonomialIntegrals = std::array{
+    TwoDMonomialIntegral{0, 0, 1.0 / 2.0},  TwoDMonomialIntegral{1, 0, 1.0 / 6.0},
+    TwoDMonomialIntegral{0, 1, 1.0 / 6.0},  TwoDMonomialIntegral{2, 0, 1.0 / 12.0},
+    TwoDMonomialIntegral{1, 1, 1.0 / 24.0}, TwoDMonomialIntegral{0, 2, 1.0 / 12.0},
+};
+
+constexpr auto kQuarticTwoDMonomialIntegrals =
+    std::array{kQuadraticTwoDMonomialIntegrals[0],      kQuadraticTwoDMonomialIntegrals[1],
+               kQuadraticTwoDMonomialIntegrals[2],      kQuadraticTwoDMonomialIntegrals[3],
+               kQuadraticTwoDMonomialIntegrals[4],      kQuadraticTwoDMonomialIntegrals[5],
+               TwoDMonomialIntegral{3, 0, 1.0 / 20.0},  TwoDMonomialIntegral{2, 1, 1.0 / 60.0},
+               TwoDMonomialIntegral{1, 2, 1.0 / 60.0},  TwoDMonomialIntegral{0, 3, 1.0 / 20.0},
+               TwoDMonomialIntegral{4, 0, 1.0 / 30.0},  TwoDMonomialIntegral{3, 1, 1.0 / 120.0},
+               TwoDMonomialIntegral{2, 2, 1.0 / 180.0}, TwoDMonomialIntegral{1, 3, 1.0 / 120.0},
+               TwoDMonomialIntegral{0, 4, 1.0 / 30.0}};
+}  // namespace
+
+TEUCHOS_UNIT_TEST(Tri3, Quadrature)
+{
+    // Test integration of all monomials up to twice the basis function order, which is order 2 for Tri3
+    constexpr auto tTolerance = 1e-15;
+
+    for (const auto& [tXPower, tYPower, tExpected] : kQuadraticTwoDMonomialIntegrals)
+    {
+        const auto tComputed = integrate_n_d_function<Plato::Tri3, 2U>(NDMonomial<2U>{tXPower, tYPower});
+        TEST_FLOATING_EQUALITY(tComputed, tExpected, tTolerance);
+    }
+}
+
+TEUCHOS_UNIT_TEST(Tri6, Quadrature)
+{
+    // Test integration of all monomials up to twice the basis function order, which is order 4 for Tri6
+    constexpr auto tTolerance = 1e-14;
+
+    for (const auto& [tXPower, tYPower, tExpected] : kQuarticTwoDMonomialIntegrals)
+    {
+        const auto tComputed = integrate_n_d_function<Plato::Tri6, 2U>(NDMonomial<2U>{tXPower, tYPower});
+        TEST_FLOATING_EQUALITY(tComputed, tExpected, tTolerance);
+    }
+}
+
+namespace
+{
+using ThreeDMonomialIntegral = std::tuple<int, int, int, double>;
+
+constexpr auto kQuarticThreeDMonomialIntegrals = std::array{
+    ThreeDMonomialIntegral{0, 0, 0, 1.0 / 6.0},    ThreeDMonomialIntegral{1, 0, 0, 1.0 / 24.0},
+    ThreeDMonomialIntegral{0, 1, 0, 1.0 / 24.0},   ThreeDMonomialIntegral{0, 0, 1, 1.0 / 24.0},
+    ThreeDMonomialIntegral{2, 0, 0, 1.0 / 60.0},   ThreeDMonomialIntegral{0, 2, 0, 1.0 / 60.0},
+    ThreeDMonomialIntegral{0, 0, 2, 1.0 / 60.0},   ThreeDMonomialIntegral{0, 1, 1, 1.0 / 120.0},
+    ThreeDMonomialIntegral{1, 0, 1, 1.0 / 120.0},  ThreeDMonomialIntegral{1, 1, 0, 1.0 / 120.0},
+    ThreeDMonomialIntegral{3, 0, 0, 1.0 / 120.0},  ThreeDMonomialIntegral{0, 3, 0, 1.0 / 120.0},
+    ThreeDMonomialIntegral{0, 0, 3, 1.0 / 120.0},  ThreeDMonomialIntegral{2, 1, 0, 1.0 / 360.0},
+    ThreeDMonomialIntegral{2, 0, 1, 1.0 / 360.0},  ThreeDMonomialIntegral{1, 2, 0, 1.0 / 360.0},
+    ThreeDMonomialIntegral{0, 2, 1, 1.0 / 360.0},  ThreeDMonomialIntegral{1, 0, 2, 1.0 / 360.0},
+    ThreeDMonomialIntegral{0, 1, 2, 1.0 / 360.0},  ThreeDMonomialIntegral{1, 1, 1, 1.0 / 720.0},
+    ThreeDMonomialIntegral{4, 0, 0, 1.0 / 210.0},  ThreeDMonomialIntegral{0, 4, 0, 1.0 / 210.0},
+    ThreeDMonomialIntegral{0, 0, 4, 1.0 / 210.0},  ThreeDMonomialIntegral{3, 1, 0, 1.0 / 840.0},
+    ThreeDMonomialIntegral{3, 0, 1, 1.0 / 840.0},  ThreeDMonomialIntegral{1, 3, 0, 1.0 / 840.0},
+    ThreeDMonomialIntegral{0, 3, 1, 1.0 / 840.0},  ThreeDMonomialIntegral{1, 0, 3, 1.0 / 840.0},
+    ThreeDMonomialIntegral{0, 1, 3, 1.0 / 840.0},  ThreeDMonomialIntegral{2, 2, 0, 1.0 / 1260.0},
+    ThreeDMonomialIntegral{2, 0, 2, 1.0 / 1260.0}, ThreeDMonomialIntegral{0, 2, 2, 1.0 / 1260.0},
+    ThreeDMonomialIntegral{2, 1, 1, 1.0 / 2520.0}, ThreeDMonomialIntegral{1, 2, 1, 1.0 / 2520.0},
+    ThreeDMonomialIntegral{1, 1, 2, 1.0 / 2520.0},
+};
+}  // namespace
+
+TEUCHOS_UNIT_TEST(Tet10, Quadrature)
+{
+    // Test integration of all monomials up to twice the basis function order, which is order 4 for Tet10
+    constexpr auto tTolerance = 1e-14;
+
+    for (const auto& [tXPower, tYPower, tZPower, tExpected] : kQuarticThreeDMonomialIntegrals)
+    {
+        const auto tComputed = integrate_n_d_function<Plato::Tet10, 3U>(NDMonomial<3U>{tXPower, tYPower, tZPower});
+        TEST_FLOATING_EQUALITY(tComputed, tExpected, tTolerance);
     }
 }

@@ -268,9 +268,9 @@ TEUCHOS_UNIT_TEST(Tet10, ComputeGradientMatrix)
 
     Plato::WorksetBase<ElementType> worksetBase(tMesh);
 
-    auto tNumCells = tMesh->NumElements();
-    auto tNodesPerCell = ElementType::mNumNodesPerCell;
-    auto tSpaceDims = ElementType::mNumSpatialDims;
+    const auto tNumCells = tMesh->NumElements();
+    const auto tNodesPerCell = ElementType::mNumNodesPerCell;
+    const auto tSpaceDims = ElementType::mNumSpatialDims;
 
     Plato::ScalarArray3DT<Plato::Scalar> tConfigWS("config workset", tNumCells, tNodesPerCell, tSpaceDims);
 
@@ -278,56 +278,51 @@ TEUCHOS_UNIT_TEST(Tet10, ComputeGradientMatrix)
 
     Plato::ComputeGradientMatrix<ElementType> computeGradientMatrix;
 
-    auto tCubPoints = ElementType::getCubPoints();
-    auto tCubWeights = ElementType::getCubWeights();
-    auto tNumPoints = tCubWeights.size();
+    Plato::Array<tSpaceDims> kEvaluationPoint{0.546881519204984, 0.433864042622832, 0.018578386644044};
 
-    Kokkos::View<Plato::Scalar****, Plato::Layout, Plato::MemSpace> tGradientsView(
-        "all gradients", tNumCells, tNumPoints, tNodesPerCell, tSpaceDims);
+    Kokkos::View<Plato::Scalar**, Plato::Layout, Plato::MemSpace> tGradientsView("gradient at evaluation point",
+                                                                                 tNodesPerCell, tSpaceDims);
 
-    Kokkos::parallel_for(
-        "gradients", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
-        KOKKOS_LAMBDA(const int cellOrdinal, const int gpOrdinal) {
-            Plato::Scalar tVolume(0.0);
+    Plato::Scalar tVolume(0.0);
+    Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, Plato::Scalar> tGradient;
+    computeGradientMatrix(0, kEvaluationPoint, tConfigWS, tGradient, tVolume);
 
-            Plato::Matrix<ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims, Plato::Scalar> tGradient;
-            auto tCubPoint = tCubPoints(gpOrdinal);
-            computeGradientMatrix(cellOrdinal, tCubPoint, tConfigWS, tGradient, tVolume);
-            tVolume *= tCubWeights(gpOrdinal);
-
-            for (int I = 0; I < ElementType::mNumNodesPerCell; I++)
-                for (int i = 0; i < ElementType::mNumSpatialDims; i++)
-                    tGradientsView(cellOrdinal, gpOrdinal, I, i) = tGradient(I, i);
-        });
+    for (int I = 0; I < ElementType::mNumNodesPerCell; I++)
+    {
+        for (int i = 0; i < ElementType::mNumSpatialDims; i++)
+        {
+            tGradientsView(I, i) = tGradient(I, i);
+        }
+    }
 
     auto tGradientsHost = Kokkos::create_mirror_view(tGradientsView);
     Kokkos::deep_copy(tGradientsHost, tGradientsView);
 
     std::vector<std::vector<Plato::Scalar>> tGradientsGold = {
-        {0.000000000000000000, 0.447213595499963701, 0.000000000000000000},
-        {1.341640786499876060, 0.000000000000000000, -1.341640786499876730},
-        {0.447213595499955985, -0.447213595499955985, 0.000000000000000000},
-        {0.000000000000000000, 0.000000000000000000, -0.447213595499955985},
-        {0.552786404500035911, -2.341640786499875840, -0.552786404500035022},
-        {-1.788854381999831710, 2.341640786499875840, -0.552786404500044348},
-        {-0.552786404500036466, 0.000000000000000000, 0.000000000000000000},
-        {-0.000000000000000000, -0.552786404500044015, 0.552786404500036688},
-        {0.552786404500044126, 0.000000000000000000, 1.788854381999831490},
-        {-0.552786404500044015, 0.552786404500044015, 0.552786404500044015}};
+        {0.000000000000000000, 0.997295793887440, 0.000000000000000000},
+        {1.187526076819936, 0.000000000000000000, -1.187526076819936},
+        {-0.735456170491328, 0.735456170491328, 0.000000000000000000},
+        {0.000000000000000000, 0.000000000000000000, -0.925686453423824},
+        {0.002704206112560, -2.187526076819936, -0.002704206112560},
+        {-0.452069906328608, 2.187526076819936, -1.735456170491328},
+        {-0.002704206112560, -1.732751964378768, 0.000000000000000000},
+        {-0.000000000000000000, -0.074313546576176, 0.002704206112560},
+        {0.074313546576176, 0.000000000000000000, 2.113212530243760},
+        {-0.074313546576176, 0.074313546576176, 1.735456170491328}};
 
-    int tNumGold_J = tGradientsGold.size();
+    const int tNumGold_J = tGradientsGold.size();
     for (int j = 0; j < tNumGold_J; j++)
     {
-        int tNumGold_K = tGradientsGold[j].size();
+        const int tNumGold_K = tGradientsGold[j].size();
         for (int k = 0; k < tNumGold_K; k++)
         {
             if (tGradientsGold[j][k] == 0)
             {
-                TEST_ASSERT(fabs(tGradientsHost(0, 0, j, k)) < 1e-14);
+                TEST_ASSERT(fabs(tGradientsHost(j, k)) < 1e-14);
             }
             else
             {
-                TEST_FLOATING_EQUALITY(tGradientsHost(0, 0, j, k), tGradientsGold[j][k], 1e-13);
+                TEST_FLOATING_EQUALITY(tGradientsHost(j, k), tGradientsGold[j][k], 1e-12);
             }
         }
     }
@@ -959,36 +954,36 @@ TEUCHOS_UNIT_TEST(Tet10, ElastostaticResidual3D)
     auto grad_entriesHost = Kokkos::create_mirror_view(grad_entries);
     Kokkos::deep_copy(grad_entriesHost, grad_entries);
 
-    std::vector<Plato::Scalar> gold_grad_entries = {-30.1009150817276634,
-                                                    -12.9003921778832886,
-                                                    -12.9003921778832868,
-                                                    -3.83250882291512918,
-                                                    -1.64250378124933993,
-                                                    17.2005229038443836,
-                                                    5.01681918028794716,
-                                                    2.15006536298054840,
-                                                    -4.30013072596109680,
-                                                    -3.83250882291512829,
-                                                    17.2005229038443836,
-                                                    -1.64250378124933971,
-                                                    -7.66501764583024325,
-                                                    8.60026145192219360,
-                                                    8.60026145192219360,
-                                                    16.2347678982366581,
-                                                    0,
-                                                    -6.95775767067285500,
-                                                    5.01681918028794627,
-                                                    -4.30013072596109680,
-                                                    2.15006536298054840,
-                                                    16.2347678982366581,
-                                                    -6.95775767067285500,
-                                                    0,
-                                                    10.0336383605758943,
-                                                    -2.15006536298054840,
-                                                    -2.15006536298054840,
-                                                    40.1345534423035701,
-                                                    -1.64250378124933838,
-                                                    -1.64250378124933927};
+    std::vector<Plato::Scalar> gold_grad_entries = {-22.43589743589744,
+                                                    -9.615384615384613,
+                                                    -9.615384615384615,
+                                                    0.0,
+                                                    0.0,
+                                                    12.82051282051282,
+                                                    3.739316239316239,
+                                                    1.602564102564102,
+                                                    -3.205128205128204,
+                                                    0.0,
+                                                    12.82051282051282,
+                                                    0.0,
+                                                    0.0,
+                                                    6.410256410256412,
+                                                    6.410256410256412,
+                                                    14.95726495726496,
+                                                    0.0,
+                                                    -6.410256410256411,
+                                                    3.739316239316238,
+                                                    -3.205128205128204,
+                                                    1.602564102564102,
+                                                    14.95726495726496,
+                                                    -6.410256410256409,
+                                                    0.0,
+                                                    7.47863247863248,
+                                                    -1.602564102564103,
+                                                    -1.602564102564102,
+                                                    29.91452991452993,
+                                                    0.0,
+                                                    0.0};
 
     int grad_entriesSize = gold_grad_entries.size();
     for (int i = 0; i < grad_entriesSize; i++)
@@ -1002,34 +997,6 @@ TEUCHOS_UNIT_TEST(Tet10, ElastostaticResidual3D)
             TEST_FLOATING_EQUALITY(grad_entriesHost(i), gold_grad_entries[i], 2.0e-14);
         }
     }
-
-#ifdef NOPE
-
-    // compute and test gradient wrt node position, x
-    //
-    auto gradient_x = tVectorFunction.gradient_x(u, z);
-
-    auto grad_x_entries = gradient_x->entries();
-    auto grad_x_entriesHost = Kokkos::create_mirror_view(grad_x_entries);
-    Kokkos::deep_copy(grad_x_entriesHost, grad_x_entries);
-
-    std::vector<Plato::Scalar> gold_grad_x_entries = {
-        -1903.84615384615336, -1903.84615384615336, -1903.84615384615358, -634.615384615384301, -634.615384615384414,
-        -634.615384615384642, -211.538461538461490, -211.538461538461462, -211.538461538461661, -105.769230769230603,
-        9.61538461538454214,  451.923076923076962,  -163.461538461538652, -48.0769230769230802, -124.999999999999716,
-        961.538461538461206,  730.769230769230603,  365.384615384615358,  -144.230769230769113, 374.999999999999716,
-        9.61538461538462741,  942.307692307692150,  596.153846153846189,  634.615384615384301,  -221.153846153846104,
-        -394.230769230769113, -67.3076923076922782, -942.307692307692150, -307.692307692307395, -230.769230769230688,
-        548.076923076922867,  317.307692307692150,  278.846153846153811,  663.461538461538112,  259.615384615384528,
-        221.153846153846132};
-
-    int grad_x_entriesSize = gold_grad_x_entries.size();
-    for (int i = 0; i < grad_x_entriesSize; i++)
-    {
-        TEST_FLOATING_EQUALITY(grad_x_entriesHost(i), gold_grad_x_entries[i], 1.0e-13);
-    }
-
-#endif
 }
 
 /******************************************************************************/

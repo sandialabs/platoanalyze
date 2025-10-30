@@ -153,37 +153,6 @@ void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_bound
         mBoundaryLoads->get(aSpatialModel, aState, aControl, aConfig, aResult, -1.0);
     }
 }
-
-/******************************************************************************/
-/**
- * \brief Evaluate contact
- *
- * \param [in] aSpatialModel Plato Analyze spatial model
- * \param [in] aSideSet side set to evaluate contact on
- * \param [in] aComputeSurfaceDisp functor for computing displacement on surface
- * \param [in] aComputeContactForce functor for computing contact force
- * \param [in] aState 2D array with state variables (C,DOF)
- * \param [in] aControl 2D array with control variables (C,N)
- * \param [in] aConfig 3D array with control variables (C,N,D)
- * \param [in] aResult 1D array with control variables (C,DOF)
- * \param [in] aTimeStep current time step
- *
- * Nomenclature: C = number of cells, DOF = number of degrees of freedom per cell
- * N = number of nodes per cell, D = spatial dimensions
- **********************************************************************************/
-template <typename EvaluationType, typename IndicatorFunctionType>
-void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_contact(
-    const Plato::SpatialModel& aSpatialModel,
-    const std::string& aSideSet,
-    Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
-    Teuchos::RCP<Plato::Contact::AbstractContactForce<EvaluationType>> aComputeContactForce,
-    const Plato::ScalarMultiVectorT<StateScalarType>& aState,
-    const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
-    const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
-    Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
-    Plato::Scalar aTimeStep) const
-{
-}
 }  // namespace Elliptic
 
 }  // namespace Plato

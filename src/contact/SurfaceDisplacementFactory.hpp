@@ -21,13 +21,13 @@ class SurfaceDisplacementFactory
     SurfaceDisplacementFactory() {}
 
     Teuchos::RCP<SurfaceDisplacement<EvaluationType>> createChildContribution(const ContactSurface& aSurface,
-                                                                              const Plato::Scalar& aScale = 1.0)
+                                                                              const Plato::Scalar& aScale = 1.0) const
     {
         return Teuchos::rcp(new SurfaceDisplacement<EvaluationType>(aSurface.childFaceLocalNodes(), aScale));
     }
 
     Teuchos::RCP<ProjectedSurfaceDisplacement<EvaluationType>> createParentContribution(
-        const ContactSurface& aSurface, Plato::Mesh aMesh, const Plato::Scalar& aScale = 1.0)
+        const ContactSurface& aSurface, Plato::Mesh aMesh, const Plato::Scalar& aScale = 1.0) const
     {
         return Teuchos::rcp(new ProjectedSurfaceDisplacement<EvaluationType>(
             aSurface.parentElements(), aSurface.mappedChildNodeLocations(), aSurface.elementWiseChildMap(), aMesh,

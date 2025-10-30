@@ -4,6 +4,7 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include "Mechanics.hpp"
 #include "MechanicsElement.hpp"
@@ -18,6 +19,8 @@
 #include "contact/ContactForceFactory.hpp"
 #include "contact/ContactPair.hpp"
 #include "contact/ContactUtils.hpp"
+#include "contact/EvaluateElementContactForces.hpp"
+#include "contact/IntegrateContactForce.hpp"
 #include "contact/SurfaceDisplacementFactory.hpp"
 #include "elliptic/EvaluationTypes.hpp"
 #include "elliptic/VectorFunction.hpp"
@@ -25,6 +28,121 @@
 
 namespace ContactTests
 {
+namespace
+{
+/// @brief Tri3 element with 1 quadrature point for testing.
+/// Many of these tests check specific values of displacements at quadrature points on a surface.
+/// These values and their gradients depend on the quadrature point they are computed at and gold values were generated
+/// with a 1 point quadrature rule.
+/// This element implements that quadrature rule so the gold values are still valid.
+class Tri3Test
+{
+   public:
+    using Face = Plato::Bar2;
+
+    static constexpr Plato::OrdinalType mNumSpatialDims = 2;
+    static constexpr Plato::OrdinalType mNumNodesPerCell = 3;
+    static constexpr Plato::OrdinalType mNumNodesPerFace = 2;
+    static constexpr Plato::OrdinalType mNumGaussPoints = 1;
+
+    static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims - 1;
+
+    static constexpr Plato::Array<mNumGaussPoints> getCubWeights()
+    {
+        return Plato::Array<mNumGaussPoints>({Plato::Scalar(1) / 2});
+    }
+
+    static constexpr Plato::Matrix<mNumGaussPoints, mNumSpatialDims> getCubPoints()
+    {
+        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>({Plato::Scalar(1) / 3, Plato::Scalar(1) / 3});
+    }
+
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static auto basisValues(
+        const Plato::Array<mNumSpatialDims>& aCubPoint) -> Plato::Array<mNumNodesPerCell>
+    {
+        const auto x = aCubPoint(0);
+        const auto y = aCubPoint(1);
+
+        return Plato::Array<mNumNodesPerCell>{1 - x - y, x, y};
+    }
+
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static auto basisGrads(
+        const Plato::Array<mNumSpatialDims>& aCubPoint) -> Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
+    {
+        return Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>{-1, -1, 1, 0, 0, 1};
+    }
+
+    template <typename ScalarType>
+    constexpr KOKKOS_INLINE_FUNCTION static auto differentialMeasure(
+        const Plato::Matrix<mNumSpatialDims, mNumSpatialDims + 1, ScalarType>& aJacobian) -> ScalarType
+    {
+        const ScalarType ax = aJacobian(0, 1) * aJacobian(1, 2) - aJacobian(0, 2) * aJacobian(1, 1);
+        const ScalarType ay = aJacobian(0, 2) * aJacobian(1, 0) - aJacobian(0, 0) * aJacobian(1, 2);
+        const ScalarType az = aJacobian(0, 0) * aJacobian(1, 1) - aJacobian(0, 1) * aJacobian(1, 0);
+
+        return sqrt(ax * ax + ay * ay + az * az);
+    }
+
+    template <typename ScalarType>
+    constexpr KOKKOS_INLINE_FUNCTION static auto differentialVector(
+        const Plato::Matrix<mNumSpatialDims, mNumSpatialDims + 1, ScalarType>& aJacobian)
+        -> Plato::Array<mNumSpatialDims + 1, ScalarType>
+    {
+        return Plato::Array<mNumSpatialDims + 1, ScalarType>{
+            aJacobian(0, 1) * aJacobian(1, 2) - aJacobian(0, 2) * aJacobian(1, 1),
+            aJacobian(0, 2) * aJacobian(1, 0) - aJacobian(0, 0) * aJacobian(1, 2),
+            aJacobian(0, 0) * aJacobian(1, 1) - aJacobian(0, 1) * aJacobian(1, 0)};
+    }
+};
+
+/// @brief Tet4 element that uses the single quadrature Tri3 as its surface elements.
+/// Many of these tests check specific values of displacements at quadrature points on a surface.
+/// These values and their gradients depend on the quadrature point they are computed at and gold values were generated
+/// with a 1 point quadrature rule.
+/// This element uses a Tri3 face element that implements that quadrature rule so the gold values are still valid.
+class Tet4Test
+{
+   public:
+    using Face = Tri3Test;
+    using C1 = Plato::Tet4;
+
+    static constexpr Plato::OrdinalType mNumSpatialDims = 3;
+    static constexpr Plato::OrdinalType mNumNodesPerCell = 4;
+    static constexpr Plato::OrdinalType mNumNodesPerFace = 3;
+    static constexpr Plato::OrdinalType mNumGaussPoints = 4;
+
+    static constexpr Plato::OrdinalType mNumSpatialDimsOnFace = mNumSpatialDims - 1;
+
+    static constexpr Plato::Array<mNumGaussPoints> getCubWeights()
+    {
+        return Plato::Array<mNumGaussPoints>({Plato::Scalar(1.0) / 24.0, Plato::Scalar(1.0) / 24.0,
+                                              Plato::Scalar(1.0) / 24.0, Plato::Scalar(1.0) / 24.0});
+    }
+
+    static constexpr Plato::Matrix<mNumGaussPoints, mNumSpatialDims> getCubPoints()
+    {
+        return Plato::Matrix<mNumGaussPoints, mNumSpatialDims>(
+            {0.585410196624969, 0.138196601125011, 0.138196601125011, 0.138196601125011, 0.585410196624969,
+             0.138196601125011, 0.138196601125011, 0.138196601125011, 0.585410196624969, 0.138196601125011,
+             0.138196601125011, 0.138196601125011});
+    }
+
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static auto basisValues(
+        const Plato::Array<mNumSpatialDims>& aCubPoint) -> Plato::Array<mNumNodesPerCell>
+    {
+        const auto x = aCubPoint(0);
+        const auto y = aCubPoint(1);
+        const auto z = aCubPoint(2);
+
+        return Plato::Array<mNumNodesPerCell>{Plato::Scalar(1) - x - y - z, x, y, z};
+    }
+
+    [[nodiscard]] constexpr KOKKOS_INLINE_FUNCTION static auto basisGrads(
+        const Plato::Array<mNumSpatialDims>& aCubPoint) -> Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>
+    {
+        return Plato::Matrix<mNumNodesPerCell, mNumSpatialDims>{-1, -1, -1, 1, 0, 0, 0, 1, 0, 0, 0, 1};
+    }
+};
 
 template <typename EvaluationType>
 class DummyResidual
@@ -77,32 +195,6 @@ class DummyResidual
     }
 };
 
-Plato::SpatialModel setup_dummy_spatial_model(Plato::Mesh aMesh)
-{
-    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
-        "<ParameterList name='Plato Problem'>                                           \n"
-        "  <ParameterList name='Spatial Model'>                                         \n"
-        "    <ParameterList name='Domains'>                                             \n"
-        "      <ParameterList name='Design Volume'>                                     \n"
-        "        <Parameter name='Element Block' type='string' value='body'/>           \n"
-        "        <Parameter name='Material Model' type='string' value='Fancy Feast'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
-        "  <ParameterList name='Material Models'>                                       \n"
-        "    <ParameterList name='Fancy Feast'>                                         \n"
-        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
-        "        <Parameter  name='Poissons Ratio' type='double' value='0.35'/>         \n"
-        "        <Parameter  name='Youngs Modulus' type='double' value='1.0e11'/>       \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
-        "</ParameterList>                                                               \n");
-
-    Plato::DataMap tDataMap;
-    return Plato::SpatialModel(aMesh, *tInputs, tDataMap);
-}
-
 void check_element_type_is_tet(Plato::Mesh aMesh)
 {
     auto tElementType = aMesh->ElementType();
@@ -132,10 +224,8 @@ Teuchos::RCP<Teuchos::ParameterList> get_2box_mesh_params()
         "    <ParameterList name='Pairs'>                                                     \n"
         "      <ParameterList name='Pair 1'>                                                  \n"
         "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
-        // "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
-        // "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
-        "        <Parameter name='Penalty Value' type='double' value='1.0e4' />  \n"
-        "        <Parameter name='Penalty Type' type='string' value='normal' />  \n"
+        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
+        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
         "        <ParameterList name='A Surface'>                                                  \n"
         "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
         "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
@@ -160,6 +250,38 @@ Teuchos::RCP<Teuchos::ParameterList> get_2box_mesh_params()
 
     return tInputs;
 }
+
+template <typename EvaluationType>
+auto element_contact_forces_for_test_case(const std::shared_ptr<Plato::EngineMesh>& aMesh,
+                                          const Teuchos::RCP<Teuchos::ParameterList>& aInputs)
+    -> Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType>
+{
+    using ElementType = typename EvaluationType::ElementType;
+
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(aMesh, *aInputs, tDataMap);
+
+    // create dummy displacement workset from box mesh
+    std::vector<Plato::Scalar> tDisplacementHost(ElementType::mNumSpatialDims * aMesh->NumNodes());
+    Plato::Scalar tDisp = 0.0;
+    constexpr Plato::Scalar tDval = 0.0001;
+    std::generate(tDisplacementHost.begin(), tDisplacementHost.end(),
+                  [tCount = 0]() mutable
+                  {
+                      constexpr auto tIncrement = 0.0001;
+                      return ++tCount * tIncrement;
+                  });
+
+    auto u = Plato::TestHelpers::create_device_view(tDisplacementHost);
+
+    auto tPairs = Plato::Contact::parse_contact(aInputs->sublist("Contact"), aMesh);
+    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
+    tSpatialModel.addContact(tPairs);
+
+    return Plato::Contact::element_contact_force_contribution<EvaluationType>(tSpatialModel, u);
+}
+
+}  // namespace
 
 TEUCHOS_UNIT_TEST(UtilsTests, ParseSingleContactPair)
 {
@@ -488,7 +610,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, ComputeContactForce_NormalContactForce)
         TEST_FLOATING_EQUALITY(tPenalizedDisp_Host(iOrd), tPenalizedDisp_Gold[iOrd], 1.0e-13);
 }
 
-TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
+TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContribution)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
@@ -496,7 +618,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     check_element_type_is_tet(tMesh);
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
     auto tCubatureWeights = ElementType::Face::getCubWeights();
     auto tNumPoints = tCubatureWeights.size();
 
@@ -546,6 +668,24 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementContrbution)
     (*tComputeSurfaceDispB)(tPair.surfaceB.childElements(), tDispWS, tSurfaceDispB);
 
     // test surface displacement child face cell 0
+    // To test surface displacement, the nodal values on child faces are needed.
+    // These are obtained as follows:
+    //
+    // Child A cell 0 is cell 2, which has connectivity [0 5 6 3] and local nodes 0, 2, 1 on the face
+    // The displacement values for the first DOF at nodes 0, 6, 5 are (0.0001, 0.0019, 0.0016)
+    //
+    // Child A cell 1 is cell 4, which has connectivity [0 7 5 2] and local nodes 0, 2, 1 on the face
+    // The displacement values for the first DOF at nodes 0, 5, 7 are (0.0001, 0.0016, 0.0022)
+    //
+    // Child A cell 0 is cell 6, which has connectivity [8, 9, 10, 11] and local nodes 1, 2, 3 on the face
+    // The displacement values for the first DOF at nodes 9, 10, 11 are (0.0028, 0.0031, 0.0034)
+    //
+    // Child A cell 1 is cell 7, which has connectivity [8, 9, 11, 12] and local nodes 1, 2, 3 on the face
+    // The displacement values for the first DOF at nodes 9, 11, 12 are (0.0028, 0.0034, 0.0037)
+    //
+    // Gold values are obtained by multiplying these values by the basis function values of the test Tri3 element and
+    // summing
+    //
     Plato::OrdinalType tChildCellOrdinal = 0;
 
     auto tSurfaceDisp_Host =
@@ -592,7 +732,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
     check_element_type_is_tet(tMesh);
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
     auto tCubatureWeights = ElementType::Face::getCubWeights();
     auto tNumPoints = tCubatureWeights.size();
 
@@ -620,10 +760,14 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
 
     // test surface displacement terms for each child node on child cell 0
     Plato::OrdinalType tChildCellOrdinal = 0;
+    constexpr double tBasisValue0{1. / 3};  // Basis function value at quadrature point 0 (the only one we're checking)
+    constexpr double tBasisValue1{1. / 3};  // Basis function value at quadrature point 0 (the only one we're checking)
+    constexpr double tBasisValue2{1. / 3};  // Basis function value at quadrature point 0 (the only one we're checking)
 
-    std::vector<std::vector<double>> tSurfaceDisp_Gold = {{0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
-                                                          {0.0034 / 3.0, 0.0035 / 3.0, 0.0036 / 3.0},
-                                                          {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0}};
+    std::vector<std::vector<double>> tSurfaceDisp_Gold = {
+        {tBasisValue0 * 0.0037, tBasisValue0 * 0.0038, tBasisValue0 * 0.0039},
+        {tBasisValue1 * 0.0034, tBasisValue1 * 0.0035, tBasisValue1 * 0.0036},
+        {tBasisValue2 * 0.0031, tBasisValue2 * 0.0032, tBasisValue2 * 0.0033}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -641,9 +785,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
         }
     }
 
-    tSurfaceDisp_Gold = {{0.0022 / 3.0, 0.0023 / 3.0, 0.0024 / 3.0},
-                         {0.0016 / 3.0, 0.0017 / 3.0, 0.0018 / 3.0},
-                         {0.0019 / 3.0, 0.0020 / 3.0, 0.0021 / 3.0}};
+    tSurfaceDisp_Gold = {{tBasisValue0 * 0.0022, tBasisValue0 * 0.0023, tBasisValue0 * 0.0024},
+                         {tBasisValue1 * 0.0016, tBasisValue1 * 0.0017, tBasisValue1 * 0.0018},
+                         {tBasisValue2 * 0.0019, tBasisValue2 * 0.0020, tBasisValue2 * 0.0021}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -664,9 +808,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     // test surface displacement terms for each child node on child cell 1
     tChildCellOrdinal = 1;
 
-    tSurfaceDisp_Gold = {{0.0037 / 3.0, 0.0038 / 3.0, 0.0039 / 3.0},
-                         {0.0031 / 3.0, 0.0032 / 3.0, 0.0033 / 3.0},
-                         {0.0028 / 3.0, 0.0029 / 3.0, 0.0030 / 3.0}};
+    tSurfaceDisp_Gold = {{tBasisValue0 * 0.0037, tBasisValue0 * 0.0038, tBasisValue0 * 0.0039},
+                         {tBasisValue1 * 0.0031, tBasisValue1 * 0.0032, tBasisValue1 * 0.0033},
+                         {tBasisValue2 * 0.0028, tBasisValue2 * 0.0029, tBasisValue2 * 0.0030}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -684,9 +828,9 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
         }
     }
 
-    tSurfaceDisp_Gold = {{0.0022 / 3.0, 0.0023 / 3.0, 0.0024 / 3.0},
-                         {0.0019 / 3.0, 0.0020 / 3.0, 0.0021 / 3.0},
-                         {0.0001 / 3.0, 0.0002 / 3.0, 0.0003 / 3.0}};
+    tSurfaceDisp_Gold = {{tBasisValue0 * 0.0022, tBasisValue0 * 0.0023, tBasisValue0 * 0.0024},
+                         {tBasisValue1 * 0.0019, tBasisValue1 * 0.0020, tBasisValue1 * 0.0021},
+                         {tBasisValue2 * 0.0001, tBasisValue2 * 0.0002, tBasisValue2 * 0.0003}};
 
     for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
     {
@@ -716,7 +860,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
     check_element_type_is_tet(tMesh);
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * tMesh->NumNodes());
@@ -814,7 +958,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_ChildElementJacobian)
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     check_element_type_is_tet(tMesh);
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
     auto tCubatureWeights = ElementType::Face::getCubWeights();
     auto tNumPoints = tCubatureWeights.size();
 
@@ -941,7 +1085,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
 
     check_element_type_is_tet(tMesh);
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
     auto tCubatureWeights = ElementType::Face::getCubWeights();
     auto tNumPoints = tCubatureWeights.size();
 
@@ -1067,97 +1211,114 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
     }
 }
 
-TEUCHOS_UNIT_TEST(ResidualTests, ElastoStatic_NoBodyContribution)
+TEUCHOS_UNIT_TEST(FunctorTests, IntegrateContactForce)
 {
-    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
-        "<ParameterList name='Plato Problem'>                                           \n"
-        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>              \n"
-        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                      \n"
-        "  <ParameterList name='Elliptic'>                                                \n"
-        "    <ParameterList name='Penalty Function'>                                      \n"
-        "      <Parameter name='Exponent' type='double' value='1.0'/>                     \n"
-        "      <Parameter name='Minimum Value' type='double' value='0.0'/>                \n"
-        "      <Parameter name='Type' type='string' value='SIMP'/>                        \n"
-        "    </ParameterList>                                                             \n"
-        "  </ParameterList>                                                               \n"
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
 
-        "  <ParameterList name='Spatial Model'>                                         \n"
-        "    <ParameterList name='Domains'>                                             \n"
-        "      <ParameterList name='Box 1'>                                             \n"
-        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "      <ParameterList name='Box 2'>                                             \n"
-        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
-        "  <ParameterList name='Contact'>                                                     \n"
-        "    <ParameterList name='Pairs'>                                                     \n"
-        "      <ParameterList name='Pair 1'>                                                  \n"
-        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
-        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
-        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
-        "        <ParameterList name='A Surface'>                                                  \n"
-        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
-        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
-        "        </ParameterList>                                                               \n"
-        "        <ParameterList name='B Surface'>                                                  \n"
-        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
-        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
-        "        </ParameterList>                                                               \n"
-        "      </ParameterList>                                                               \n"
-        "    </ParameterList>                                                                 \n"
-        "  </ParameterList>                                                                   \n"
-
-        "  <ParameterList name='Material Models'>                                       \n"
-        "    <ParameterList name='Ether'>                                         \n"
-        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
-        "        <Parameter  name='Poissons Ratio' type='double' value='0.0'/>         \n"
-        "        <Parameter  name='Youngs Modulus' type='double' value='0.0'/>       \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
-        "</ParameterList>                                                               \n");
-
-    // setup spatial model
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
-    check_element_type_is_tet(tMesh);
-
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    Plato::SpatialModel tSpatialModel(tMesh, *get_2box_mesh_params(), tDataMap);
 
-    // add contact to spatial model
-    auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
-    Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
-    tSpatialModel.addContact(tPairs);
-
-    // create dummy control vector (all 1s)
-    std::vector<Plato::Scalar> z_host(tMesh->NumNodes(), 1.0);
-    auto z = Plato::TestHelpers::create_device_view(z_host);
+    Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType> tConfigWS(
+        "Config Workset", tMesh->NumElements(), ElementType::mNumNodesPerCell, ElementType::mNumSpatialDims);
+    tWorksetBase.worksetConfig(tConfigWS);
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * tMesh->NumNodes());
     Plato::Scalar disp = 0.0, dval = 0.0001;
     for (auto& val : u_host) val = (disp += dval);
     auto u = Plato::TestHelpers::create_device_view(u_host);
+    Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType> tDispWS("state workset", tMesh->NumElements(),
+                                                                                ElementType::mNumDofsPerCell);
+    tWorksetBase.worksetState(u, tDispWS);
 
-    // compute and test residual
-    Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tet4>> tVectorFunction(
-        tSpatialModel, tDataMap, *tInputs, tInputs->get<std::string>("PDE Constraint"));
+    const auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
+    const auto tPair = tPairs[0];  // there is only 1 pair
 
-    auto tResidual = tVectorFunction.value(u, z);
+    Plato::Contact::SurfaceDisplacementFactory<EvaluationType> tSurfaceDisplacementFactory;
+    auto tComputeChildSurfaceDispA = tSurfaceDisplacementFactory.createChildContribution(tPair.surfaceA);
+
+    Plato::Contact::ContactForceFactory<EvaluationType> tFactory;
+    auto tComputeContactForce = tFactory.create(tPair.penaltyType, tPair.penaltyValue);
+
+    Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType> tValues("", tMesh->NumElements(),
+                                                                                 ElementType::mNumDofsPerCell);
+
+    const auto tSideSet = tPair.surfaceA.childSideSet();
+    Plato::Contact::IntegrateContactForce<EvaluationType> tIntegrateContactForceChildA(
+        tSpatialModel, tSideSet, tComputeChildSurfaceDispA, tComputeContactForce);
+    tIntegrateContactForceChildA(tDispWS, tConfigWS, tValues, /*aTimeStep=*/0.0);
+
+    constexpr std::size_t tNumFaceNodes{3};
+    const Plato::Array<tNumFaceNodes, Plato::Scalar> tShapeValues{
+        1. / 3, 1. / 3, 1. / 3};  // Shape function values at the only quadrature point
+
+    // Child A cell 0 is cell 2, which has connectivity [0 5 6 3] and local nodes 0, 2, 1 on the face
+    // The displacement values for the first DOF at nodes 0, 6, 5 are (0.0001, 0.0019, 0.0016)
+    //
+    constexpr std::size_t tFirstChildCell{2};
+    const Plato::Matrix<tNumFaceNodes, ElementType::mNumSpatialDims, Plato::Scalar> tFaceDisplacements{
+        0.0001, 0.0019, 0.0016, 0.0002, 0.0020, 0.0017, 0.0003, 0.0021, 0.0018};  // [dofs X dims]
+    const Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tSurfaceDisplacements =
+        Plato::times(tFaceDisplacements, tShapeValues);
+
+    constexpr double tPenaltyValue{1.0e4};  // assuming the same value for all DOFs, must match value in input
+    const Plato::Array<ElementType::mNumSpatialDims, Plato::Scalar> tContactForces =
+        Plato::times(tPenaltyValue, tSurfaceDisplacements);
+
+    constexpr double tWeightedSurfaceArea{
+        0.5};  // Surface area for these elements is 1, quadrature weight for single point element is 0.5
+    const auto tFirstChildCellValues_host =
+        Plato::TestHelpers::get(Kokkos::subview(tValues, tFirstChildCell, Kokkos::ALL()));
+    const std::vector<Plato::Scalar> tGoldFirstChildCellValues{
+        tWeightedSurfaceArea * tShapeValues[0] * tContactForces[0],
+        tWeightedSurfaceArea * tShapeValues[1] * tContactForces[1],
+        tWeightedSurfaceArea * tShapeValues[2] * tContactForces[2],
+        tWeightedSurfaceArea * tShapeValues[0] * tContactForces[0],
+        tWeightedSurfaceArea * tShapeValues[1] * tContactForces[1],
+        tWeightedSurfaceArea * tShapeValues[2] * tContactForces[2],
+        tWeightedSurfaceArea * tShapeValues[0] * tContactForces[0],
+        tWeightedSurfaceArea * tShapeValues[1] * tContactForces[1],
+        tWeightedSurfaceArea * tShapeValues[2] * tContactForces[2],
+        0.0,
+        0.0,
+        0.0};
+    TEST_EQUALITY(tFirstChildCellValues_host.size(), tGoldFirstChildCellValues.size());
+    for (int iVal = 0; iVal < tGoldFirstChildCellValues.size(); iVal++)
+    {
+        TEST_FLOATING_EQUALITY(tFirstChildCellValues_host(iVal), tGoldFirstChildCellValues[iVal], 1e-12);
+    }
+}
+
+TEUCHOS_UNIT_TEST(FunctorTests, ElementContactForceContribution_Values)
+{
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
+
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
+
+    std::string tMeshName = "two_block_contact.exo";
+    auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
+
+    check_element_type_is_tet(tMesh);
+
+    const auto tValues = element_contact_forces_for_test_case<EvaluationType>(tMesh, tInputs);
+
+    Plato::ScalarVector tResidual("Assembled Residual", ElementType::mNumDofsPerNode * tMesh->NumNodes());
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
+    tWorksetBase.assembleResidual(tValues, tResidual);
 
     auto tResidual_Host = Plato::TestHelpers::get(tResidual);
 
-    // 1/3 is the face basis function value at gauss point (for tet4)
-    // 1/2 is the face weight at gauss point (for tet4)
+    // 1/3 is the face basis function value at gauss point (for test tet4)
+    // 1/2 is the face weight at gauss point (for test tet4)
     std::vector<Plato::Scalar> tResidual_Gold = {-0.0041e4 / 3 / 2,
                                                  -0.0041e4 / 3 / 2,
                                                  -0.0041e4 / 3 / 2,
@@ -1214,80 +1375,34 @@ TEUCHOS_UNIT_TEST(ResidualTests, ElastoStatic_NoBodyContribution)
     }
 }
 
-TEUCHOS_UNIT_TEST(JacobianTests, ElastoStatic_NoBodyContribution)
+TEUCHOS_UNIT_TEST(FunctorTests, ElementContactForceContribution_Jacobian)
 {
-    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
-        "<ParameterList name='Plato Problem'>                                           \n"
-        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>              \n"
-        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                      \n"
-        "  <ParameterList name='Elliptic'>                                                \n"
-        "    <ParameterList name='Penalty Function'>                                      \n"
-        "      <Parameter name='Exponent' type='double' value='1.0'/>                     \n"
-        "      <Parameter name='Minimum Value' type='double' value='0.0'/>                \n"
-        "      <Parameter name='Type' type='string' value='SIMP'/>                        \n"
-        "    </ParameterList>                                                             \n"
-        "  </ParameterList>                                                               \n"
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
 
-        "  <ParameterList name='Spatial Model'>                                         \n"
-        "    <ParameterList name='Domains'>                                             \n"
-        "      <ParameterList name='Box 1'>                                             \n"
-        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "      <ParameterList name='Box 2'>                                             \n"
-        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
-        "  <ParameterList name='Contact'>                                                     \n"
-        "    <ParameterList name='Pairs'>                                                     \n"
-        "      <ParameterList name='Pair 1'>                                                  \n"
-        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
-        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
-        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
-        "        <ParameterList name='A Surface'>                                                  \n"
-        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
-        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
-        "        </ParameterList>                                                               \n"
-        "        <ParameterList name='B Surface'>                                                  \n"
-        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
-        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
-        "        </ParameterList>                                                               \n"
-        "      </ParameterList>                                                               \n"
-        "    </ParameterList>                                                                 \n"
-        "  </ParameterList>                                                                   \n"
-
-        "  <ParameterList name='Material Models'>                                       \n"
-        "    <ParameterList name='Ether'>                                         \n"
-        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
-        "        <Parameter  name='Poissons Ratio' type='double' value='0.0'/>         \n"
-        "        <Parameter  name='Youngs Modulus' type='double' value='0.0'/>       \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
-        "</ParameterList>                                                               \n");
-
-    // setup spatial model
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     check_element_type_is_tet(tMesh);
+
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
-
-    // add contact to spatial model
     auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
-
     tSpatialModel.addContact(tPairs);
 
-    // create dummy control vector (all 1s)
-    std::vector<Plato::Scalar> z_host(tMesh->NumNodes(), 1.0);
-    auto z = Plato::TestHelpers::create_device_view(z_host);
+    Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
+        Plato::CreateBlockMatrix<Plato::CrsMatrixType, ElementType::mNumDofsPerNode, ElementType::mNumDofsPerNode>(
+            tSpatialModel);
+    auto tMatEntries = tJacobianMat->entries();
+
+    Plato::BlockMatrixEntryOrdinal<ElementType::mNumNodesPerCell, ElementType::mNumDofsPerNode,
+                                   ElementType::mNumDofsPerNode>
+        tJacobianMatEntryOrdinal(tJacobianMat, tSpatialModel.Mesh);
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * tMesh->NumNodes());
@@ -1295,13 +1410,10 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElastoStatic_NoBodyContribution)
     for (auto& val : u_host) val = (disp += dval);
     auto u = Plato::TestHelpers::create_device_view(u_host);
 
-    // compute and test jacobian
-    Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tet4>> tVectorFunction(
-        tSpatialModel, tDataMap, *tInputs, tInputs->get<std::string>("PDE Constraint"));
+    Plato::Contact::assemble_contact_force_nonlocal_jacobian<EvaluationType>(tSpatialModel, tJacobianMat,
+                                                                             tJacobianMatEntryOrdinal, u);
 
-    auto tJacobian = tVectorFunction.gradient_u(u, z);
-    auto tEntries = tJacobian->entries();
-
+    auto tEntries = tJacobianMat->entries();
     auto tEntries_Host = Plato::TestHelpers::get(tEntries);
 
     // 1/3 is the face basis function value at gauss point (for tet4)
@@ -2581,92 +2693,40 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElastoStatic_NoBodyContribution)
     }
 }
 
-TEUCHOS_UNIT_TEST(GradientXTests, ElastoStatic_NoBodyContribution)
+TEUCHOS_UNIT_TEST(FunctorTests, ElementContactForceContribution_GradientX)
 {
-    Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
-        "<ParameterList name='Plato Problem'>                                           \n"
-        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>              \n"
-        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                      \n"
-        "  <ParameterList name='Elliptic'>                                                \n"
-        "    <ParameterList name='Penalty Function'>                                      \n"
-        "      <Parameter name='Exponent' type='double' value='1.0'/>                     \n"
-        "      <Parameter name='Minimum Value' type='double' value='0.0'/>                \n"
-        "      <Parameter name='Type' type='string' value='SIMP'/>                        \n"
-        "    </ParameterList>                                                             \n"
-        "  </ParameterList>                                                               \n"
+    using ElementType = typename Plato::MechanicsElement<Tet4Test>;
+    using EvaluationType = typename Plato::Elliptic::Evaluation<ElementType>::GradientX;
 
-        "  <ParameterList name='Spatial Model'>                                         \n"
-        "    <ParameterList name='Domains'>                                             \n"
-        "      <ParameterList name='Box 1'>                                             \n"
-        "        <Parameter name='Element Block' type='string' value='block_1'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "      <ParameterList name='Box 2'>                                             \n"
-        "        <Parameter name='Element Block' type='string' value='block_2'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Ether'/>   \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
+    Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
-        "  <ParameterList name='Contact'>                                                     \n"
-        "    <ParameterList name='Pairs'>                                                     \n"
-        "      <ParameterList name='Pair 1'>                                                  \n"
-        "        <Parameter name='Initial Gap' type='Array(double)' value='{1.0,0.0,0.0}' />  \n"
-        "        <Parameter name='Penalty Value' type='Array(double)' value='{1.0e4,1.0e4,1.0e4}' />  \n"
-        "        <Parameter name='Penalty Type' type='string' value='tensor' />  \n"
-        "        <ParameterList name='A Surface'>                                                  \n"
-        "          <Parameter name='Child Sideset' type='string' value='block1_child'/>  \n"
-        "          <Parameter name='Parent Block'  type='string' value='block_2'/>       \n"
-        "        </ParameterList>                                                               \n"
-        "        <ParameterList name='B Surface'>                                                  \n"
-        "          <Parameter name='Child Sideset' type='string' value='block2_child'/>  \n"
-        "          <Parameter name='Parent Block'  type='string' value='block_1'/>       \n"
-        "        </ParameterList>                                                               \n"
-        "      </ParameterList>                                                               \n"
-        "    </ParameterList>                                                                 \n"
-        "  </ParameterList>                                                                   \n"
-
-        "  <ParameterList name='Material Models'>                                       \n"
-        "    <ParameterList name='Ether'>                                         \n"
-        "      <ParameterList name='Isotropic Linear Elastic'>                          \n"
-        "        <Parameter  name='Poissons Ratio' type='double' value='0.0'/>         \n"
-        "        <Parameter  name='Youngs Modulus' type='double' value='0.0'/>       \n"
-        "      </ParameterList>                                                         \n"
-        "    </ParameterList>                                                           \n"
-        "  </ParameterList>                                                             \n"
-        "</ParameterList>                                                               \n");
-
-    // setup spatial model
     std::string tMeshName = "two_block_contact.exo";
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     check_element_type_is_tet(tMesh);
+
+    auto tContactForceValues = element_contact_forces_for_test_case<EvaluationType>(tMesh, tInputs);
+
+    Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
     Plato::DataMap tDataMap;
     Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
-
-    // add contact to spatial model
     auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
-
     tSpatialModel.addContact(tPairs);
 
-    // create dummy control vector (all 1s)
-    std::vector<Plato::Scalar> z_host(tMesh->NumNodes(), 1.0);
-    auto z = Plato::TestHelpers::create_device_view(z_host);
+    Teuchos::RCP<Plato::CrsMatrixType> tGradientXTranspose =
+        Plato::CreateBlockMatrixTranspose<Plato::CrsMatrixType, ElementType::mNumDofsPerNode,
+                                          ElementType::mNumSpatialDims>(tSpatialModel);
 
-    // create dummy displacement workset from box mesh
-    std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * tMesh->NumNodes());
-    Plato::Scalar disp = 0.0, dval = 0.0001;
-    for (auto& val : u_host) val = (disp += dval);
-    auto u = Plato::TestHelpers::create_device_view(u_host);
+    Plato::BlockMatrixTransposeEntryOrdinal<ElementType::mNumNodesPerCell, ElementType::mNumDofsPerNode,
+                                            ElementType::mNumSpatialDims>
+        tGradientXMatEntryOrdinal(tGradientXTranspose, tMesh);
 
-    // compute and test gradientX
-    Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tet4>> tVectorFunction(
-        tSpatialModel, tDataMap, *tInputs, tInputs->get<std::string>("PDE Constraint"));
-
-    auto tGradientXTranspose = tVectorFunction.gradient_x(u, z);  // recall this returns (dR/dX)^T
+    auto tMatEntries = tGradientXTranspose->entries();
+    const Plato::OrdinalType tNumConfigDofsPerCell = ElementType::mNumSpatialDims * ElementType::mNumNodesPerCell;
+    tWorksetBase.assembleJacobianFad(ElementType::mNumDofsPerCell, tNumConfigDofsPerCell, tGradientXMatEntryOrdinal,
+                                     tContactForceValues, tMatEntries);
 
     // get dR/dX from transpose
     auto tNumRows = tGradientXTranspose->numCols();
@@ -2677,7 +2737,6 @@ TEUCHOS_UNIT_TEST(GradientXTests, ElastoStatic_NoBodyContribution)
     Plato::MatrixTranspose(tGradientXTranspose, tGradientX);
 
     auto tEntries = tGradientX->entries();
-
     auto tEntries_Host = Plato::TestHelpers::get(tEntries);
 
     // 1/3 is the face basis function value at gauss point (for tet4)

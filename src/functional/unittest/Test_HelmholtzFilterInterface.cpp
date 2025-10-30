@@ -65,10 +65,10 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
         const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshAllDesignBlocks();
         const auto tResult = tFilter.filter(tAnalysisDomainMesh);
         const auto tRegressionBlockDensities = std::map<int, std::vector<double>>{
-            {1, {3.989534972684765, 4.005611590018745, 4.167508297994873, 4.163367110053167, 4.171356751583184}},
+            {1, {3.953658063494317, 3.979473301330917, 4.156879952468092, 4.160902857747669, 4.172679917311173}},
             {2,
-             {4.167508297994873, 4.163367110053167, 4.171356751583184, 4.322358904846153, 4.350306252767223,
-              4.334260244661879}}};
+             {4.156879952468092, 4.160902857747669, 4.172679917311173, 4.353333917626102, 4.390422701843561,
+              4.37470229598349}}};
 
         tTestFunction(tResult, tRegressionBlockDensities);
     }
@@ -78,8 +78,8 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
         const auto tResult = tFilter.filter(tAnalysisDomainMesh);
         const auto tRegressionBlockDensities =
             std::map<int, std::vector<double>>{{2,
-                                                {4.045611765166145, 4.038671230784396, 4.045563528601696,
-                                                 4.211065651063589, 4.240095189763867, 4.223408884391668}}};
+                                                {4.036530041169163, 4.037929466052052, 4.048074594031434,
+                                                 4.243310126679313, 4.281344804443195, 4.265093074165032}}};
 
         tTestFunction(tResult, tRegressionBlockDensities);
     }
@@ -88,7 +88,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, FilterRegression)
         const auto tAnalysisDomainMesh = tTestFixture.analysisDomainMeshBlock2Fixed();
         const auto tResult = tFilter.filter(tAnalysisDomainMesh);
         const auto tRegressionBlockDensities = std::map<int, std::vector<double>>{
-            {1, {2.58498312091394, 2.604892249666857, 2.581443556225109, 2.592666672332953, 2.605060695617186}}};
+            {1, {2.566060946362842, 2.593716394303182, 2.596076585940593, 2.610341610583288, 2.621402874904288}}};
 
         tTestFunction(tResult, tRegressionBlockDensities);
     }
@@ -119,8 +119,8 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, JacobianRegression)
             std::vector<double>(number_of_analysis_field_variables(tAnalysisDomainMesh), 1.0));
         const auto tResult = tFilter.rowVectorTimesJacobian(tAnalysisDomainMesh, tOnesVector);
         const auto tRegressionBlockDensities =
-            std::vector<double>{0.9857300023534444, 0.9866024254916289, 1.004803010671341,  2.324358568896947,
-                                0.6648815169928183, 0.342308097769717,  0.6752612305036949, 1.016055147320401};
+            std::vector<double>{0.9863222864773449, 0.9872790785970711, 1.000881486065802,  2.31560221871226,
+                                0.6646187050426258, 0.3446758279200729, 0.6799924391245759, 1.020627958060224};
         tTestFunction(tResult.stdVector(), tRegressionBlockDensities);
     }
     // Block 1 fixed
@@ -130,8 +130,8 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, JacobianRegression)
             std::vector<double>(number_of_analysis_field_variables(tAnalysisDomainMesh), 1.0));
         const auto tResult = tFilter.rowVectorTimesJacobian(tAnalysisDomainMesh, tOnesVector);
         const auto tRegressionBlockDensities =
-            std::vector<double>{0.7683236710634752, 1.730773305817584,  0.5013065698002031,
-                                0.2692266941824142, 0.5269350168014131, 0.7946398770386152};
+            std::vector<double>{0.7644493558941634, 1.733194638281614, 0.5023560058242136,
+                                0.2720883038682069, 0.533713354495278, 0.8016648300424967};
         tTestFunction(tResult.stdVector(), tRegressionBlockDensities);
     }
     // Block 2 fixed
@@ -141,7 +141,7 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterInterface, JacobianRegression)
             std::vector<double>(number_of_analysis_field_variables(tAnalysisDomainMesh), 1.0));
         const auto tResult = tFilter.rowVectorTimesJacobian(tAnalysisDomainMesh, tOnesVector);
         const auto tRegressionBlockDensities = std::vector<double>{
-            0.6537499612395944, 0.6542467484355006, 0.6146358731048033, 1.47020614276741, 0.4187273429521783};
+            0.6579999011116582, 0.6585681684314523, 0.6199068627397625, 1.468951211216291, 0.4205907211335903};
         tTestFunction(tResult.stdVector(), tRegressionBlockDensities);
     }
 }
