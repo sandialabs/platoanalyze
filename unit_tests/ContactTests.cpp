@@ -4,6 +4,7 @@
 #include <Teuchos_XMLParameterListHelpers.hpp>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include "Mechanics.hpp"
 #include "MechanicsElement.hpp"
@@ -261,17 +262,17 @@ auto element_contact_forces_for_test_case(const std::shared_ptr<Plato::EngineMes
     Plato::SpatialModel tSpatialModel(aMesh, *aInputs, tDataMap);
 
     // create dummy displacement workset from box mesh
-    std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * aMesh->NumNodes());
+    std::vector<Plato::Scalar> tDisplacementHost(ElementType::mNumSpatialDims * aMesh->NumNodes());
     Plato::Scalar tDisp = 0.0;
     constexpr Plato::Scalar tDval = 0.0001;
-    std::generate(Kokkos::Experimental::begin(tDisplacementHost), Kokkos::Experimental::end(tDisplacementHost),
+    std::generate(tDisplacementHost.begin(), tDisplacementHost.end(),
                   [tCount = 0]() mutable
                   {
                       constexpr auto tIncrement = 0.0001;
                       return ++tCount * tIncrement;
                   });
 
-    auto u = Plato::TestHelpers::create_device_view(u_host);
+    auto u = Plato::TestHelpers::create_device_view(tDisplacementHost);
 
     auto tPairs = Plato::Contact::parse_contact(aInputs->sublist("Contact"), aMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);

@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
 #include "Hex27.hpp"
@@ -9,6 +11,7 @@
 #include "Tet10.hpp"
 #include "Tet4.hpp"
 #include "Teuchos_UnitTestHarness.hpp"
+#include "Kokkos_StdAlgorithms.hpp"
 #include "Tri3.hpp"
 #include "Tri6.hpp"
 #include "WorksetBase.hpp"
