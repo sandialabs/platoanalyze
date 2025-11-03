@@ -94,7 +94,12 @@ class NewmarkIntegrator
         }
     }
 
-    ~NewmarkIntegrator() {}
+    virtual ~NewmarkIntegrator() = default;
+
+    NewmarkIntegrator(const NewmarkIntegrator&) = delete;
+    NewmarkIntegrator(NewmarkIntegrator&&) = delete;
+    NewmarkIntegrator& operator=(const NewmarkIntegrator&) = delete;
+    NewmarkIntegrator& operator=(NewmarkIntegrator&&) = delete;
 
     Plato::Scalar getOmega() const { return pow(mGamma / 2.0 - mBeta, -1.0 / 2.0); }
 

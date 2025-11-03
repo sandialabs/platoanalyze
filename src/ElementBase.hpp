@@ -14,6 +14,15 @@ template <typename ElementType>
 class ElementBase
 {
    public:
+    ElementBase() = default;
+
+    virtual ~ElementBase() = default;
+
+    ElementBase(const ElementBase&) = default;
+    ElementBase(ElementBase&&) = default;
+    ElementBase& operator=(const ElementBase&) = default;
+    ElementBase& operator=(ElementBase&&) = default;
+
     static constexpr Plato::OrdinalType mNumSpatialDims = ElementType::mNumSpatialDims;
     static constexpr Plato::OrdinalType mNumNodesPerCell = ElementType::mNumNodesPerCell;
 

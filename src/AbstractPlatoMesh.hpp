@@ -11,6 +11,15 @@ namespace Plato
 class AbstractMesh
 {
    public:
+    AbstractMesh() = default;
+
+    virtual ~AbstractMesh() = default;
+
+    AbstractMesh(const AbstractMesh&) = delete;
+    AbstractMesh(AbstractMesh&&) = delete;
+    AbstractMesh& operator=(const AbstractMesh&) = delete;
+    AbstractMesh& operator=(AbstractMesh&&) = delete;
+
     /******************************************************************************/
     /**
      * \brief Return the name of the mesh file
