@@ -35,11 +35,11 @@ class StateUpdate : public Plato::WorksetBase<typename PhysicsType::ElementType>
         using ResultScalarType = typename EvaluationType::ResultScalarType;
 
        public:
-        virtual void evaluate(const Plato::ScalarMultiVectorT<GlobalStateScalarType>& aGlobalState,
-                              const Plato::ScalarArray3DT<Plato::Scalar>& aLocalState,
-                              const Plato::ScalarArray3DT<Plato::Scalar>& aLocalStatePrev,
-                              const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
-                              const Plato::ScalarArray3DT<ResultScalarType>& aResult)
+        void evaluate(const Plato::ScalarMultiVectorT<GlobalStateScalarType>& aGlobalState,
+                      const Plato::ScalarArray3DT<Plato::Scalar>& aLocalState,
+                      const Plato::ScalarArray3DT<Plato::Scalar>& aLocalStatePrev,
+                      const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
+                      const Plato::ScalarArray3DT<ResultScalarType>& aResult)
         {
             Plato::OrdinalType tNumCells = aGlobalState.extent(0);
 

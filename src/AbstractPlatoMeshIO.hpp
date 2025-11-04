@@ -10,6 +10,14 @@ namespace Plato
 class AbstractMeshIO
 {
    public:
+    AbstractMeshIO() = default;
+    virtual ~AbstractMeshIO() = default;
+
+    AbstractMeshIO(const AbstractMeshIO&) = delete;
+    AbstractMeshIO(AbstractMeshIO&&) = delete;
+    AbstractMeshIO& operator=(const AbstractMeshIO&) = delete;
+    AbstractMeshIO& operator=(AbstractMeshIO&&) = delete;
+
     /******************************************************************************/
     /**
      * \brief Return number of nodes in the mesh

@@ -49,6 +49,14 @@ struct BoxLimits
 class ConstructivePrimitive
 {
    public:
+    ConstructivePrimitive() = default;
+    virtual ~ConstructivePrimitive() = default;
+
+    ConstructivePrimitive(const ConstructivePrimitive&) = delete;
+    ConstructivePrimitive(ConstructivePrimitive&&) = delete;
+    ConstructivePrimitive& operator=(const ConstructivePrimitive&) = delete;
+    ConstructivePrimitive& operator=(ConstructivePrimitive&&) = delete;
+
     virtual void apply(OrdinalVector aCellMask, Plato::ScalarMultiVector aCellCenters) const = 0;
 };
 

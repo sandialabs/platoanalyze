@@ -6,8 +6,8 @@
       "hidden": false,
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-        "GCC_ADDITIONAL_WARNINGS": "-Wcomment;-Woverloaded-virtual;-Wswitch;-Wunused-value",
-        "CLANG_ADDITIONAL_WARNINGS": "-Wno-return-type-c-linkage",
+        "GCC_ADDITIONAL_WARNINGS": "-Wcomment;-Woverloaded-virtual;-Wswitch;-Wunused-value;-Wpedantic;-Wnon-virtual-dtor;-Wmisleading-indentation",
+        "CLANG_ADDITIONAL_WARNINGS": "-Wno-return-type-c-linkage;-Wpedantic;-Wnon-virtual-dtor;-Wmisleading-indentation",
         "WARNINGS_AS_ERRORS": true
       }
     },
