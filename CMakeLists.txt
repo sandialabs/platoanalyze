@@ -84,10 +84,6 @@ MESSAGE("   Trilinos_CXX_COMPILER = ${Trilinos_CXX_COMPILER}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 MESSAGE("End of Trilinos details\n")
 
-set(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
-set(CMAKE_C_COMPILER ${Trilinos_C_COMPILER})
-set(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
-
 find_package(Boost REQUIRED)
 
 message(STATUS "Additional gcc warnings: ${GCC_ADDITIONAL_WARNINGS}")
