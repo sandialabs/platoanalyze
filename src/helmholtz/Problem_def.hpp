@@ -27,7 +27,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
       mPhysics(aProblemParams.get<std::string>("Physics"))
 {
     Plato::SolverFactory tSolverFactory(aProblemParams.sublist("Linear Solver"),
-                                        LinearSystemType::SYMMETRIC_INDEFINITE);
+                                        LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE);
     mSolver = tSolverFactory.create(aMesh->NumNodes(), aMachine, ElementType::mNumDofsPerNode);
 }
 

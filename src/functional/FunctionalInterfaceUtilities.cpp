@@ -57,7 +57,6 @@ auto helmholtz_filter_parameter_list(const filter::library::FilterParameters& aF
         .set("Length Scale", helmholtz_radius_from_physical_radius(aFilterParameters.mFilterRadius));
     parameters_sublist(tParameterList)
         .set("Surface Length Scale", aFilterParameters.mBoundaryStickingPenalty.value_or(-1.0));
-    solver_sublist(tParameterList).set("Solver Stack", "tacho");
     return tParameterList;
 }
 
