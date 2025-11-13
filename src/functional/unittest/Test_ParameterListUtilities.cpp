@@ -12,6 +12,7 @@ const auto kSpatialDomainLabel = std::string{"Spatial Model"};
 const auto kDomainsLabel = std::string{"Domains"};
 const auto kElementBlockLabel = std::string{"Element Block"};
 const auto kParametersLabel = std::string{"Parameters"};
+const auto kSolverLabel = std::string{"Linear Solver"};
 
 /// @brief Adds the sublist path given by @a aSublistPathToTest to an empty ParameterList and checks that @a
 /// aSublistFunction returns the sublist corresponding to that path.
@@ -110,6 +111,19 @@ TEUCHOS_UNIT_TEST(ParameterListUtilities, ParametersSublist)
     test_sublist_path_with_nonconst_parameter_list([](auto& tParameterList) -> Teuchos::ParameterList&
                                                    { return parameters_sublist(tParameterList); },
                                                    tSublistPath, out, success);
+}
+
+TEUCHOS_UNIT_TEST(ParameterListUtilities, SolverSublist)
+{
+    const auto tSublistPath = std::vector{kPlatoProblemLabel, kSolverLabel};
+    // Const
+    TEST_ASSERT(test_sublist_path_with_const_parameter_list(
+        [](const auto& tParameterList) { return solver_sublist(tParameterList); }, tSublistPath));
+
+    // Non-const
+    test_sublist_path_with_nonconst_parameter_list([](auto& tParameterList) -> Teuchos::ParameterList&
+                                                   { return solver_sublist(tParameterList); }, tSublistPath, out,
+                                                   success);
 }
 
 TEUCHOS_UNIT_TEST(ParameterListUtilities, BlockNames)

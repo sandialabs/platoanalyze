@@ -59,6 +59,12 @@ decltype(auto) parameters_sublist(ParameterListType&& aParameterList)
     return plato_problem_sublist(std::forward<ParameterListType>(aParameterList)).sublist("Parameters");
 }
 
+template <typename ParameterListType>
+decltype(auto) solver_sublist(ParameterListType&& aParameterList)
+{
+    return plato_problem_sublist(std::forward<ParameterListType>(aParameterList)).sublist("Linear Solver");
+}
+
 }  // namespace plato::functional
 
 #endif
