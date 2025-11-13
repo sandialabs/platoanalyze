@@ -12,7 +12,6 @@ const auto kSpatialDomainLabel = std::string{"Spatial Model"};
 const auto kDomainsLabel = std::string{"Domains"};
 const auto kElementBlockLabel = std::string{"Element Block"};
 const auto kParametersLabel = std::string{"Parameters"};
-const auto kSolverLabel = std::string{"Linear Solver"};
 
 /// @brief Adds the sublist path given by @a aSublistPathToTest to an empty ParameterList and checks that @a
 /// aSublistFunction returns the sublist corresponding to that path.
