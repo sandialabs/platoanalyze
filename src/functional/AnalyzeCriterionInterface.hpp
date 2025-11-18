@@ -3,7 +3,7 @@
 
 #include <plato/criteria/library/CriterionInterface.hpp>
 
-#include "FunctionalInterface.hpp"
+#include "functional/FunctionalInterface.hpp"
 
 namespace plato::functional
 {

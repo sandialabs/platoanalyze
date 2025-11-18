@@ -3,7 +3,7 @@
 #include <Kokkos_Core.hpp>
 #include <cassert>
 
-#include "PlatoTypes.hpp"
+#include "core_types/PlatoTypes.hpp"
 
 namespace Plato
 {

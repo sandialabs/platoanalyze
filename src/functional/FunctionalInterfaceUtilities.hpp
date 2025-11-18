@@ -6,9 +6,9 @@
 #include <string_view>
 #include <vector>
 
-#include "PlatoMesh.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "alg/ParallelComm.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
+#include "mesh/PlatoMesh.hpp"
+#include "utilities/ParallelComm.hpp"
 
 namespace Teuchos
 {

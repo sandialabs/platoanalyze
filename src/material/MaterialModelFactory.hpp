@@ -4,8 +4,8 @@
 #include <Teuchos_RCPDecl.hpp>
 #include <string>
 
-#include "AnalyzeMacros.hpp"
 #include "material/MaterialModel.hpp"
+#include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
 {

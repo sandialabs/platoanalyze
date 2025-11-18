@@ -1,10 +1,10 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <plato/filter/library/FilterInterface.hpp>
 
-#include "FunctionalInterfaceUtilities.hpp"
-#include "InputValidation.hpp"
-#include "PlatoTestHelpers.hpp"
-#include "TestMeshSetupTeardown.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "functional/InputValidation.hpp"
+#include "functional/unittest/TestMeshSetupTeardown.hpp"
+#include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::functional::unittest
 {

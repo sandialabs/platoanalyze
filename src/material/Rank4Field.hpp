@@ -5,11 +5,11 @@
 #include <map>
 #include <string>
 
-#include "AnalyzeMacros.hpp"
-#include "InterpolateFromNodal.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "PlatoTypes.hpp"
-#include "material/ScalarExpression.hpp"
+#include "core_types/PlatoTypes.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
+#include "local_operations/mapping/InterpolateFromNodal.hpp"
+#include "parsing/ScalarExpression.hpp"
+#include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
 {

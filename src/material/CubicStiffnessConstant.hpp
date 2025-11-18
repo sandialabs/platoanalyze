@@ -2,9 +2,9 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "ParseTools.hpp"
-#include "PlatoTypes.hpp"
+#include "core_types/PlatoTypes.hpp"
 #include "material/MaterialModel.hpp"
+#include "parsing/ParseTools.hpp"
 
 namespace Plato
 {

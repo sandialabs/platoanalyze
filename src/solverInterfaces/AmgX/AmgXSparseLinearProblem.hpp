@@ -17,10 +17,11 @@
 
 #include <amgx_c.h>
 
-#include <CrsLinearProblem.hpp>
 #include <cassert>
 #include <fstream>
 #include <sstream>
+
+#include "linear_algebra/CrsLinearProblem.hpp"
 
 namespace lgr
 {
@@ -47,8 +48,8 @@ class AmgXSparseLinearProblem : public CrsLinearProblem<Ordinal>
     static constexpr const bool USE_RELATIVE_TOL = false;
 
    public:
-    typedef Kokkos::View<Scalar *, MemSpace> Vector;
-    typedef Kokkos::View<Scalar **, Plato::Layout, MemSpace> MultiVector;
+    typedef Kokkos::View<Scalar*, MemSpace> Vector;
+    typedef Kokkos::View<Scalar**, Plato::Layout, MemSpace> MultiVector;
 
    private:
     typedef int RowMapEntryType;
@@ -374,7 +375,7 @@ class AmgXSparseLinearProblem : public CrsLinearProblem<Ordinal>
     AmgXSparseLinearProblem(const Matrix A,
                             Vector x,
                             const Vector b,
-                            std::string const &solverConfigString = configurationString(DEFAULT_CONFIG))
+                            std::string const& solverConfigString = configurationString(DEFAULT_CONFIG))
         : CrsLinearProblem<Ordinal>(A, x, b)
     {
         check_inputs(A, x, b);
@@ -399,10 +400,10 @@ class AmgXSparseLinearProblem : public CrsLinearProblem<Ordinal>
         AMGX_solver_create(&_solver, _rsrc, AMGX_mode_dDDI, _config);
 
         // This seems to do the right thing whether the data is on device or host. In our case it is on the device.
-        const int *row_ptrs = A.rowMap().data();
-        const int *col_indices = A.columnIndices().data();
-        const void *data = A.entries().data();
-        const void *diag_data = nullptr;  // no exterior diagonal
+        const int* row_ptrs = A.rowMap().data();
+        const int* col_indices = A.columnIndices().data();
+        const void* data = A.entries().data();
+        const void* diag_data = nullptr;  // no exterior diagonal
         AMGX_matrix_upload_all(_matrix, N / BlockSize, nnz, BlockSize, BlockSize, row_ptrs, col_indices, data,
                                diag_data);
 
@@ -435,12 +436,12 @@ class AmgXSparseLinearProblem : public CrsLinearProblem<Ordinal>
 
     void setRHS(const Vector b) { AMGX_vector_upload(_rhs, b.size() / BlockSize, BlockSize, b.data()); }
 
-    void setMatrix(const Matrix &aMatrix, const Ordinal &aNumEquations)
+    void setMatrix(const Matrix& aMatrix, const Ordinal& aNumEquations)
     {
-        const void *tData = aMatrix.entries().data();
-        const void *tDiagData = nullptr;  // no exterior diagonal
-        const int *tRowPtrs = aMatrix.rowMap().data();
-        const int *tColIndices = aMatrix.columnIndices().data();
+        const void* tData = aMatrix.entries().data();
+        const void* tDiagData = nullptr;  // no exterior diagonal
+        const int* tRowPtrs = aMatrix.rowMap().data();
+        const int* tColIndices = aMatrix.columnIndices().data();
         const Ordinal tNumNonZeros = aMatrix.columnIndices().size();
         AMGX_matrix_upload_all(_matrix, aNumEquations / BlockSize, tNumNonZeros, BlockSize, BlockSize, tRowPtrs,
                                tColIndices, tData, tDiagData);

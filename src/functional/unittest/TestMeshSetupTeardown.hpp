@@ -4,8 +4,8 @@
 #include <filesystem>
 #include <plato/analysis/AnalysisDomainMesh.hpp>
 
-#include "PlatoMesh.hpp"
-#include "PlatoMeshTestHelpers.hpp"
+#include "mesh/PlatoMesh.hpp"
+#include "test_utilities/PlatoMeshTestHelpers.hpp"
 
 namespace plato::functional::unittest
 {

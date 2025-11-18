@@ -1,0 +1,5 @@
+add_subdirectory(./constitutive)
+add_subdirectory(./differential)
+add_subdirectory(./kinematics)
+add_subdirectory(./mapping)
+add_subdirectory(./optimization)

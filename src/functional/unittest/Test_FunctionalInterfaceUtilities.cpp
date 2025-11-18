@@ -5,12 +5,12 @@
 #include <plato/filter/library/FilterInterface.hpp>
 #include <random>
 
-#include "BLAS1.hpp"
-#include "FunctionalInterfaceUtilities.hpp"
-#include "PlatoMeshTestHelpers.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "PlatoTestHelpers.hpp"
-#include "TestMeshSetupTeardown.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "functional/unittest/TestMeshSetupTeardown.hpp"
+#include "linear_algebra/BLAS1.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
+#include "test_utilities/PlatoMeshTestHelpers.hpp"
+#include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::functional::unittest
 {

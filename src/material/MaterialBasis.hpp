@@ -1,8 +1,8 @@
 #pragma once
 
-#include "SpatialModel.hpp"
-#include "VoigtUtils.hpp"
+#include "domain/SpatialModel.hpp"
 #include "material/MaterialModel.hpp"
+#include "material/VoigtUtils.hpp"
 
 namespace Plato
 {

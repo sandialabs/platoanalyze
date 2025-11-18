@@ -1,7 +1,7 @@
 #ifndef PLATO_FUNCTIONAL_INPUTVALIDATION_H
 #define PLATO_FUNCTIONAL_INPUTVALIDATION_H
 
-#include "PlatoMesh.hpp"
+#include "mesh/PlatoMesh.hpp"
 
 namespace Teuchos
 {
@@ -16,8 +16,8 @@ namespace plato::functional
                                                   const Plato::Mesh& aMesh);
 
 /// @brief Returns an error message for any validation errors found.
-[[nodiscard]] auto error_messages(const Teuchos::ParameterList& aParameterList, const Plato::Mesh& aMesh)
-    -> std::string;
+[[nodiscard]] auto error_messages(const Teuchos::ParameterList& aParameterList,
+                                  const Plato::Mesh& aMesh) -> std::string;
 
 }  // namespace plato::functional
 

@@ -1,0 +1,46 @@
+#pragma once
+
+#include <vector>
+
+#include "SuiteSparse_config.h"
+#include "linear_algebra/CrsMatrix.hpp"
+
+namespace Plato::alg
+{
+/// @brief Representation of a CSR matrix using `std::vector` data types.
+///
+/// The purpose of this class is for converting Plato::CRSMatrix to C-style arrays used in UMFPACK and CHOLMOD.
+struct CRSMatrix
+{
+    std::vector<SuiteSparse_long> mRowBegin;
+    std::vector<SuiteSparse_long> mColumns;
+    std::vector<double> mValues;
+    [[nodiscard]] auto numberOfRows() const -> SuiteSparse_long;
+};
+
+/// @brief Representation of a CSC matrix using `std::vector` data types.
+///
+/// The purpose of this class is for converting Plato::CRSMatrix to C-style arrays used in UMFPACK and CHOLMOD.
+struct CCSMatrix
+{
+    std::vector<SuiteSparse_long> mColumnBegin;
+    std::vector<SuiteSparse_long> mRows;
+    std::vector<double> mValues;
+    [[nodiscard]] auto numberOfColumns() const -> SuiteSparse_long;
+};
+
+/// @brief Converts a CSR matrix to an equivalent matrix in CSC format.
+///
+/// UMFPACK and CHOLMOD use CSC format, but plato uses CSR.
+[[nodiscard]] auto to_CCS(const CRSMatrix& aA) -> CCSMatrix;
+
+/// @brief Converts a plato CrsMatrix that may have a block form. Copies the data to `std::vector`s.
+[[nodiscard]] auto make_CRS_matrix(const Plato::CrsMatrix<Plato::OrdinalType>& aA) -> CRSMatrix;
+
+/// @brief Converts a plato CrsMatrix that may have a block form. Copies the data to `std::vector`s.
+///
+/// This overload can be used with crs_matrix_non_block_form, so that properties of the matrix may be checked first,
+/// such as symmetry.
+[[nodiscard]] auto make_CRS_matrix(const CrsRowsColumnsValues<Plato::OrdinalType>& aRowsColumnsAndValues) -> CRSMatrix;
+
+}  // namespace Plato::alg

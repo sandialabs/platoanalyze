@@ -20,12 +20,12 @@ option(PLATOANALYZE_ENABLE_TPETRA     "Enable Tpetra"               OFF)
 
 option(ELLIPTIC        "Compile with Elliptic physics"       ON )
 option(PARABOLIC       "Compile with Parabolic physics"      ON )
-option(HYPERBOLIC      "Compile with Hyperbolic physics"     ON )
-option(STABILIZED      "Compile with Stabilized VMS physics" ON )
+option(HYPERBOLIC      "Compile with Hyperbolic physics"     OFF )
+option(STABILIZED      "Compile with Stabilized VMS physics" OFF )
 option(HELMHOLTZ       "Compile with Helmholtz filter"       ON )
 option(CUSTOMMATERIALS "Compile with custom materials"       OFF)
-option(HATCHING        "Compile with hatching algorithm"     ON )
-option(MICROMORPHIC    "Compile with Micromorphic physics"   ON )
+option(HATCHING        "Compile with hatching algorithm"     OFF)
+option(MICROMORPHIC    "Compile with Micromorphic physics"   OFF )
 
 # Experimental option for using shape optimization with inherent strain/hatching
 option(HATCHING_GRADIENT "Compile with hatching gradients, enabling shape optimization with elliptic hatching problem" OFF)
@@ -197,15 +197,15 @@ endif()
 
 add_executable(
     analyze
-    src/alg/Run.cpp
-    src/alg/Analyze.cpp
+    src/main/Run.cpp
+    src/main/Analyze.cpp
   )
 
 if( CMAKE_INSTALL_PREFIX )
   install( TARGETS analyze DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 endif()
 target_include_directories(analyze PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries( analyze analyzelib Trilinos::all_selected_libs )
+target_link_libraries( analyze AnalyzeLib)
 
 IF (DEFINED AMGX_PREFIX)
   ADD_DEFINITIONS(-DHAVE_AMGX)
@@ -227,15 +227,6 @@ IF (DEFINED AMGX_PREFIX)
   MESSAGE("-- Found AmgX!")
   MESSAGE("-- AMGX_INCLUDE_DIRS = ${AMGX_INCLUDE_DIRS}")
   MESSAGE("-- AMGX_LIBRARIES = ${AMGX_LIBRARIES}")
-ENDIF()
-
-SET(SOLVER_INTERFACE_LIBRARIES)
-
-IF( AMGX_FOUND )
-  SET(SOLVER_INTERFACE_LIBRARIES
-      ${SOLVER_INTERFACE_LIBRARIES}
-      ${AMGX_LIBRARIES}
-     )
 ENDIF()
 
 if(ELLIPTIC)
@@ -322,7 +313,6 @@ if (PLATOANALYZE_ENABLE_TPETRA)
   message("adding define: -DPLATO_TPETRA")
   add_definitions(-DPLATO_TPETRA)
 endif()
-target_link_libraries(analyze ${PLATO_LIBS} Trilinos::all_selected_libs)
 
 set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
 find_package(PlatoEngine REQUIRED COMPONENTS PlatoEngine::PlatoCommonInterface PlatoEngine::PlatoUtilitiesInterface PlatoEngine::PlatoTestUtilitiesInterface PlatoEngine::PlatoCommonTestUtilitiesInterface HINTS ${PLATOENGINE_PREFIX})
@@ -330,14 +320,6 @@ find_package(SEACASExodus REQUIRED)
 find_package(SEACASNemesis REQUIRED)
 find_package(Shards REQUIRED)
 find_package(TeuchosCore REQUIRED)
-
-set(PLATO_LIBS
-    Shards::shards
-    Sacado::sacado
-    TeuchosCore::teuchoscore
-    SEACASNemesis::nemesis
-    SEACASExodus::exodus
-    )
 
 if (PLATOANALYZE_ENABLE_ENGINEMESH)
   message("Default mesh is EngineMesh")
@@ -351,9 +333,6 @@ if (PLATOANALYZE_ENABLE_TACHO)
   find_package(ShyLU_NodeTacho REQUIRED)
   message("adding define: -DPLATO_TACHO")
   add_definitions(-DPLATO_TACHO)
-  set(PLATO_LIBS ${PLATO_LIBS}
-                  $<$<BOOL:${PLATOANALYZE_ENABLE_CUDA}>:CUDA::cusparse> # This is a work-around for tacho not linking cuda properly.
-                  ${ShyLU_NodeTacho_LIBRARIES} )
 endif()
 
 option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
@@ -362,7 +341,6 @@ if (PLATOANALYZE_ENABLE_UMFPACK)
   message("adding define: -DPLATO_UMFPACK")
   add_definitions(-DPLATO_UMFPACK)
   include_directories( ${UMFPACK_INC_DIR} )
-  set(PLATO_LIBS ${PLATO_LIBS} ${UMFPACK})
 endif()
 
 IF(OMEGA_H_PREFIX)
@@ -370,8 +348,6 @@ IF(OMEGA_H_PREFIX)
  set_target_properties(Omega_h::omega_h PROPERTIES INTERFACE_COMPILE_OPTIONS "")
 ENDIF()
 
-ENABLE_TESTING()
-INCLUDE(CTest)
 
 SET(PLATOANALYZE_RANKS_PER_NODE_FLAG "-npernode" CACHE STRING "Processes per node flag for PLATOANALYZE_MPIEXEC")
 SET(PLATOANALYZE_RANKS_FLAG "-n" CACHE STRING "Number of processes flag for PLATOANALYZE_MPIEXEC")
@@ -383,11 +359,10 @@ function(build_mpi_test_string RESULT_NAME num_mpi_proc)
   set(${RESULT_NAME} ${PLATOANALYZE_MPIEXEC} ${PLATOANALYZE_RANKS_PER_NODE_FLAG} ${PLATOANALYZE_RANKS_PER_NODE} ${PLATOANALYZE_RANKS_FLAG} ${num_mpi_proc} ${VALGRIND} ${ARGN} PARENT_SCOPE)
 endfunction(build_mpi_test_string)
 
-ADD_SUBDIRECTORY(src)
+ENABLE_TESTING()
+INCLUDE(CTest)
 
-if( PLATOANALYZE_UNIT_TEST)
-  ADD_SUBDIRECTORY(unit_tests)
-endif()
+add_subdirectory(src)
 
 if(PLATOANALYZE_SMOKE_TESTS)
   add_subdirectory(tests)

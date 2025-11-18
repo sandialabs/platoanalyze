@@ -2,17 +2,17 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "ParseTools.hpp"
-#include "PlatoStaticsTypes.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "material/Rank4Field.hpp"
 #include "material/Rank4FieldFactory.hpp"
 #include "material/Rank4SkewConstant.hpp"
 #include "material/Rank4VoigtConstant.hpp"
 #include "material/Rank4VoigtFunctor.hpp"
-#include "material/ScalarExpression.hpp"
 #include "material/ScalarFunctor.hpp"
 #include "material/TensorConstant.hpp"
 #include "material/TensorFunctor.hpp"
+#include "parsing/ParseTools.hpp"
+#include "parsing/ScalarExpression.hpp"
 
 namespace Plato
 {

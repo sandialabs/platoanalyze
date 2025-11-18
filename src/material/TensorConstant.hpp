@@ -3,7 +3,7 @@
 #include <Kokkos_Core.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include "PlatoTypes.hpp"
+#include "core_types/PlatoTypes.hpp"
 
 namespace Plato
 {

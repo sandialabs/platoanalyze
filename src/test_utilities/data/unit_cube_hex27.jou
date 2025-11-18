@@ -1,0 +1,26 @@
+## /home/jrobbin/opt/cubit/15.3/bin/cubitx
+## Cubit Version 15.3
+## Cubit Build 413520
+## Revised 2018-09-20 09:38:41 -0600 (Thu, 20 Sep 2018)
+## Running 11/17/2021 06:18:37 PM
+## Command Options:
+create brick x 1
+volume all size 0.5
+mesh volume all
+sideset 1 surface 4
+sideset 1 name "x-"
+sideset 2 surface 6
+sideset 2 name "x+"
+sideset 3 surface 3
+sideset 3 name "y-"
+sideset 4 surface 5
+sideset 4 name "y+"
+sideset 5 surface 2
+sideset 5 name "z-"
+sideset 6 surface 1
+sideset 6 name "z+"
+block 1 volume all
+block 1 element type hex27
+block 1 name "block_1"
+export mesh "unit_cube_hex27.exo" overwrite
+exit

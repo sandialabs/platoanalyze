@@ -2,7 +2,7 @@
 
 #include <exodusII.h>
 
-#include "PlatoUtilities.hpp"
+#include "utilities/PlatoUtilities.hpp"
 
 namespace Plato
 {

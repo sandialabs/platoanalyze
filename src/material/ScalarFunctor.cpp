@@ -1,10 +1,10 @@
-#include "ScalarFunctor.hpp"
+#include "material/ScalarFunctor.hpp"
 
 #include <Kokkos_Core.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include "AnalyzeMacros.hpp"
-#include "PlatoTypes.hpp"
+#include "core_types/PlatoTypes.hpp"
+#include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
 {
