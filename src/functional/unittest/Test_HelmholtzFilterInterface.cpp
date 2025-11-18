@@ -4,9 +4,9 @@
 #include <plato/filter/library/FilterInterface.hpp>
 #include <random>
 
-#include "FunctionalInterfaceUtilities.hpp"
-#include "HelmholtzFilterInterface.hpp"
-#include "TestMeshSetupTeardown.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "functional/HelmholtzFilterInterface.hpp"
+#include "functional/unittest/TestMeshSetupTeardown.hpp"
 
 namespace plato::functional::unittest
 {

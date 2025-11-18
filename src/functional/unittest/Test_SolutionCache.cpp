@@ -1,10 +1,10 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <plato/utilities/StateCache.hpp>
 
-#include "FunctionalInterfaceUtilities.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "PlatoTestHelpers.hpp"
-#include "Solutions.hpp"
+#include "domain/Solutions.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
+#include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::functional::unittest
 {

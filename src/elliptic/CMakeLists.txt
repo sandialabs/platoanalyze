@@ -1,1 +1,0 @@
-add_subdirectory(./finite_deformation_mechanics)

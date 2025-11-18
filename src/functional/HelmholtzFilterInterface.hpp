@@ -3,7 +3,7 @@
 
 #include <plato/filter/library/FilterInterface.hpp>
 
-#include "FunctionalInterface.hpp"
+#include "functional/FunctionalInterface.hpp"
 
 namespace plato::functional
 {

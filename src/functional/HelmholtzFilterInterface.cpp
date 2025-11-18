@@ -1,12 +1,12 @@
-#include "HelmholtzFilterInterface.hpp"
+#include "functional/HelmholtzFilterInterface.hpp"
 
 #include <Teuchos_ParameterList.hpp>
 #include <plato/analysis/AnalysisDomainMesh.hpp>
 #include <plato/linear_algebra/DynamicVector.hpp>
 
-#include "FunctionalInterfaceUtilities.hpp"
-#include "PlatoAbstractProblem.hpp"
-#include "Solutions.hpp"
+#include "domain/Solutions.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "problem/PlatoAbstractProblem.hpp"
 
 namespace plato::functional
 {

@@ -5,10 +5,10 @@
 #include <string>
 #include <string_view>
 
-#include "FunctionalInterfaceUtilities.hpp"
-#include "PlatoAbstractProblem.hpp"
-#include "Solutions.hpp"
-#include "alg/ParseInput.hpp"
+#include "domain/Solutions.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "problem/PlatoAbstractProblem.hpp"
+#include "solver/ParseInput.hpp"
 
 namespace plato::functional
 {

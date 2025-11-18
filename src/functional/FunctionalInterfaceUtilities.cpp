@@ -1,4 +1,4 @@
-#include "FunctionalInterfaceUtilities.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
 
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -6,9 +6,9 @@
 #include <plato/analysis/AnalysisDomainMesh.hpp>
 #include <plato/filter/library/FilterInterface.hpp>
 
-#include "CrsMatrixUtils.hpp"
-#include "ParameterListUtilities.hpp"
-#include "alg/ErrorHandling.hpp"
+#include "functional/ParameterListUtilities.hpp"
+#include "linear_algebra/CrsMatrixUtils.hpp"
+#include "main/library/ErrorHandling.hpp"
 
 namespace plato::functional
 {

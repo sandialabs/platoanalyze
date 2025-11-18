@@ -2,7 +2,7 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "ParseTools.hpp"
+#include "parsing/ParseTools.hpp"
 
 namespace Plato
 {

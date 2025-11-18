@@ -4,12 +4,12 @@
 #include <memory>
 #include <string>
 
-#include "AnalyzeMacros.hpp"
-#include "ParseTools.hpp"
 #include "material/CubicVoigtRank4Field.hpp"
 #include "material/IsotropicVoigtRank4Field.hpp"
 #include "material/Rank4Field.hpp"
 #include "material/TetragonalSkewRank4Field.hpp"
+#include "parsing/ParseTools.hpp"
+#include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
 {

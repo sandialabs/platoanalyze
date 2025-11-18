@@ -3,11 +3,11 @@
 #include <Kokkos_Core.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-#include "AnalyzeMacros.hpp"
-#include "PlatoStaticsTypes.hpp"
-#include "PlatoTypes.hpp"
+#include "core_types/PlatoTypes.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "material/Rank4Field.hpp"
-#include "material/ScalarExpression.hpp"
+#include "parsing/ScalarExpression.hpp"
+#include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
 {

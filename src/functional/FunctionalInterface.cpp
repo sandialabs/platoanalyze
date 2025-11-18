@@ -1,18 +1,18 @@
-#include "FunctionalInterface.hpp"
+#include "functional/FunctionalInterface.hpp"
 
 #include <mpi.h>
 
 #include <Kokkos_Core.hpp>
 #include <plato/analysis/AnalysisDomainMesh.hpp>
 
-#include "FunctionalInterfaceUtilities.hpp"
-#include "InputValidation.hpp"
-#include "ParameterListUtilities.hpp"
-#include "PlatoAbstractProblem.hpp"
-#include "PlatoProblemFactory.hpp"
-#include "Solutions.hpp"
-#include "alg/ErrorHandling.hpp"
-#include "alg/ParallelComm.hpp"
+#include "domain/Solutions.hpp"
+#include "functional/FunctionalInterfaceUtilities.hpp"
+#include "functional/InputValidation.hpp"
+#include "functional/ParameterListUtilities.hpp"
+#include "main/library/ErrorHandling.hpp"
+#include "problem/PlatoAbstractProblem.hpp"
+#include "problem/PlatoProblemFactory.hpp"
+#include "utilities/ParallelComm.hpp"
 
 namespace plato::functional
 {

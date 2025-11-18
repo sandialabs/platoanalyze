@@ -1,6 +1,5 @@
-if( PLATOANALYZE_UNIT_TEST )
-  include(${CMAKE_UTIL_DIR}/create_analyze_unittester.cmake)
-  set(DIRECTORIES unittest)
-
-  create_analyze_unittester(AnalyzeUtilities ${DIRECTORIES})
-endif()
+include(${CMAKE_UTIL_DIR}/create_plato_analyze_library.cmake)
+include(${CMAKE_UTIL_DIR}/create_plato_analyze_unittester.cmake)
+find_package(MPI REQUIRED COMPONENTS CXX)
+set(LINK_LIBS AnalyzeCoreTypes )
+create_plato_analyze_library(AnalyzeUtilities "." "${LINK_LIBS}")

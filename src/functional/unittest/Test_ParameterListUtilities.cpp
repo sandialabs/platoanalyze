@@ -1,7 +1,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <plato/filter/library/FilterInterface.hpp>
 
-#include "ParameterListUtilities.hpp"
+#include "functional/ParameterListUtilities.hpp"
 
 namespace plato::functional::unittest
 {
@@ -80,8 +80,8 @@ TEUCHOS_UNIT_TEST(ParameterListUtilities, AllDomainsSublist)
 
     // Non-const
     test_sublist_path_with_nonconst_parameter_list([](auto& tParameterList) -> Teuchos::ParameterList&
-                                                   { return all_domains_sublist(tParameterList); },
-                                                   tSublistPath, out, success);
+                                                   { return all_domains_sublist(tParameterList); }, tSublistPath, out,
+                                                   success);
 }
 
 TEUCHOS_UNIT_TEST(ParameterListUtilities, DomainSublist)
@@ -108,8 +108,8 @@ TEUCHOS_UNIT_TEST(ParameterListUtilities, ParametersSublist)
 
     // Non-const
     test_sublist_path_with_nonconst_parameter_list([](auto& tParameterList) -> Teuchos::ParameterList&
-                                                   { return parameters_sublist(tParameterList); },
-                                                   tSublistPath, out, success);
+                                                   { return parameters_sublist(tParameterList); }, tSublistPath, out,
+                                                   success);
 }
 
 TEUCHOS_UNIT_TEST(ParameterListUtilities, BlockNames)

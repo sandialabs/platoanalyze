@@ -6,9 +6,9 @@
 #include <plato/utilities/StateCache.hpp>
 #include <utility>
 
-#include "PlatoMesh.hpp"
-#include "Solutions.hpp"
-#include "alg/ParallelComm.hpp"
+#include "domain/Solutions.hpp"
+#include "mesh/PlatoMesh.hpp"
+#include "utilities/ParallelComm.hpp"
 
 namespace Plato
 {
