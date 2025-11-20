@@ -11,7 +11,10 @@
 
 int main(int argc, char* argv[])
 {
-    MPI_Init(&argc, &argv);
+    auto tThreadsProvided = int{};
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &tThreadsProvided);
+    assert(tThreadsProvided == MPI_THREAD_FUNNELED);
+
     Kokkos::initialize(argc, argv);
     Plato::MeshFactory::initialize(argc, argv);
 

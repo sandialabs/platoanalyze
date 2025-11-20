@@ -36,7 +36,8 @@ void start_up()
         MPI_Initialized(&tMPIInitialized);
         if (tMPIInitialized == 0)
         {
-            MPI_Init(&tArgc, &tArgv);
+            auto tThreadsProvided = int{};
+            MPI_Init_thread(&tArgc, &tArgv, MPI_THREAD_FUNNELED, &tThreadsProvided);
         }
 
         if (!Kokkos::is_initialized())
