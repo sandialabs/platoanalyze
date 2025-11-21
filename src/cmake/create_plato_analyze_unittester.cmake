@@ -45,7 +45,12 @@ function( create_plato_analyze_unittester_impl TEST_EXE DIRECTORIES TEST_MAIN_CP
 
     target_link_libraries( ${TEST_EXE} PRIVATE ${GTEST_OR_TEUCHOS_LIB}  ${TARGET_LINK_LIST})
     add_test(NAME ${TEST_EXE} COMMAND ${TEST_EXE} ${GTEST_OUTPUT})
-    set_property(TEST ${TEST_EXE} PROPERTY LABELS "small")
+    
+    set( NUM_THREADS "1" )
+    if( PLATOANALYZE_ENABLE_OPENMP )
+        set( NUM_THREADS "4" )
+    endif()
+    set_tests_properties( ${TEST_EXE} PROPERTIES LABELS "small" PROCESSORS ${NUM_THREADS} ENVIRONMENT "OMP_NUM_THREADS=${NUM_THREADS};OMP_PROC_BIND=close;OMP_PLACES=threads")
 
     install( TARGETS ${TEST_EXE} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 

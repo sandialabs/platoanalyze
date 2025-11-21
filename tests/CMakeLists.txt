@@ -1,3 +1,5 @@
+include(${CMAKE_CURRENT_SOURCE_DIR}/tools/openmp_setup.cmake)
+
 if(    EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/regression/CMakeLists.txt
    AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/verification/CMakeLists.txt)
   ADD_SUBDIRECTORY(regression)
