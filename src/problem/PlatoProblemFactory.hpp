@@ -15,7 +15,6 @@
 #include "element/Tet10.hpp"
 #include "element/Tet4.hpp"
 #include "mesh/PlatoMesh.hpp"
-#include "problem/Electromechanics.hpp"
 #include "problem/Mechanics.hpp"
 #include "problem/Thermal.hpp"
 #include "problem/Thermomechanics.hpp"
@@ -36,10 +35,6 @@
 #include "problem/elliptic/Problem.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/Problem.hpp"
-#ifdef PLATO_HATCHING
-#include "problem/elliptic/hatching/Mechanics.hpp"
-#include "problem/elliptic/hatching/Problem.hpp"
-#endif
 #endif
 
 #ifdef PLATO_PARABOLIC
@@ -49,18 +44,7 @@
 #ifdef PLATO_HYPERBOLIC
 #include "problem/hyperbolic/Mechanics.hpp"
 #include "problem/hyperbolic/Problem.hpp"
-#ifdef PLATO_FLUIDS
-#include "problem/hyperbolic/fluids/FluidsQuasiImplicit.hpp"
-#endif
-#ifdef PLATO_MICROMORPHIC
-#include "problem/hyperbolic/micromorphic/MicromorphicMechanics.hpp"
-#endif
-#endif
 
-#ifdef PLATO_STABILIZED
-#include "problem/elliptic/stabilized/Mechanics.hpp"
-#include "problem/elliptic/stabilized/Problem.hpp"
-#include "problem/elliptic/stabilized/Thermomechanics.hpp"
 #endif
 
 #ifdef PLATO_HELMHOLTZ
@@ -162,13 +146,7 @@ inline std::shared_ptr<Plato::AbstractProblem> create_mechanical_problem(Plato::
     {
         return makeProblem<Plato::Elliptic::Problem, Plato::Mechanics>(aMesh, aPlatoProb, aMachine);
     }
-#ifdef PLATO_HATCHING
-    if (tLowerPDE == "elliptic hatching")
-    {
-        return makeProblem<Plato::Elliptic::Hatching::Problem, Plato::Elliptic::Hatching::Mechanics>(aMesh, aPlatoProb,
-                                                                                                     aMachine);
-    }
-#endif
+
 #endif
 #ifdef PLATO_HYPERBOLIC
     if (tLowerPDE == "hyperbolic")
@@ -246,33 +224,6 @@ inline std::shared_ptr<Plato::AbstractProblem> create_thermoplasticity_problem(P
 
 /******************************************************************************/
 /**
- * \brief Create a abstract problem of type stabilized mechanical.
- * \param [in] aMesh      mesh metadata
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine   mpi communicator interface
- * \returns shared pointer to abstract problem of type stabilized mechanical
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_stabilized_mechanical_problem(Plato::Mesh aMesh,
-                                                                                    Teuchos::ParameterList& aPlatoProb,
-                                                                                    Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-#ifdef PLATO_ELLIPTIC
-#ifdef PLATO_STABILIZED
-    if (tLowerPDE == "elliptic")
-    {
-        return makeProblem<Plato::Stabilized::Problem, Plato::Stabilized::Mechanics>(aMesh, aPlatoProb, aMachine);
-    }
-#endif
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_stabilized_mechanical_problem
-
-/******************************************************************************/
-/**
  * \brief Create a abstract problem of type thermal.
  * \param [in] aMesh      mesh metadata
  * \param [in] aPlatoProb input xml metadata
@@ -305,59 +256,6 @@ inline std::shared_ptr<Plato::AbstractProblem> create_thermal_problem(Plato::Mes
 
 /******************************************************************************/
 /**
- * \brief Create a abstract problem of type electromechanical.
- * \param [in] aMesh      mesh metadata
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine   mpi communicator interface
- * \returns shared pointer to abstract problem of type electromechanical
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_electromechanical_problem(Plato::Mesh aMesh,
-                                                                                Teuchos::ParameterList& aPlatoProb,
-                                                                                Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-
-#ifdef PLATO_ELLIPTIC
-    if (tLowerPDE == "elliptic")
-    {
-        return makeProblem<Plato::Elliptic::Problem, Plato::Electromechanics>(aMesh, aPlatoProb, aMachine);
-    }
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_electromechanical_problem
-
-/******************************************************************************/
-/**
- * \brief Create a abstract problem of type stabilized thermomechanical.
- * \param [in] aMesh      mesh metadata
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine   mpi communicator interface
- * \returns shared pointer to abstract problem of type stabilized thermomechanical
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_stabilized_thermomechanical_problem(
-    Plato::Mesh aMesh, Teuchos::ParameterList& aPlatoProb, Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-
-#ifdef PLATO_ELLIPTIC
-#ifdef PLATO_STABILIZED
-    if (tLowerPDE == "elliptic")
-    {
-        return makeProblem<Plato::Stabilized::Problem, Plato::Stabilized::Thermomechanics>(aMesh, aPlatoProb, aMachine);
-    }
-#endif
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_stabilized_thermomechanical_problem
-
-/******************************************************************************/
-/**
  * \brief Create a abstract problem of type thermomechanical.
  * \param [in] aMesh        mesh metadata
  * \param [in] aPlatoProb input xml metadata
@@ -387,63 +285,6 @@ inline std::shared_ptr<Plato::AbstractProblem> create_thermomechanical_problem(P
     }
 }
 // function create_thermomechanical_problem
-
-/******************************************************************************/
-/**
- * \brief Create a abstract problem of type incompressible fluid.
- * \param [in] aMesh        mesh metadata
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine     mpi communicator interface
- * \returns shared pointer to abstract problem of type incompressible fluid
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_incompressible_fluid_problem(Plato::Mesh aMesh,
-                                                                                   Teuchos::ParameterList& aPlatoProb,
-                                                                                   Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-
-#ifdef PLATO_HYPERBOLIC
-#ifdef PLATO_FLUIDS
-    if (tLowerPDE == "hyperbolic")
-    {
-        return makeProblem<Plato::Fluids::QuasiImplicit, Plato::IncompressibleFluids>(aMesh, aPlatoProb, aMachine);
-    }
-#endif
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_incompressible_fluid_problem
-
-/******************************************************************************/
-/**
- * \brief Create a abstract problem of micromorphic mechanics.
- * \param [in] aMesh        mesh metadata
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine     mpi communicator interface
- * \returns shared pointer to abstract problem of type micromorphic mechanics
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_micromorphic_mechanics_problem(Plato::Mesh aMesh,
-                                                                                     Teuchos::ParameterList& aPlatoProb,
-                                                                                     Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-
-#ifdef PLATO_HYPERBOLIC
-#ifdef PLATO_MICROMORPHIC
-    if (tLowerPDE == "hyperbolic")
-    {
-        return makeProblem<Plato::Hyperbolic::Problem, Plato::Hyperbolic::MicromorphicMechanics>(aMesh, aPlatoProb,
-                                                                                                 aMachine);
-    }
-#endif
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_micromorphic_mechanics_problem
 
 /// @brief Create finite deformation* mechanics problem.
 /// @param[in] aMesh plato abstract mesh
@@ -501,42 +342,15 @@ class ProblemFactory
         {
             return (Plato::create_finite_deformation_mechanics_problem(aMesh, tInputData, aMachine));
         }
-        if (tLowerPhysics == "plasticity")
-        {
-            return (Plato::create_plasticity_problem(aMesh, tInputData, aMachine));
-        }
-        if (tLowerPhysics == "thermoplasticity")
-        {
-            return (Plato::create_thermoplasticity_problem(aMesh, tInputData, aMachine));
-        }
-        if (tLowerPhysics == "stabilized mechanical")
-        {
-            return (Plato::create_stabilized_mechanical_problem(aMesh, tInputData, aMachine));
-        }
         if (tLowerPhysics == "thermal")
         {
             return (Plato::create_thermal_problem(aMesh, tInputData, aMachine));
-        }
-        if (tLowerPhysics == "electromechanical")
-        {
-            return (Plato::create_electromechanical_problem(aMesh, tInputData, aMachine));
-        }
-        if (tLowerPhysics == "stabilized thermomechanical")
-        {
-            return (Plato::create_stabilized_thermomechanical_problem(aMesh, tInputData, aMachine));
         }
         if (tLowerPhysics == "thermomechanical")
         {
             return (Plato::create_thermomechanical_problem(aMesh, tInputData, aMachine));
         }
-        if (tLowerPhysics == "incompressible fluids")
-        {
-            return (Plato::create_incompressible_fluid_problem(aMesh, tInputData, aMachine));
-        }
-        if (tLowerPhysics == "micromorphic mechanical")
-        {
-            return (Plato::create_micromorphic_mechanics_problem(aMesh, tInputData, aMachine));
-        }
+
 #ifdef PLATO_HELMHOLTZ
         if (tLowerPhysics == "helmholtz filter")
         {

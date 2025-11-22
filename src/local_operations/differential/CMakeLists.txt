@@ -1,8 +1,7 @@
 include(${CMAKE_UTIL_DIR}/create_plato_analyze_library.cmake)
 
 set(LINK_LIBS AnalyzeCoreTypes 
-              AnalyzeLinearAlgebra
-              AnalyzeSimplex)
+              AnalyzeLinearAlgebra)
 create_plato_analyze_library(AnalyzeDifferentialOperations "." "${LINK_LIBS}")
 
 if( PLATOANALYZE_UNIT_TEST )

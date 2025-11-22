@@ -50,7 +50,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
     this->initialize(aProblemParams);
 
     LinearSystemType systemType = LinearSystemType::SYMMETRIC_POSITIVE_DEFINITE;
-    if (mPhysics == "Electromechanical" || mPhysics == "Thermomechanical")
+    if (mPhysics == "Thermomechanical")
     {
         systemType = LinearSystemType::SYMMETRIC_PATTERN;
     }
