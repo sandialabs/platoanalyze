@@ -7,9 +7,4 @@
 #include "problem/hyperbolic/PhysicsScalarFunction_def.hpp"
 PLATO_ELEMENT_DEF(Plato::Hyperbolic::PhysicsScalarFunction, Plato::Hyperbolic::Mechanics)
 
-#ifdef PLATO_MICROMORPHIC
-#include "problem/hyperbolic/micromorphic/MicromorphicMechanics.hpp"
-PLATO_ELEMENT_DEF(Plato::Hyperbolic::PhysicsScalarFunction, Plato::Hyperbolic::MicromorphicMechanics)
-#endif
-
 #endif

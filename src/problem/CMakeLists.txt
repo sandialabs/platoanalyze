@@ -19,9 +19,6 @@ endif()
 if(HYPERBOLIC)
   add_subdirectory(./hyperbolic)
 endif()
-if(PLASTICITY)
-  add_subdirectory(./plasticity)
-endif()
 
 set(LINK_LIBS AnalyzeUtilities 
               AnalyzeMesh 

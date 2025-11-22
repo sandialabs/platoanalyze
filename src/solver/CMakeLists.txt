@@ -35,9 +35,7 @@ if(PLATOANALYZE_ENABLE_MESHMAP)
     list(APPEND FOLDERS "multipoint_constraint")
 endif()
 
-if(PLASTICITY)
-    list(APPEND FOLDERS "path_dependent")
-endif()
+
 
 IF( AMGX_FOUND )
   list(APPEND FOLDERS "amgx")

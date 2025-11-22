@@ -48,8 +48,3 @@ class ScalarFunctionFactory
 #include "element/BaseExpInstMacros.hpp"
 #include "problem/hyperbolic/Mechanics.hpp"
 PLATO_ELEMENT_DEC(Plato::Hyperbolic::ScalarFunctionFactory, Plato::Hyperbolic::Mechanics)
-
-#ifdef PLATO_MICROMORPHIC
-#include "problem/hyperbolic/micromorphic/MicromorphicMechanics.hpp"
-PLATO_ELEMENT_DEC(Plato::Hyperbolic::ScalarFunctionFactory, Plato::Hyperbolic::MicromorphicMechanics)
-#endif

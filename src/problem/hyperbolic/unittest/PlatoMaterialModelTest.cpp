@@ -21,7 +21,6 @@
 #include "material/TetragonalSkewRank4Field.hpp"
 #include "problem/elliptic/EvaluationTypes.hpp"
 #include "problem/hyperbolic/EvaluationTypes.hpp"
-#include "problem/hyperbolic/micromorphic/MicromorphicMechanicsElement.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace PlatoUnitTests
@@ -1048,53 +1047,6 @@ TEUCHOS_UNIT_TEST(MaterialModelTests, ParseCubicVoigtField_ErrorNoAlphaInLameRep
     TEST_THROW(Plato::CubicVoigtRank4Field<EvalType> tCubicField(*tParams), std::runtime_error);
 }
 
-TEUCHOS_UNIT_TEST(MaterialModelTests, ParseTetragonalSkewField)
-{
-    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
-        "        <ParameterList name='Cc Stiffness Tensor Expression'>                                    \n"
-        "          <Parameter name='Symmetry' type='string' value='tetragonal skew' /> \n"
-        "          <ParameterList  name='Mu'>   \n"
-        "            <Parameter name='Constant Names' type='Array(string)' value='{v0, v1}'/> \n"
-        "            <Parameter name='Constant Values' type='Array(double)' value='{1.8e-4, 0.0}'/> \n"
-        "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
-        "            <Parameter name='Expression' type='string' value='v0+v1*Z'/> \n"
-        "          </ParameterList>                                                  \n"
-        "        </ParameterList>                                                                   \n");
-
-    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
-    using EvalType = typename Plato::Hyperbolic::ResidualTypes<ElementType>;
-
-    Plato::TetragonalSkewRank4Field<EvalType> tTetragonalSkewField(*tParamList);
-
-    const auto& tMu = tTetragonalSkewField.getTensorProperty("Mu");
-    TEST_ASSERT(tMu.getIndependentVariableName() == "Z");
-    TEST_ASSERT(tMu.getExpression() == "v0+v1*Z");
-
-    constexpr Plato::Scalar tTolerance = 1e-12;
-    TEST_FLOATING_EQUALITY(1.8e-4, tMu.getConstantsMap().at("v0"), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tMu.getConstantsMap().at("v1"), tTolerance);
-}
-
-TEUCHOS_UNIT_TEST(MaterialModelTests, ParseTetragonalSkewField_ErrorNoMu)
-{
-    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
-        "        <ParameterList name='Cc Stiffness Tensor Expression'>                                    \n"
-        "          <Parameter name='Symmetry' type='string' value='tetragonal skew' /> \n"
-        "          <ParameterList  name='Moo'>   \n"
-        "            <Parameter name='Constant Names' type='Array(string)' value='{v0, v1}'/> \n"
-        "            <Parameter name='Constant Values' type='Array(double)' value='{1.8e-4, 0.0}'/> \n"
-        "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
-        "            <Parameter name='Expression' type='string' value='v0+v1*Z'/> \n"
-        "          </ParameterList>                                                  \n"
-        "        </ParameterList>                                                                   \n");
-
-    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
-    using EvalType = typename Plato::Hyperbolic::ResidualTypes<ElementType>;
-
-    // Plato::TetragonalSkewRank4Field<EvalType> tTetragonalSkewField(*tParamList);
-    TEST_THROW(Plato::TetragonalSkewRank4Field<EvalType> tTetragonalSkewField(*tParamList), std::runtime_error);
-}
-
 TEUCHOS_UNIT_TEST(MaterialModelTests, IsotropicVoigtField_ErrorNameNotInExpressionMap)
 {
     Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
@@ -1557,92 +1509,6 @@ TEUCHOS_UNIT_TEST(MaterialModelTests, CubicVoigtField_LameRepresentation_NonUnif
     TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 5, 3), tTolerance);
     TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 5, 4), tTolerance);
     TEST_FLOATING_EQUALITY(tF * 8.37, tStiffness_host(0, 0, 5, 5), tTolerance);
-}
-
-TEUCHOS_UNIT_TEST(MaterialModelTests, TetragonalSkewField_NoDensityDependence)
-{
-    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
-        "        <ParameterList name='Cc Stiffness Tensor Expression'>                                    \n"
-        "          <Parameter name='Symmetry' type='string' value='tetragonal skew' /> \n"
-        "          <ParameterList  name='Mu'>   \n"
-        "            <Parameter name='Constant Names' type='Array(string)' value='{v0, v1}'/> \n"
-        "            <Parameter name='Constant Values' type='Array(double)' value='{1.8e-4, 0.0}'/> \n"
-        "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
-        "            <Parameter name='Expression' type='string' value='v0+v1*Z'/> \n"
-        "          </ParameterList>                                                  \n"
-        "        </ParameterList>                                                                   \n");
-    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
-    using EvalType = typename Plato::Hyperbolic::ResidualTypes<ElementType>;
-    using ControlScalarType = typename EvalType::ControlScalarType;
-
-    Plato::TetragonalSkewRank4Field<EvalType> tTetragonalSkewField(*tParamList);
-
-    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", 1, 4);
-    Kokkos::deep_copy(tControl, 1.0);
-
-    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tTetragonalSkewField(tControl);
-    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
-    Kokkos::deep_copy(tStiffness_host, tStiffness);
-
-    constexpr Plato::Scalar tTolerance = 1e-12;
-    TEST_FLOATING_EQUALITY(1.8e-4, tStiffness_host(0, 0, 0, 0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 0, 1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 0, 2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 1, 0), tTolerance);
-    TEST_FLOATING_EQUALITY(1.8e-4, tStiffness_host(0, 0, 1, 1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 1, 2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 2, 0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 2, 1), tTolerance);
-    TEST_FLOATING_EQUALITY(1.8e-4, tStiffness_host(0, 0, 2, 2), tTolerance);
-}
-
-TEUCHOS_UNIT_TEST(MaterialModelTests, TetragonalSkewField_NonUniformDensity)
-{
-    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
-        "        <ParameterList name='Cc Stiffness Tensor Expression'>                                    \n"
-        "          <Parameter name='Symmetry' type='string' value='tetragonal skew' /> \n"
-        "          <ParameterList  name='Mu'>   \n"
-        "            <Parameter name='Constant Names' type='Array(string)' value='{v0, v1}'/> \n"
-        "            <Parameter name='Constant Values' type='Array(double)' value='{1.8e-4, 1.8e-4}'/> \n"
-        "            <Parameter name='Independent Variable Name' type='string' value='Z'/> \n"
-        "            <Parameter name='Expression' type='string' value='v0+v1*Z'/> \n"
-        "          </ParameterList>                                                  \n"
-        "        </ParameterList>                                                                   \n");
-    using ElementType = typename Plato::Hyperbolic::MicromorphicMechanicsElement<Plato::Tet4>;
-    using EvalType = typename Plato::Hyperbolic::ResidualTypes<ElementType>;
-    using ControlScalarType = typename EvalType::ControlScalarType;
-
-    Plato::TetragonalSkewRank4Field<EvalType> tTetragonalSkewField(*tParamList);
-
-    constexpr unsigned int tNumCells = 1;
-    constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
-    TEST_EQUALITY(tNumNodesPerCell, 4);
-
-    std::vector<std::vector<Plato::Scalar>> tKnownControl = {{0.0, 1.0, 0.5, 0.5}};
-    Plato::ScalarMultiVectorT<Plato::Scalar> tControl("density", tNumCells, tNumNodesPerCell);
-    Plato::TestHelpers::setControlWS(tKnownControl, tControl);
-
-    Plato::ScalarArray4DT<Plato::Scalar> tStiffness = tTetragonalSkewField(tControl);
-    auto tStiffness_host = Kokkos::create_mirror_view(tStiffness);
-    Kokkos::deep_copy(tStiffness_host, tStiffness);
-
-    std::vector<Plato::Scalar> tGP = {0.585410196624969, 0.138196601125011, 0.138196601125011};
-
-    std::vector<Plato::Scalar> tN = {1.0 - tGP[0] - tGP[1] - tGP[2], tGP[0], tGP[1], tGP[2]};
-    auto tC = tKnownControl[0];
-    Plato::Scalar tGPControl = tN[0] * tC[0] + tN[1] * tC[1] + tN[2] * tC[2] + tN[3] * tC[3];
-    Plato::Scalar tStiff = (1.0 + tGPControl) * 1.8e-4;
-
-    constexpr Plato::Scalar tTolerance = 1e-12;
-    TEST_FLOATING_EQUALITY(tStiff, tStiffness_host(0, 0, 0, 0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 0, 1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 0, 2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 1, 0), tTolerance);
-    TEST_FLOATING_EQUALITY(tStiff, tStiffness_host(0, 0, 1, 1), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 1, 2), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 2, 0), tTolerance);
-    TEST_FLOATING_EQUALITY(0.0, tStiffness_host(0, 0, 2, 1), tTolerance);
-    TEST_FLOATING_EQUALITY(tStiff, tStiffness_host(0, 0, 2, 2), tTolerance);
 }
 
 /******************************************************************************/
