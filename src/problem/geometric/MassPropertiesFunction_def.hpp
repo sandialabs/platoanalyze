@@ -136,9 +136,9 @@ bool MassPropertiesFunction<PhysicsType>::allPropertiesSpecified(const std::vect
         // property vectors were sorted so check that the properties match in sequence
         if (tCurrentProperty != tAllPropertiesVector[tIndex])
         {
-            printf("Property %s does not equal property %s \n", tCurrentProperty.c_str(),
-                   tAllPropertiesVector[tIndex].c_str());
-            printf("If user specifies all mass properties, better performance may be experienced.\n");
+            std::cout << std::format("Property {} does not equal property {} \n", tCurrentProperty.c_str(),
+                                     tAllPropertiesVector[tIndex].c_str());
+            std::cout << "If user specifies all mass properties, better performance may be experienced.\n";
             return false;
         }
     }
@@ -161,7 +161,7 @@ void MassPropertiesFunction<PhysicsType>::createAllMassPropertiesLeastSquaresFun
     const std::vector<Plato::Scalar>& aPropertyWeights,
     const std::vector<Plato::Scalar>& aPropertyGoldValues)
 {
-    printf("Creating all mass properties function.\n");
+    std::cout << "Creating all mass properties function.\n";
     mLeastSquaresFunction =
         std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(aSpatialModel, mDataMap);
     std::map<std::string, Plato::Scalar> tWeightMap;
@@ -271,8 +271,8 @@ void MassPropertiesFunction<PhysicsType>::computeRotationAndParallelAxisTheoremM
 
     Plato::decomposeEigenJacobi<3>(tGoldInertiaTensorAboutCG, mInertiaRotationMatrix, mInertiaPrincipalValues);
 
-    printf("Eigenvalues of GoldInertiaTensor : %f, %f, %f\n", mInertiaPrincipalValues(0), mInertiaPrincipalValues(1),
-           mInertiaPrincipalValues(2));
+    std::cout << std::format("Eigenvalues of GoldInertiaTensor : {}, {}, {}\n", mInertiaPrincipalValues(0),
+                             mInertiaPrincipalValues(1), mInertiaPrincipalValues(2));
 
     mMinusRotatedParallelAxisTheoremMatrix =
         Plato::times(-1.0, Plato::times(Plato::transpose(mInertiaRotationMatrix),
@@ -294,7 +294,7 @@ void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
     const std::vector<Plato::Scalar>& aPropertyWeights,
     const std::vector<Plato::Scalar>& aPropertyGoldValues)
 {
-    printf("Creating itemized mass properties function.\n");
+    std::cout << "Creating itemized mass properties function.\n";
     mLeastSquaresFunction =
         std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(aSpatialModel, mDataMap);
     for (Plato::OrdinalType tPropertyIndex = 0; tPropertyIndex < aPropertyNames.size(); ++tPropertyIndex)

@@ -193,10 +193,11 @@ Plato::Scalar LeastSquaresFunction<PhysicsType>::value(const Plato::ScalarVector
         Plato::Scalar tPercentDiff = std::abs(tFunctionGoldValue) > 0.0
                                          ? 100.0 * (tFunctionValue - tFunctionGoldValue) / tFunctionGoldValue
                                          : (tFunctionValue - tFunctionGoldValue);
-        printf("%20s = %12.4e * ((%12.4e - %12.4e) / %12.4e)^2 =  %12.4e (PercDiff = %10.1f)\n",
-               mScalarFunctionBaseContainer[tFunctionIndex]->name().c_str(), tFunctionWeight, tFunctionValue,
-               tFunctionGoldValue, tFunctionScale,
-               tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, 2), tPercentDiff);
+        std::cout << std::format(
+            "{:.20s} = {:12.4e} * (({:12.4e} - {:12.4e}) / {:12.4e})^2 =  {:12.4e} (PercDiff = {:10.1f})\n",
+            mScalarFunctionBaseContainer[tFunctionIndex]->name().c_str(), tFunctionWeight, tFunctionValue,
+            tFunctionGoldValue, tFunctionScale,
+            tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, 2), tPercentDiff);
     }
     return tResult;
 }

@@ -219,7 +219,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, SolutionReducesResidualBelowToleranc
 
     // test residual norm
     const auto tResidualNorm = Plato::blas1::norm(tResidual);
-    printf("\n Residual Norm at converged state : %e\n", tResidualNorm);
+    std::cout << "\n Residual Norm at converged state : " << tResidualNorm << "\n";
     TEST_ASSERT(tResidualNorm < tTolerance);
 }
 

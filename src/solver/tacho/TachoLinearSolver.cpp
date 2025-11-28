@@ -175,7 +175,7 @@ void tachoSolver<SX>::MySolve(int NRHS, value_type_matrix b, value_type_matrix x
 
     /// kyungjoo: lazy allocation of workspace
     if (NRHS != int(b.extent(1)) || NRHS != int(x.extent(1)))
-        printf("Error: NRHS does not match to b and x extent(1)\n");
+        std::cout << "Error: NRHS does not match to b and x extent(1)\n";
     {  // this workspace is allocated when NRHS is changed
         const int rhs_span = m_numRows * NRHS, rhs_span_actual = m_TempRhs.span();
         if (rhs_span != rhs_span_actual)
