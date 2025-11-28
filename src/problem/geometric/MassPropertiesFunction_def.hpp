@@ -146,6 +146,7 @@ bool MassPropertiesFunction<PhysicsType>::allPropertiesSpecified(const std::vect
     return true;
 }
 
+// CPD-OFF
 /******************************************************************************/
 /**
  * \brief Create a least squares function for all mass properties (inertia about gold CG)
@@ -278,6 +279,7 @@ void MassPropertiesFunction<PhysicsType>::computeRotationAndParallelAxisTheoremM
         Plato::times(-1.0, Plato::times(Plato::transpose(mInertiaRotationMatrix),
                                         Plato::times(tParallelAxisTheoremMatrix, mInertiaRotationMatrix)));
 }
+// CPD-ON
 
 /******************************************************************************/
 /**
