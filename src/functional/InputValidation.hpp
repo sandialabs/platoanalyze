@@ -16,8 +16,8 @@ namespace plato::functional
                                                   const Plato::Mesh& aMesh);
 
 /// @brief Returns an error message for any validation errors found.
-[[nodiscard]] auto error_messages(const Teuchos::ParameterList& aParameterList,
-                                  const Plato::Mesh& aMesh) -> std::string;
+[[nodiscard]] auto error_messages(const Teuchos::ParameterList& aParameterList, const Plato::Mesh& aMesh)
+    -> std::string;
 
 }  // namespace plato::functional
 

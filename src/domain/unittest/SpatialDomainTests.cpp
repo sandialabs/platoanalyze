@@ -11,22 +11,6 @@ namespace PlatoUnitTests
 {
 namespace
 {
-const auto kMeshFilePath = std::filesystem::path{"test-mesh.exo"};
-
-auto write_and_load_mesh() -> Plato::Mesh
-{
-    Plato::TestHelpers::write_two_block_mesh(kMeshFilePath);
-    return Plato::MeshFactory::create(kMeshFilePath.string());
-}
-
-class TwoBlockMeshRAII
-{
-   public:
-    Plato::Mesh mMesh = write_and_load_mesh();
-
-    ~TwoBlockMeshRAII() { std::filesystem::remove(kMeshFilePath); }
-};
-
 auto domain_parameter_list(const std::string_view aElementBlockParameterTag, const std::string_view aElementBlockName)
     -> Teuchos::ParameterList
 {
@@ -75,21 +59,21 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainElementBlockNameDoesNotExi
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainMeshHasElementBlock)
 {
-    const auto tMesh = TwoBlockMeshRAII{};
+    const auto tMesh = Plato::TestHelpers::TwoBlockTriMeshRAII{};
     const auto tParameterList = domain_parameter_list("Element Block", "BLOCK_1");
     TEST_ASSERT(Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, tParameterList));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainMeshWrongElementBlockTag)
 {
-    const auto tMesh = TwoBlockMeshRAII{};
+    const auto tMesh = Plato::TestHelpers::TwoBlockTriMeshRAII{};
     const auto tParameterList = domain_parameter_list("Element Bloke", "BLOCK_1");
     TEST_ASSERT(!Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, tParameterList));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoresMissingBlocks)
 {
-    const auto tMesh = TwoBlockMeshRAII{};
+    const auto tMesh = Plato::TestHelpers::TwoBlockTriMeshRAII{};
 
     const auto tInput = std::string{
         "<ParameterList name='Plato Problem'>\n"

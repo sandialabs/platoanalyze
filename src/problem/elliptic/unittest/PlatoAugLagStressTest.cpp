@@ -1150,7 +1150,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_VonMises3D)
 
             Plato::Scalar tVonMises(0.0);
 
-            tComputeVonMises(tCellOrdinal, tStress, tVonMises);
+            tComputeVonMises(tStress, tVonMises);
 
             tCellVonMises(tCellOrdinal) = tVonMises;
         });
@@ -1195,7 +1195,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_VonMises2D)
 
             Plato::Scalar tVonMises(0.0);
 
-            tComputeVonMises(tCellOrdinal, tStress, tVonMises);
+            tComputeVonMises(tStress, tVonMises);
 
             tCellVonMises(tCellOrdinal) = tVonMises;
         });
@@ -1236,7 +1236,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_VonMises1D)
 
             Plato::Scalar tVonMises(0.0);
 
-            tComputeVonMises(tCellOrdinal, tStress, tVonMises);
+            tComputeVonMises(tStress, tVonMises);
 
             tCellVonMises(tCellOrdinal) = tVonMises;
         });

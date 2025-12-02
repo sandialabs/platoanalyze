@@ -13,12 +13,12 @@ namespace
 /// @brief Used for custom deleter of UMFPACK numeric object.
 struct UMFPACKNumericDeleter
 {
-    void operator()(void *aUMFPACKSymbolic);
+    void operator()(void* aUMFPACKSymbolic);
 };
 
 using UMFPACKNumeric = std::unique_ptr<void, UMFPACKNumericDeleter>;
 
-void UMFPACKNumericDeleter::operator()(void *aUMFPACKNumeric)
+void UMFPACKNumericDeleter::operator()(void* aUMFPACKNumeric)
 {
     if (aUMFPACKNumeric)
     {
@@ -26,9 +26,9 @@ void UMFPACKNumericDeleter::operator()(void *aUMFPACKNumeric)
     }
 }
 
-void check_umfpack(const std::string &aMessage,
-                   const std::array<double, UMFPACK_INFO> &aInfo,
-                   const Plato::CrsMatrix<Plato::OrdinalType> &aMatrix)
+void check_umfpack(const std::string& aMessage,
+                   const std::array<double, UMFPACK_INFO>& aInfo,
+                   const Plato::CrsMatrix<Plato::OrdinalType>& aMatrix)
 {
     if (aInfo[UMFPACK_STATUS] != UMFPACK_OK)
     {
@@ -39,12 +39,12 @@ void check_umfpack(const std::string &aMessage,
     }
 }
 
-[[nodiscard]] auto numeric_factorization(const CCSMatrix &aCCSMatrix,
-                                         const CrsMatrixType &aCRSMatrix,
-                                         void *const aUMFPACKSymbolic) -> UMFPACKNumeric
+[[nodiscard]] auto numeric_factorization(const CCSMatrix& aCCSMatrix,
+                                         const CrsMatrixType& aCRSMatrix,
+                                         void* const aUMFPACKSymbolic) -> UMFPACKNumeric
 {
     auto tInfo = std::array<double, UMFPACK_INFO>{};
-    void *tNumeric = nullptr;
+    void* tNumeric = nullptr;
     umfpack_dl_numeric(aCCSMatrix.mColumnBegin.data(), aCCSMatrix.mRows.data(), aCCSMatrix.mValues.data(),
                        aUMFPACKSymbolic, &tNumeric, nullptr, tInfo.data());
     auto tWrappedNumeric = UMFPACKNumeric{tNumeric};
@@ -54,7 +54,7 @@ void check_umfpack(const std::string &aMessage,
 
 }  // namespace
 
-void UMFPACKSymbolicDeleter::operator()(void *aUMFPACKSymbolic)
+void UMFPACKSymbolicDeleter::operator()(void* aUMFPACKSymbolic)
 {
     if (aUMFPACKSymbolic)
     {
@@ -62,12 +62,12 @@ void UMFPACKSymbolicDeleter::operator()(void *aUMFPACKSymbolic)
     }
 }
 
-UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverParams,
+UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList& aSolverParams,
                                          std::shared_ptr<Plato::MultipointConstraints> aMPCs)
     : Plato::AbstractSolver(aSolverParams, aMPCs),
-      mUMFPACKSymbolicCache{[](const CCSMatrix &aMatrix, const CrsMatrixType &aCRSMatrix)
+      mUMFPACKSymbolicCache{[](const CCSMatrix& aMatrix, const CrsMatrixType& aCRSMatrix)
                             {
-                                void *tSymbolic = nullptr;
+                                void* tSymbolic = nullptr;
                                 const auto tNumberOfRows = aMatrix.numberOfColumns();
                                 auto tInfo = std::array<double, UMFPACK_INFO>{};
                                 umfpack_dl_symbolic(tNumberOfRows, tNumberOfRows, aMatrix.mColumnBegin.data(),
@@ -77,7 +77,7 @@ UMFPACKLinearSolver::UMFPACKLinearSolver(const Teuchos::ParameterList &aSolverPa
                                 check_umfpack("Symbolic factorization", tInfo, aCRSMatrix);
                                 return tWrappedSymbolic;
                             },
-                            [](const CCSMatrix &aMatrix, const CrsMatrixType &)
+                            [](const CCSMatrix& aMatrix, const CrsMatrixType&)
                             { return crs_matrix_row_column_hash(aMatrix.mColumnBegin, aMatrix.mRows); }}
 {
 }
@@ -89,7 +89,7 @@ void UMFPACKLinearSolver::innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aCRSMa
     const auto tNumberOfRows = aCRSMatrix.numRows();
     auto tMatrix = to_CCS(make_CRS_matrix(aCRSMatrix));
 
-    const auto &tSymbolic = mUMFPACKSymbolicCache.compute(tMatrix, aCRSMatrix);
+    const auto& tSymbolic = mUMFPACKSymbolicCache.compute(tMatrix, aCRSMatrix);
     const auto tNumeric = numeric_factorization(tMatrix, aCRSMatrix, tSymbolic.get());
 
     const auto tRHSOnHost = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultHostExecutionSpace{}, aB);

@@ -2,6 +2,7 @@
 
 #include "core_types/FadTypes.hpp"
 #include "linear_algebra/ScalarProduct.hpp"
+#include "local_operations/constitutive/TensorNormFactory.hpp"
 #include "local_operations/differential/GradientMatrix.hpp"
 #include "local_operations/mapping/InterpolateFromNodal.hpp"
 #include "material/TMKinematics.hpp"

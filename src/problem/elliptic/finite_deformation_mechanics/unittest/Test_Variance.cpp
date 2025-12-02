@@ -110,7 +110,7 @@ TEUCHOS_UNIT_TEST(Variance, UniaxialDisplacementGivesZeroVariance)
 
     std::vector<Plato::Scalar> tDispVals{0.0, 0.01, 0.0, -0.01,
                                          1.0, 0.01, 1.0, -0.01};  // uniaxial displacement field with extension of 1.0
-    const auto tSolution = Plato::TestHelpers::single_step_solutions_from_vector(tDispVals);
+    const auto tSolution = Plato::TestHelpers::single_step_solutions(tDispVals);
 
     constexpr Plato::Scalar tGoldVariance{0.0};
     // control of 1
@@ -178,7 +178,7 @@ TEUCHOS_UNIT_TEST(Variance, NonHomogeneousDisplacementAndGradientZMatchAnalytic)
     const auto tNumNodes = tMesh->NumNodes();
 
     std::vector<Plato::Scalar> tDispVals{0.0, 0.02, 0.0, -0.02, 0.0, -0.02, 0.0, 0.02};
-    const auto tSolution = Plato::TestHelpers::single_step_solutions_from_vector(tDispVals);
+    const auto tSolution = Plato::TestHelpers::single_step_solutions(tDispVals);
 
     // control of 1
     {

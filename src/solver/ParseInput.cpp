@@ -57,9 +57,9 @@
 namespace Plato
 {
 
-void add_timings(Teuchos::ParameterList &problem, Teuchos::Time &time_main, Comm::Machine const &machine)
+void add_timings(Teuchos::ParameterList& problem, Teuchos::Time& time_main, Comm::Machine const& machine)
 {
-    Teuchos::ParameterList &runtime = problem.sublist("Runtime");
+    Teuchos::ParameterList& runtime = problem.sublist("Runtime");
     const std::string time_doc = "Number of seconds of execution time on processor 0.";
     const Plato::Scalar sec = time_main.stop();
     if (Comm::rank(machine) == 0)
@@ -70,17 +70,17 @@ void add_timings(Teuchos::ParameterList &problem, Teuchos::Time &time_main, Comm
     runtime.get<Plato::Scalar>("Execution Time in Sec");
 }
 
-bool unused(const Teuchos::ParameterList &problem, const std::string &path, std::string &os)
+bool unused(const Teuchos::ParameterList& problem, const std::string& path, std::string& os)
 {
     bool all_unused = true;
     std::string not_used;
     for (Teuchos::ParameterList::ConstIterator i = problem.begin(); i != problem.end(); ++i)
     {
-        const Teuchos::ParameterEntry &entry_i = problem.entry(i);
-        const std::string &name_i = problem.name(i);
+        const Teuchos::ParameterEntry& entry_i = problem.entry(i);
+        const std::string& name_i = problem.name(i);
         if (entry_i.isList())
         {
-            const Teuchos::ParameterList &sublist = problem.sublist(name_i);
+            const Teuchos::ParameterList& sublist = problem.sublist(name_i);
             const std::string new_path(path + name_i + "::");
             const bool sublist_unused = unused(sublist, new_path, os);
             if (sublist_unused)
@@ -102,16 +102,16 @@ bool unused(const Teuchos::ParameterList &problem, const std::string &path, std:
 
 // NVR 8-30-17: clang indicates that Function 'setParameters' is not needed and will not be emitted.  Can we delete
 // this?
-Teuchos::ParameterList setParameters(Teuchos::ParameterList &dest, const Teuchos::ParameterList &source)
+Teuchos::ParameterList setParameters(Teuchos::ParameterList& dest, const Teuchos::ParameterList& source)
 {
     for (Teuchos::ParameterList::ConstIterator i = source.begin(); i != source.end(); ++i)
     {
-        const std::string &name_i = source.name(i);
-        const Teuchos::ParameterEntry &entry_i = source.entry(i);
+        const std::string& name_i = source.name(i);
+        const Teuchos::ParameterEntry& entry_i = source.entry(i);
         if (entry_i.isList())
         {
-            Teuchos::ParameterList &dest_sublist = dest.sublist(name_i, false, entry_i.docString());
-            const Teuchos::ParameterList &src_sublist = entry_i.getValue<Teuchos::ParameterList>(nullptr);
+            Teuchos::ParameterList& dest_sublist = dest.sublist(name_i, false, entry_i.docString());
+            const Teuchos::ParameterList& src_sublist = entry_i.getValue<Teuchos::ParameterList>(nullptr);
             setParameters(dest_sublist, src_sublist);
         }
         else
@@ -122,9 +122,9 @@ Teuchos::ParameterList setParameters(Teuchos::ParameterList &dest, const Teuchos
     return dest;
 }
 
-Teuchos::ParameterList add_input_file(const Teuchos::ParameterList &problem, const Comm::Machine &machine)
+Teuchos::ParameterList add_input_file(const Teuchos::ParameterList& problem, const Comm::Machine& machine)
 {
-    auto &runtime = problem.sublist("Runtime");
+    auto& runtime = problem.sublist("Runtime");
     auto filename = runtime.get<std::string>("Input Config");
 
     Teuchos::ParameterList file_input(problem);
@@ -140,7 +140,7 @@ Teuchos::ParameterList add_input_file(const Teuchos::ParameterList &problem, con
     return file_input;
 }
 
-Teuchos::ParameterList input_file_parsing(int argc, char **argv, Comm::Machine const &machine)
+Teuchos::ParameterList input_file_parsing(int argc, char** argv, Comm::Machine const& machine)
 {
     const bool throwExceptions = false;
     const bool recogniseAllOptions = true;
@@ -185,7 +185,7 @@ Teuchos::ParameterList input_file_parsing(int argc, char **argv, Comm::Machine c
         problem.set("Output Viz", output_viz, output_viz_doc);
         problem.set("Input Mesh", input_mesh, input_mesh_doc);
 
-        Teuchos::ParameterList &runtime =
+        Teuchos::ParameterList& runtime =
             problem.sublist("Runtime", false,
                             "System type parameters: Number of CPU run, platform name, code "
                             "timers.\n"

@@ -90,7 +90,7 @@ void VonMisesLocalMeasure<EvaluationType>::operator()(const Plato::ScalarMultiVe
             tComputeCauchyStress(tStress, tStrain);
 
             ResultT tResult(0);
-            tComputeVonMises(iCellOrdinal, tStress, tResult);
+            tComputeVonMises(tStress, tResult);
             Kokkos::atomic_add(&aResultWS(iCellOrdinal), tCubWeight * tResult * tDetJ);
             Kokkos::atomic_add(&tCellVolume(iCellOrdinal), tCubWeight * tDetJ);
         });

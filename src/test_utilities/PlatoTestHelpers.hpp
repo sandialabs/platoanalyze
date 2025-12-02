@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "domain/Solutions.hpp"
+#include "domain/SpatialModel.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
 #include "test_utilities/BamG/BamG.hpp"
@@ -47,8 +48,12 @@ Plato::ScalarVectorT<ScalarT> create_device_view(const std::vector<ScalarT>& aVe
     return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
 
-/// @brief construct a Plato::Solutions object with a single solution from an input vector
-Plato::Solutions single_step_solutions_from_vector(const std::vector<Plato::Scalar>& aStateVector);
+/// @brief construct a Plato::Solutions object with a single solution. Overload to take a Plato::ScalarVector of state
+/// values.
+[[nodiscard]] Plato::Solutions single_step_solutions(const Plato::ScalarVector& aStateValues);
+
+/// @brief construct a Plato::Solutions object with a single solution. Overload to take a std::vector of state values.
+[[nodiscard]] Plato::Solutions single_step_solutions(const std::vector<Plato::Scalar>& aStateValues);
 
 /******************************************************************************/
 /*! Return a 2D view with specified control values.
@@ -192,6 +197,55 @@ std::vector<std::vector<Plato::Scalar>> to_full(Teuchos::RCP<Plato::CrsMatrixTyp
 
 const Teuchos::RCP<Teuchos::ParameterList> getParameterListForHelmholtzTest();
 const Teuchos::RCP<Teuchos::ParameterList> getSolverParametersForHelmholtzTest();
+
+/// @brief evaluate a criterion defined by @a aParameterList over the mesh @a aMesh for the given input solution
+/// @a aSolution and the given input ScalarVector of Controls @a aControl.
+///
+/// @tparam CreateCriterion callable for constructing an instance of the criterion object.
+///         Must have the following signature:
+///         ScalarFunctionBase(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap,
+///         Teuchos::ParameterList& aParameterList)
+template <typename ElementType, typename CreateCriterion>
+Plato::Scalar compute_criterion_over_mesh(const CreateCriterion& aCreateCriterion,
+                                          const Plato::Mesh& aMesh,
+                                          Teuchos::ParameterList& aParameterList,
+                                          const Plato::Solutions& aSolution,
+                                          const Plato::ScalarVector& aControl)
+{
+    Plato::DataMap tDataMap;
+    Plato::SpatialModel tSpatialModel(aMesh, aParameterList, tDataMap);
+    const auto tCriterion = aCreateCriterion(tSpatialModel, tDataMap, aParameterList);
+
+    return tCriterion.value(aSolution, aControl);
+}
+
+/// @brief creates a linear displacement field defined over a mesh @a aMesh using @a aConstantDisplacementGradient such
+/// that the displacement u at a point x is: u = aConstantDisplacementGradient * x.
+template <Plato::OrdinalType NumDims>
+Plato::ScalarVector create_linear_displacement_field(
+    const Plato::Mesh& aMesh, const Plato::Matrix<NumDims, NumDims, Plato::Scalar>& aConstantDisplacementGradient)
+{
+    const Plato::OrdinalType tNumNodes = aMesh->NumNodes();
+    const auto tCoords = aMesh->Coordinates();
+    const auto tNumDofs = NumDims * tNumNodes;
+    Plato::ScalarVector tDisplacementField("linear displacement", tNumDofs);
+    Kokkos::parallel_for(
+        "fill linear displacement field", Kokkos::RangePolicy<int>(0, tNumNodes),
+        KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal) {
+            Plato::Array<NumDims, Plato::Scalar> tNodeCoords(0.0);
+            for (Plato::OrdinalType tDofOrdinal = 0; tDofOrdinal < NumDims; tDofOrdinal++)
+            {
+                tNodeCoords(tDofOrdinal) = tCoords(tNodeOrdinal * NumDims + tDofOrdinal);
+            }
+            const auto tNodeDisplacement = Plato::times(aConstantDisplacementGradient, tNodeCoords);
+            for (Plato::OrdinalType tDofOrdinal = 0; tDofOrdinal < NumDims; tDofOrdinal++)
+            {
+                tDisplacementField(tNodeOrdinal * NumDims + tDofOrdinal) = tNodeDisplacement(tDofOrdinal);
+            }
+        });
+
+    return tDisplacementField;
+}
 
 }  // namespace TestHelpers
 }  // namespace Plato
