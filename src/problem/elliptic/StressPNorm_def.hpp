@@ -2,6 +2,7 @@
 
 #include "core_types/FadTypes.hpp"
 #include "local_operations/constitutive/LinearStress.hpp"
+#include "local_operations/constitutive/TensorNormFactory.hpp"
 #include "local_operations/differential/GradientMatrix.hpp"
 #include "local_operations/kinematics/SmallStrain.hpp"
 #include "mesh/PlatoMeshExpr.hpp"

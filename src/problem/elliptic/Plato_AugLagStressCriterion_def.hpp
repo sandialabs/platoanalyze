@@ -350,7 +350,7 @@ void AugLagStressCriterion<EvaluationType>::evaluate_conditional(const Plato::Sc
                 tCauchyStrain(iCellOrdinal, tGpStrain, aStateWS, tGpGradient);
                 tCauchyStress(tGpStress, tGpStrain);
                 // Compute 3D Von Mises Yield Criterion
-                tComputeVonMises(iCellOrdinal, tGpStress, tGpVonMises);
+                tComputeVonMises(tGpStress, tGpVonMises);
                 tVonMises += tGpVonMises;
 
                 // Calculate density
@@ -458,7 +458,7 @@ void AugLagStressCriterion<EvaluationType>::updateMultipliers(const Plato::Scala
                 tCauchyStrain(iCellOrdinal, tStrain, aStateWS, tGradient);
                 tCauchyStress(tStress, tStrain);
                 // Compute 3D Von Mises Yield Criterion
-                tComputeVonMises(iCellOrdinal, tStress, tLocalVonMises);
+                tComputeVonMises(tStress, tLocalVonMises);
                 tVonMises += tLocalVonMises;
 
                 // Calculate density

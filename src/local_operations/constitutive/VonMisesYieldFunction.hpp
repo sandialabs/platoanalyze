@@ -45,8 +45,7 @@ class VonMisesYieldFunction
                                            ResultType& aVonMisesStress) const;
 
     template <typename InputType, typename ResultType>
-    KOKKOS_INLINE_FUNCTION void operator()(const Plato::OrdinalType& aCellOrdinal,
-                                           const Plato::Array<NumVoigtTerms, InputType>& aCauchyStress,
+    KOKKOS_INLINE_FUNCTION void operator()(const Plato::Array<NumVoigtTerms, InputType>& aCauchyStress,
                                            ResultType& aVonMisesStress) const;
 };
 // class VonMisesYieldFunction
@@ -122,8 +121,7 @@ KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<3, 6>::operator()(
 }
 template <>
 template <typename InputType, typename ResultType>
-KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<3, 6>::operator()(const Plato::OrdinalType& aCellOrdinal,
-                                                                    const Plato::Array<6, InputType>& aCauchyStress,
+KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<3, 6>::operator()(const Plato::Array<6, InputType>& aCauchyStress,
                                                                     ResultType& aVonMisesStress) const
 {
     ResultType tSigma11MinusSigma22 = aCauchyStress(0) - aCauchyStress(1);
@@ -197,8 +195,7 @@ KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<2, 3>::operator()(
 
 template <>
 template <typename InputType, typename ResultType>
-KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<2, 3>::operator()(const Plato::OrdinalType& aCellOrdinal,
-                                                                    const Plato::Array<3, InputType>& aCauchyStress,
+KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<2, 3>::operator()(const Plato::Array<3, InputType>& aCauchyStress,
                                                                     ResultType& aVonMisesStress) const
 {
     ResultType tSigma11TimesSigma11 = aCauchyStress(0) * aCauchyStress(0);
@@ -243,8 +240,7 @@ KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<1, 1>::operator()(
 }
 template <>
 template <typename InputType, typename ResultType>
-KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<1, 1>::operator()(const Plato::OrdinalType& aCellOrdinal,
-                                                                    const Plato::Array<1, InputType>& aCauchyStress,
+KOKKOS_INLINE_FUNCTION void VonMisesYieldFunction<1, 1>::operator()(const Plato::Array<1, InputType>& aCauchyStress,
                                                                     ResultType& aVonMisesStress) const
 {
     aVonMisesStress = aCauchyStress(0);

@@ -42,7 +42,7 @@
 
 #include "Teuchos_UnitTestRepository.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     auto result = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 

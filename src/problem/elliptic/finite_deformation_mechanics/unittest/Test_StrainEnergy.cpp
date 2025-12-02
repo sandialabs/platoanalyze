@@ -19,6 +19,21 @@ namespace plato::elliptic::finite_deformation_mechanics::unittest
 {
 namespace
 {
+const std::string kStrainEnergyCriterionName{"Strain Energy"};
+
+template <typename ElementType>
+struct CreateStrainEnergyCriterion
+{
+    auto operator()(const Plato::SpatialModel& aSpatialModel,
+                    Plato::DataMap& aDataMap,
+                    Teuchos::ParameterList& aParameterList) const
+    {
+        return Plato::Elliptic::PhysicsScalarFunction<
+            FiniteDeformationMechanics<typename ElementType::TopoElementType>>(aSpatialModel, aDataMap, aParameterList,
+                                                                               kStrainEnergyCriterionName);
+    }
+};
+
 Teuchos::ParameterList create_param_list()
 {
     Teuchos::ParameterList tParameterList;
@@ -26,11 +41,20 @@ Teuchos::ParameterList create_param_list()
     tParameterList.set("PDE Constraint", "Elliptic");
     tParameterList.set("Physics", "Finite Deformation Mechanics");
 
-    tParameterList.sublist("Criteria").sublist("Strain Energy").set("Type", "Scalar Function");
-    tParameterList.sublist("Criteria").sublist("Strain Energy").set("Scalar Function Type", "Strain Energy");
-    tParameterList.sublist("Criteria").sublist("Strain Energy").sublist("Penalty Function").set("Type", "SIMP");
-    tParameterList.sublist("Criteria").sublist("Strain Energy").sublist("Penalty Function").set("Exponent", 1.0);
-    tParameterList.sublist("Criteria").sublist("Strain Energy").sublist("Penalty Function").set("Minimum Value", 1e-16);
+    tParameterList.sublist("Criteria").sublist(kStrainEnergyCriterionName).set("Type", "Scalar Function");
+    tParameterList.sublist("Criteria").sublist(kStrainEnergyCriterionName).set("Scalar Function Type", "Strain Energy");
+    tParameterList.sublist("Criteria")
+        .sublist(kStrainEnergyCriterionName)
+        .sublist("Penalty Function")
+        .set("Type", "SIMP");
+    tParameterList.sublist("Criteria")
+        .sublist(kStrainEnergyCriterionName)
+        .sublist("Penalty Function")
+        .set("Exponent", 1.0);
+    tParameterList.sublist("Criteria")
+        .sublist(kStrainEnergyCriterionName)
+        .sublist("Penalty Function")
+        .set("Minimum Value", 1e-16);
 
     tParameterList.sublist("Spatial Model").sublist("Domains").sublist("Body").set("Element Block", "body");
     tParameterList.sublist("Spatial Model").sublist("Domains").sublist("Body").set("Material Model", "Pudding");
@@ -44,23 +68,6 @@ Teuchos::ParameterList create_param_list()
         .sublist("Neo Hookean Hyperelastic")
         .set("Shear Modulus", 0.375);
     return tParameterList;
-}
-
-template <typename ElementType>
-Plato::Scalar compute_criterion_over_mesh(const Plato::Mesh& aMesh,
-                                          const std::vector<Plato::Scalar>& aStateVector,
-                                          const Plato::ScalarVector& aControl)
-{
-    Teuchos::ParameterList tParamList = create_param_list();
-    Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, tParamList, tDataMap);
-    const std::string tCriterionName = "Strain Energy";
-    const Plato::Elliptic::PhysicsScalarFunction<FiniteDeformationMechanics<typename ElementType::TopoElementType>>
-        tCriterion(tSpatialModel, tDataMap, tParamList, tCriterionName);
-
-    const auto tSolution = Plato::TestHelpers::single_step_solutions_from_vector(aStateVector);
-
-    return tCriterion.value(tSolution, aControl);
 }
 }  // namespace
 
@@ -79,7 +86,11 @@ TEUCHOS_UNIT_TEST(StrainEnergy, ZeroDisplacementGivesZeroResidual)
     const Plato::ScalarVector tControl("control of ones", tNumNodes);
     Plato::blas1::fill(1.0, tControl);
 
-    const auto tValue = compute_criterion_over_mesh<ElementType>(tMesh, tStateVector, tControl);
+    Teuchos::ParameterList tParamList = create_param_list();
+
+    const auto tValue = Plato::TestHelpers::compute_criterion_over_mesh<ElementType>(
+        CreateStrainEnergyCriterion<ElementType>{}, tMesh, tParamList,
+        Plato::TestHelpers::single_step_solutions(tStateVector), tControl);
     TEST_ASSERT(tValue < 1e-16);
 }
 
@@ -106,6 +117,8 @@ TEUCHOS_UNIT_TEST(StrainEnergy, UniaxialDisplacementGivesExpectedValue)
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
     const auto tNumNodes = tMesh->NumNodes();
 
+    Teuchos::ParameterList tParamList = create_param_list();
+
     std::vector<Plato::Scalar> tDispVals{0.0, 0.0, 0.0, 0.0,
                                          1.0, 0.0, 1.0, 0.0};  // uniaxial displacement field with extension of 1.0
 
@@ -125,7 +138,9 @@ TEUCHOS_UNIT_TEST(StrainEnergy, UniaxialDisplacementGivesExpectedValue)
         const Plato::ScalarVector tControl("control", tNumNodes);
         Plato::blas1::fill(1.0, tControl);
 
-        const auto tValue = compute_criterion_over_mesh<ElementType>(tMesh, tDispVals, tControl);
+        const auto tValue = Plato::TestHelpers::compute_criterion_over_mesh<ElementType>(
+            CreateStrainEnergyCriterion<ElementType>{}, tMesh, tParamList,
+            Plato::TestHelpers::single_step_solutions(tDispVals), tControl);
         TEST_FLOATING_EQUALITY(tValue, tGoldValue, 1e-14);
     }
 
@@ -135,7 +150,9 @@ TEUCHOS_UNIT_TEST(StrainEnergy, UniaxialDisplacementGivesExpectedValue)
         const Plato::ScalarVector tControl("control", tNumNodes);
         Plato::blas1::fill(tControlValue, tControl);
 
-        const auto tValue = compute_criterion_over_mesh<ElementType>(tMesh, tDispVals, tControl);
+        const auto tValue = Plato::TestHelpers::compute_criterion_over_mesh<ElementType>(
+            CreateStrainEnergyCriterion<ElementType>{}, tMesh, tParamList,
+            Plato::TestHelpers::single_step_solutions(tDispVals), tControl);
         TEST_FLOATING_EQUALITY(tValue, tControlValue * tGoldValue, 1e-14);
     }
 }

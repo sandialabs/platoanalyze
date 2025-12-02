@@ -13,7 +13,7 @@ namespace Plato
 {
 class OmegaHMeshIO : public AbstractMeshIO
 {
-    Omega_h::Mesh *mMesh;
+    Omega_h::Mesh* mMesh;
 
     std::shared_ptr<Omega_h::vtk::Writer> mWriter;
 
@@ -29,7 +29,7 @@ class OmegaHMeshIO : public AbstractMeshIO
     Mode mMode;
 
    public:
-    OmegaHMeshIO(std::string aOutputFilePath, Plato::OmegaHMesh &aMesh, std::string aMode = "Write");
+    OmegaHMeshIO(std::string aOutputFilePath, Plato::OmegaHMesh& aMesh, std::string aMode = "Write");
 
     Plato::OrdinalType NumNodes() const override;
     Plato::OrdinalType NumElements() const override;
@@ -45,6 +45,6 @@ class OmegaHMeshIO : public AbstractMeshIO
 
     Plato::OrdinalType NumTimeSteps() override;
 
-    Plato::ScalarVector ReadNodeData(const std::string &aVariableName, Plato::OrdinalType aStepIndex) override;
+    Plato::ScalarVector ReadNodeData(const std::string& aVariableName, Plato::OrdinalType aStepIndex) override;
 };
 }  // namespace Plato

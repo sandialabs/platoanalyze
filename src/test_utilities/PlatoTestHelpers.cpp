@@ -10,18 +10,31 @@ namespace Plato
 {
 namespace TestHelpers
 {
-Plato::Solutions single_step_solutions_from_vector(const std::vector<Plato::Scalar>& aStateVector)
+namespace
 {
-    const auto tStateView = create_device_view(aStateVector);
-    const auto tNumDofs = aStateVector.size();
-    Plato::ScalarMultiVector tState("uniaxial state", static_cast<Plato::OrdinalType>(1), tNumDofs);
+[[nodiscard]] Plato::Solutions single_step_solution_impl(const Plato::ScalarVector& aStateView)
+{
+    const auto tNumDofs = aStateView.size();
+    Plato::ScalarMultiVector tStateMultiVector("state", static_cast<Plato::OrdinalType>(1), tNumDofs);
     Kokkos::parallel_for(
         "multidimensional view", Kokkos::RangePolicy<int>(0, tNumDofs),
-        KOKKOS_LAMBDA(Plato::OrdinalType tDofOrdinal) { tState(0, tDofOrdinal) = tStateView(tDofOrdinal); });
+        KOKKOS_LAMBDA(Plato::OrdinalType tDofOrdinal) { tStateMultiVector(0, tDofOrdinal) = aStateView(tDofOrdinal); });
     Plato::Solutions tSolution(std::string{}, std::string{});
-    tSolution.set("State", tState);
+    tSolution.set("State", tStateMultiVector);
 
     return tSolution;
+}
+}  // namespace
+
+Plato::Solutions single_step_solutions(const Plato::ScalarVector& aStateValues)
+{
+    return single_step_solution_impl(aStateValues);
+}
+
+Plato::Solutions single_step_solutions(const std::vector<Plato::Scalar>& aStateValues)
+{
+    const auto tStateView = create_device_view(aStateValues);
+    return single_step_solution_impl(tStateView);
 }
 
 void setControlWS(std::vector<std::vector<Plato::Scalar>>& aValues, Plato::ScalarMultiVectorT<Plato::Scalar>& aControl)

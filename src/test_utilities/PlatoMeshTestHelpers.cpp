@@ -9,11 +9,15 @@
 #include <stk_mesh/base/MeshBuilder.hpp>
 #include <string_view>
 
+#include "mesh/PlatoMesh.hpp"
+
 namespace Plato::TestHelpers
 {
 
 namespace
 {
+const auto kMeshFilePath = std::filesystem::path{"test-mesh.exo"};
+
 void write_text_mesh(const std::string_view aMeshDescription, const std::filesystem::path& aFilePath)
 {
     auto tBulk = stk::mesh::MeshBuilder(MPI_COMM_SELF).create();
@@ -26,7 +30,18 @@ void write_text_mesh(const std::string_view aMeshDescription, const std::filesys
     tIOBroker.write_output_mesh(outputFileIndex);
     tIOBroker.write_defined_output_fields(outputFileIndex);
 }
+
+auto write_and_load_two_block_tri_mesh() -> Plato::Mesh
+{
+    write_two_block_mesh(kMeshFilePath);
+    return Plato::MeshFactory::create(kMeshFilePath.string());
+}
+
 }  // namespace
+
+TwoBlockTriMeshRAII::TwoBlockTriMeshRAII() : mMesh{write_and_load_two_block_tri_mesh()} {}
+
+TwoBlockTriMeshRAII::~TwoBlockTriMeshRAII() { std::filesystem::remove(kMeshFilePath); }
 
 void write_two_block_mesh(const std::filesystem::path& aFilePath)
 {

@@ -6,7 +6,7 @@ namespace Plato
 {
 namespace detail
 {
-void affirmOneValidInput(const std::string &aName, Teuchos::ParameterList &aSubList)
+void affirmOneValidInput(const std::string& aName, Teuchos::ParameterList& aSubList)
 {
     constexpr int kNumOptions = 6;
     const std::array<bool, kNumOptions> tAllOptions = {aSubList.isType<Plato::Scalar>("Value"),

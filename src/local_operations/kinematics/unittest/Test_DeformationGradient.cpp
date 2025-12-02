@@ -36,32 +36,6 @@ constexpr Plato::OrdinalType kPlaneStrainGradientSize{2};
     return Plato::plus(tReturn, Plato::identity<kDeformationGradientSize>());
 }
 
-template <Plato::OrdinalType NumDims>
-Plato::ScalarVector create_linear_displacement_field(
-    const Plato::Mesh& aMesh, const Plato::Matrix<NumDims, NumDims, Plato::Scalar>& aConstantDisplacementGradient)
-{
-    const Plato::OrdinalType tNumNodes = aMesh->NumNodes();
-    const auto tCoords = aMesh->Coordinates();
-    const auto tNumDofs = NumDims * tNumNodes;
-    Plato::ScalarVector tDisplacementField("linear displacement", tNumDofs);
-    Kokkos::parallel_for(
-        "fill linear displacement field", Kokkos::RangePolicy<int>(0, tNumNodes),
-        KOKKOS_LAMBDA(Plato::OrdinalType tNodeOrdinal) {
-            Plato::Array<NumDims, Plato::Scalar> tNodeCoords(0.0);
-            for (Plato::OrdinalType tDofOrdinal = 0; tDofOrdinal < NumDims; tDofOrdinal++)
-            {
-                tNodeCoords(tDofOrdinal) = tCoords(tNodeOrdinal * NumDims + tDofOrdinal);
-            }
-            const auto tNodeDisplacement = Plato::times(aConstantDisplacementGradient, tNodeCoords);
-            for (Plato::OrdinalType tDofOrdinal = 0; tDofOrdinal < NumDims; tDofOrdinal++)
-            {
-                tDisplacementField(tNodeOrdinal * NumDims + tDofOrdinal) = tNodeDisplacement(tDofOrdinal);
-            }
-        });
-
-    return tDisplacementField;
-}
-
 template <typename ElementType>
 void test_deformation_gradient_against_gold(
     const Plato::Mesh& aMesh,
@@ -177,7 +151,8 @@ TEUCHOS_UNIT_TEST(DeformationGradient, LinearDisplacementGivesConstant)
 
     const Plato::Matrix<tSpatialDims, tSpatialDims, Plato::Scalar> tGoldDisplacementGradient{5.9, 2.1, 8.6, 3.8, 7.1,
                                                                                              2.2, 9.3, 2.0, 3.7};
-    const auto tDisplacementField = create_linear_displacement_field(tMesh, tGoldDisplacementGradient);
+    const auto tDisplacementField =
+        Plato::TestHelpers::create_linear_displacement_field(tMesh, tGoldDisplacementGradient);
 
     const auto tGoldDeformationGradient =
         Plato::plus(tGoldDisplacementGradient, Plato::identity<kDeformationGradientSize>());
@@ -194,7 +169,8 @@ TEUCHOS_UNIT_TEST(DeformationGradient, LinearDisplacementGivesConstant2D)
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
     const Plato::Matrix<tSpatialDims, tSpatialDims, Plato::Scalar> tGoldDisplacementGradient{8.8, 7.1, 8.6, 3.8};
-    const auto tDisplacementField = create_linear_displacement_field(tMesh, tGoldDisplacementGradient);
+    const auto tDisplacementField =
+        Plato::TestHelpers::create_linear_displacement_field(tMesh, tGoldDisplacementGradient);
 
     const auto tGoldDeformationGradient =
         full_deformation_gradient_from_plane_strain_displacement_gradient(tGoldDisplacementGradient);

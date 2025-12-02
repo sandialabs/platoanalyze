@@ -1,6 +1,6 @@
 #pragma once
 
-#include "linear_algebra/TensorPNorm.hpp"
+#include "local_operations/constitutive/TensorNormBase.hpp"
 #include "local_operations/optimization/ApplyWeighting.hpp"
 #include "material/ElasticModelFactory.hpp"
 #include "problem/elliptic/AbstractScalarFunction.hpp"
