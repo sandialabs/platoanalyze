@@ -270,6 +270,7 @@ include_directories(${PROJECT_SOURCE_DIR}/src/mesh)
 
 add_library( analyzelib ${ANALYZE_SOURCES})
 SET_TARGET_PROPERTIES(analyzelib PROPERTIES OUTPUT_NAME analyze)
+target_compile_options(analyzelib PRIVATE "-fPIC")
 if( CMAKE_INSTALL_PREFIX )
   install( TARGETS analyzelib DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 endif()
