@@ -299,19 +299,7 @@ else()
 endif()
 
 option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
-if (PLATOANALYZE_ENABLE_TACHO)
-  find_package(ShyLU_NodeTacho REQUIRED)
-  message("adding define: -DPLATO_TACHO")
-  add_definitions(-DPLATO_TACHO)
-endif()
-
 option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
-if (PLATOANALYZE_ENABLE_UMFPACK)
-  find_library(UMFPACK NAMES umfpack PATHS ${UMFPACK_LIB_DIR})
-  message("adding define: -DPLATO_UMFPACK")
-  add_definitions(-DPLATO_UMFPACK)
-  include_directories( ${UMFPACK_INC_DIR} )
-endif()
 
 IF(OMEGA_H_PREFIX)
  # omega-h adds -Werror which currently breaks build
