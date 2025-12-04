@@ -48,7 +48,7 @@ void driver(Teuchos::ParameterList& aInputData, Comm::Machine aMachine)
         {
             std::string tName = tCriteriaList.name(tIndex);
             Plato::Scalar tCriterionValue = tPlatoProblem->criterionValue(tControl, tSolution, tName);
-            printf("Criterion '%s' , Value %0.10e\n", tName.c_str(), tCriterionValue);
+            std::cout << std::format("Criterion {} , Value {:0.10e}\n", tName.c_str(), tCriterionValue);
         }
     }
 

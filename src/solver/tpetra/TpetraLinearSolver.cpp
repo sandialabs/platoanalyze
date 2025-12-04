@@ -286,11 +286,11 @@ void TpetraLinearSolver::setupSolverOptions()
 
     if (tPrintSolverParameterLists)
     {
-        printf("\n'Linear Solver' Parameter List: \n");
+        std::cout << "\n'Linear Solver' Parameter List: \n";
         mSolverParams.print(std::cout, 2, true);
-        printf("\n'Solver Options' sublist of 'Linear Solver' Parameter List: \n");
+        std::cout << "\n'Solver Options' sublist of 'Linear Solver' Parameter List: \n";
         mSolverOptions.print(std::cout, 2, true);
-        printf("\n'Preconditioner Options' sublist of 'Linear Solver' Parameter List: \n");
+        std::cout << "\n'Preconditioner Options' sublist of 'Linear Solver' Parameter List: \n";
         mPreconditionerOptions.print(std::cout, 2, true);
     }
 }
@@ -428,10 +428,13 @@ void TpetraLinearSolver::innerSolve(Plato::CrsMatrix<Plato::OrdinalType> aA,
     mSolverEndTime = mPreLinearSolveTimer->wallTime();
     const double tTpetraElapsedTime = mSolverEndTime - mSolverStartTime;
     if (mDisplayIterations > 0)
-        printf(
-            "Pre Lin. Solve %5.1f second(s) || Tpetra Lin. Solve %5.1f second(s), %4d iteration(s), %7.1e achieved "
+    {
+        std::cout << std::format(
+            "Pre Lin. Solve {:5.1f} second(s) || Tpetra Lin. Solve {:5.1f} second(s), {} iteration(s), {:7.1e} "
+            "achieved "
             "tolerance\n",
             tAnalyzeElapsedTime, tTpetraElapsedTime, mNumIterations, mAchievedTolerance);
+    }
     mPreLinearSolveTimer->start();
 }
 

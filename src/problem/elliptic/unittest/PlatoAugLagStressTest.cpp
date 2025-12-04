@@ -598,7 +598,6 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_CheckThermalVonMises3D)
     constexpr Plato::Scalar tTolerance = 1e-6;
     for (Plato::OrdinalType tIndex = 0; tIndex < tNumCells; tIndex++)
     {
-        // printf("Cell %d , TVM %f\n", tIndex, tHostResult(tIndex));
         TEST_FLOATING_EQUALITY(13.2287565, tHostResult(tIndex), tTolerance);
     }
 }
