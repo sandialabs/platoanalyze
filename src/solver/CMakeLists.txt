@@ -12,7 +12,12 @@ set(LINK_LIBS AnalyzeCoreTypes
               Belos::belos 
               MueLu::muelu)
 
+set(EXTERNAL_INCLUDE_DIRECTORIES "")
+
 if(PLATOANALYZE_ENABLE_TACHO)
+  message(STATUS "Adding define: -DPLATO_TACHO")
+  add_definitions(-DPLATO_TACHO)
+
   find_package(ShyLU_NodeTacho REQUIRED)
   list(APPEND FOLDERS "tacho")
   list(APPEND LINK_LIBS Shards::shards  $<$<BOOL:${PLATOANALYZE_ENABLE_CUDA}>:CUDA::cusparse> # This is a work-around for tacho not linking cuda properly.
@@ -20,10 +25,14 @@ if(PLATOANALYZE_ENABLE_TACHO)
 endif()
 
 if(PLATOANALYZE_ENABLE_UMFPACK)
+  message(STATUS "Adding define: -DPLATO_UMFPACK")
+  add_definitions(-DPLATO_UMFPACK)
+
   find_library(UMFPACK NAMES umfpack PATHS ${UMFPACK_LIB_DIR})
-  list(APPEND FOLDERS "umfpack"
-                      ${UMFPACK_INC_DIR})
-  list(APPEND LINK_LIBS ${UMFPACK})
+  find_library(CHOLMOD NAMES cholmod PATHS ${UMFPACK_LIB_DIR})
+  list(APPEND FOLDERS "umfpack")
+  list(APPEND LINK_LIBS ${UMFPACK} ${CHOLMOD})
+  list(APPEND EXTERNAL_INCLUDE_DIRECTORIES ${UMFPACK_INC_DIR})
 endif()
 
 if(PLATOANALYZE_ENABLE_TPETRA)
@@ -35,13 +44,10 @@ if(PLATOANALYZE_ENABLE_MESHMAP)
     list(APPEND FOLDERS "multipoint_constraint")
 endif()
 
-
-
 IF( AMGX_FOUND )
   list(APPEND FOLDERS "amgx")
   list(APPEND LINK_LIBS "${AMGX_LIBRARIES}")
 ENDIF()
-
 
 if (PLATOANALYZE_ENABLE_MESHMAP)
   list(APPEND LINK_LIBS ArborX::ArborX)
@@ -52,6 +58,7 @@ IF( AMGX_FOUND )
 ENDIF()
 
 create_plato_analyze_library(AnalyzeSolver "${FOLDERS}" "${LINK_LIBS}")
+target_include_directories(AnalyzeSolver PUBLIC "${EXTERNAL_INCLUDE_DIRECTORIES}")
 
 if( PLATOANALYZE_UNIT_TEST )
   set(FOLDERS "")
