@@ -47,7 +47,7 @@ class BodyLoad
               typename ControlScalarType,
               typename ConfigScalarType,
               typename ResultScalarType>
-    void get(const Plato::SpatialDomain& aSpatialDomain,
+    void get(const plato::domain::SpatialDomain& aSpatialDomain,
              const Plato::ScalarMultiVectorT<StateScalarType>& aState,
              const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
              const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
@@ -74,7 +74,7 @@ class BodyLoad
         // integrate and assemble
         //
         auto tDof = mDof;
-        Plato::VectorEntryOrdinal<mSpaceDim, mSpaceDim> tVectorEntryOrdinal(aSpatialDomain.Mesh);
+        Plato::VectorEntryOrdinal<mSpaceDim, mSpaceDim> tVectorEntryOrdinal(aSpatialDomain.mMesh);
         Kokkos::parallel_for(
             "compute body load", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumCells, tNumPoints}),
             KOKKOS_LAMBDA(const Plato::OrdinalType iCellOrdinal, const Plato::OrdinalType iGpOrdinal) {
@@ -150,7 +150,7 @@ class BodyLoads
               typename ControlScalarType,
               typename ConfigScalarType,
               typename ResultScalarType>
-    void get(const Plato::SpatialDomain& aSpatialDomain,
+    void get(const plato::domain::SpatialDomain& aSpatialDomain,
              Plato::ScalarMultiVectorT<StateScalarType> aState,
              Plato::ScalarMultiVectorT<ControlScalarType> aControl,
              const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

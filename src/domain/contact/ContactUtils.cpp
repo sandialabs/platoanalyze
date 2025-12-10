@@ -100,11 +100,12 @@ void parse_contact_penalty(const Teuchos::ParameterList& aParams, ContactPair& a
             "Parsing 'Contact' parameter list 'Pairs' sublist. Required 'Penalty Value' parameter not found")
 }
 
-Plato::SpatialDomain get_domain(const std::string& aDomainName, const std::vector<Plato::SpatialDomain>& aDomains)
+plato::domain::SpatialDomain get_domain(const std::string& aDomainName,
+                                        const std::vector<plato::domain::SpatialDomain>& aDomains)
 {
     for (auto& tDomain : aDomains)
     {
-        auto tName = tDomain.getElementBlockName();
+        auto tName = tDomain.elementBlockName();
         if (tName == aDomainName) return tDomain;
     }
     std::string tMsg = "Block with name " + aDomainName +

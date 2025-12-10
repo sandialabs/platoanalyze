@@ -19,7 +19,7 @@ template <typename EvaluationType>
 void TensileEnergyDensityLocalMeasure<EvaluationType>::getYoungsModulusAndPoissonsRatio(
     Teuchos::ParameterList& aInputParams)
 {
-    auto tMaterialName = mSpatialDomain.getMaterialName();
+    auto tMaterialName = mSpatialDomain.materialName();
 
     auto tModelParamLists = aInputParams.get<Teuchos::ParameterList>("Material Models");
     auto tModelParamList = tModelParamLists.get<Teuchos::ParameterList>(tMaterialName);
@@ -58,7 +58,7 @@ void TensileEnergyDensityLocalMeasure<EvaluationType>::computeLameConstants()
  **********************************************************************************/
 template <typename EvaluationType>
 TensileEnergyDensityLocalMeasure<EvaluationType>::TensileEnergyDensityLocalMeasure(
-    const Plato::SpatialDomain& aSpatialModel,
+    const plato::domain::SpatialDomain& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aInputParams,
     const std::string& aName)
@@ -77,7 +77,7 @@ TensileEnergyDensityLocalMeasure<EvaluationType>::TensileEnergyDensityLocalMeasu
  **********************************************************************************/
 template <typename EvaluationType>
 TensileEnergyDensityLocalMeasure<EvaluationType>::TensileEnergyDensityLocalMeasure(
-    const Plato::SpatialDomain& aSpatialModel,
+    const plato::domain::SpatialDomain& aSpatialModel,
     Plato::DataMap& aDataMap,
     const Plato::Scalar& aYoungsModulus,
     const Plato::Scalar& aPoissonsRatio,

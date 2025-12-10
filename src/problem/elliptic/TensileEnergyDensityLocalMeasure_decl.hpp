@@ -50,7 +50,7 @@ class TensileEnergyDensityLocalMeasure : public AbstractLocalMeasure<EvaluationT
      * \param [in] aInputParams input parameters database
      * \param [in] aName local measure name
      **********************************************************************************/
-    TensileEnergyDensityLocalMeasure(const Plato::SpatialDomain& aSpatialModel,
+    TensileEnergyDensityLocalMeasure(const plato::domain::SpatialDomain& aSpatialModel,
                                      Plato::DataMap& aDataMap,
                                      Teuchos::ParameterList& aInputParams,
                                      const std::string& aName);
@@ -62,7 +62,7 @@ class TensileEnergyDensityLocalMeasure : public AbstractLocalMeasure<EvaluationT
      * \param [in] aPoissonsRatio Poisson's ratio
      * \param [in] aName local measure name
      **********************************************************************************/
-    TensileEnergyDensityLocalMeasure(const Plato::SpatialDomain& aSpatialModel,
+    TensileEnergyDensityLocalMeasure(const plato::domain::SpatialDomain& aSpatialModel,
                                      Plato::DataMap& aDataMap,
                                      const Plato::Scalar& aYoungsModulus,
                                      const Plato::Scalar& aPoissonsRatio,

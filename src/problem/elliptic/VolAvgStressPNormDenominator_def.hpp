@@ -19,7 +19,7 @@ namespace Elliptic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 VolAvgStressPNormDenominator<EvaluationType, IndicatorFunctionType>::VolAvgStressPNormDenominator(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams,

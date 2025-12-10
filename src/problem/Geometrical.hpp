@@ -21,7 +21,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Geometric::AbstractScalarFunction<EvaluationType>> createScalarFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aParamList,
         std::string aFuncType,

@@ -15,11 +15,11 @@
 namespace plato::elliptic::finite_deformation_mechanics
 {
 template <typename PhysicsType>
-VarianceFunction<PhysicsType>::VarianceFunction(const Plato::SpatialModel& aSpatialModel,
+VarianceFunction<PhysicsType>::VarianceFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                 Plato::DataMap& aDataMap,
                                                 Teuchos::ParameterList& aProblemParams,
                                                 const std::string& aName)
-    : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName),
@@ -30,9 +30,9 @@ VarianceFunction<PhysicsType>::VarianceFunction(const Plato::SpatialModel& aSpat
     auto tProblemDefault = aProblemParams.sublist("Criteria").sublist(mFunctionName);
     auto tFieldVariable = tProblemDefault.get<std::string>("Field Variable", "");
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
         mNumTotalCells += tDomain.numCells();
 
         mValueFunctions[tName] = tFactory.template createScalarFunction<Residual>(tDomain, mDataMap, aProblemParams,
@@ -83,9 +83,9 @@ Plato::ScalarVector VarianceFunction<PhysicsType>::gradient_z(const Plato::Solut
 
     // sum gradient entries w.r.t. the same DOFs
     Plato::ScalarVector tGradient("gradient vector", mNumNodes);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        const auto tResult = tDomainResults.at(tDomain.getDomainName());
+        const auto tResult = tDomainResults.at(tDomain.domainName());
         Plato::assemble_scalar_gradient_fad<mNumNodesPerCell>(tDomain, mControlEntryOrdinal, tResult, tGradient);
     }
     return tGradient;
@@ -110,9 +110,9 @@ Plato::ScalarVector VarianceFunction<PhysicsType>::gradient_u(const Plato::Solut
 
     // sum gradient entries w.r.t. the same DOFs
     Plato::ScalarVector tGradient("gradient vector", mNumDofsPerNode * mNumNodes);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        const auto tResult = tDomainResults.at(tDomain.getDomainName());
+        const auto tResult = tDomainResults.at(tDomain.domainName());
         Plato::assemble_vector_gradient_fad<mNumNodesPerCell, mNumDofsPerNode>(tDomain, mGlobalStateEntryOrdinal,
                                                                                tResult, tGradient);
     }
@@ -137,9 +137,9 @@ Plato::ScalarVector VarianceFunction<PhysicsType>::gradient_x(const Plato::Solut
 
     // sum gradient entries w.r.t. the same DOFs
     Plato::ScalarVector tGradient("gradient vector", mNumSpatialDims * mNumNodes);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        const auto tResult = tDomainResults.at(tDomain.getDomainName());
+        const auto tResult = tDomainResults.at(tDomain.domainName());
         Plato::assemble_vector_gradient_fad<mNumNodesPerCell, mNumSpatialDims>(tDomain, mConfigEntryOrdinal, tResult,
                                                                                tGradient);
     }
@@ -167,10 +167,10 @@ auto VarianceFunction<PhysicsType>::computeElementWiseField(const Plato::ScalarV
     using ResultScalar = typename EvaluationType::ResultScalarType;
 
     std::map<std::string, Plato::ScalarVectorT<ResultScalar>> tDomainResults;
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         const auto tNumCells = tDomain.numCells();
-        const auto tName = tDomain.getDomainName();
+        const auto tName = tDomain.domainName();
 
         // workset state
         Plato::ScalarMultiVectorT<StateScalar> tStateWS("state workset", tNumCells, mNumDofsPerCell);
@@ -197,15 +197,15 @@ auto VarianceFunction<PhysicsType>::computeElementWiseField(const Plato::ScalarV
 namespace detail
 {
 template <typename ResultScalarType>
-Plato::Scalar compute_field_mean(const Plato::SpatialModel& aSpatialModel,
+Plato::Scalar compute_field_mean(const plato::domain::SpatialModel& aSpatialModel,
                                  const std::map<std::string, Plato::ScalarVectorT<ResultScalarType>>& aDomainResults,
                                  const Plato::OrdinalType aNumTotalCells)
 {
     Plato::Scalar tMean{0.0};
-    for (const auto& tDomain : aSpatialModel.Domains)
+    for (const auto& tDomain : aSpatialModel.mDomains)
     {
         const auto tNumCells = tDomain.numCells();
-        const auto tResult = aDomainResults.at(tDomain.getDomainName());
+        const auto tResult = aDomainResults.at(tDomain.domainName());
         Kokkos::parallel_reduce(
             Kokkos::RangePolicy<>(0, tNumCells),
             KOKKOS_LAMBDA(const Plato::OrdinalType tCellOrdinal, Plato::Scalar& aUpdate) {
@@ -217,15 +217,15 @@ Plato::Scalar compute_field_mean(const Plato::SpatialModel& aSpatialModel,
 }
 
 template <>
-Plato::Scalar compute_field_mean(const Plato::SpatialModel& aSpatialModel,
+Plato::Scalar compute_field_mean(const plato::domain::SpatialModel& aSpatialModel,
                                  const std::map<std::string, Plato::ScalarVectorT<Plato::Scalar>>& aDomainResults,
                                  const Plato::OrdinalType aNumTotalCells)
 {
     Plato::Scalar tMean{0.0};
-    for (const auto& tDomain : aSpatialModel.Domains)
+    for (const auto& tDomain : aSpatialModel.mDomains)
     {
         const auto tNumCells = tDomain.numCells();
-        const auto tResult = aDomainResults.at(tDomain.getDomainName());
+        const auto tResult = aDomainResults.at(tDomain.domainName());
         Kokkos::parallel_reduce(
             Kokkos::RangePolicy<>(0, tNumCells),
             KOKKOS_LAMBDA(const Plato::OrdinalType tCellOrdinal, Plato::Scalar& aUpdate) {
@@ -238,15 +238,15 @@ Plato::Scalar compute_field_mean(const Plato::SpatialModel& aSpatialModel,
 
 template <typename ResultScalarType>
 void scale_result_by_variance_derivative(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const std::map<std::string, Plato::ScalarVectorT<ResultScalarType>>& aDomainResults,
     const Plato::Scalar aMean,
     const Plato::OrdinalType aNumTotalCells)
 {
-    for (const auto& tDomain : aSpatialModel.Domains)
+    for (const auto& tDomain : aSpatialModel.mDomains)
     {
         const auto tNumCells = tDomain.numCells();
-        const auto tResult = aDomainResults.at(tDomain.getDomainName());
+        const auto tResult = aDomainResults.at(tDomain.domainName());
         Kokkos::parallel_for(
             "scale by variance derivative", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumCells),
             KOKKOS_LAMBDA(const Plato::OrdinalType tCellOrdinal) {
@@ -256,4 +256,5 @@ void scale_result_by_variance_derivative(
 }
 }  // namespace detail
 }  // namespace plato::elliptic::finite_deformation_mechanics
+
 #endif

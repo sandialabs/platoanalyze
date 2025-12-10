@@ -51,7 +51,7 @@ class HeatEquationResidual : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    HeatEquationResidual(const Plato::SpatialDomain& aSpatialDomain,
+    HeatEquationResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                          Plato::DataMap& aDataMap,
                          Teuchos::ParameterList& problemParams,
                          Teuchos::ParameterList& penaltyParams);
@@ -67,7 +67,7 @@ class HeatEquationResidual : public EvaluationType::ElementType,
                   Plato::Scalar aTimeStep = 0.0) const override;
 
     /**************************************************************************/
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
                            const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,

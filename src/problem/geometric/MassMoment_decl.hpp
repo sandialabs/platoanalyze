@@ -46,7 +46,7 @@ class MassMoment : public EvaluationType::ElementType, public Plato::Geometric::
      * \param [in] aDataMap Plato Analyze data map
      * \param [in] aInputParams input parameters database
      **********************************************************************************/
-    MassMoment(const Plato::SpatialDomain& aSpatialDomain,
+    MassMoment(const plato::domain::SpatialDomain& aSpatialDomain,
                Plato::DataMap& aDataMap,
                Teuchos::ParameterList& aInputParams);
 
@@ -56,7 +56,7 @@ class MassMoment : public EvaluationType::ElementType, public Plato::Geometric::
      * \param [in] aMesh mesh database
      * \param [in] aDataMap Plato Engine and Analyze data map
      **********************************************************************************/
-    MassMoment(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
+    MassMoment(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

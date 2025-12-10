@@ -53,7 +53,7 @@ class InternalElasticEnergy : public EvaluationType::ElementType,
      * \param aProblemParams input database for overall problem
      * \param aPenaltyParams input database for penalty function
      **********************************************************************************/
-    InternalElasticEnergy(const Plato::SpatialDomain& aSpatialDomain,
+    InternalElasticEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aProblemParams,
                           Teuchos::ParameterList& aPenaltyParams,

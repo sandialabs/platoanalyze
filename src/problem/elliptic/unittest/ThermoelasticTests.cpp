@@ -116,7 +116,8 @@ TEUCHOS_UNIT_TEST(ThermoelasticTests, InternalThermoelasticEnergy3D)
         "</ParameterList>                                                             \n");
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::VectorFunction<::Plato::Thermomechanics<Plato::Tet4>> vectorFunction(
         tSpatialModel, tDataMap, *params, params->get<std::string>("PDE Constraint"));
 

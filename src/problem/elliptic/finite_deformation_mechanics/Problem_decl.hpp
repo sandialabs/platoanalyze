@@ -91,7 +91,7 @@ class Problem : public Plato::AbstractProblem
                                         const ResidualDerivativeFunc& aComputeResidualDerivative);
 
    private:
-    Plato::SpatialModel mSpatialModel;
+    plato::domain::SpatialModel mSpatialModel;
     std::shared_ptr<VectorFunctionType> mPDE;
     std::string mPDEType;
     std::string mPhysics;

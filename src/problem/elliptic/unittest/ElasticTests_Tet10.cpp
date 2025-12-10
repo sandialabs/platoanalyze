@@ -360,9 +360,10 @@ TEUCHOS_UNIT_TEST(Tet10, ComputeStresses)
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET10", meshWidth);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet10>;
 
@@ -394,7 +395,7 @@ TEUCHOS_UNIT_TEST(Tet10, ComputeStresses)
     Plato::SmallStrain<ElementType> voigtStrain;
 
     Plato::ElasticModelFactory<tSpaceDims> mmfactory(*tParamList);
-    auto materialModel = mmfactory.create(tOnlyDomain.getMaterialName());
+    auto materialModel = mmfactory.create(tOnlyDomain.materialName());
     auto tCellStiffness = materialModel->getStiffnessMatrix();
 
     Plato::LinearStress<Plato::Elliptic::ResidualTypes<ElementType>, ElementType> voigtStress(tCellStiffness);
@@ -779,7 +780,8 @@ TEUCHOS_UNIT_TEST(Tet10, ElastostaticResidual3D)
     // create constraint evaluator
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     using PhysicsType = typename Plato::Mechanics<Plato::Tet10>;
 
@@ -1063,7 +1065,8 @@ TEUCHOS_UNIT_TEST(Tet10, ElastostaticResidual3D_NaturalBC)
     // create constraint evaluator
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     using PhysicsType = typename Plato::Mechanics<Plato::Tet10>;
 
@@ -1288,7 +1291,8 @@ TEUCHOS_UNIT_TEST(DerivativeTests, ElasticTet10InternalElasticEnergy3D)
     // create objective
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     std::string tMyFunction("Internal Elastic Energy");
     Plato::Elliptic::PhysicsScalarFunction<::Plato::Mechanics<Plato::Tet10>> eeScalarFunction(tSpatialModel, tDataMap,

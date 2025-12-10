@@ -154,13 +154,13 @@ class DummyResidual
 
    public:
     void dummy_contact_force(
-        const Plato::SpatialModel& aSpatialModel,
+        const plato::domain::SpatialModel& aSpatialModel,
         const std::string& aSideSet,
         const Plato::ScalarMultiVectorT<StateScalarType>& aState,
         Teuchos::RCP<Plato::Contact::AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
         Plato::ScalarMultiVectorT<ResultScalarType>& aResult)
     {
-        auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(aSideSet);
+        auto tElementOrds = aSpatialModel.mMesh->GetSideSetElements(aSideSet);
         Plato::OrdinalType tNumFaces = tElementOrds.size();
 
         auto tCubaturePoints = ElementType::Face::getCubPoints();
@@ -171,7 +171,7 @@ class DummyResidual
                                                                      ElementType::mNumDofsPerNode);
         (*aComputeSurfaceDisp)(tElementOrds, aState, tSurfaceDisplacement);
 
-        auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
+        auto tLocalNodeOrds = aSpatialModel.mMesh->GetSideSetLocalNodes(aSideSet);
 
         Kokkos::parallel_for(
             "contact force", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {tNumFaces, tNumPoints}),
@@ -259,7 +259,8 @@ auto element_contact_forces_for_test_case(const std::shared_ptr<Plato::EngineMes
     using ElementType = typename EvaluationType::ElementType;
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, *aInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*aInputs, aMesh);
+    plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> tDisplacementHost(ElementType::mNumSpatialDims * aMesh->NumNodes());
@@ -375,7 +376,8 @@ TEUCHOS_UNIT_TEST(UtilsTests, PopulateFullContactArrays)
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
@@ -729,7 +731,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementContribut
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Tet4Test>;
@@ -857,7 +860,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_LoopThroughContributions)
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Tet4Test>;
@@ -1082,7 +1086,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, SurfaceDisplacement_SingleParentElementJacobian)
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     check_element_type_is_tet(tMesh);
     using ElementType = typename Plato::MechanicsElement<Tet4Test>;
@@ -1222,7 +1227,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, IntegrateContactForce)
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *get_2box_mesh_params(), tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*get_2box_mesh_params(), tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
@@ -1390,7 +1396,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, ElementContactForceContribution_Jacobian)
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
     tSpatialModel.addContact(tPairs);
@@ -1402,7 +1409,7 @@ TEUCHOS_UNIT_TEST(FunctorTests, ElementContactForceContribution_Jacobian)
 
     Plato::BlockMatrixEntryOrdinal<ElementType::mNumNodesPerCell, ElementType::mNumDofsPerNode,
                                    ElementType::mNumDofsPerNode>
-        tJacobianMatEntryOrdinal(tJacobianMat, tSpatialModel.Mesh);
+        tJacobianMatEntryOrdinal(tJacobianMat, tSpatialModel.mMesh);
 
     // create dummy displacement workset from box mesh
     std::vector<Plato::Scalar> u_host(ElementType::mNumSpatialDims * tMesh->NumNodes());
@@ -2710,7 +2717,8 @@ TEUCHOS_UNIT_TEST(FunctorTests, ElementContactForceContribution_GradientX)
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     auto tPairs = Plato::Contact::parse_contact(tInputs->sublist("Contact"), tMesh);
     Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, tSpatialModel);
     tSpatialModel.addContact(tPairs);

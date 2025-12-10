@@ -125,12 +125,12 @@ Teuchos::RCP<MatrixType> CreateLocalByGlobalBlockMatrix(Plato::Mesh aMesh)
   DofsPerNode_I X DofsPerNode_J.
 */
 template <typename MatrixType, Plato::OrdinalType DofsPerNode_I, Plato::OrdinalType DofsPerNode_J = DofsPerNode_I>
-Teuchos::RCP<MatrixType> CreateBlockMatrix(const Plato::SpatialModel& aSpatialModel)
+Teuchos::RCP<MatrixType> CreateBlockMatrix(const plato::domain::SpatialModel& aSpatialModel)
 /******************************************************************************/
 {
     Plato::OrdinalVector tOffsetMap;
     Plato::OrdinalVector tNodeOrds;
-    aSpatialModel.NodeNodeGraph(tOffsetMap, tNodeOrds);
+    aSpatialModel.nodeNodeGraph(tOffsetMap, tNodeOrds);
 
     auto numRows = tOffsetMap.size() - 1;
     auto nnz = tNodeOrds.size();
@@ -151,12 +151,12 @@ Teuchos::RCP<MatrixType> CreateBlockMatrix(const Plato::SpatialModel& aSpatialMo
   DofsPerNode_J X DofsPerNode_I.
 */
 template <typename MatrixType, Plato::OrdinalType DofsPerNode_I, Plato::OrdinalType DofsPerNode_J = DofsPerNode_I>
-Teuchos::RCP<MatrixType> CreateBlockMatrixTranspose(const Plato::SpatialModel& aSpatialModel)
+Teuchos::RCP<MatrixType> CreateBlockMatrixTranspose(const plato::domain::SpatialModel& aSpatialModel)
 /******************************************************************************/
 {
     Plato::OrdinalVector tOffsetMap;
     Plato::OrdinalVector tNodeOrds;
-    aSpatialModel.NodeNodeGraphTranspose(tOffsetMap, tNodeOrds);
+    aSpatialModel.nodeNodeGraphTranspose(tOffsetMap, tNodeOrds);
 
     auto numRows = tOffsetMap.size() - 1;
     auto nnz = tNodeOrds.size();

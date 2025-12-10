@@ -11,10 +11,11 @@ namespace Plato
 
 /**************************************************************************/
 template <typename EvaluationType>
-IntermediateDensityPenalty<EvaluationType>::IntermediateDensityPenalty(const Plato::SpatialDomain& aSpatialDomain,
-                                                                       Plato::DataMap& aDataMap,
-                                                                       Teuchos::ParameterList& aInputParams,
-                                                                       std::string aFunctionName)
+IntermediateDensityPenalty<EvaluationType>::IntermediateDensityPenalty(
+    const plato::domain::SpatialDomain& aSpatialDomain,
+    Plato::DataMap& aDataMap,
+    Teuchos::ParameterList& aInputParams,
+    std::string aFunctionName)
     : FunctionBaseType(aSpatialDomain, aDataMap, aInputParams, aFunctionName), mPenaltyAmplitude(1.0)
 /**************************************************************************/
 {
@@ -26,8 +27,8 @@ IntermediateDensityPenalty<EvaluationType>::IntermediateDensityPenalty(const Pla
  * Unit testing constructor
  **************************************************************************/
 template <typename EvaluationType>
-IntermediateDensityPenalty<EvaluationType>::IntermediateDensityPenalty(const Plato::SpatialDomain& aSpatialDomain,
-                                                                       Plato::DataMap& aDataMap)
+IntermediateDensityPenalty<EvaluationType>::IntermediateDensityPenalty(
+    const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
     : FunctionBaseType(aSpatialDomain, aDataMap, "IntermediateDensityPenalty"), mPenaltyAmplitude(1.0)
 /**************************************************************************/
 {

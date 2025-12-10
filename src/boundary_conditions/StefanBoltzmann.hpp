@@ -51,7 +51,7 @@ class StefanBoltzmann
               typename ControlScalarType,
               typename ConfigScalarType,
               typename ResultScalarType>
-    void operator()(const Plato::SpatialModel& aSpatialModel,
+    void operator()(const plato::domain::SpatialModel& aSpatialModel,
                     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
@@ -117,15 +117,15 @@ void StefanBoltzmann<ElementType, DofsPerNode, DofOffset>::evaluateSurfaceFlux(
 template <typename ElementType, Plato::OrdinalType DofsPerNode, Plato::OrdinalType DofOffset>
 template <typename StateScalarType, typename ControlScalarType, typename ConfigScalarType, typename ResultScalarType>
 void StefanBoltzmann<ElementType, DofsPerNode, DofOffset>::operator()(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
     const Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
     Plato::Scalar aScale) const
 {
-    auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(mSideSetName);
-    auto tNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(mSideSetName);
+    auto tElementOrds = aSpatialModel.mMesh->GetSideSetElements(mSideSetName);
+    auto tNodeOrds = aSpatialModel.mMesh->GetSideSetLocalNodes(mSideSetName);
     Plato::OrdinalType tNumFaces = tElementOrds.size();
 
     Plato::SurfaceArea<ElementType> surfaceArea;

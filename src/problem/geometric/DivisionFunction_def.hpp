@@ -40,11 +40,11 @@ void DivisionFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProblemP
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-DivisionFunction<PhysicsType>::DivisionFunction(const Plato::SpatialModel& aSpatialModel,
+DivisionFunction<PhysicsType>::DivisionFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                 Plato::DataMap& aDataMap,
                                                 Teuchos::ParameterList& aProblemParams,
                                                 const std::string& aName)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -58,8 +58,9 @@ DivisionFunction<PhysicsType>::DivisionFunction(const Plato::SpatialModel& aSpat
  * \param [in] aMesh mesh database
  **********************************************************************************/
 template <typename PhysicsType>
-DivisionFunction<PhysicsType>::DivisionFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.Mesh),
+DivisionFunction<PhysicsType>::DivisionFunction(const plato::domain::SpatialModel& aSpatialModel,
+                                                Plato::DataMap& aDataMap)
+    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Division Function")

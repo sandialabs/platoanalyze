@@ -39,7 +39,8 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, Tri3MatrixEntries)
     // create PDE
     Plato::DataMap tDataMap;
     const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Helmholtz::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *tParamList,
                                                                  tParamList->get<std::string>("PDE Constraint"));
 
@@ -145,7 +146,8 @@ TEUCHOS_UNIT_TEST(HelmholtzFilterTests, Tet4MatrixEntries)
     // create PDE
     Plato::DataMap tDataMap;
     const auto tParamList = Plato::TestHelpers::getParameterListForHelmholtzTest();
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Helmholtz::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *tParamList,
                                                                  tParamList->get<std::string>("PDE Constraint"));
 

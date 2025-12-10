@@ -24,7 +24,7 @@ namespace Geometric
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Geometric::ScalarFunctionBase> ScalarFunctionBaseFactory<PhysicsType>::create(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     std::string& aFunctionName)

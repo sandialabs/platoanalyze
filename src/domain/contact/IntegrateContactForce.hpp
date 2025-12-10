@@ -22,14 +22,14 @@ class IntegrateContactForce
     using ResultScalarType = typename EvaluationType::ResultScalarType;
 
    public:
-    IntegrateContactForce(const Plato::SpatialModel& aSpatialModel,
+    IntegrateContactForce(const plato::domain::SpatialModel& aSpatialModel,
                           const std::string& aSideSet,
                           Teuchos::RCP<AbstractSurfaceDisplacement<EvaluationType>> aComputeSurfaceDisp,
                           Teuchos::RCP<AbstractContactForce<EvaluationType>> aComputeContactForce)
         : mComputeSurfaceDisplacement(aComputeSurfaceDisp),
           mComputeContactForce(aComputeContactForce),
-          mElementOrds(aSpatialModel.Mesh->GetSideSetElements(aSideSet)),
-          mLocalNodeOrds(aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet))
+          mElementOrds(aSpatialModel.mMesh->GetSideSetElements(aSideSet)),
+          mLocalNodeOrds(aSpatialModel.mMesh->GetSideSetLocalNodes(aSideSet))
     {
     }
 

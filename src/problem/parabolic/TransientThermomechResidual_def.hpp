@@ -22,7 +22,7 @@ namespace Parabolic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 TransientThermomechResidual<EvaluationType, IndicatorFunctionType>::TransientThermomechResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams)
@@ -53,12 +53,12 @@ TransientThermomechResidual<EvaluationType, IndicatorFunctionType>::TransientThe
 
     {
         Plato::ThermoelasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-        mMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+        mMaterialModel = mmfactory.create(aSpatialDomain.materialName());
     }
 
     {
         Plato::ThermalMassModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-        mThermalMassMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+        mThermalMassMaterialModel = mmfactory.create(aSpatialDomain.materialName());
     }
 
     // parse boundary Conditions
@@ -246,7 +246,7 @@ void TransientThermomechResidual<EvaluationType, IndicatorFunctionType>::evaluat
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 void TransientThermomechResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,

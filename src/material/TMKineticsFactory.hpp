@@ -31,7 +31,7 @@ class TMKineticsFactory
         **********************************************************************************/
     Teuchos::RCP<Plato::AbstractTMKinetics<EvaluationType, ElementType>> create(
         const Teuchos::RCP<Plato::MaterialModel<ElementType::mNumSpatialDims>> aMaterialModel,
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         const Plato::DataMap& aDataMap)
     {
         Plato::MaterialModelType tModelType = aMaterialModel->type();

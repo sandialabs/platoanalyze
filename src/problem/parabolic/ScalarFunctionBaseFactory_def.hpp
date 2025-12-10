@@ -19,7 +19,7 @@ namespace Parabolic
  **********************************************************************************/
 template <typename PhysicsT>
 std::shared_ptr<Plato::Parabolic::ScalarFunctionBase> ScalarFunctionBaseFactory<PhysicsT>::create(
-    Plato::SpatialModel& aSpatialModel,
+    plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     std::string& aFunctionName)

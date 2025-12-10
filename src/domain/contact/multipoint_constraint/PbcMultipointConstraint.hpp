@@ -30,7 +30,7 @@ template <typename ElementT>
 class PbcMultipointConstraint : public MultipointConstraint
 {
    public:
-    PbcMultipointConstraint(const Plato::SpatialModel& aSpatialModel,
+    PbcMultipointConstraint(const plato::domain::SpatialModel& aSpatialModel,
                             const std::string& aName,
                             Teuchos::ParameterList& aParam);
 

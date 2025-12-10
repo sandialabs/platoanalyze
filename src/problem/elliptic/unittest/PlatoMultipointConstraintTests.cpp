@@ -124,7 +124,8 @@ TEUCHOS_UNIT_TEST(MultipointConstraintTests, BuildCondensedSystem)
     // create vector function
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *params,
                                                                 params->get<std::string>("PDE Constraint"));
 
@@ -292,7 +293,8 @@ TEUCHOS_UNIT_TEST(MultipointConstraintTests, Elastic2DTieMPC)
     // create vector function
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *params,
                                                                 params->get<std::string>("PDE Constraint"));
 
@@ -469,7 +471,8 @@ TEUCHOS_UNIT_TEST(MultipointConstraintTests, Elastic3DPbcMPC)
     // create vector function
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *params,
                                                                 params->get<std::string>("PDE Constraint"));
 

@@ -15,13 +15,13 @@ namespace Plato
  * \param [in] aName local measure name
  **********************************************************************************/
 template <typename EvaluationType>
-VonMisesLocalMeasure<EvaluationType>::VonMisesLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
+VonMisesLocalMeasure<EvaluationType>::VonMisesLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
                                                            Plato::DataMap& aDataMap,
                                                            Teuchos::ParameterList& aInputParams,
                                                            const std::string& aName)
     : AbstractLocalMeasure<EvaluationType>(aSpatialDomain, aDataMap, aInputParams, aName)
 {
-    auto tMaterialName = mSpatialDomain.getMaterialName();
+    auto tMaterialName = mSpatialDomain.materialName();
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aInputParams);
     auto tMaterialModel = tMaterialModelFactory.create(tMaterialName);
     mCellStiffMatrix = tMaterialModel->getStiffnessMatrix();
@@ -34,7 +34,7 @@ VonMisesLocalMeasure<EvaluationType>::VonMisesLocalMeasure(const Plato::SpatialD
  * \param [in] aName local measure name
  **********************************************************************************/
 template <typename EvaluationType>
-VonMisesLocalMeasure<EvaluationType>::VonMisesLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
+VonMisesLocalMeasure<EvaluationType>::VonMisesLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
                                                            Plato::DataMap& aDataMap,
                                                            const MatrixType& aCellStiffMatrix,
                                                            const std::string aName)

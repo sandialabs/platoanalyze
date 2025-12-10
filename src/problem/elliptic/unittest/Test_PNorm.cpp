@@ -31,7 +31,7 @@ const std::string kPNormCriterionName{"My P-Norm"};
 template <typename ElementType>
 struct CreatePNormCriterion
 {
-    auto operator()(const Plato::SpatialModel& aSpatialModel,
+    auto operator()(const plato::domain::SpatialModel& aSpatialModel,
                     Plato::DataMap& aDataMap,
                     Teuchos::ParameterList& aParameterList) const
     {

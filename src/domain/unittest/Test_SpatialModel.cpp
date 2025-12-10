@@ -105,14 +105,15 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, PlatoModel)
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::MaskFactory<spaceDim> tMaskFactory;
-    auto tMask = tMaskFactory.create(tSpatialModel.Mesh, *tMaskParams);
+    auto tMask = tMaskFactory.create(tSpatialModel.mMesh, *tMaskParams);
 
     tSpatialModel.applyMask(tMask);
 
-    auto tOrdinals = tSpatialModel.Domains[0].cellOrdinals();
+    auto tOrdinals = tSpatialModel.mDomains[0].cellOrdinals();
 
     auto tOrdinals_host = Kokkos::create_mirror_view(tOrdinals);
     Kokkos::deep_copy(tOrdinals_host, tOrdinals);
@@ -155,9 +156,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, DefaultBlockNotMarkedAsFixed)
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tIsFixed = tSpatialModel.Domains[0].isFixedBlock();
+    auto tIsFixed = tSpatialModel.mDomains[0].fixedBlock();
 
     TEST_ASSERT(tIsFixed == false);
 }
@@ -192,9 +194,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, FixedBlockIsMarked)
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tIsFixed = tSpatialModel.Domains[0].isFixedBlock();
+    auto tIsFixed = tSpatialModel.mDomains[0].fixedBlock();
 
     TEST_ASSERT(tIsFixed == true);
 }
@@ -235,7 +238,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, DefaultBlockWorksetControlUnchanged)
     // create spatial model
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     // create control
     //
@@ -250,7 +254,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, DefaultBlockWorksetControlUnchanged)
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControlWS("control workset", tNumCells, tNumNodesPerCell);
-    tWorksetBase.worksetControl(tControl, tControlWS, tSpatialModel.Domains[0]);
+    tWorksetBase.worksetControl(tControl, tControlWS, tSpatialModel.mDomains[0]);
 
     // test workset control
     //
@@ -303,7 +307,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, FixedBlockWorksetControlGivesOnes)
     // create spatial model
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     // create control
     //
@@ -318,7 +323,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, FixedBlockWorksetControlGivesOnes)
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
     Plato::ScalarMultiVectorT<Plato::Scalar> tControlWS("control workset", tNumCells, tNumNodesPerCell);
-    tWorksetBase.worksetControl(tControl, tControlWS, tSpatialModel.Domains[0]);
+    tWorksetBase.worksetControl(tControl, tControlWS, tSpatialModel.mDomains[0]);
 
     // test workset control
     //

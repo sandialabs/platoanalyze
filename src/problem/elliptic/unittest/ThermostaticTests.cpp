@@ -96,7 +96,8 @@ TEUCHOS_UNIT_TEST(DerivativeTests, ThermostaticResidual3D)
     // create constraint evaluator
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     using PhysicsType = typename Plato::Thermal<Plato::Tet4>;
 
@@ -284,7 +285,8 @@ TEUCHOS_UNIT_TEST(DerivativeTests, InternalThermalEnergy3D)
     // create objective
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     std::string tMyFunction("Internal Thermal Energy");
     Plato::Elliptic::PhysicsScalarFunction<::Plato::Thermal<Plato::Tet4>> eeScalarFunction(tSpatialModel, tDataMap,
@@ -439,7 +441,8 @@ TEUCHOS_UNIT_TEST(DerivativeTests, FluxPNorm3D)
     // create objective
     //
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     std::string tMyFunction("Flux P-Norm");
     Plato::Elliptic::PhysicsScalarFunction<::Plato::Thermal<Plato::Tet4>> scalarFunction(tSpatialModel, tDataMap,

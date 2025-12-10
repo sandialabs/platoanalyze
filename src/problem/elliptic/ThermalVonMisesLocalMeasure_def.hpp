@@ -17,14 +17,15 @@ namespace Plato
  * \param [in] aName local measure name
  **********************************************************************************/
 template <typename EvaluationType>
-ThermalVonMisesLocalMeasure<EvaluationType>::ThermalVonMisesLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
-                                                                         Plato::DataMap& aDataMap,
-                                                                         Teuchos::ParameterList& aInputParams,
-                                                                         const std::string& aName)
+ThermalVonMisesLocalMeasure<EvaluationType>::ThermalVonMisesLocalMeasure(
+    const plato::domain::SpatialDomain& aSpatialDomain,
+    Plato::DataMap& aDataMap,
+    Teuchos::ParameterList& aInputParams,
+    const std::string& aName)
     : AbstractLocalMeasure<EvaluationType>(aSpatialDomain, aDataMap, aInputParams, aName)
 {
     Plato::ThermoelasticModelFactory<mNumSpatialDims> tFactory(aInputParams);
-    mMaterialModel = tFactory.create(mSpatialDomain.getMaterialName());
+    mMaterialModel = tFactory.create(mSpatialDomain.materialName());
 }
 
 /******************************************************************************/

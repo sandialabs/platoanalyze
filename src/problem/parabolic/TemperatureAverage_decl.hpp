@@ -39,7 +39,7 @@ class TemperatureAverage : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    TemperatureAverage(const Plato::SpatialDomain& aSpatialDomain,
+    TemperatureAverage(const plato::domain::SpatialDomain& aSpatialDomain,
                        Plato::DataMap& aDataMap,
                        Teuchos::ParameterList& aProblemParams,
                        Teuchos::ParameterList& aPenaltyParams,

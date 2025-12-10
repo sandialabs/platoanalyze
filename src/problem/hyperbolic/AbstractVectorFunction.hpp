@@ -12,7 +12,7 @@ template <typename EvaluationType>
 class AbstractVectorFunction
 {
    protected:
-    const Plato::SpatialDomain& mSpatialDomain;
+    const plato::domain::SpatialDomain& mSpatialDomain;
 
     Plato::DataMap& mDataMap;
     std::vector<std::string> mDofNames;
@@ -22,7 +22,7 @@ class AbstractVectorFunction
    public:
     using AbstractType = typename Plato::Hyperbolic::AbstractVectorFunction<EvaluationType>;
 
-    explicit AbstractVectorFunction(const Plato::SpatialDomain& aSpatialDomain,
+    explicit AbstractVectorFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                                     Plato::DataMap& aDataMap,
                                     std::vector<std::string> aStateNames,
                                     std::vector<std::string> aStateDotNames,
@@ -35,7 +35,7 @@ class AbstractVectorFunction
     {
     }
 
-    explicit AbstractVectorFunction(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+    explicit AbstractVectorFunction(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
         : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap)
     {
     }
@@ -50,7 +50,7 @@ class AbstractVectorFunction
 
     AbstractVectorFunction& operator=(AbstractVectorFunction&& aFunction) = delete;
 
-    decltype(mSpatialDomain.Mesh) getMesh() const { return (mSpatialDomain.Mesh); }
+    decltype(mSpatialDomain.mMesh) getMesh() const { return (mSpatialDomain.mMesh); }
 
     const decltype(mDofNames)& getDofNames() const { return (mDofNames); }
 
@@ -72,7 +72,7 @@ class AbstractVectorFunction
                           Plato::Scalar aCurrentTime = 0.0) const = 0;
 
     virtual void evaluate_boundary(
-        const Plato::SpatialModel& aSpatialModel,
+        const plato::domain::SpatialModel& aSpatialModel,
         const Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType>& aState,
         const Plato::ScalarMultiVectorT<typename EvaluationType::StateDotScalarType>& aStateDot,
         const Plato::ScalarMultiVectorT<typename EvaluationType::StateDotDotScalarType>& aStateDotDot,

@@ -19,7 +19,7 @@ namespace Elliptic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 InternalThermoelasticEnergy<EvaluationType, IndicatorFunctionType>::InternalThermoelasticEnergy(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams,
@@ -32,7 +32,7 @@ InternalThermoelasticEnergy<EvaluationType, IndicatorFunctionType>::InternalTher
 {
     Teuchos::ParameterList tProblemParams(aProblemParams);
 
-    auto tMaterialName = aSpatialDomain.getMaterialName();
+    auto tMaterialName = aSpatialDomain.materialName();
 
     if (aProblemParams.isSublist("Material Models") == false)
     {

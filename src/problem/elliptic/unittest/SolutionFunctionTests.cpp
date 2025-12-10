@@ -74,7 +74,8 @@ TEUCHOS_UNIT_TEST(DerivativeTests, Solution2D)
     Plato::Comm::Machine tMachine(myComm);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     // create objective
     //
@@ -200,7 +201,8 @@ TEUCHOS_UNIT_TEST(DerivativeTests, Solution2D_Mag)
     Plato::Comm::Machine tMachine(myComm);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     // create objective
     //

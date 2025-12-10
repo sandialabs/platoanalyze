@@ -15,7 +15,7 @@ namespace Plato
 
 template <typename EvaluationT, template <typename, typename> typename FunctionT>
 inline std::shared_ptr<typename FunctionT<EvaluationT, Plato::NoPenalty>::AbstractType> makeVectorFunction(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     std::string aFuncName)
@@ -56,7 +56,7 @@ inline std::shared_ptr<typename FunctionT<EvaluationT, Plato::NoPenalty>::Abstra
 
 template <typename EvaluationT, template <typename, typename> typename FunctionT>
 inline std::shared_ptr<typename FunctionT<EvaluationT, Plato::NoPenalty>::AbstractType> makeScalarFunction(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     const std::string& aFuncName)

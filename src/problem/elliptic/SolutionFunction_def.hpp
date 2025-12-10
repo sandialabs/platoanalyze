@@ -293,11 +293,11 @@ void SolutionFunction<PhysicsType>::initialize_normal_vector(Teuchos::ParameterL
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-SolutionFunction<PhysicsType>::SolutionFunction(const Plato::SpatialModel& aSpatialModel,
+SolutionFunction<PhysicsType>::SolutionFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                 Plato::DataMap& aDataMap,
                                                 Teuchos::ParameterList& aProblemParams,
                                                 const std::string& aName)
-    : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mFunctionName(aName),
       mNormal{0.0}
@@ -322,7 +322,7 @@ Plato::Scalar SolutionFunction<PhysicsType>::value(const Plato::Solutions& aSolu
     auto tLastIndex = tState.extent(0) - 1;
     auto tStateSubView = Kokkos::subview(tState, tLastIndex, Kokkos::ALL());
 
-    auto tNodeIds = mSpatialModel.Mesh->GetNodeSetNodes(mDomainName);
+    auto tNodeIds = mSpatialModel.mMesh->GetNodeSetNodes(mDomainName);
     auto tNumNodes = tNodeIds.size();
 
     auto tNormal = mNormal;
@@ -500,7 +500,7 @@ Plato::ScalarVector SolutionFunction<PhysicsType>::gradient_u(const Plato::Solut
     auto tState = aSolution.get("State");
     auto tStateSubView = Kokkos::subview(tState, aStepIndex, Kokkos::ALL());
 
-    auto tNodeIds = mSpatialModel.Mesh->GetNodeSetNodes(mDomainName);
+    auto tNodeIds = mSpatialModel.mMesh->GetNodeSetNodes(mDomainName);
     auto tNumNodes = tNodeIds.size();
 
     auto tNormal = mNormal;

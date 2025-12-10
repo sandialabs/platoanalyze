@@ -53,7 +53,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
     std::map<std::string, GradientXFunction> mGradientXFunctions;
     std::map<std::string, GradientZFunction> mGradientZFunctions;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap; /*!< PLATO Engine and Analyze data map */
 
@@ -75,7 +75,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      * \param [in] aInputParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    PhysicsScalarFunction(const Plato::SpatialModel& aSpatialModel,
+    PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aInputParams,
                           std::string& aName);
@@ -86,7 +86,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aDataMap Plato Analyze data map
      **********************************************************************************/
-    PhysicsScalarFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

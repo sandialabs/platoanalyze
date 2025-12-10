@@ -63,7 +63,7 @@ void AugLagStressCriterionQuadratic<EvaluationType>::updateAugLagPenaltyMultipli
  **********************************************************************************/
 template <typename EvaluationType>
 AugLagStressCriterionQuadratic<EvaluationType>::AugLagStressCriterionQuadratic(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aInputParams,
     const std::string& aFuncName)
@@ -75,7 +75,7 @@ AugLagStressCriterionQuadratic<EvaluationType>::AugLagStressCriterionQuadratic(
       mAugLagPenaltyUpperBound(100),
       mInitialLagrangeMultipliersValue(0.01),
       mAugLagPenaltyExpansionMultiplier(1.05),
-      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.Mesh->NumElements())
+      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.mMesh->NumElements())
 {
     this->initialize(aInputParams);
 }
@@ -88,7 +88,7 @@ AugLagStressCriterionQuadratic<EvaluationType>::AugLagStressCriterionQuadratic(
  **********************************************************************************/
 template <typename EvaluationType>
 AugLagStressCriterionQuadratic<EvaluationType>::AugLagStressCriterionQuadratic(
-    const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+    const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
     : FunctionBaseType(aSpatialDomain, aDataMap, "Local Constraint Quadratic"),
       mPenalty(3),
       mLocalMeasureLimit(1),
@@ -97,7 +97,7 @@ AugLagStressCriterionQuadratic<EvaluationType>::AugLagStressCriterionQuadratic(
       mAugLagPenaltyUpperBound(100),
       mInitialLagrangeMultipliersValue(0.01),
       mAugLagPenaltyExpansionMultiplier(1.05),
-      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.Mesh->NumElements()),
+      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.mMesh->NumElements()),
       mLocalMeasureEvaluationType(nullptr),
       mLocalMeasurePODType(nullptr)
 {

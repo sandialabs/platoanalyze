@@ -62,7 +62,7 @@ class TransientThermomechResidual : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    TransientThermomechResidual(const Plato::SpatialDomain& aSpatialDomain,
+    TransientThermomechResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                                 Plato::DataMap& aDataMap,
                                 Teuchos::ParameterList& aProblemParams,
                                 Teuchos::ParameterList& aPenaltyParams);
@@ -78,7 +78,7 @@ class TransientThermomechResidual : public EvaluationType::ElementType,
                   Plato::Scalar aTimeStep = 0.0) const override;
 
     /**************************************************************************/
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
                            const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,

@@ -44,7 +44,7 @@ class MultipointConstraintFactory
      * \brief Create a multipoint constraint.
      * \return multipoint constraint
      **********************************************************************************/
-    std::shared_ptr<Plato::MultipointConstraint> create(const Plato::SpatialModel& aSpatialModel,
+    std::shared_ptr<Plato::MultipointConstraint> create(const plato::domain::SpatialModel& aSpatialModel,
                                                         const std::string& aName)
     {
         const std::string tType = mParamList.get<std::string>("Type");
@@ -64,11 +64,12 @@ class MultipointConstraintFactory
     Teuchos::ParameterList& mParamList; /*!< Input parameter list */
 
     template <template <typename> typename MPCType>
-    inline std::shared_ptr<MultipointConstraint> makeMultipointConstraint(const Plato::SpatialModel& aSpatialModel,
-                                                                          const std::string& aName,
-                                                                          const Teuchos::ParameterList& aInput) const
+    inline std::shared_ptr<MultipointConstraint> makeMultipointConstraint(
+        const plato::domain::SpatialModel& aSpatialModel,
+        const std::string& aName,
+        const Teuchos::ParameterList& aInput) const
     {
-        auto tElementType = aSpatialModel.Mesh->ElementType();
+        auto tElementType = aSpatialModel.mMesh->ElementType();
         if (Plato::tolower(tElementType) == "tet10" || Plato::tolower(tElementType) == "tetra10")
         {
             return std::make_shared<MPCType<Plato::Tet10>>(aSpatialModel, aName, mParamList);

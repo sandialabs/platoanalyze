@@ -43,7 +43,7 @@ class NonLinearTMKinetics : public Plato::AbstractTMKinetics<EvaluationType, Ele
      * \param [in] aMaterialModel material model
      **********************************************************************************/
     NonLinearTMKinetics(const Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> aMaterialModel,
-                        const Plato::SpatialDomain& aSpatialDomain,
+                        const plato::domain::SpatialDomain& aSpatialDomain,
                         const Plato::DataMap& aDataMap)
         : AbstractTMKinetics<EvaluationType, ElementType>(aMaterialModel, aSpatialDomain, aDataMap),
           mRefTemperature(aMaterialModel->getScalarConstant("Reference Temperature")),

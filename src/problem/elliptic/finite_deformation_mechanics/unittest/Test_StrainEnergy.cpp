@@ -24,7 +24,7 @@ const std::string kStrainEnergyCriterionName{"Strain Energy"};
 template <typename ElementType>
 struct CreateStrainEnergyCriterion
 {
-    auto operator()(const Plato::SpatialModel& aSpatialModel,
+    auto operator()(const plato::domain::SpatialModel& aSpatialModel,
                     Plato::DataMap& aDataMap,
                     Teuchos::ParameterList& aParameterList) const
     {

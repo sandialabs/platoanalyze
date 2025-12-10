@@ -102,7 +102,7 @@ class GeometryMisfit : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    GeometryMisfit(const Plato::SpatialDomain& aSpatialDomain,
+    GeometryMisfit(const plato::domain::SpatialDomain& aSpatialDomain,
                    Plato::DataMap& aDataMap,
                    Teuchos::ParameterList& aFunctionParams,
                    const std::string& aFunctionName)
@@ -115,7 +115,7 @@ class GeometryMisfit : public EvaluationType::ElementType,
 
         parsePointCloud(aCriterionParams);
 
-        createPointGraph(aSpatialDomain.Mesh);
+        createPointGraph(aSpatialDomain.mMesh);
     }
 
     /**************************************************************************/
@@ -127,15 +127,15 @@ class GeometryMisfit : public EvaluationType::ElementType,
     }
 
     /**************************************************************************/
-    void evaluate_boundary_conditional(const Plato::SpatialModel& aModel,
+    void evaluate_boundary_conditional(const plato::domain::SpatialModel& aModel,
                                        const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                                        const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
                                        Plato::ScalarVectorT<ResultScalarType>& aResult) const override
     /**************************************************************************/
     {
         // load the sideset specified in the input
-        auto tElementOrds = aModel.Mesh->GetSideSetElements(mSideSetName);
-        auto tNodeOrds = aModel.Mesh->GetSideSetLocalNodes(mSideSetName);
+        auto tElementOrds = aModel.mMesh->GetSideSetElements(mSideSetName);
+        auto tNodeOrds = aModel.mMesh->GetSideSetLocalNodes(mSideSetName);
 
         auto tOffsets = mDataMap.ordinalVectors[mPointCloudRowMapName];
         auto tIndices = mDataMap.ordinalVectors[mPointCloudColMapName];

@@ -70,11 +70,11 @@ void LeastSquaresFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProb
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-LeastSquaresFunction<PhysicsType>::LeastSquaresFunction(const Plato::SpatialModel& aSpatialModel,
+LeastSquaresFunction<PhysicsType>::LeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                         Plato::DataMap& aDataMap,
                                                         Teuchos::ParameterList& aProblemParams,
                                                         const std::string& aName)
-    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -89,9 +89,9 @@ LeastSquaresFunction<PhysicsType>::LeastSquaresFunction(const Plato::SpatialMode
  * \param [in] aDataMap Plato Analyze data map
  **********************************************************************************/
 template <typename PhysicsType>
-LeastSquaresFunction<PhysicsType>::LeastSquaresFunction(const Plato::SpatialModel& aSpatialModel,
+LeastSquaresFunction<PhysicsType>::LeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                         Plato::DataMap& aDataMap)
-    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Least Squares")

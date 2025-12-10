@@ -73,7 +73,7 @@ class VolumeIntegralCriterion : public EvaluationType::ElementType,
      * \param [in] aInputParams input parameters database
      * \param [in] aFuncName user defined function name
      **********************************************************************************/
-    VolumeIntegralCriterion(const Plato::SpatialDomain& aSpatialDomain,
+    VolumeIntegralCriterion(const plato::domain::SpatialDomain& aSpatialDomain,
                             Plato::DataMap& aDataMap,
                             Teuchos::ParameterList& aInputParams,
                             const std::string& aFuncName);
@@ -84,7 +84,7 @@ class VolumeIntegralCriterion : public EvaluationType::ElementType,
      * \param [in] aSpatialDomain Plato Analyze spatial domain
      * \param [in] aDataMap PLATO Engine and Analyze data map
      **********************************************************************************/
-    VolumeIntegralCriterion(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
+    VolumeIntegralCriterion(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

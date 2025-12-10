@@ -24,7 +24,7 @@ struct FiniteDeformationMechanicsFactory
 {
     /// @brief returns a shared pointer to the base class of a vector function (PDE residual).
     template <typename EvaluationType>
-    auto createVectorFunction(const Plato::SpatialDomain& aSpatialDomain,
+    auto createVectorFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                               Plato::DataMap& aDataMap,
                               Teuchos::ParameterList& aProblemParams,
                               std::string aPDE)
@@ -32,7 +32,7 @@ struct FiniteDeformationMechanicsFactory
 
     /// @brief returns a shared pointer to the base class of a scalar function (criterion for optimization).
     template <typename EvaluationType>
-    auto createScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+    auto createScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                               Plato::DataMap& aDataMap,
                               Teuchos::ParameterList& aProblemParams,
                               std::string aFuncType,
@@ -41,7 +41,7 @@ struct FiniteDeformationMechanicsFactory
 };
 
 template <typename EvaluationType>
-auto FiniteDeformationMechanicsFactory::createVectorFunction(const Plato::SpatialDomain& aSpatialDomain,
+auto FiniteDeformationMechanicsFactory::createVectorFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                                                              Plato::DataMap& aDataMap,
                                                              Teuchos::ParameterList& aProblemParams,
                                                              std::string aPDE)
@@ -52,7 +52,7 @@ auto FiniteDeformationMechanicsFactory::createVectorFunction(const Plato::Spatia
 }
 
 template <typename EvaluationType>
-auto FiniteDeformationMechanicsFactory::createScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+auto FiniteDeformationMechanicsFactory::createScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                                                              Plato::DataMap& aDataMap,
                                                              Teuchos::ParameterList& aProblemParams,
                                                              std::string aFuncType,

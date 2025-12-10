@@ -19,7 +19,7 @@ class AbstractVectorFunction
     using StrVec = std::vector<std::string>;
 
    protected:
-    const Plato::SpatialDomain& mSpatialDomain;
+    const plato::domain::SpatialDomain& mSpatialDomain;
 
     Plato::DataMap& mDataMap;
     StrVec mDofNames;
@@ -29,7 +29,7 @@ class AbstractVectorFunction
     using AbstractType = Plato::Parabolic::AbstractVectorFunction<EvaluationType>;
 
     /******************************************************************************/
-    explicit AbstractVectorFunction(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+    explicit AbstractVectorFunction(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
         : /******************************************************************************/
           mSpatialDomain(aSpatialDomain),
           mDataMap(aDataMap)
@@ -43,7 +43,7 @@ class AbstractVectorFunction
     /**
      * \brief Return reference to mesh data base
      ********************************************************************************/
-    decltype(mSpatialDomain.Mesh) getMesh() const { return (mSpatialDomain.Mesh); }
+    decltype(mSpatialDomain.mMesh) getMesh() const { return (mSpatialDomain.mMesh); }
 
     /****************************************************************************/
     /**
@@ -74,7 +74,7 @@ class AbstractVectorFunction
 
     /******************************************************************************/
     virtual void evaluate_boundary(
-        const Plato::SpatialModel& aModel,
+        const plato::domain::SpatialModel& aModel,
         const Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType>& aState,
         const Plato::ScalarMultiVectorT<typename EvaluationType::StateDotScalarType>& aStateDot,
         const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControl,

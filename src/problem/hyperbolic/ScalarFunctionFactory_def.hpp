@@ -19,7 +19,7 @@ namespace Hyperbolic
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Hyperbolic::ScalarFunctionBase> ScalarFunctionFactory<PhysicsType>::create(
-    Plato::SpatialModel& aSpatialModel,
+    plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aInputParams,
     std::string& aFunctionName)

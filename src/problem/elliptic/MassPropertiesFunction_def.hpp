@@ -26,14 +26,14 @@ namespace Elliptic
 template <typename PhysicsType>
 void MassPropertiesFunction<PhysicsType>::initialize(Teuchos::ParameterList& aInputParams)
 {
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         auto tMaterialModelsInputs = aInputParams.get<Teuchos::ParameterList>("Material Models");
-        if (tMaterialModelsInputs.isSublist(tDomain.getMaterialName()))
+        if (tMaterialModelsInputs.isSublist(tDomain.materialName()))
         {
-            auto tMaterialModelInputs = aInputParams.sublist(tDomain.getMaterialName());
+            auto tMaterialModelInputs = aInputParams.sublist(tDomain.materialName());
             mMaterialDensities[tName] = tMaterialModelInputs.get<Plato::Scalar>("Density", 1.0);
         }
     }
@@ -47,7 +47,7 @@ void MassPropertiesFunction<PhysicsType>::initialize(Teuchos::ParameterList& aIn
  * \param [in] aInputParams input parameters database
  **********************************************************************************/
 template <typename PhysicsType>
-void MassPropertiesFunction<PhysicsType>::createLeastSquaresFunction(const Plato::SpatialModel& aSpatialModel,
+void MassPropertiesFunction<PhysicsType>::createLeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                                      Teuchos::ParameterList& aInputParams)
 {
     auto tProblemFunctionName = aInputParams.sublist("Criteria").sublist(mFunctionName);
@@ -158,7 +158,7 @@ bool MassPropertiesFunction<PhysicsType>::allPropertiesSpecified(const std::vect
  **********************************************************************************/
 template <typename PhysicsType>
 void MassPropertiesFunction<PhysicsType>::createAllMassPropertiesLeastSquaresFunction(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const std::vector<std::string>& aPropertyNames,
     const std::vector<Plato::Scalar>& aPropertyWeights,
     const std::vector<Plato::Scalar>& aPropertyGoldValues)
@@ -289,7 +289,7 @@ void MassPropertiesFunction<PhysicsType>::computeRotationAndParallelAxisTheoremM
  **********************************************************************************/
 template <typename PhysicsType>
 void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const std::vector<std::string>& aPropertyNames,
     const std::vector<Plato::Scalar>& aPropertyWeights,
     const std::vector<Plato::Scalar>& aPropertyGoldValues)
@@ -381,7 +381,7 @@ void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>>
-MassPropertiesFunction<PhysicsType>::getMassFunction(const Plato::SpatialModel& aSpatialModel)
+MassPropertiesFunction<PhysicsType>::getMassFunction(const plato::domain::SpatialModel& aSpatialModel)
 {
     std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>> tMassFunction =
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>>(aSpatialModel, mDataMap);
@@ -389,9 +389,9 @@ MassPropertiesFunction<PhysicsType>::getMassFunction(const Plato::SpatialModel& 
 
     std::string tCalculationType = std::string("Mass");
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         std::shared_ptr<Plato::Elliptic::MassMoment<Residual>> tValue =
             std::make_shared<Plato::Elliptic::MassMoment<Residual>>(tDomain, mDataMap);
@@ -429,16 +429,16 @@ MassPropertiesFunction<PhysicsType>::getMassFunction(const Plato::SpatialModel& 
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> MassPropertiesFunction<PhysicsType>::getFirstMomentOverMassRatio(
-    const Plato::SpatialModel& aSpatialModel, const std::string& aMomentType)
+    const plato::domain::SpatialModel& aSpatialModel, const std::string& aMomentType)
 {
     const std::string tNumeratorName = std::string("CG Numerator (Moment type = ") + aMomentType + ")";
     std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>> tNumerator =
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>>(aSpatialModel, mDataMap);
     tNumerator->setFunctionName(tNumeratorName);
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         std::shared_ptr<Plato::Elliptic::MassMoment<Residual>> tNumeratorValue =
             std::make_shared<Plato::Elliptic::MassMoment<Residual>>(tDomain, mDataMap);
@@ -486,16 +486,16 @@ std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> MassPropertiesFunction<Phys
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> MassPropertiesFunction<PhysicsType>::getSecondMassMoment(
-    const Plato::SpatialModel& aSpatialModel, const std::string& aMomentType)
+    const plato::domain::SpatialModel& aSpatialModel, const std::string& aMomentType)
 {
     const std::string tInertiaName = std::string("Second Mass Moment (Moment type = ") + aMomentType + ")";
     std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>> tSecondMomentFunction =
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>>(aSpatialModel, mDataMap);
     tSecondMomentFunction->setFunctionName(tInertiaName);
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         std::shared_ptr<Plato::Elliptic::MassMoment<Residual>> tValue =
             std::make_shared<Plato::Elliptic::MassMoment<Residual>>(tDomain, mDataMap);
@@ -533,7 +533,7 @@ std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> MassPropertiesFunction<Phys
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> MassPropertiesFunction<PhysicsType>::getMomentOfInertia(
-    const Plato::SpatialModel& aSpatialModel, const std::string& aAxes)
+    const plato::domain::SpatialModel& aSpatialModel, const std::string& aAxes)
 {
     std::shared_ptr<Plato::Elliptic::WeightedSumFunction<PhysicsType>> tMomentOfInertiaFunction =
         std::make_shared<Plato::Elliptic::WeightedSumFunction<PhysicsType>>(aSpatialModel, mDataMap);
@@ -595,7 +595,7 @@ std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> MassPropertiesFunction<Phys
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::ScalarFunctionBase>
-MassPropertiesFunction<PhysicsType>::getMomentOfInertiaRotatedAboutCG(const Plato::SpatialModel& aSpatialModel,
+MassPropertiesFunction<PhysicsType>::getMomentOfInertiaRotatedAboutCG(const plato::domain::SpatialModel& aSpatialModel,
                                                                       const std::string& aAxes)
 {
     std::shared_ptr<Plato::Elliptic::WeightedSumFunction<PhysicsType>> tMomentOfInertiaFunction =
@@ -730,11 +730,11 @@ void MassPropertiesFunction<PhysicsType>::getInertiaAndMassWeights(std::vector<P
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-MassPropertiesFunction<PhysicsType>::MassPropertiesFunction(const Plato::SpatialModel& aSpatialModel,
+MassPropertiesFunction<PhysicsType>::MassPropertiesFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                             Plato::DataMap& aDataMap,
                                                             Teuchos::ParameterList& aInputParams,
                                                             const std::string& aName)
-    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)

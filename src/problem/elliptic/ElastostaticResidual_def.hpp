@@ -28,7 +28,7 @@ namespace Elliptic
  **********************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 ElastostaticResidual<EvaluationType, IndicatorFunctionType>::ElastostaticResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams)
@@ -44,7 +44,7 @@ ElastostaticResidual<EvaluationType, IndicatorFunctionType>::ElastostaticResidua
     // create material model and get stiffness
     //
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aProblemParams);
-    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.materialName());
 
     // parse cell problem forcing
     //
@@ -195,7 +195,7 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
  **********************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
@@ -215,7 +215,8 @@ void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_bound
  **************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 void ElastostaticResidual<EvaluationType, IndicatorFunctionType>::outputVonMises(
-    const Plato::ScalarMultiVectorT<ResultScalarType>& aCauchyStress, const Plato::SpatialDomain& aSpatialDomain) const
+    const Plato::ScalarMultiVectorT<ResultScalarType>& aCauchyStress,
+    const plato::domain::SpatialDomain& aSpatialDomain) const
 {
     auto tNumCells = aSpatialDomain.numCells();
     Plato::VonMisesYieldFunction<mNumSpatialDims, mNumVoigtTerms> tComputeVonMises;

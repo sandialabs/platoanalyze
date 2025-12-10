@@ -12,7 +12,7 @@ namespace Elliptic
 /**************************************************************************/
 template <typename EvaluationType>
 VolumeAverageCriterionDenominator<EvaluationType>::VolumeAverageCriterionDenominator(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     std::string& aFunctionName)

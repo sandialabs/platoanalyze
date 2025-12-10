@@ -63,7 +63,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
     EvaluationFunctionMap<GradientX> mGradientXFunctions;
     EvaluationFunctionMap<GradientZ> mGradientZFunctions;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap;
 
@@ -78,17 +78,17 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
      * \param [in] aProblemType problem type
      *
      ******************************************************************************/
-    VectorFunction(const Plato::SpatialModel& aSpatialModel,
+    VectorFunction(const plato::domain::SpatialModel& aSpatialModel,
                    Plato::DataMap& aDataMap,
                    Teuchos::ParameterList& aProblemParams,
                    std::string& aProblemType)
-        : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
+        : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
     {
         typename PhysicsType::FunctionFactory tFunctionFactory;
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
             mResidualFunctions[tName] = tFunctionFactory.template createVectorFunction<Residual>(
                 tDomain, aDataMap, aProblemParams, aProblemType);
             mJacobianFunctions[tName] = tFunctionFactory.template createVectorFunction<Jacobian>(
@@ -106,8 +106,8 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
      * \param [in] aSpatialModel struct that contains the mesh, meshsets, domains, etc.
      * \param [in] aDataMap problem-specific data map
      ******************************************************************************/
-    VectorFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap)
-        : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
+    VectorFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap)
+        : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
     {
     }
 
@@ -118,7 +118,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
      ******************************************************************************/
     std::vector<std::string> getDofNames() const
     {
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
         return mResidualFunctions.at(tFirstBlockName)->getDofNames();
     }
 
@@ -221,7 +221,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
      ********************************************************************************/
     Plato::Solutions getSolutionStateOutputData(const Plato::Solutions& aSolutions) const
     {
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
         auto tItr = mResidualFunctions.find(tFirstBlockName);
         if (tItr == mResidualFunctions.end())
         {
@@ -234,7 +234,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
     template <typename EvaluationType>
     Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType> internalForceContribution(
         const EvaluationFunction<EvaluationType>& aFunction,
-        const Plato::SpatialDomain& aDomain,
+        const plato::domain::SpatialDomain& aDomain,
         const Plato::ScalarVector& aState,
         const Plato::ScalarVector& aControl,
         Plato::Scalar aTimeStep = 0.0) const
@@ -299,15 +299,15 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
     {
         Plato::ScalarVector tReturnValue("Assembled Residual", mNumDofsPerNode * mNumNodes);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
             auto tInternalForceValues = this->template internalForceContribution<Residual>(
                 mResidualFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleResidual(tInternalForceValues, tReturnValue, tDomain);
         }
 
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
 
         auto tExternalForceValues = this->template externalForceContribution<Residual>(
             mResidualFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
@@ -334,11 +334,11 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         auto tMatEntries = tGradientXMat->entries();
 
         Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode, mNumSpatialDims>
-            tGradientXMatEntryOrdinal(tGradientXMat, mSpatialModel.Mesh);
+            tGradientXMatEntryOrdinal(tGradientXMat, mSpatialModel.mMesh);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
             auto tInternalForceValues = this->template internalForceContribution<GradientX>(
                 mGradientXFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad(mNumDofsPerCell, mNumConfigDofsPerCell,
@@ -346,7 +346,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
                                                                  tMatEntries, tDomain);
         }
 
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
 
         auto tExternalForceValues = this->template externalForceContribution<GradientX>(
             mGradientXFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
@@ -375,18 +375,18 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         auto tMatEntries = tJacobianMat->entries();
 
         Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode> tJacobianMatEntryOrdinal(
-            tJacobianMat, mSpatialModel.Mesh);
+            tJacobianMat, mSpatialModel.mMesh);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
             auto tInternalForceValues = this->template internalForceContribution<Jacobian>(
                 mJacobianFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad(
                 mNumDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tInternalForceValues, tMatEntries, tDomain);
         }
 
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
 
         auto tExternalForceValues = this->template externalForceContribution<Jacobian>(
             mJacobianFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
@@ -413,18 +413,18 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         auto tMatEntries = tJacobianMat->entries();
 
         Plato::BlockMatrixEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode, mNumDofsPerNode> tJacobianMatEntryOrdinal(
-            tJacobianMat, mSpatialModel.Mesh);
+            tJacobianMat, mSpatialModel.mMesh);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
             auto tInternalForceValues = this->template internalForceContribution<Jacobian>(
                 mJacobianFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad(
                 mNumDofsPerCell, mNumDofsPerCell, tJacobianMatEntryOrdinal, tInternalForceValues, tMatEntries, tDomain);
         }
 
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
 
         auto tExternalForceValues = this->template externalForceContribution<Jacobian>(
             mJacobianFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);
@@ -451,11 +451,11 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         auto tMatEntries = tGradientZMat->entries();
 
         Plato::BlockMatrixTransposeEntryOrdinal<mNumNodesPerCell, mNumDofsPerNode, mNumControl>
-            tGradientZMatEntryOrdinal(tGradientZMat, mSpatialModel.Mesh);
+            tGradientZMatEntryOrdinal(tGradientZMat, mSpatialModel.mMesh);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
             auto tInternalForceValues = this->template internalForceContribution<GradientZ>(
                 mGradientZFunctions.at(tName), tDomain, aState, aControl, aTimeStep);
             Plato::WorksetBase<ElementType>::assembleJacobianFad(mNumDofsPerCell, mNumNodesPerCell,
@@ -463,7 +463,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
                                                                  tMatEntries, tDomain);
         }
 
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
 
         auto tExternalForceValues = this->template externalForceContribution<GradientZ>(
             mGradientZFunctions.at(tFirstBlockName), aState, aControl, aTimeStep);

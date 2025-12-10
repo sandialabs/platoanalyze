@@ -18,7 +18,7 @@ namespace Parabolic
 
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
-TMStressPNorm<EvaluationType, IndicatorFunctionType>::TMStressPNorm(const Plato::SpatialDomain& aSpatialDomain,
+TMStressPNorm<EvaluationType, IndicatorFunctionType>::TMStressPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                                                                     Plato::DataMap& aDataMap,
                                                                     Teuchos::ParameterList& aProblemParams,
                                                                     Teuchos::ParameterList& aPenaltyParams,
@@ -29,7 +29,7 @@ TMStressPNorm<EvaluationType, IndicatorFunctionType>::TMStressPNorm(const Plato:
 /**************************************************************************/
 {
     Plato::ThermoelasticModelFactory<mNumSpatialDims> tFactory(aProblemParams);
-    mMaterialModel = tFactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = tFactory.create(aSpatialDomain.materialName());
 
     auto tParams = aProblemParams.sublist("Criteria").get<Teuchos::ParameterList>(aFunctionName);
 

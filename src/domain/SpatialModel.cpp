@@ -2,13 +2,11 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-#include "linear_algebra/PlatoMathTypes.hpp"
+#include "domain/SpatialDomain.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
-#include "mesh/PlatoMask.hpp"
 #include "mesh/PlatoMesh.hpp"
-#include "parsing/ParseTools.hpp"
 
-namespace Plato
+namespace plato::domain
 {
 namespace
 {
@@ -23,7 +21,7 @@ auto block_names_as_string(const Plato::Mesh& aMesh) -> std::string
 auto error_message_for_mismatched_blocks(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aDomainParams)
     -> std::string
 {
-    const auto tBlockName = SpatialDomain::elementBlockName(aDomainParams).value_or(std::string{"UNKNOWN"});
+    const auto tBlockName = detail::element_block_name(aDomainParams).value_or(std::string{"UNKNOWN"});
     const auto tErrorMessage = "Element Block in the input file with name " + tBlockName +
                                " has no matching block in the exodus mesh.\nBlock names in mesh: \n";
     const auto tBlockNamesInMesh = block_names_as_string(aMesh);
@@ -31,155 +29,9 @@ auto error_message_for_mismatched_blocks(const Plato::Mesh& aMesh, const Teuchos
 }
 }  // namespace
 
-SpatialDomain::SpatialDomain(Plato::Mesh aMesh, Plato::DataMap& aDataMap, std::string aName)
-    : Mesh(aMesh), mDataMap(aDataMap), mSpatialDomainName(std::move(aName))
+auto parse_domains(const Teuchos::ParameterList& aInputParams, const Plato::Mesh& aMesh) -> ParsedDomains
 {
-}
-
-SpatialDomain::SpatialDomain(Plato::Mesh aMesh,
-                             Plato::DataMap& aDataMap,
-                             const Teuchos::ParameterList& aInputParams,
-                             std::string aName)
-    : Mesh(aMesh), mDataMap(aDataMap), mSpatialDomainName(std::move(aName))
-{
-    this->initialize(aInputParams);
-}
-
-auto SpatialDomain::elementBlockExistsInMesh(const Plato::Mesh& aMesh, const Teuchos::ParameterList& aInputParams)
-    -> bool
-{
-    if (const auto tElementBlockName = SpatialDomain::elementBlockName(aInputParams))
-    {
-        const auto tElementBlocksInMesh = aMesh->GetElementBlockNames();
-        return std::find(tElementBlocksInMesh.cbegin(), tElementBlocksInMesh.cend(), tElementBlockName.value()) !=
-               tElementBlocksInMesh.cend();
-    }
-    return false;
-}
-
-auto SpatialDomain::elementBlockName(const Teuchos::ParameterList& aInputParams) -> std::optional<std::string>
-{
-    constexpr auto tElementBlockTag = "Element Block";
-    if (aInputParams.isType<std::string>(tElementBlockTag))
-    {
-        return aInputParams.get<std::string>(tElementBlockTag);
-    }
-    return std::nullopt;
-}
-
-void SpatialDomain::removeMask() { Kokkos::deep_copy(mMaskedElemLids, mTotalElemLids); }
-
-void SpatialDomain::setMaskLocalElemIDs(const std::string& aBlockName)
-{
-    auto tElemLids = Mesh->GetLocalElementIDs(aBlockName);
-    auto tNumElems = tElemLids.size();
-    mTotalElemLids = Plato::OrdinalVector("element list", tNumElems);
-    mMaskedElemLids = Plato::OrdinalVector("masked element list", tNumElems);
-
-    auto tTotalElemLids = mTotalElemLids;
-    Kokkos::parallel_for(
-        "get element ids", Kokkos::RangePolicy<>(0, tNumElems), KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
-            tTotalElemLids(aCellOrdinal) = tElemLids[aCellOrdinal];
-        });
-    Kokkos::deep_copy(mMaskedElemLids, mTotalElemLids);
-}
-
-void SpatialDomain::initialize(const Teuchos::ParameterList& aInputParams)
-{
-    if (aInputParams.isType<std::string>("Element Block"))
-    {
-        mElementBlockName = aInputParams.get<std::string>("Element Block");
-        this->cellOrdinals(mElementBlockName);
-    }
-    else
-    {
-        ANALYZE_THROWERR("Parsing new Domain. Required keyword 'Element Block' not found");
-    }
-
-    if (aInputParams.isType<std::string>("Material Model"))
-    {
-        mMaterialModelName = aInputParams.get<std::string>("Material Model");
-    }
-    else
-    {
-        ANALYZE_THROWERR("Parsing new Domain. Required keyword 'Material Model' not found");
-    }
-    if (aInputParams.isType<bool>("Fixed Control"))
-    {
-        mIsFixedBlock = aInputParams.get<bool>("Fixed Control");
-    }
-
-    this->setMaskLocalElemIDs(mElementBlockName);
-
-    parseUniformCartesianBasis(aInputParams);
-    parseVaryingCartesianBasis(aInputParams);
-}
-
-void SpatialDomain::parseUniformCartesianBasis(const Teuchos::ParameterList& aParamList)
-{
-    if (aParamList.isSublist("Basis"))
-    {
-        if (Mesh->NumDimensions() == 3)
-        {
-            Plato::ParseTools::getBasis(aParamList, mUniformCartesianBasis);
-        }
-        else if (Mesh->NumDimensions() == 2)
-        {
-            Plato::Matrix<2, 2> tBasis;
-            Plato::ParseTools::getBasis(aParamList, tBasis);
-            setUniformCartesianBasis(tBasis);
-        }
-        else if (Mesh->NumDimensions() == 1)
-        {
-            Plato::Matrix<1, 1> tBasis;
-            Plato::ParseTools::getBasis(aParamList, tBasis);
-            setUniformCartesianBasis(tBasis);
-        }
-        mHasUniformBasis = true;
-    }
-    else
-    {
-        mHasUniformBasis = false;
-    }
-}
-
-void SpatialDomain::parseVaryingCartesianBasis(const Teuchos::ParameterList& aParamList)
-{
-    if (aParamList.isType<std::string>("Basis Field"))
-    {
-        auto tBasisFieldName = aParamList.get<std::string>("Basis Field");
-        auto tBasisField = mDataMap.scalarArray3Ds[tBasisFieldName];
-        mHasVaryingBasis = true;
-
-        auto tBasisDim = tBasisField.extent(1);
-        auto tNumCells = this->numCells();
-        auto tCellOrds = this->cellOrdinals();
-        Kokkos::resize(mVaryingCartesianBasis, tNumCells, tBasisDim, tBasisDim);
-
-        auto& tVaryingCartesianBasis = mVaryingCartesianBasis;
-        Kokkos::parallel_for(
-            "get basis", Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(const Plato::OrdinalType& aCellOrdinal) {
-                auto iCellOrdinal = tCellOrds(aCellOrdinal);
-                for (decltype(tBasisDim) iDim = 0; iDim < tBasisDim; iDim++)
-                {
-                    for (decltype(tBasisDim) jDim = 0; jDim < tBasisDim; jDim++)
-                    {
-                        tVaryingCartesianBasis(aCellOrdinal, iDim, jDim) = tBasisField(iCellOrdinal, iDim, jDim);
-                    }
-                }
-            });
-    }
-    else
-    {
-        mHasVaryingBasis = false;
-    }
-}
-
-SpatialModel::SpatialModel(Plato::Mesh aMesh) : Mesh(aMesh), mHasContact(false), mUpdateGraphForContact(aMesh) {}
-
-SpatialModel::SpatialModel(Plato::Mesh aMesh, const Teuchos::ParameterList& aInputParams, Plato::DataMap& aDataMap)
-    : Mesh(aMesh), mHasContact(false), mUpdateGraphForContact(aMesh)
-{
+    ParsedDomains tDomains;
     if (aInputParams.isSublist("Spatial Model"))
     {
         auto tModelParams = aInputParams.sublist("Spatial Model");
@@ -202,11 +54,12 @@ SpatialModel::SpatialModel(Plato::Mesh aMesh, const Teuchos::ParameterList& aInp
             }
 
             Teuchos::ParameterList& tDomainParams = tDomainsParams.sublist(tMyName);
-            if (SpatialDomain::elementBlockExistsInMesh(aMesh, tDomainParams))
+            const auto tBlockName = detail::element_block_name(tDomainParams);
+            if (detail::element_block_exists_in_mesh(aMesh, tBlockName))
             {
-                Domains.emplace_back(aMesh, aDataMap, tDomainParams, tMyName);
+                tDomains.emplace(tMyName, parse_spatial_domain(tDomainParams, aMesh->NumDimensions()));
             }
-            else if (!ignoreMissingElementBlocks(tModelParams))
+            else if (!ignore_missing_element_blocks(tModelParams))
             {
                 ANALYZE_THROWERR(error_message_for_mismatched_blocks(aMesh, tDomainParams));
             }
@@ -216,9 +69,10 @@ SpatialModel::SpatialModel(Plato::Mesh aMesh, const Teuchos::ParameterList& aInp
     {
         ANALYZE_THROWERR("Parsing 'Plato Problem'. Required 'Spatial Model' parameter list not found");
     }
+    return tDomains;
 }
 
-auto SpatialModel::ignoreMissingElementBlocks(const Teuchos::ParameterList& aParameterList) -> bool
+auto ignore_missing_element_blocks(const Teuchos::ParameterList& aParameterList) -> bool
 {
     constexpr auto tParameterName = "Ignore Missing Element Blocks";
     if (aParameterList.isParameter(tParameterName))
@@ -229,11 +83,32 @@ auto SpatialModel::ignoreMissingElementBlocks(const Teuchos::ParameterList& aPar
     return tDefaultValue;
 }
 
-void SpatialModel::append(Plato::SpatialDomain& aDomain) { Domains.push_back(aDomain); }
+namespace
+{
+[[nodiscard]] auto spatial_domains(Plato::Mesh aMesh, const ParsedDomains& aParsedDomains, Plato::DataMap& aDataMap)
+    -> std::vector<SpatialDomain>
+{
+    std::vector<SpatialDomain> tDomains;
+    tDomains.reserve(aParsedDomains.size());
+    std::ranges::transform(aParsedDomains, std::back_inserter(tDomains),
+                           [&aMesh, &aDataMap](const auto& aParsedDomainParameter)
+                           {
+                               return std::move(SpatialDomain(aMesh, aDataMap, aParsedDomainParameter.second,
+                                                              aParsedDomainParameter.first));
+                           });
+    return tDomains;
+}
+
+}  // namespace
+
+SpatialModel::SpatialModel(Plato::Mesh aMesh, const ParsedDomains& aParsedDomains, Plato::DataMap& aDataMap)
+    : mMesh(aMesh), mUpdateGraphForContact(aMesh), mDomains(std::move(spatial_domains(aMesh, aParsedDomains, aDataMap)))
+{
+}
 
 void SpatialModel::addContact(std::vector<Plato::Contact::ContactPair> aPairs)
 {
-    if (!mHasContact)
+    if (!hasContact())
     {
         mContactPairs = aPairs;
 
@@ -241,27 +116,29 @@ void SpatialModel::addContact(std::vector<Plato::Contact::ContactPair> aPairs)
         Plato::OrdinalVector tChildNodes("", tNumNodes);
         Plato::OrdinalVector tParentElements("", tNumNodes);
         Plato::Contact::populate_full_contact_arrays(aPairs, tChildNodes, tParentElements);
-        Plato::Contact::check_for_repeated_child_nodes(tChildNodes, Mesh->NumNodes());
+        Plato::Contact::check_for_repeated_child_nodes(tChildNodes, mMesh->NumNodes());
         mUpdateGraphForContact.createNodeNodeGraph(tChildNodes, tParentElements);
-
-        mHasContact = true;
     }
 }
 
-void SpatialModel::NodeNodeGraph(Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const
+auto SpatialModel::hasContact() const -> bool { return !mContactPairs.empty(); }
+
+auto SpatialModel::contactPairs() const -> std::vector<Plato::Contact::ContactPair> { return mContactPairs; }
+
+void SpatialModel::nodeNodeGraph(Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const
 {
-    if (mHasContact)
+    if (hasContact())
         mUpdateGraphForContact.NodeNodeGraph(aOffsetMap, aNodeOrds);
     else
-        Mesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
+        mMesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
 }
 
-void SpatialModel::NodeNodeGraphTranspose(Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const
+void SpatialModel::nodeNodeGraphTranspose(Plato::OrdinalVector& aOffsetMap, Plato::OrdinalVector& aNodeOrds) const
 {
-    if (mHasContact)
+    if (hasContact())
         mUpdateGraphForContact.NodeNodeGraphTranspose(aOffsetMap, aNodeOrds);
     else
-        Mesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
+        mMesh->NodeNodeGraph(aOffsetMap, aNodeOrds);
 }
 
-}  // namespace Plato
+}  // namespace plato::domain

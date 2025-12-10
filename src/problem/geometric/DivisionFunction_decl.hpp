@@ -27,7 +27,7 @@ class DivisionFunction : public Plato::Geometric::ScalarFunctionBase,
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> mScalarFunctionBaseNumerator;
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> mScalarFunctionBaseDenominator;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap; /*!< PLATO Engine and Analyze data map */
 
@@ -49,7 +49,7 @@ class DivisionFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    DivisionFunction(const Plato::SpatialModel& aSpatialModel,
+    DivisionFunction(const plato::domain::SpatialModel& aSpatialModel,
                      Plato::DataMap& aDataMap,
                      Teuchos::ParameterList& aProblemParams,
                      const std::string& aName);
@@ -59,7 +59,7 @@ class DivisionFunction : public Plato::Geometric::ScalarFunctionBase,
      * \brief Secondary division function constructor, used for unit testing
      * \param [in] aMesh mesh database
      **********************************************************************************/
-    DivisionFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    DivisionFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

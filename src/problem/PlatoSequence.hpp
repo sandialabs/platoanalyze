@@ -46,11 +46,13 @@ class SequenceStep
      * \brief Constructor
      * \param [in] aInputParams SequenceStep definition
      **********************************************************************************/
-    SequenceStep(Plato::SpatialModel& aSpatialModel, const Teuchos::ParameterList& aInputParams, std::string aName)
+    SequenceStep(plato::domain::SpatialModel& aSpatialModel,
+                 const Teuchos::ParameterList& aInputParams,
+                 std::string aName)
         : mName(aName)
     {
         Plato::MaskFactory<ElementType::mNumSpatialDims> tMaskFactory;
-        mMask = tMaskFactory.create(aSpatialModel.Mesh, aInputParams);
+        mMask = tMaskFactory.create(aSpatialModel.mMesh, aInputParams);
     }
 };
 
@@ -69,7 +71,7 @@ class Sequence
 
     int getNumSteps() const { return mSteps.size(); }
 
-    Sequence(Plato::SpatialModel& aSpatialModel, const Teuchos::ParameterList& aInputParams)
+    Sequence(plato::domain::SpatialModel& aSpatialModel, const Teuchos::ParameterList& aInputParams)
     {
         if (aInputParams.isSublist("Sequence"))
         {

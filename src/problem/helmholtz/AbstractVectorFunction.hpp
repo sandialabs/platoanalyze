@@ -20,8 +20,8 @@ template <typename EvaluationType>
 class AbstractVectorFunction
 {
    protected:
-    const Plato::SpatialDomain& mSpatialDomain; /*!< Plato spatial model containing mesh, meshsets, etc */
-    Plato::DataMap& mDataMap;                   /*!< Plato Analyze database */
+    const plato::domain::SpatialDomain& mSpatialDomain; /*!< Plato spatial model containing mesh, meshsets, etc */
+    Plato::DataMap& mDataMap;                           /*!< Plato Analyze database */
 
    public:
     /******************************************************************************/
@@ -30,7 +30,7 @@ class AbstractVectorFunction
      * \param [in] aSpatialDomain Plato spatial model
      * \param [in] aDataMap Plato Analyze database
      **********************************************************************************/
-    explicit AbstractVectorFunction(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+    explicit AbstractVectorFunction(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
         : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap)
     {
     }
@@ -46,7 +46,7 @@ class AbstractVectorFunction
      * \brief Return reference to mesh database
      * \return volume mesh database
      ********************************************************************************/
-    decltype(mSpatialDomain.Mesh) getMesh() const { return (mSpatialDomain.Mesh); }
+    decltype(mSpatialDomain.mMesh) getMesh() const { return (mSpatialDomain.mMesh); }
 
     /****************************************************************************/
     /**
@@ -85,7 +85,7 @@ class AbstractVectorFunction
      * N = number of nodes per cell, D = spatial dimensions
      **********************************************************************************/
     virtual void evaluate_boundary(
-        const Plato::SpatialModel& aModel,
+        const plato::domain::SpatialModel& aModel,
         const Plato::ScalarMultiVectorT<typename EvaluationType::StateScalarType>& aState,
         const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControl,
         const Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType>& aConfig,

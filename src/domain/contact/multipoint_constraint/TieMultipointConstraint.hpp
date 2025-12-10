@@ -28,7 +28,7 @@ template <typename ElementT>
 class TieMultipointConstraint : public Plato::MultipointConstraint
 {
    public:
-    TieMultipointConstraint(const Plato::SpatialModel& aSpatialModel,
+    TieMultipointConstraint(const plato::domain::SpatialModel& aSpatialModel,
                             const std::string& aName,
                             Teuchos::ParameterList& aParam)
         : Plato::MultipointConstraint(aName)
@@ -39,12 +39,12 @@ class TieMultipointConstraint : public Plato::MultipointConstraint
 
         // parse child nodes
         std::string tChildNodeSet = aParam.get<std::string>("Child");
-        auto tChildNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tChildNodeSet);
+        auto tChildNodeLids = aSpatialModel.mMesh->GetNodeSetNodes(tChildNodeSet);
         auto tNumberChildNodes = tChildNodeLids.size();
 
         // parse parent nodes
         std::string tParentNodeSet = aParam.get<std::string>("Parent");
-        auto tParentNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tParentNodeSet);
+        auto tParentNodeLids = aSpatialModel.mMesh->GetNodeSetNodes(tParentNodeSet);
         auto tNumberParentNodes = tParentNodeLids.size();
 
         // Check that the number of child and parent nodes match

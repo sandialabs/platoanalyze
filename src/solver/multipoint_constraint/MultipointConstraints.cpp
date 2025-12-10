@@ -4,11 +4,11 @@ namespace Plato
 {
 
 /****************************************************************************/
-MultipointConstraints::MultipointConstraints(const Plato::SpatialModel& aSpatialModel,
+MultipointConstraints::MultipointConstraints(const plato::domain::SpatialModel& aSpatialModel,
                                              const OrdinalType& aNumDofsPerNode,
                                              Teuchos::ParameterList& aParams)
     : MPCs(),
-      mNumNodes(aSpatialModel.Mesh->NumNodes()),
+      mNumNodes(aSpatialModel.mMesh->NumNodes()),
       mNumDofsPerNode(aNumDofsPerNode),
       mTransformMatrix(Teuchos::null),
       mTransformMatrixTranspose(Teuchos::null)

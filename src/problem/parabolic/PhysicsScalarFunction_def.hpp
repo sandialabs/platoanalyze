@@ -19,9 +19,9 @@ void PhysicsScalarFunction<PhysicsType>::initialize(Teuchos::ParameterList& aInp
     auto tProblemDefault = aInputParams.sublist("Criteria").sublist(mFunctionName);
     auto tFunctionType = tProblemDefault.get<std::string>("Scalar Function Type", "");
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         mValueFunctions[tName] = tFactory.template createScalarFunctionParabolic<Residual>(
             tDomain, mDataMap, aInputParams, tFunctionType, mFunctionName);
@@ -45,11 +45,11 @@ void PhysicsScalarFunction<PhysicsType>::initialize(Teuchos::ParameterList& aInp
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const Plato::SpatialModel& aSpatialModel,
+PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap,
                                                           Teuchos::ParameterList& aInputParams,
                                                           std::string& aName)
-    : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -64,9 +64,9 @@ PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const Plato::SpatialMo
  * \param [in] aDataMap Plato Analyze data map
  **********************************************************************************/
 template <typename PhysicsType>
-PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const Plato::SpatialModel& aSpatialModel,
+PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap)
-    : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Undefined Name")
@@ -98,10 +98,10 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
     auto tNumSteps = tStates.extent(0);
 
     std::vector<ResultScalar> tValues(tNumSteps, 0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         // workset control
         //
@@ -147,7 +147,7 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
     ResultScalar tReturnVal(0.0);
     for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
     {
-        auto tName = mSpatialModel.Domains[0].getDomainName();
+        auto tName = mSpatialModel.mDomains[0].domainName();
         mValueFunctions.at(tName)->postEvaluate(tValues[tStepIndex]);
         tReturnVal += tValues[tStepIndex];
     }
@@ -182,10 +182,10 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
     Plato::ScalarVector tObjGradientX("objective gradient configuration", mNumSpatialDims * mNumNodes);
 
     Plato::Scalar tValue(0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         Plato::ScalarMultiVectorT<StateScalar> tStateWS("state workset", tNumCells, mNumDofsPerCell);
         Plato::ScalarMultiVectorT<StateDotScalar> tStateDotWS("state dot workset", tNumCells, mNumDofsPerCell);
@@ -227,7 +227,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
             tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
         }
     }
-    auto tName = mSpatialModel.Domains[0].getDomainName();
+    auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientXFunctions.at(tName)->postEvaluate(tObjGradientX, tValue);
 
     return tObjGradientX;
@@ -262,10 +262,10 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
     Plato::ScalarVector tObjGradientU("objective gradient state", mNumDofsPerNode * mNumNodes);
 
     Plato::Scalar tValue(0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         assert(aStepIndex < tStates.extent(0));
         assert(tStates.extent(0) > 0);
@@ -305,7 +305,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
 
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
-    auto tName = mSpatialModel.Domains[0].getDomainName();
+    auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientUFunctions.at(tName)->postEvaluate(tObjGradientU, tValue);
 
     return tObjGradientU;
@@ -340,10 +340,10 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
     Plato::ScalarVector tObjGradientV("objective gradient state", mNumDofsPerNode * mNumNodes);
 
     Plato::Scalar tValue(0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         // workset control
         //
@@ -380,7 +380,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
 
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
-    auto tName = mSpatialModel.Domains[0].getDomainName();
+    auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientVFunctions.at(tName)->postEvaluate(tObjGradientV, tValue);
 
     return tObjGradientV;
@@ -415,10 +415,10 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
     Plato::ScalarMultiVector tObjGradientZSteps("objective gradient wrt control", tNumSteps, mNumNodes);
 
     std::vector<Plato::Scalar> tValues(tNumSteps, 0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         Plato::ScalarMultiVectorT<StateScalar> tStateWS("state workset", tNumCells, mNumDofsPerCell);
         Plato::ScalarMultiVectorT<StateDotScalar> tStateDotWS("state dot workset", tNumCells, mNumDofsPerCell);
@@ -466,7 +466,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
     for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
     {
         Plato::ScalarVector tObjGradientZStep = Kokkos::subview(tObjGradientZSteps, tStepIndex, Kokkos::ALL());
-        auto tName = mSpatialModel.Domains[0].getDomainName();
+        auto tName = mSpatialModel.mDomains[0].domainName();
         mGradientZFunctions.at(tName)->postEvaluate(tObjGradientZStep, tValues[tStepIndex]);
         Plato::blas1::axpy(1.0, tObjGradientZStep, tObjGradientZ);
     }

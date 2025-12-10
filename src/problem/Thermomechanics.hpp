@@ -34,7 +34,7 @@ namespace ThermomechanicsFactory
  **********************************************************************************/
 template <typename EvaluationType>
 inline std::shared_ptr<Plato::AbstractLocalMeasure<EvaluationType>> create_local_measure(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     const std::string& aFuncName)
@@ -62,7 +62,7 @@ inline std::shared_ptr<Plato::AbstractLocalMeasure<EvaluationType>> create_local
  **********************************************************************************/
 template <typename EvaluationType>
 inline std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<EvaluationType>> stress_constraint_quadratic(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aInputParams,
     const std::string& aFuncName)
@@ -87,7 +87,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<EvaluationType>> createVectorFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aParamList,
         std::string aFuncType)
@@ -109,7 +109,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Parabolic::AbstractVectorFunction<EvaluationType>> createVectorFunctionParabolic(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aPDE)
@@ -131,7 +131,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<EvaluationType>> createScalarFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aFuncType,
@@ -169,7 +169,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Parabolic::AbstractScalarFunction<EvaluationType>> createScalarFunctionParabolic(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aFuncType,

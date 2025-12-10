@@ -21,11 +21,11 @@ template <typename EvaluationType>
 class AbstractScalarFunction
 {
    protected:
-    const Plato::SpatialDomain& mSpatialDomain; /*!< Plato spatial model */
-    Plato::DataMap& mDataMap;                   /*!< Plato Analyze data map */
-    const std::string mFunctionName;            /*!< my abstract scalar function name */
-    bool mHasBoundaryTerm;                      /*!< false if evaluate_boundary() is not implemented */
-    bool mCompute;                              /*!< if true, include in evaluation */
+    const plato::domain::SpatialDomain& mSpatialDomain; /*!< Plato spatial model */
+    Plato::DataMap& mDataMap;                           /*!< Plato Analyze data map */
+    const std::string mFunctionName;                    /*!< my abstract scalar function name */
+    bool mHasBoundaryTerm;                              /*!< false if evaluate_boundary() is not implemented */
+    bool mCompute;                                      /*!< if true, include in evaluation */
 
    public:
     using AbstractType = typename Plato::Geometric::AbstractScalarFunction<EvaluationType>;
@@ -37,7 +37,7 @@ class AbstractScalarFunction
      * \param [in] aDataMap Plato Engine and Plato Analyze data map
      * \param [in] aName my abstract scalar function name
      **********************************************************************************/
-    AbstractScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+    AbstractScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aInputs,
                            const std::string& aName)
@@ -47,7 +47,7 @@ class AbstractScalarFunction
           mHasBoundaryTerm(false),
           mCompute(true)
     {
-        std::string tCurrentDomainName = aSpatialDomain.getDomainName();
+        std::string tCurrentDomainName = aSpatialDomain.domainName();
 
         auto tMyCriteria = aInputs.sublist("Criteria").sublist(aName);
         std::vector<std::string> tDomains = Plato::teuchos::parse_array<std::string>("Domains", tMyCriteria);
@@ -71,7 +71,7 @@ class AbstractScalarFunction
      * \param [in] aDataMap PLATO Engine and PLATO Analyze data map
      * \param [in] aName my abstract scalar function name
      **********************************************************************************/
-    AbstractScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+    AbstractScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                            Plato::DataMap& aDataMap,
                            const std::string& aName)
         : mSpatialDomain(aSpatialDomain),
@@ -127,7 +127,7 @@ class AbstractScalarFunction
      * \param [in] aTimeStep time step (default = 0)
      **********************************************************************************/
     virtual void evaluate_boundary(
-        const Plato::SpatialModel& aModel,
+        const plato::domain::SpatialModel& aModel,
         const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControl,
         const Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType>& aConfig,
         Plato::ScalarVectorT<typename EvaluationType::ResultScalarType>& aResult)
@@ -144,7 +144,7 @@ class AbstractScalarFunction
      * \param [in] aTimeStep time step (default = 0)
      **********************************************************************************/
     virtual void evaluate_boundary_conditional(
-        const Plato::SpatialModel& aModel,
+        const plato::domain::SpatialModel& aModel,
         const Plato::ScalarMultiVectorT<typename EvaluationType::ControlScalarType>& aControl,
         const Plato::ScalarArray3DT<typename EvaluationType::ConfigScalarType>& aConfig,
         Plato::ScalarVectorT<typename EvaluationType::ResultScalarType>& aResult) const

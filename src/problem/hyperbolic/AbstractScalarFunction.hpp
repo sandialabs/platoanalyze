@@ -14,7 +14,7 @@ template <typename EvaluationType>
 class AbstractScalarFunction
 {
    protected:
-    const Plato::SpatialDomain& mSpatialDomain;
+    const plato::domain::SpatialDomain& mSpatialDomain;
     Plato::DataMap& mDataMap;
     const std::string mFunctionName;
     bool mCompute;
@@ -22,13 +22,13 @@ class AbstractScalarFunction
    public:
     using AbstractType = typename Plato::Hyperbolic::AbstractScalarFunction<EvaluationType>;
 
-    AbstractScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+    AbstractScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aInputs,
                            const std::string& aName)
         : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap), mFunctionName(aName), mCompute(true)
     {
-        std::string tCurrentDomainName = aSpatialDomain.getDomainName();
+        std::string tCurrentDomainName = aSpatialDomain.domainName();
 
         auto tMyCriteria = aInputs.sublist("Criteria").sublist(aName);
         std::vector<std::string> tDomains = Plato::teuchos::parse_array<std::string>("Domains", tMyCriteria);

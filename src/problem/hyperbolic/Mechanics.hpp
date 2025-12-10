@@ -18,7 +18,7 @@ struct FunctionFactory
 {
     template <typename EvaluationType>
     std::shared_ptr<::Plato::Hyperbolic::AbstractVectorFunction<EvaluationType>> createVectorFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aPDE)
@@ -37,7 +37,7 @@ struct FunctionFactory
 
     template <typename EvaluationType>
     std::shared_ptr<::Plato::Hyperbolic::AbstractScalarFunction<EvaluationType>> createScalarFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aFuncType,

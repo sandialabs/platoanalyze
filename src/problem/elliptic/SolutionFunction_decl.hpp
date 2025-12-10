@@ -62,7 +62,7 @@ class SolutionFunction : public Plato::Elliptic::ScalarFunctionBase,
     bool mTargetMagnitudeSpecified;
     bool mTargetSolutionSpecified;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
     solution_type_t mSolutionType;
 
     /******************************************************************************/
@@ -86,7 +86,7 @@ class SolutionFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    SolutionFunction(const Plato::SpatialModel& aSpatialModel,
+    SolutionFunction(const plato::domain::SpatialModel& aSpatialModel,
                      Plato::DataMap& aDataMap,
                      Teuchos::ParameterList& aProblemParams,
                      const std::string& aName);

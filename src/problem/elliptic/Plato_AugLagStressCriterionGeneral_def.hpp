@@ -33,11 +33,11 @@ template <typename EvaluationType>
 void AugLagStressCriterionGeneral<EvaluationType>::initialize(Teuchos::ParameterList& aInputParams)
 {
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aInputParams);
-    auto tMaterialModel = tMaterialModelFactory.create(mSpatialDomain.getMaterialName());
+    auto tMaterialModel = tMaterialModelFactory.create(mSpatialDomain.materialName());
     mCellStiffMatrix = tMaterialModel->getStiffnessMatrix();
 
     Teuchos::ParameterList tMaterialModelsInputs = aInputParams.sublist("Material Models");
-    Teuchos::ParameterList tMaterialModelInputs = tMaterialModelsInputs.sublist(mSpatialDomain.getMaterialName());
+    Teuchos::ParameterList tMaterialModelInputs = tMaterialModelsInputs.sublist(mSpatialDomain.materialName());
     mCellMaterialDensity = tMaterialModelInputs.get<Plato::Scalar>("Density", 1.0);
 
     this->readInputs(aInputParams);
@@ -85,10 +85,11 @@ void AugLagStressCriterionGeneral<EvaluationType>::updateAugLagPenaltyMultiplier
  * \param [in] aInputParams input parameters database
  **********************************************************************************/
 template <typename EvaluationType>
-AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(const Plato::SpatialDomain& aSpatialDomain,
-                                                                           Plato::DataMap& aDataMap,
-                                                                           Teuchos::ParameterList& aInputParams,
-                                                                           const std::string& aFuncName)
+AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(
+    const plato::domain::SpatialDomain& aSpatialDomain,
+    Plato::DataMap& aDataMap,
+    Teuchos::ParameterList& aInputParams,
+    const std::string& aFuncName)
     : FunctionBaseType(aSpatialDomain, aDataMap, aInputParams, aFuncName),
       mPenalty(3),
       mStressLimit(1),
@@ -101,7 +102,7 @@ AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(const
       mMassNormalizationMultiplier(1.0),
       mInitialLagrangeMultipliersValue(0.01),
       mAugLagPenaltyExpansionMultiplier(1.05),
-      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.Mesh->NumElements())
+      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.mMesh->NumElements())
 {
     this->initialize(aInputParams);
     this->computeStructuralMass();
@@ -114,8 +115,8 @@ AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(const
  * \param [in] aDataMap PLATO Engine and Analyze data map
  **********************************************************************************/
 template <typename EvaluationType>
-AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(const Plato::SpatialDomain& aSpatialDomain,
-                                                                           Plato::DataMap& aDataMap)
+AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(
+    const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
     : FunctionBaseType(aSpatialDomain, aDataMap, "Stress Constraint"),
       mPenalty(3),
       mStressLimit(1),
@@ -128,7 +129,7 @@ AugLagStressCriterionGeneral<EvaluationType>::AugLagStressCriterionGeneral(const
       mMassNormalizationMultiplier(1.0),
       mInitialLagrangeMultipliersValue(0.01),
       mAugLagPenaltyExpansionMultiplier(1.05),
-      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.Mesh->NumElements())
+      mLagrangeMultipliers("Lagrange Multipliers", aSpatialDomain.mMesh->NumElements())
 {
     Plato::blas1::fill(mInitialLagrangeMultipliersValue, mLagrangeMultipliers);
 }
@@ -443,7 +444,7 @@ void AugLagStressCriterionGeneral<EvaluationType>::computeStructuralMass()
 {
     auto tNumCells = mSpatialDomain.numCells();
 
-    Plato::NodeCoordinate<mNumSpatialDims, mNumNodesPerCell> tCoordinates(mSpatialDomain.Mesh);
+    Plato::NodeCoordinate<mNumSpatialDims, mNumNodesPerCell> tCoordinates(mSpatialDomain.mMesh);
     Plato::ScalarArray3D tConfig("configuration", tNumCells, mNumNodesPerCell, mNumSpatialDims);
     Plato::workset_config_scalar<mNumSpatialDims, mNumNodesPerCell>(tNumCells, tCoordinates, tConfig);
 

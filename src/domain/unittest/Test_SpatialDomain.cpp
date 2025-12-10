@@ -1,13 +1,12 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
-#include <filesystem>
 #include <string_view>
 
 #include "domain/SpatialModel.hpp"
 #include "mesh/PlatoMesh.hpp"
 #include "test_utilities/PlatoMeshTestHelpers.hpp"
 
-namespace PlatoUnitTests
+namespace plato::domain::unittest
 {
 namespace
 {
@@ -31,44 +30,51 @@ auto spatial_model_with_ignore_mismatch_parameter(const std::string_view aIgnore
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoreMissingElementBlocks)
 {
     constexpr auto tIgnoreMismatchParameterName = std::string_view{"Ignore Missing Element Blocks"};
-    TEST_ASSERT(Plato::SpatialModel::ignoreMissingElementBlocks(
+    TEST_ASSERT(ignore_missing_element_blocks(
         spatial_model_with_ignore_mismatch_parameter(tIgnoreMismatchParameterName, true)));
-    TEST_ASSERT(!Plato::SpatialModel::ignoreMissingElementBlocks(
+    TEST_ASSERT(!ignore_missing_element_blocks(
         spatial_model_with_ignore_mismatch_parameter(tIgnoreMismatchParameterName, false)));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoreMissingElementBlocksDefault)
 {
-    TEST_ASSERT(!Plato::SpatialModel::ignoreMissingElementBlocks(
+    TEST_ASSERT(!ignore_missing_element_blocks(
         spatial_model_with_ignore_mismatch_parameter("Ignore Missing Element Blocks Wrong name", false)));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainElementBlockName)
 {
     const auto tParameterList = domain_parameter_list("Element Block", "octopus");
-    const auto tBlockName = Plato::SpatialDomain::elementBlockName(tParameterList);
+    const auto tBlockName = detail::element_block_name(tParameterList);
     TEST_ASSERT(tBlockName.has_value());
     TEST_EQUALITY(tBlockName.value(), "octopus");
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainElementBlockNameDoesNotExist)
 {
-    const auto tParameterList = domain_parameter_list("Element Bloke", "squid");
-    TEST_ASSERT(!Plato::SpatialDomain::elementBlockName(tParameterList).has_value());
+    const auto tParameterList = domain_parameter_list("TYPO Element Bloke", "squid");
+    TEST_ASSERT(!detail::element_block_name(tParameterList).has_value());
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainMeshHasElementBlock)
 {
     const auto tMesh = Plato::TestHelpers::TwoBlockTriMeshRAII{};
-    const auto tParameterList = domain_parameter_list("Element Block", "BLOCK_1");
-    TEST_ASSERT(Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, tParameterList));
+    const auto tBlockName = std::string{"BLOCK_1"};
+    TEST_ASSERT(detail::element_block_exists_in_mesh(tMesh.mMesh, tBlockName));
+}
+
+TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainStdOptional)
+{
+    const auto tMesh = Plato::TestHelpers::TwoBlockTriMeshRAII{};
+    const std::optional<std::string> tBlockName = std::nullopt;
+    TEST_ASSERT(!detail::element_block_exists_in_mesh(tMesh.mMesh, tBlockName));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialDomainMeshWrongElementBlockTag)
 {
     const auto tMesh = Plato::TestHelpers::TwoBlockTriMeshRAII{};
-    const auto tParameterList = domain_parameter_list("Element Bloke", "BLOCK_1");
-    TEST_ASSERT(!Plato::SpatialDomain::elementBlockExistsInMesh(tMesh.mMesh, tParameterList));
+    const auto tBlockName = std::string{"TYPO_BLOCK_1"};
+    TEST_ASSERT(!detail::element_block_exists_in_mesh(tMesh.mMesh, tBlockName));
 }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoresMissingBlocks)
@@ -93,13 +99,15 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, SpatialModelIgnoresMissingBlocks)
         "</ParameterList>\n"};
     const auto tParameterList = Teuchos::getParametersFromXmlString(tInput);
     auto tDataMap = Plato::DataMap{};
-    const auto tSpatialModel = Plato::SpatialModel{tMesh.mMesh, *tParameterList, tDataMap};
+    const auto tParsedDomains = plato::domain::parse_domains(*tParameterList, tMesh.mMesh);
+    const auto tSpatialModel = plato::domain::SpatialModel{tMesh.mMesh, tParsedDomains, tDataMap};
 
     constexpr auto tExpectedNumberOfDomains = 1U;
-    TEST_EQUALITY_CONST(tSpatialModel.Domains.size(), tExpectedNumberOfDomains);
+    TEST_EQUALITY_CONST(tSpatialModel.mDomains.size(), tExpectedNumberOfDomains);
 
     tParameterList->sublist("Spatial Model").get<bool>("Ignore Missing Element Blocks") = false;
-    TEST_THROW(Plato::SpatialModel(tMesh.mMesh, *tParameterList, tDataMap), std::runtime_error);
+    TEST_THROW(const auto tParsedDomains = plato::domain::parse_domains(*tParameterList, tMesh.mMesh);
+               , std::runtime_error);
 }
 
-}  // namespace PlatoUnitTests
+}  // namespace plato::domain::unittest

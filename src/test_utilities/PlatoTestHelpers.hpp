@@ -203,7 +203,7 @@ const Teuchos::RCP<Teuchos::ParameterList> getSolverParametersForHelmholtzTest()
 ///
 /// @tparam CreateCriterion callable for constructing an instance of the criterion object.
 ///         Must have the following signature:
-///         ScalarFunctionBase(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap,
+///         ScalarFunctionBase(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap,
 ///         Teuchos::ParameterList& aParameterList)
 template <typename ElementType, typename CreateCriterion>
 Plato::Scalar compute_criterion_over_mesh(const CreateCriterion& aCreateCriterion,
@@ -213,7 +213,8 @@ Plato::Scalar compute_criterion_over_mesh(const CreateCriterion& aCreateCriterio
                                           const Plato::ScalarVector& aControl)
 {
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, aParameterList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(aParameterList, aMesh);
+    plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
     const auto tCriterion = aCreateCriterion(tSpatialModel, tDataMap, aParameterList);
 
     return tCriterion.value(aSolution, aControl);

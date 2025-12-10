@@ -49,7 +49,7 @@ class EffectiveEnergy : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    EffectiveEnergy(const Plato::SpatialDomain& aSpatialDomain,
+    EffectiveEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                     Plato::DataMap& aDataMap,
                     Teuchos::ParameterList& aProblemParams,
                     Teuchos::ParameterList& aPenaltyParams,

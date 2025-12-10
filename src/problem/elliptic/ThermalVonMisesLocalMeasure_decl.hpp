@@ -43,7 +43,7 @@ class ThermalVonMisesLocalMeasure : public AbstractLocalMeasure<EvaluationType>
      * \param [in] aInputParams input parameters database
      * \param [in] aName local measure name
      **********************************************************************************/
-    ThermalVonMisesLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
+    ThermalVonMisesLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
                                 Plato::DataMap& aDataMap,
                                 Teuchos::ParameterList& aInputParams,
                                 const std::string& aName);

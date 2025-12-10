@@ -20,10 +20,10 @@ template <typename EvaluationType>
 class AbstractScalarFunction
 {
    protected:
-    const Plato::SpatialDomain& mSpatialDomain; /*!< Plato spatial model */
-    Plato::DataMap& mDataMap;                   /*!< Plato Analyze data map */
-    const std::string mFunctionName;            /*!< my abstract scalar function name */
-    bool mCompute;                              /*!< if true, include in evaluation */
+    const plato::domain::SpatialDomain& mSpatialDomain; /*!< Plato spatial model */
+    Plato::DataMap& mDataMap;                           /*!< Plato Analyze data map */
+    const std::string mFunctionName;                    /*!< my abstract scalar function name */
+    bool mCompute;                                      /*!< if true, include in evaluation */
 
    public:
     using AbstractType = typename Plato::Elliptic::AbstractScalarFunction<EvaluationType>;
@@ -36,13 +36,13 @@ class AbstractScalarFunction
      * \param [in] aInputs Problem input.  Used to set up active domains.
      * \param [in] aName my abstract scalar function name
      **********************************************************************************/
-    AbstractScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+    AbstractScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aInputs,
                            const std::string& aName)
         : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap), mFunctionName(aName), mCompute(true)
     {
-        std::string tCurrentDomainName = aSpatialDomain.getDomainName();
+        std::string tCurrentDomainName = aSpatialDomain.domainName();
 
         auto tMyCriteria = aInputs.sublist("Criteria").sublist(aName);
         std::vector<std::string> tDomains = Plato::teuchos::parse_array<std::string>("Domains", tMyCriteria);
@@ -65,7 +65,7 @@ class AbstractScalarFunction
      * \param [in] aDataMap PLATO Engine and PLATO Analyze data map
      * \param [in] aName my abstract scalar function name
      **********************************************************************************/
-    AbstractScalarFunction(const Plato::SpatialDomain& aSpatialDomain,
+    AbstractScalarFunction(const plato::domain::SpatialDomain& aSpatialDomain,
                            Plato::DataMap& aDataMap,
                            const std::string& aName)
         : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap), mFunctionName(aName), mCompute(true)

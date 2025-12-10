@@ -29,7 +29,7 @@ class WeightedSumFunction : public Plato::Geometric::ScalarFunctionBase,
     std::vector<Plato::Scalar> mFunctionWeights;
     std::vector<std::shared_ptr<Plato::Geometric::ScalarFunctionBase>> mScalarFunctionBaseContainer;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap;
 
@@ -51,7 +51,7 @@ class WeightedSumFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    WeightedSumFunction(const Plato::SpatialModel& aSpatialModel,
+    WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel,
                         Plato::DataMap& aDataMap,
                         Teuchos::ParameterList& aProblemParams,
                         std::string& aName);
@@ -62,7 +62,7 @@ class WeightedSumFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aDataMap Plato Analyze data map
      **********************************************************************************/
-    WeightedSumFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

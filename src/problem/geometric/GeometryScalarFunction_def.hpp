@@ -22,9 +22,9 @@ void GeometryScalarFunction<GeometryT>::initialize(Teuchos::ParameterList& aProb
     auto tFunctionParams = aProblemParams.sublist("Criteria").sublist(mFunctionName);
     auto tFunctionType = tFunctionParams.get<std::string>("Scalar Function Type", "");
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         mValueFunctions[tName] = tFactory.template createScalarFunction<Residual>(tDomain, mDataMap, aProblemParams,
                                                                                   tFunctionType, mFunctionName);
@@ -44,11 +44,11 @@ void GeometryScalarFunction<GeometryT>::initialize(Teuchos::ParameterList& aProb
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename GeometryT>
-GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const Plato::SpatialModel& aSpatialModel,
+GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap,
                                                           Teuchos::ParameterList& aProblemParams,
                                                           const std::string& aName)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -62,9 +62,9 @@ GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const Plato::SpatialMo
  * \param [in] aMesh mesh database
  **********************************************************************************/
 template <typename GeometryT>
-GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const Plato::SpatialModel& aSpatialModel,
+GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Undefined Name")
@@ -115,10 +115,10 @@ void GeometryScalarFunction<GeometryT>::setEvaluator(const GradientXFunction& aI
 template <typename GeometryT>
 void GeometryScalarFunction<GeometryT>::updateProblem(const Plato::ScalarVector& aControl) const
 {
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         Plato::ScalarMultiVector tControlWS("control workset", tNumCells, mNumNodesPerCell);
         Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
@@ -146,10 +146,10 @@ Plato::Scalar GeometryScalarFunction<GeometryT>::value(const Plato::ScalarVector
     using ResultScalar = typename Residual::ResultScalarType;
 
     Plato::Scalar tReturnVal(0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         // workset control
         //
@@ -175,11 +175,11 @@ Plato::Scalar GeometryScalarFunction<GeometryT>::value(const Plato::ScalarVector
         tReturnVal += Plato::local_result_sum<Plato::Scalar>(tNumCells, tResult);
     }
 
-    auto tFirstBlock = mSpatialModel.Domains.front();
-    auto tFirstBlockName = tFirstBlock.getDomainName();
+    auto tFirstBlock = mSpatialModel.mDomains.front();
+    auto tFirstBlockName = tFirstBlock.domainName();
     if (mValueFunctions.at(tFirstBlockName)->hasBoundaryTerm())
     {
-        auto tNumCells = mSpatialModel.Mesh->NumElements();
+        auto tNumCells = mSpatialModel.mMesh->NumElements();
 
         // workset control
         //
@@ -203,7 +203,7 @@ Plato::Scalar GeometryScalarFunction<GeometryT>::value(const Plato::ScalarVector
         //
         tReturnVal += Plato::local_result_sum<Plato::Scalar>(tNumCells, tResult);
     }
-    auto tName = mSpatialModel.Domains[0].getDomainName();
+    auto tName = mSpatialModel.mDomains[0].domainName();
     mValueFunctions.at(tName)->postEvaluate(tReturnVal);
 
     return tReturnVal;
@@ -226,10 +226,10 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_x(const Plato::S
 
     Plato::Scalar tValue(0.0);
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         // workset control
         //
@@ -257,11 +257,11 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_x(const Plato::S
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
 
-    auto tFirstBlock = mSpatialModel.Domains.front();
-    auto tFirstBlockName = tFirstBlock.getDomainName();
+    auto tFirstBlock = mSpatialModel.mDomains.front();
+    auto tFirstBlockName = tFirstBlock.domainName();
     if (mValueFunctions.at(tFirstBlockName)->hasBoundaryTerm())
     {
-        auto tNumCells = mSpatialModel.Mesh->NumElements();
+        auto tNumCells = mSpatialModel.mMesh->NumElements();
 
         // workset control
         //
@@ -289,7 +289,7 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_x(const Plato::S
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
     // Note: below uses the 'postEvaluate()' function of the first block.
-    auto tName = mSpatialModel.Domains[0].getDomainName();
+    auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientXFunctions.at(tName)->postEvaluate(tObjGradientX, tValue);
 
     return tObjGradientX;
@@ -311,10 +311,10 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_z(const Plato::S
     Plato::ScalarVector tObjGradientZ("objective gradient control", mNumNodes);
 
     Plato::Scalar tValue(0.0);
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         // workset control
         //
@@ -341,11 +341,11 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_z(const Plato::S
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
 
-    auto tFirstBlock = mSpatialModel.Domains.front();
-    auto tFirstBlockName = tFirstBlock.getDomainName();
+    auto tFirstBlock = mSpatialModel.mDomains.front();
+    auto tFirstBlockName = tFirstBlock.domainName();
     if (mValueFunctions.at(tFirstBlockName)->hasBoundaryTerm())
     {
-        auto tNumCells = mSpatialModel.Mesh->NumElements();
+        auto tNumCells = mSpatialModel.mMesh->NumElements();
 
         // workset control
         //
@@ -371,7 +371,7 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_z(const Plato::S
 
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
-    auto tName = mSpatialModel.Domains[0].getDomainName();
+    auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientZFunctions.at(tName)->postEvaluate(tObjGradientZ, tValue);
 
     return tObjGradientZ;

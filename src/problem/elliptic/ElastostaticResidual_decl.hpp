@@ -68,7 +68,7 @@ class ElastostaticResidual : public EvaluationType::ElementType,
      * \param [in] aProblemParams input parameters for overall problem
      * \param [in] aPenaltyParams input parameters for penalty function
      **********************************************************************************/
-    ElastostaticResidual(const Plato::SpatialDomain& aSpatialDomain,
+    ElastostaticResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                          Plato::DataMap& aDataMap,
                          Teuchos::ParameterList& aProblemParams,
                          Teuchos::ParameterList& aPenaltyParams);
@@ -114,7 +114,7 @@ class ElastostaticResidual : public EvaluationType::ElementType,
      * Nomenclature: C = number of cells, DOF = number of degrees of freedom per cell
      * N = number of nodes per cell, D = spatial dimensions
      **********************************************************************************/
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                            const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
@@ -127,7 +127,7 @@ class ElastostaticResidual : public EvaluationType::ElementType,
      * \param [in] aCauchyStress Cauchy stress tensor
      **************************************************************************/
     void outputVonMises(const Plato::ScalarMultiVectorT<ResultScalarType>& aCauchyStress,
-                        const Plato::SpatialDomain& aSpatialDomain) const;
+                        const plato::domain::SpatialDomain& aSpatialDomain) const;
 };
 // class ElastostaticResidual
 

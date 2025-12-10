@@ -38,7 +38,7 @@ class MultipointConstraints
      \brief Constructor that parses and creates a vector of MultipointConstraint objects
      based on the ParameterList.
      */
-    MultipointConstraints(const Plato::SpatialModel& aSpatialModel,
+    MultipointConstraints(const plato::domain::SpatialModel& aSpatialModel,
                           const OrdinalType& aNumDofsPerNode,
                           Teuchos::ParameterList& aParams);
 

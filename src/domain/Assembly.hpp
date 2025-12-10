@@ -85,7 +85,7 @@ inline void flatten_vector_workset(const Plato::OrdinalType& aNumCells, AViewTyp
  * \param [in/out] aOutput   output vector (NumCells * LocalNumCellDofs)
  **********************************************************************************/
 template <Plato::OrdinalType NumDofsPerCell, class AViewType, class BViewType>
-inline void flatten_vector_workset(const Plato::SpatialDomain& aDomain, AViewType& aInput, BViewType& aOutput)
+inline void flatten_vector_workset(const plato::domain::SpatialDomain& aDomain, AViewType& aInput, BViewType& aOutput)
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
@@ -129,7 +129,7 @@ inline void flatten_vector_workset(const Plato::SpatialDomain& aDomain, AViewTyp
  * \param [in/out] aOutput   output vector (NumCells * LocalNumCellDofs)
  **********************************************************************************/
 template <Plato::OrdinalType NumDofsPerCell, class ViewType>
-inline void assemble_vector_workset(const Plato::SpatialDomain& aDomain, ViewType& aInput, ViewType& aOutput)
+inline void assemble_vector_workset(const plato::domain::SpatialDomain& aDomain, ViewType& aInput, ViewType& aOutput)
 {
     auto tNumCells = aDomain.numCells();
     auto tCellOrdinals = aDomain.cellOrdinals();
@@ -173,7 +173,7 @@ inline void assemble_vector_workset(const Plato::SpatialDomain& aDomain, ViewTyp
  *
  ********************************************************************************/
 template <Plato::OrdinalType NumDofsPerCell, typename ADType>
-inline void transform_ad_type_to_pod_1Dview(const Plato::SpatialDomain& aDomain,
+inline void transform_ad_type_to_pod_1Dview(const plato::domain::SpatialDomain& aDomain,
                                             const Plato::ScalarVectorT<ADType>& aInput,
                                             Plato::ScalarVector& aOutput)
 {
@@ -243,7 +243,7 @@ inline void transform_ad_type_to_pod_2Dview(const Plato::ScalarVectorT<ADType>& 
  *
  ********************************************************************************/
 template <Plato::OrdinalType NumDofsPerCell, typename ADType>
-inline void transform_ad_type_to_pod_2Dview(const Plato::SpatialDomain& aDomain,
+inline void transform_ad_type_to_pod_2Dview(const plato::domain::SpatialDomain& aDomain,
                                             const Plato::ScalarVectorT<ADType>& aInput,
                                             Plato::ScalarMultiVector& aOutput)
 {
@@ -285,7 +285,7 @@ inline void transform_ad_type_to_pod_2Dview(const Plato::SpatialDomain& aDomain,
  *
  ********************************************************************************/
 template <Plato::OrdinalType NumRowsPerCell, Plato::OrdinalType NumColsPerCell, typename ADType>
-inline void transform_ad_type_to_pod_3Dview(const Plato::SpatialDomain& aDomain,
+inline void transform_ad_type_to_pod_3Dview(const plato::domain::SpatialDomain& aDomain,
                                             const Plato::ScalarMultiVectorT<ADType>& aInput,
                                             Plato::ScalarArray3D& aOutput)
 {
@@ -503,7 +503,7 @@ template <Plato::OrdinalType NumNodesPerCell,
           class EntryOrdinal,
           class Gradient,
           class ReturnVal>
-inline void assemble_vector_gradient_fad(const Plato::SpatialDomain& aDomain,
+inline void assemble_vector_gradient_fad(const plato::domain::SpatialDomain& aDomain,
                                          const EntryOrdinal& aEntryOrdinal,
                                          const Gradient& aGradient,
                                          ReturnVal& aOutput)
@@ -612,7 +612,7 @@ inline void assemble_scalar_gradient_fad(const Plato::OrdinalType& aNumCells,
  *
  *****************************************************************************/
 template <Plato::OrdinalType NumNodesPerCell, class EntryOrdinal, class Gradient, class ReturnVal>
-inline void assemble_scalar_gradient_fad(const Plato::SpatialDomain& aDomain,
+inline void assemble_scalar_gradient_fad(const plato::domain::SpatialDomain& aDomain,
                                          const EntryOrdinal& aEntryOrdinal,
                                          const Gradient& aGradient,
                                          ReturnVal& aOutput)
@@ -649,7 +649,7 @@ inline void assemble_scalar_gradient_fad(const Plato::SpatialDomain& aDomain,
  *
  *******************************************************************************/
 template <Plato::OrdinalType NumNodesPerCell, class ControlEntryOrdinal, class Control, class ControlWS>
-inline void workset_control_scalar_scalar(const Plato::SpatialDomain& aDomain,
+inline void workset_control_scalar_scalar(const plato::domain::SpatialDomain& aDomain,
                                           const ControlEntryOrdinal& aControlEntryOrdinal,
                                           const Control& aControl,
                                           ControlWS& aControlWS)
@@ -724,7 +724,7 @@ template <Plato::OrdinalType NumNodesPerCell,
           class ControlEntryOrdinal,
           class Control,
           class FadControlWS>
-inline void workset_control_scalar_fad(const Plato::SpatialDomain& aDomain,
+inline void workset_control_scalar_fad(const plato::domain::SpatialDomain& aDomain,
                                        const ControlEntryOrdinal& aControlEntryOrdinal,
                                        const Control& aControl,
                                        FadControlWS& aFadControlWS)
@@ -805,7 +805,7 @@ template <Plato::OrdinalType NumDofsPerNode,
           class StateEntryOrdinal,
           class State,
           class StateWS>
-inline void workset_state_scalar_scalar(const Plato::SpatialDomain& aDomain,
+inline void workset_state_scalar_scalar(const plato::domain::SpatialDomain& aDomain,
                                         const StateEntryOrdinal& aStateEntryOrdinal,
                                         const State& aState,
                                         StateWS& aStateWS)
@@ -894,7 +894,7 @@ template <Plato::OrdinalType NumDofsPerNode,
           class StateEntryOrdinal,
           class State,
           class FadStateWS>
-inline void workset_state_scalar_fad(const Plato::SpatialDomain& aDomain,
+inline void workset_state_scalar_fad(const plato::domain::SpatialDomain& aDomain,
                                      const StateEntryOrdinal& aStateEntryOrdinal,
                                      const State& aState,
                                      FadStateWS& aFadStateWS)
@@ -1040,7 +1040,7 @@ inline void workset_local_state_scalar_fad(const Plato::OrdinalType& aNumCells,
  *
  *******************************************************************************/
 template <Plato::OrdinalType NumLocalStatesPerGP, class State, class StateWS>
-inline void workset_local_state_scalar_scalar(const Plato::SpatialDomain& aDomain,
+inline void workset_local_state_scalar_scalar(const plato::domain::SpatialDomain& aDomain,
                                               const State& aState,
                                               StateWS& aStateWS)
 {
@@ -1074,7 +1074,7 @@ inline void workset_local_state_scalar_scalar(const Plato::SpatialDomain& aDomai
  *
  *******************************************************************************/
 template <Plato::OrdinalType NumLocalStatesPerGP, class StateFad, class State, class FadStateWS>
-inline void workset_local_state_scalar_fad(const Plato::SpatialDomain& aDomain,
+inline void workset_local_state_scalar_fad(const plato::domain::SpatialDomain& aDomain,
                                            const State& aState,
                                            FadStateWS& aFadStateWS)
 {
@@ -1109,7 +1109,7 @@ inline void workset_local_state_scalar_fad(const Plato::SpatialDomain& aDomain,
  *
  *******************************************************************************/
 template <Plato::OrdinalType SpaceDim, Plato::OrdinalType NumNodesPerCell, class ConfigWS, class NodeCoordinates>
-inline void workset_config_scalar(const Plato::SpatialDomain& aDomain,
+inline void workset_config_scalar(const plato::domain::SpatialDomain& aDomain,
                                   const NodeCoordinates& aNodeCoordinate,
                                   ConfigWS& aConfigWS)
 {
@@ -1187,7 +1187,7 @@ template <Plato::OrdinalType SpaceDim,
           class ConfigFad,
           class FadConfigWS,
           class NodeCoordinates>
-inline void workset_config_fad(const Plato::SpatialDomain& aDomain,
+inline void workset_config_fad(const plato::domain::SpatialDomain& aDomain,
                                const NodeCoordinates& aNodeCoordinate,
                                FadConfigWS& aFadConfigWS)
 {
@@ -1273,7 +1273,7 @@ template <Plato::OrdinalType NumNodesPerCell,
           class StateEntryOrdinal,
           class Residual,
           class ReturnVal>
-inline void assemble_residual(const Plato::SpatialDomain& aDomain,
+inline void assemble_residual(const plato::domain::SpatialDomain& aDomain,
                               const StateEntryOrdinal& aStateEntryOrdinal,
                               const Residual& aResidual,
                               ReturnVal& aReturnValue)
@@ -1434,7 +1434,7 @@ inline void assemble_jacobian_transpose_pod(Plato::OrdinalType aNumCells,
  *
  *******************************************************************************/
 template <class MatrixEntriesOrdinal, class Jacobian, class ReturnVal>
-inline void assemble_jacobian_fad(const Plato::SpatialDomain& aDomain,
+inline void assemble_jacobian_fad(const plato::domain::SpatialDomain& aDomain,
                                   Plato::OrdinalType aNumRowsPerCell,
                                   Plato::OrdinalType aNumColumnsPerCell,
                                   const MatrixEntriesOrdinal& aMatrixEntryOrdinal,
@@ -1575,7 +1575,7 @@ inline void assemble_jacobian_fad(Plato::OrdinalType aNumNodesPerFace,
  *
  *******************************************************************************/
 template <class MatrixEntriesOrdinal, class Jacobian, class ReturnVal>
-inline void assemble_transpose_jacobian(const Plato::SpatialDomain& aDomain,
+inline void assemble_transpose_jacobian(const plato::domain::SpatialDomain& aDomain,
                                         Plato::OrdinalType aNumRowsPerCell,
                                         Plato::OrdinalType aNumColumnsPerCell,
                                         const MatrixEntriesOrdinal& aMatrixEntryOrdinal,
@@ -1618,7 +1618,7 @@ inline void assemble_transpose_jacobian(const Plato::SpatialDomain& aDomain,
  *
  *******************************************************************************/
 template <class MatrixEntriesOrdinal, class Jacobian, class ReturnVal>
-inline void assemble_state_jacobian_transpose(const Plato::SpatialDomain& aDomain,
+inline void assemble_state_jacobian_transpose(const plato::domain::SpatialDomain& aDomain,
                                               Plato::OrdinalType aNumRowsPerCell,
                                               Plato::OrdinalType aNumColumnsPerCell,
                                               const MatrixEntriesOrdinal& aMatrixEntryOrdinal,

@@ -126,7 +126,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, readCSV)
         "</ParameterList>                                                            \n");
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::readInputData(*tParamList, tDataMap, tMesh);
 
@@ -238,7 +239,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, uniformSpatialBasis)
         "</ParameterList>                                                            \n");
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::readInputData(*tParamList, tDataMap, tMesh);
 

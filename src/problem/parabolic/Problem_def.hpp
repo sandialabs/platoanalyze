@@ -23,7 +23,7 @@ namespace Parabolic
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine)
     : AbstractProblem(aMesh, aProblemParams),
-      mSpatialModel(aMesh, aProblemParams, mDataMap),
+      mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
       mPDEConstraint(mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint")),
       mTrapezoidIntegrator(aProblemParams.sublist("Time Integration")),
       mNumSteps(Plato::ParseTools::getSubParam<int>(aProblemParams, "Time Integration", "Number Time Steps", 1)),
@@ -97,7 +97,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
     // parse boundary constraints
     //
     Plato::EssentialBCs<ElementType> tEssentialBoundaryConditions(
-        aProblemParams.sublist("Essential Boundary Conditions", false), mSpatialModel.Mesh);
+        aProblemParams.sublist("Essential Boundary Conditions", false), mSpatialModel.mMesh);
     tEssentialBoundaryConditions.get(mStateBcDofs, mStateBcValues);
 
     if (mMPCs)
@@ -211,7 +211,7 @@ void Problem<PhysicsType>::output(const std::string& aFilepath)
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();
     auto tSolutionOutput = mPDEConstraint.getSolutionStateOutputData(tSolution);
-    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.Mesh);
+    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.mMesh);
 }
 
 /******************************************************************************/

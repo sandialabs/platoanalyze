@@ -35,7 +35,7 @@ class ScalarFunctionBaseFactory
      * \param [in] aInputParams parameter input
      * \param [in] aFunctionName name of function in parameter list
      **********************************************************************************/
-    std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> create(const Plato::SpatialModel& aSpatialModel,
+    std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> create(const plato::domain::SpatialModel& aSpatialModel,
                                                                 Plato::DataMap& aDataMap,
                                                                 Teuchos::ParameterList& aInputParams,
                                                                 const std::string& aFunctionName) const;

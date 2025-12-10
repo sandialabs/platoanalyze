@@ -15,7 +15,7 @@ namespace Elliptic
 {
 
 template <typename EvaluationType, typename IndicatorFunctionType>
-FluxPNorm<EvaluationType, IndicatorFunctionType>::FluxPNorm(const Plato::SpatialDomain& aSpatialDomain,
+FluxPNorm<EvaluationType, IndicatorFunctionType>::FluxPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                                                             Plato::DataMap& aDataMap,
                                                             Teuchos::ParameterList& aProblemParams,
                                                             Teuchos::ParameterList& aPenaltyParams,
@@ -26,7 +26,7 @@ FluxPNorm<EvaluationType, IndicatorFunctionType>::FluxPNorm(const Plato::Spatial
 /**************************************************************************/
 {
     Plato::ThermalConductionModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-    mMaterialModel = mmfactory.create(mSpatialDomain.getMaterialName());
+    mMaterialModel = mmfactory.create(mSpatialDomain.materialName());
 
     auto params = aProblemParams.sublist("Criteria").get<Teuchos::ParameterList>(aFunctionName);
 

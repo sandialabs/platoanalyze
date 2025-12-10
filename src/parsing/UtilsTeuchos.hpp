@@ -148,12 +148,12 @@ inline Type parse_parameter(const std::string& aTag, const std::string& aBlock, 
 template <typename Type>
 inline Type parse_max_material_property(Teuchos::ParameterList& aInputs,
                                         const std::string& aProperty,
-                                        const std::vector<Plato::SpatialDomain>& aDomains)
+                                        const std::vector<plato::domain::SpatialDomain>& aDomains)
 {
     std::vector<Type> tProperties;
     for (auto& tDomain : aDomains)
     {
-        auto tMaterialName = tDomain.getMaterialName();
+        auto tMaterialName = tDomain.materialName();
         Plato::teuchos::is_material_defined(tMaterialName, aInputs);
         auto tMaterialParamList = aInputs.sublist("Material Models").sublist(tMaterialName);
         if (tMaterialParamList.isParameter(aProperty))
