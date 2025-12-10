@@ -16,7 +16,7 @@ namespace Parabolic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 InternalThermalEnergy<EvaluationType, IndicatorFunctionType>::InternalThermalEnergy(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams,
@@ -27,7 +27,7 @@ InternalThermalEnergy<EvaluationType, IndicatorFunctionType>::InternalThermalEne
 /**************************************************************************/
 {
     Plato::ThermalConductionModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-    mThermalConductivityMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+    mThermalConductivityMaterialModel = mmfactory.create(aSpatialDomain.materialName());
 }
 
 /**************************************************************************/

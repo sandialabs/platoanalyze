@@ -30,11 +30,11 @@ class DummyResidual
     using ResultScalarType = typename EvaluationType::ResultScalarType;
 
    public:
-    void evaluateIdentity(const Plato::SpatialModel& aSpatialModel,
+    void evaluateIdentity(const plato::domain::SpatialModel& aSpatialModel,
                           const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                           Plato::ScalarMultiVectorT<ResultScalarType>& aResult)
     {
-        auto tNumCells = aSpatialModel.Mesh->NumElements();
+        auto tNumCells = aSpatialModel.mMesh->NumElements();
 
         Kokkos::parallel_for(
             "identity residual", Kokkos::RangePolicy<int>(0, tNumCells),
@@ -51,11 +51,11 @@ class DummyResidual
             });
     }
 
-    void evaluateInterpolate(const Plato::SpatialModel& aSpatialModel,
+    void evaluateInterpolate(const plato::domain::SpatialModel& aSpatialModel,
                              const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                              Plato::ScalarMultiVectorT<ResultScalarType>& aResult)
     {
-        auto tNumCells = aSpatialModel.Mesh->NumElements();
+        auto tNumCells = aSpatialModel.mMesh->NumElements();
 
         auto tCubPoints = ElementType::getCubPoints();
         auto tCubWeights = ElementType::getCubWeights();
@@ -87,7 +87,7 @@ class DummyResidual
             });
     }
 
-    void evaluateNonlocal(const Plato::SpatialModel& aSpatialModel,
+    void evaluateNonlocal(const plato::domain::SpatialModel& aSpatialModel,
                           const std::string& aSideSet,
                           Plato::OrdinalType aContributingCell,
                           const Plato::ScalarMultiVectorT<StateScalarType>& aState,
@@ -95,8 +95,8 @@ class DummyResidual
     {
         // just evaluating displacement at cubature point of provided contributing cell ("parent element")
         // and interpolating over face side set face elements
-        auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(aSideSet);
-        auto tLocalNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(aSideSet);
+        auto tElementOrds = aSpatialModel.mMesh->GetSideSetElements(aSideSet);
+        auto tLocalNodeOrds = aSpatialModel.mMesh->GetSideSetLocalNodes(aSideSet);
         Plato::OrdinalType tNumFaces = tElementOrds.size();
 
         auto tCubaturePoints = ElementType::getCubPoints();
@@ -133,7 +133,7 @@ class DummyResidual
     }
 };
 
-Plato::SpatialModel setup_dummy_spatial_model(Plato::Mesh aMesh)
+plato::domain::SpatialModel setup_dummy_spatial_model(Plato::Mesh aMesh)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
         "<ParameterList name='Plato Problem'>                                           \n"
@@ -156,7 +156,8 @@ Plato::SpatialModel setup_dummy_spatial_model(Plato::Mesh aMesh)
         "</ParameterList>                                                               \n");
 
     Plato::DataMap tDataMap;
-    return Plato::SpatialModel(aMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, aMesh);
+    return plato::domain::SpatialModel(aMesh, tParsedDomains, tDataMap);
 }
 
 // #ifdef PLATO_MESHMAP
@@ -216,12 +217,13 @@ void check_element_type_is_tet(Plato::Mesh aMesh)
         ANALYZE_THROWERR("AssemblyTests: Mesh element type being used is not tet4")
 }
 
-Plato::SpatialModel setup_2box_spatial_model(Plato::Mesh aMesh)
+plato::domain::SpatialModel setup_2box_spatial_model(Plato::Mesh aMesh)
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = get_2box_mesh_params();
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, aMesh);
+    plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     check_element_type_is_tet(aMesh);
@@ -263,7 +265,7 @@ TEUCHOS_UNIT_TEST(BoxMeshWidth1Tests, BlockMatrixRowAndColumnMaps)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
-    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>(tSpatialModel);
@@ -297,7 +299,7 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
-    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>(tSpatialModel);
@@ -341,8 +343,8 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreIdentity)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
-    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
-    auto tDomain = tSpatialModel.Domains.front();  // only one domain
+    plato::domain::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
+    auto tDomain = tSpatialModel.mDomains.front();  // only one domain
     auto tNumCells = tDomain.numCells();
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
@@ -420,7 +422,7 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreShapeFunctions)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
-    Plato::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_dummy_spatial_model(tMesh);
     auto tNumCells = tMesh->NumElements();
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
@@ -518,7 +520,8 @@ TEUCHOS_UNIT_TEST(TwoBoxMeshWidth1Tests, BlockMatrixRowAndColumnMaps)
     auto tMesh = std::make_shared<Plato::EngineMesh>(tMeshName);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputs, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputs, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     check_element_type_is_tet(tMesh);
@@ -653,7 +656,7 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected_LocalOrdin
     constexpr int tNumDofsPerNode = ElementType::mNumDofsPerNode;
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
 
-    Plato::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>(tSpatialModel);
@@ -695,7 +698,7 @@ TEUCHOS_UNIT_TEST(BlockMatrixEntryOrdinalTests, OrdinalsMatchExpected_NonLocalOr
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
     constexpr int tNumNodesPerFace = ElementType::mNumNodesPerFace;
 
-    Plato::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
 
     Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
         Plato::CreateBlockMatrix<Plato::CrsMatrixType, tNumDofsPerNode, tNumDofsPerNode>(tSpatialModel);
@@ -758,7 +761,7 @@ TEUCHOS_UNIT_TEST(JacobianTestsWithContactGraph, ElementDerivativesAreShapeFunct
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
     constexpr int tNumDofsPerCell = ElementType::mNumDofsPerCell;
 
-    Plato::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
     auto tNumCells = tMesh->NumElements();
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
@@ -883,7 +886,7 @@ TEUCHOS_UNIT_TEST(JacobianTestsWithContactGraph,
     constexpr int tNumNodesPerCell = ElementType::mNumNodesPerCell;
     constexpr int tNumDofsPerCell = ElementType::mNumDofsPerCell;
 
-    Plato::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
+    plato::domain::SpatialModel tSpatialModel = setup_2box_spatial_model(tMesh);
     auto tNumCells = tMesh->NumElements();
 
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);

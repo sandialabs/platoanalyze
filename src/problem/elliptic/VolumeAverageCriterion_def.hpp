@@ -32,7 +32,7 @@ void VolumeAverageCriterion<PhysicsType>::initialize(Teuchos::ParameterList& aIn
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>>
-VolumeAverageCriterion<PhysicsType>::getVolumeFunction(const Plato::SpatialModel& aSpatialModel,
+VolumeAverageCriterion<PhysicsType>::getVolumeFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                        Teuchos::ParameterList& aInputParams)
 {
     std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>> tVolumeFunction =
@@ -42,9 +42,9 @@ VolumeAverageCriterion<PhysicsType>::getVolumeFunction(const Plato::SpatialModel
     typename PhysicsType::FunctionFactory tFactory;
     std::string tFunctionType = "volume average criterion denominator";
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<Residual>> tValue =
             tFactory.template createScalarFunction<Residual>(tDomain, mDataMap, aInputParams, tFunctionType,
@@ -80,7 +80,7 @@ VolumeAverageCriterion<PhysicsType>::getVolumeFunction(const Plato::SpatialModel
  * \param [in] aInputParams parameter list
  **********************************************************************************/
 template <typename PhysicsType>
-void VolumeAverageCriterion<PhysicsType>::createDivisionFunction(const Plato::SpatialModel& aSpatialModel,
+void VolumeAverageCriterion<PhysicsType>::createDivisionFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                                  Teuchos::ParameterList& aInputParams)
 {
     const std::string tNumeratorName = "Volume Average Criterion Numerator";
@@ -91,9 +91,9 @@ void VolumeAverageCriterion<PhysicsType>::createDivisionFunction(const Plato::Sp
     typename PhysicsType::FunctionFactory tFactory;
     std::string tFunctionType = "volume average criterion numerator";
 
-    for (const auto& tDomain : mSpatialModel.Domains)
+    for (const auto& tDomain : mSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
 
         std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<Residual>> tNumeratorValue =
             tFactory.template createScalarFunction<Residual>(tDomain, mDataMap, aInputParams, tFunctionType,
@@ -140,11 +140,11 @@ void VolumeAverageCriterion<PhysicsType>::createDivisionFunction(const Plato::Sp
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-VolumeAverageCriterion<PhysicsType>::VolumeAverageCriterion(const Plato::SpatialModel& aSpatialModel,
+VolumeAverageCriterion<PhysicsType>::VolumeAverageCriterion(const plato::domain::SpatialModel& aSpatialModel,
                                                             Plato::DataMap& aDataMap,
                                                             Teuchos::ParameterList& aInputParams,
                                                             const std::string& aName)
-    : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)

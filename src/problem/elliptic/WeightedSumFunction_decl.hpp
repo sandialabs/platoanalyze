@@ -35,7 +35,7 @@ class WeightedSumFunction : public Plato::Elliptic::ScalarFunctionBase,
     std::vector<Plato::Scalar> mFunctionWeights;
     std::vector<std::shared_ptr<Plato::Elliptic::ScalarFunctionBase>> mScalarFunctionBaseContainer;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap;
 
@@ -58,7 +58,7 @@ class WeightedSumFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    WeightedSumFunction(const Plato::SpatialModel& aSpatialModel,
+    WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel,
                         Plato::DataMap& aDataMap,
                         Teuchos::ParameterList& aProblemParams,
                         const std::string& aName);
@@ -68,7 +68,7 @@ class WeightedSumFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \brief Secondary weight sum function constructor, used for unit testing
      * \param [in] aSpatialModel Plato Analyze spatial model
      **********************************************************************************/
-    WeightedSumFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

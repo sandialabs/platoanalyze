@@ -16,18 +16,19 @@ namespace Elliptic
 {
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
-EffectiveEnergy<EvaluationType, IndicatorFunctionType>::EffectiveEnergy(const Plato::SpatialDomain& aSpatialDomain,
-                                                                        Plato::DataMap& aDataMap,
-                                                                        Teuchos::ParameterList& aProblemParams,
-                                                                        Teuchos::ParameterList& aPenaltyParams,
-                                                                        const std::string& aFunctionName)
+EffectiveEnergy<EvaluationType, IndicatorFunctionType>::EffectiveEnergy(
+    const plato::domain::SpatialDomain& aSpatialDomain,
+    Plato::DataMap& aDataMap,
+    Teuchos::ParameterList& aProblemParams,
+    Teuchos::ParameterList& aPenaltyParams,
+    const std::string& aFunctionName)
     : Plato::Elliptic::AbstractScalarFunction<EvaluationType>(aSpatialDomain, aDataMap, aProblemParams, aFunctionName),
       mIndicatorFunction(aPenaltyParams),
       mApplyWeighting(mIndicatorFunction)
 /**************************************************************************/
 {
     Plato::ElasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-    auto materialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+    auto materialModel = mmfactory.create(aSpatialDomain.materialName());
     mCellStiffness = materialModel->getStiffnessMatrix();
 
     Teuchos::ParameterList& tParams = aProblemParams.sublist("Criteria").sublist(aFunctionName);

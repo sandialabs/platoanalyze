@@ -33,7 +33,7 @@ class Problem : public Plato::AbstractProblem
 
     using VectorFunctionType = Plato::Parabolic::VectorFunction<PhysicsType>;
 
-    Plato::SpatialModel mSpatialModel; /*!< SpatialModel instance contains the mesh, meshsets, domains, etc. */
+    plato::domain::SpatialModel mSpatialModel; /*!< SpatialModel instance contains the mesh, meshsets, domains, etc. */
 
     VectorFunctionType mPDEConstraint;
 

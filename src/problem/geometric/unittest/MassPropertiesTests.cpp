@@ -70,10 +70,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Geometric::WeightedSumFunction<Plato::Geometrical<Plato::Tri3>> tWeightedSum(tSpatialModel, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     const Plato::Scalar tMaterialDensity = 0.5;
     const auto tCriterion = std::make_shared<Plato::Geometric::MassMoment<Residual>>(tOnlyDomain, tDataMap);
@@ -84,7 +85,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
         std::make_shared<Plato::Geometric::GeometryScalarFunction<Plato::Geometrical<Plato::Tri3>>>(tSpatialModel,
                                                                                                     tDataMap);
 
-    tGeometryScalarFunc->setEvaluator(tCriterion, tOnlyDomain.getDomainName());
+    tGeometryScalarFunc->setEvaluator(tCriterion, tOnlyDomain.domainName());
 
     const Plato::Scalar tFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tGeometryScalarFunc);
@@ -148,10 +149,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *params, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Geometric::WeightedSumFunction<Plato::Geometrical<Plato::Tet4>> tWeightedSum(tSpatialModel, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     const Plato::Scalar tMaterialDensity = 0.5;
     const auto tCriterion = std::make_shared<Plato::Geometric::MassMoment<Residual>>(tOnlyDomain, tDataMap);
@@ -162,7 +164,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume3D)
         std::make_shared<Plato::Geometric::GeometryScalarFunction<Plato::Geometrical<Plato::Tet4>>>(tSpatialModel,
                                                                                                     tDataMap);
 
-    tGeometryScalarFunc->setEvaluator(tCriterion, tOnlyDomain.getDomainName());
+    tGeometryScalarFunc->setEvaluator(tCriterion, tOnlyDomain.domainName());
 
     const Plato::Scalar tFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tGeometryScalarFunc);
@@ -224,7 +226,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     std::string tFuncName = "Mass Properties";
     Plato::Geometric::MassPropertiesFunction<Plato::Geometrical<Plato::Tet4>> tMassProperties(tSpatialModel, tDataMap,
                                                                                               *tParams, tFuncName);
@@ -284,7 +287,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3DNormalized)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     std::string tFuncName = "Mass Properties";
     Plato::Geometric::MassPropertiesFunction<Plato::Geometrical<Plato::Tet4>> tMassProperties(tSpatialModel, tDataMap,
                                                                                               *tParams, tFuncName);
@@ -342,7 +346,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesGradZ_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     std::string tFuncName = "Mass Properties";
     Plato::Geometric::MassPropertiesFunction<Plato::Geometrical<Plato::Tet4>> tMassProperties(tSpatialModel, tDataMap,
                                                                                               *tParams, tFuncName);

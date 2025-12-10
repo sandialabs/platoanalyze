@@ -65,7 +65,7 @@ class SurfacePressureIntegral final
               typename ControlScalarType,
               typename ConfigScalarType,
               typename ResultScalarType>
-    void operator()(const Plato::SpatialModel& aSpatialModel,
+    void operator()(const plato::domain::SpatialModel& aSpatialModel,
                     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
@@ -100,22 +100,22 @@ template <typename ElementType,
           Plato::OrdinalType DofOffset>
 template <typename StateScalarType, typename ControlScalarType, typename ConfigScalarType, typename ResultScalarType>
 void SurfacePressureIntegral<ElementType, NumDofs, DofsPerNode, DofOffset>::operator()(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
     const Plato::ScalarMultiVectorT<ResultScalarType>& aResult,
     Plato::Scalar aScale) const
 {
-    const auto tElementOrds = aSpatialModel.Mesh->GetSideSetElements(mSidesetName);
-    const auto tNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodes(mSidesetName);
-    const auto tConnectivity = aSpatialModel.Mesh->Connectivity();
+    const auto tElementOrds = aSpatialModel.mMesh->GetSideSetElements(mSidesetName);
+    const auto tNodeOrds = aSpatialModel.mMesh->GetSideSetLocalNodes(mSidesetName);
+    const auto tConnectivity = aSpatialModel.mMesh->Connectivity();
 
     const Plato::OrdinalType tNumFaces = tElementOrds.size();
 
     const Plato::WeightedNormalVector<ElementType> weightedNormalVector;
 
-    const auto tBoundaryData = mBCData->getScalarData(aSpatialModel.Mesh, mCurrentTime);
+    const auto tBoundaryData = mBCData->getScalarData(aSpatialModel.mMesh, mCurrentTime);
 
     const auto tCubatureWeights = ElementType::Face::getCubWeights();
     const auto tCubaturePoints = ElementType::Face::getCubPoints();

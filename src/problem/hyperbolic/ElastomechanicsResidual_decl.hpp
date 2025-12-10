@@ -53,7 +53,7 @@ class TransientMechanicsResidual : public EvaluationType::ElementType,
     std::vector<std::string> mPlotTable;
 
    public:
-    TransientMechanicsResidual(const Plato::SpatialDomain& aSpatialDomain,
+    TransientMechanicsResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                                Plato::DataMap& aDataMap,
                                Teuchos::ParameterList& aProblemParams,
                                Teuchos::ParameterList& aPenaltyParams);
@@ -89,7 +89,7 @@ class TransientMechanicsResidual : public EvaluationType::ElementType,
                              Plato::Scalar aTimeStep = 0.0,
                              Plato::Scalar aCurrentTime = 0.0) const;
 
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
                            const Plato::ScalarMultiVectorT<StateDotDotScalarType>& aStateDotDot,

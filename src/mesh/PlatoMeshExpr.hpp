@@ -76,7 +76,7 @@ void mapPoints(const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
 }
 /******************************************************************************/
 template <typename ElementType>
-void mapPoints(const Plato::SpatialDomain& aSpatialDomain,
+void mapPoints(const plato::domain::SpatialDomain& aSpatialDomain,
                Plato::ScalarMultiVector aRefPoints,
                Plato::ScalarArray3D aMappedPoints)
 /******************************************************************************/
@@ -87,7 +87,7 @@ void mapPoints(const Plato::SpatialDomain& aSpatialDomain,
     Kokkos::deep_copy(aMappedPoints, Plato::Scalar(0.0));  // initialize to 0
 
     Plato::NodeCoordinate<ElementType::mNumSpatialDims, ElementType::mNumNodesPerCell> tNodeCoordinate(
-        aSpatialDomain.Mesh);
+        aSpatialDomain.mMesh);
 
     auto tCellOrdinals = aSpatialDomain.cellOrdinals();
     Kokkos::parallel_for(
@@ -119,18 +119,18 @@ void mapPoints(const Plato::SpatialDomain& aSpatialDomain,
 
 /******************************************************************************/
 template <typename ElementType>
-void mapPoints(const Plato::SpatialModel& aSpatialModel,
+void mapPoints(const plato::domain::SpatialModel& aSpatialModel,
                Plato::ScalarMultiVector aRefPoints,
                Plato::ScalarArray3D aMappedPoints)
 /******************************************************************************/
 {
-    Plato::OrdinalType tNumCells = aSpatialModel.Mesh->NumElements();
+    Plato::OrdinalType tNumCells = aSpatialModel.mMesh->NumElements();
     Plato::OrdinalType tNumPoints = aMappedPoints.extent(1);
 
     Kokkos::deep_copy(aMappedPoints, Plato::Scalar(0.0));  // initialize to 0
 
     Plato::NodeCoordinate<ElementType::mNumSpatialDims, ElementType::mNumNodesPerCell> tNodeCoordinate(
-        &(aSpatialModel.Mesh));
+        &(aSpatialModel.mMesh));
 
     Kokkos::parallel_for(
         Kokkos::RangePolicy<>(0, tNumCells), KOKKOS_LAMBDA(Plato::OrdinalType aCellOrdinal) {
@@ -163,7 +163,7 @@ void mapPoints(const Plato::SpatialModel& aSpatialModel,
  * \brief compute function values at gauss points
  **********************************************************************************/
 template <typename ConfigScalarType, typename ElementType>
-Plato::ScalarVectorT<ConfigScalarType> computeSpatialWeights(const Plato::SpatialDomain& aSpatialDomain,
+Plato::ScalarVectorT<ConfigScalarType> computeSpatialWeights(const plato::domain::SpatialDomain& aSpatialDomain,
                                                              const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
                                                              const std::string& aFunction)
 {

@@ -94,9 +94,9 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetControl(const Plato::ScalarVectorT<Plato::Scalar>& aControl,
                         Plato::ScalarMultiVectorT<Plato::Scalar>& aControlWS,
-                        const Plato::SpatialDomain& aDomain) const
+                        const plato::domain::SpatialDomain& aDomain) const
     {
-        if (aDomain.isFixedBlock())
+        if (aDomain.fixedBlock())
         {
             Plato::ScalarVector tFixedControl("fixed control", aControl.size());
             Plato::blas1::fill(1.0, tFixedControl);
@@ -131,9 +131,9 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetControl(const Plato::ScalarVectorT<Plato::Scalar>& aControl,
                         Plato::ScalarMultiVectorT<ControlFad>& aFadControlWS,
-                        const Plato::SpatialDomain& aDomain) const
+                        const plato::domain::SpatialDomain& aDomain) const
     {
-        if (aDomain.isFixedBlock())
+        if (aDomain.fixedBlock())
         {
             Plato::ScalarVector tFixedControl("fixed control", aControl.size());
             Plato::blas1::fill(1.0, tFixedControl);
@@ -169,7 +169,7 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetState(const Plato::ScalarVectorT<Plato::Scalar>& aState,
                       Plato::ScalarMultiVectorT<Plato::Scalar>& aStateWS,
-                      const Plato::SpatialDomain& aDomain) const
+                      const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_state_scalar_scalar<mNumDofsPerNode, mNumNodesPerCell>(aDomain, mGlobalStateEntryOrdinal, aState,
                                                                               aStateWS);
@@ -197,7 +197,7 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetState(const Plato::ScalarVectorT<Plato::Scalar>& aState,
                       Plato::ScalarMultiVectorT<StateFad>& aFadStateWS,
-                      const Plato::SpatialDomain& aDomain) const
+                      const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_state_scalar_fad<mNumDofsPerNode, mNumNodesPerCell, StateFad>(aDomain, mGlobalStateEntryOrdinal,
                                                                                      aState, aFadStateWS);
@@ -236,7 +236,7 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetLocalState(const Plato::ScalarArray3DT<Plato::Scalar>& aLocalState,
                            Plato::ScalarArray3DT<Plato::Scalar>& aLocalStateWS,
-                           const Plato::SpatialDomain& aDomain) const
+                           const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_local_state_scalar_scalar<mNumLocalStatesPerGP>(aDomain, aLocalState, aLocalStateWS);
     }
@@ -262,7 +262,7 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetLocalState(const Plato::ScalarArray3DT<Plato::Scalar>& aLocalState,
                            Plato::ScalarArray3DT<LocalStateFad>& aFadLocalStateWS,
-                           const Plato::SpatialDomain& aDomain) const
+                           const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_local_state_scalar_fad<mNumLocalDofsPerCell, LocalStateFad>(aDomain, aLocalState,
                                                                                    aFadLocalStateWS);
@@ -291,7 +291,7 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetNodeState(const Plato::ScalarVectorT<Plato::Scalar>& aState,
                           Plato::ScalarMultiVectorT<Plato::Scalar>& aNodeStateWS,
-                          const Plato::SpatialDomain& aDomain) const
+                          const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_state_scalar_scalar<mNumNodeStatePerNode, mNumNodesPerCell>(aDomain, mNodeStateEntryOrdinal,
                                                                                    aState, aNodeStateWS);
@@ -320,7 +320,7 @@ class WorksetBase : public ElementType
      **********************************************************************************/
     void worksetNodeState(const Plato::ScalarVectorT<Plato::Scalar>& aState,
                           Plato::ScalarMultiVectorT<NodeStateFad>& aFadStateWS,
-                          const Plato::SpatialDomain& aDomain) const
+                          const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_state_scalar_fad<mNumNodeStatePerNode, mNumNodesPerCell, NodeStateFad>(
             aDomain, mNodeStateEntryOrdinal, aState, aFadStateWS);
@@ -332,7 +332,8 @@ class WorksetBase : public ElementType
      * \param [in/out] aConfigWS configuration workset (scalar type), as a 3-D Kokkos::View
      * \param [in] aDomain Domain containing elements to be added to workset
      **********************************************************************************/
-    void worksetConfig(Plato::ScalarArray3DT<Plato::Scalar>& aConfigWS, const Plato::SpatialDomain& aDomain) const
+    void worksetConfig(Plato::ScalarArray3DT<Plato::Scalar>& aConfigWS,
+                       const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_config_scalar<mSpaceDim, mNumNodesPerCell>(aDomain, mNodeCoordinate, aConfigWS);
     }
@@ -352,7 +353,8 @@ class WorksetBase : public ElementType
      * \brief Get configuration workset, i.e. coordinates for each cell
      * \param [in/out] aReturnValue configuration workset (AD type), as a 3-D Kokkos::View
      **********************************************************************************/
-    void worksetConfig(Plato::ScalarArray3DT<ConfigFad>& aFadConfigWS, const Plato::SpatialDomain& aDomain) const
+    void worksetConfig(Plato::ScalarArray3DT<ConfigFad>& aFadConfigWS,
+                       const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::workset_config_fad<mSpaceDim, mNumNodesPerCell, mNumConfigDofsPerCell, ConfigFad>(
             aDomain, mNodeCoordinate, aFadConfigWS);
@@ -383,7 +385,7 @@ class WorksetBase : public ElementType
     template <class ResidualWorksetType, class AssembledResidualType>
     void assembleResidual(const ResidualWorksetType& aResidualWorkset,
                           AssembledResidualType& aReturnValue,
-                          const Plato::SpatialDomain& aDomain) const
+                          const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::assemble_residual<mNumNodesPerCell, mNumDofsPerNode>(
             aDomain, WorksetBase<ElementType>::mGlobalStateEntryOrdinal, aResidualWorkset, aReturnValue);
@@ -576,7 +578,7 @@ class WorksetBase : public ElementType
                              const MatrixEntriesOrdinalType& aMatrixEntryOrdinal,
                              const JacobianWorksetType& aJacobianWorkset,
                              AssembledJacobianType& aReturnValue,
-                             const Plato::SpatialDomain& aDomain) const
+                             const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::assemble_jacobian_fad(aDomain, aNumRows, aNumColumns, aMatrixEntryOrdinal, aJacobianWorkset,
                                      aReturnValue);
@@ -660,7 +662,7 @@ class WorksetBase : public ElementType
                                    const MatrixEntriesOrdinalType& aMatrixEntryOrdinal,
                                    const JacobianWorksetType& aJacobianWorkset,
                                    AssembledJacobianType& aReturnValue,
-                                   const Plato::SpatialDomain& aDomain) const
+                                   const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::assemble_transpose_jacobian(aDomain, aNumRowsPerCell, aNumColumnsPerCell, aMatrixEntryOrdinal,
                                            aJacobianWorkset, aReturnValue);
@@ -711,7 +713,7 @@ class WorksetBase : public ElementType
                                         const MatrixEntriesOrdinalType& aMatrixEntryOrdinal,
                                         const JacobianWorksetType& aJacobianWorkset,
                                         AssembledJacobianType& aReturnValue,
-                                        const Plato::SpatialDomain& aDomain) const
+                                        const plato::domain::SpatialDomain& aDomain) const
     {
         Plato::assemble_state_jacobian_transpose(aDomain, aNumRowsPerCell, aNumColumnsPerCell, aMatrixEntryOrdinal,
                                                  aJacobianWorkset, aReturnValue);

@@ -53,7 +53,8 @@ auto get_variance_criterion_for_mesh(const Plato::Mesh& aMesh)
 {
     Teuchos::ParameterList tParamList = create_param_list();
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(tParamList, aMesh);
+    plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
     const std::string tCriterionName = "Strain Variance";
 
     return VarianceFunction<FiniteDeformationMechanics<typename ElementType::TopoElementType>>{

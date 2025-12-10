@@ -24,7 +24,7 @@ namespace plato::elliptic::finite_deformation_mechanics
 {
 template <typename EvaluationType, typename IndicatorFunctionType>
 HyperElastostaticResidual<EvaluationType, IndicatorFunctionType>::HyperElastostaticResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams)
@@ -34,7 +34,7 @@ HyperElastostaticResidual<EvaluationType, IndicatorFunctionType>::HyperElastosta
       mBodyLoads(utilities::get_body_loads<EvaluationType, ElementType>(aProblemParams)),
       mBoundaryLoads(utilities::get_boundary_loads<ElementType>(aProblemParams, "Natural Boundary Conditions")),
       mNeoHookeanParameters{composable_function_objects::material::get_neo_hookean_parameters(
-          aProblemParams.sublist("Material Models").sublist(aSpatialDomain.getMaterialName()))},
+          aProblemParams.sublist("Material Models").sublist(aSpatialDomain.materialName()))},
       mPlotTable{utilities::get_plot_table(aProblemParams.sublist("Elliptic"))}
 {
     utilities::get_displacement_dof_names(mNumSpatialDims, mDofNames);
@@ -132,7 +132,7 @@ void HyperElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
 
 template <typename EvaluationType, typename IndicatorFunctionType>
 void HyperElastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

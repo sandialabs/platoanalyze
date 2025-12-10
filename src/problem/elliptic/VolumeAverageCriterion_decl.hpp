@@ -29,7 +29,7 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
 
     std::shared_ptr<Plato::Elliptic::DivisionFunction<PhysicsType>> mDivisionFunction;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap; /*!< PLATO Engine and Analyze data map */
 
@@ -53,7 +53,7 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
      * \return physics scalar function
      **********************************************************************************/
     std::shared_ptr<Plato::Elliptic::PhysicsScalarFunction<PhysicsType>> getVolumeFunction(
-        const Plato::SpatialModel& aSpatialModel, Teuchos::ParameterList& aInputParams);
+        const plato::domain::SpatialModel& aSpatialModel, Teuchos::ParameterList& aInputParams);
 
     /******************************************************************************/
     /**
@@ -61,7 +61,7 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aInputParams parameter list
      **********************************************************************************/
-    void createDivisionFunction(const Plato::SpatialModel& aSpatialModel, Teuchos::ParameterList& aInputParams);
+    void createDivisionFunction(const plato::domain::SpatialModel& aSpatialModel, Teuchos::ParameterList& aInputParams);
 
    public:
     /******************************************************************************/
@@ -72,7 +72,7 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aInputParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    VolumeAverageCriterion(const Plato::SpatialModel& aSpatialModel,
+    VolumeAverageCriterion(const plato::domain::SpatialModel& aSpatialModel,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aInputParams,
                            const std::string& aName);

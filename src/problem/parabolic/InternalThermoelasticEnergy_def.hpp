@@ -17,7 +17,7 @@ namespace Parabolic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 InternalThermoelasticEnergy<EvaluationType, IndicatorFunctionType>::InternalThermoelasticEnergy(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams,
@@ -29,7 +29,7 @@ InternalThermoelasticEnergy<EvaluationType, IndicatorFunctionType>::InternalTher
 /**************************************************************************/
 {
     Plato::ThermoelasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-    mMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = mmfactory.create(aSpatialDomain.materialName());
 
     if (aProblemParams.isType<Teuchos::Array<std::string>>("Plottable"))
     {

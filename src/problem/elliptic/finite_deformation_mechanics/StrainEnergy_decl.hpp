@@ -34,7 +34,7 @@ class StrainEnergy : public EvaluationType::ElementType, public Plato::Elliptic:
     using ResultScalarType = typename EvaluationType::ResultScalarType;
 
    public:
-    StrainEnergy(const Plato::SpatialDomain& aSpatialDomain,
+    StrainEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                  Plato::DataMap& aDataMap,
                  Teuchos::ParameterList& aProblemParams,
                  Teuchos::ParameterList& aPenaltyParams,

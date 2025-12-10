@@ -354,7 +354,8 @@ class UniformMaterialBasisFactory
    public:
     template <int SpatialDim>
     std::shared_ptr<Plato::UniformMaterialBasis<SpatialDim>> create(
-        Teuchos::RCP<Plato::MaterialModel<SpatialDim>> const aMaterialModel, Plato::SpatialDomain const& aSpatialDomain)
+        Teuchos::RCP<Plato::MaterialModel<SpatialDim>> const aMaterialModel,
+        plato::domain::SpatialDomain const& aSpatialDomain)
     {
         bool tHasMaterialBasis = aMaterialModel->hasCartesianBasis();
         bool tHasBlockBasis = aSpatialDomain.hasUniformCartesianBasis();
@@ -402,7 +403,7 @@ class VaryingMaterialBasisFactory
    public:
     template <int SpatialDim>
     std::shared_ptr<Plato::VaryingMaterialBasis<SpatialDim>> create(Plato::DataMap const& aDataMap,
-                                                                    Plato::SpatialDomain const& aSpatialDomain)
+                                                                    plato::domain::SpatialDomain const& aSpatialDomain)
     {
         bool tHasBasis = aSpatialDomain.hasVaryingCartesianBasis();
         if (!tHasBasis)

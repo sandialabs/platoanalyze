@@ -29,7 +29,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
 
     std::shared_ptr<Plato::Geometric::LeastSquaresFunction<PhysicsType>> mLeastSquaresFunction;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap; /*!< PLATO Engine and Analyze data map */
 
@@ -55,7 +55,8 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aProblemParams input parameters database
      **********************************************************************************/
-    void createLeastSquaresFunction(const Plato::SpatialModel& aSpatialModel, Teuchos::ParameterList& aProblemParams);
+    void createLeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
+                                    Teuchos::ParameterList& aProblemParams);
 
     /******************************************************************************/
     /**
@@ -73,7 +74,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aPropertyWeights weights of properties specified by user
      * \param [in] aPropertyGoldValues gold values of properties specified by user
      **********************************************************************************/
-    void createAllMassPropertiesLeastSquaresFunction(const Plato::SpatialModel& aSpatialModel,
+    void createAllMassPropertiesLeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                      const std::vector<std::string>& aPropertyNames,
                                                      const std::vector<Plato::Scalar>& aPropertyWeights,
                                                      const std::vector<Plato::Scalar>& aPropertyGoldValues);
@@ -93,7 +94,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aPropertyWeights weights of properties specified by user
      * \param [in] aPropertyGoldValues gold values of properties specified by user
      **********************************************************************************/
-    void createItemizedLeastSquaresFunction(const Plato::SpatialModel& aSpatialModel,
+    void createItemizedLeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
                                             const std::vector<std::string>& aPropertyNames,
                                             const std::vector<Plato::Scalar>& aPropertyWeights,
                                             const std::vector<Plato::Scalar>& aPropertyGoldValues);
@@ -105,7 +106,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \return physics scalar function
      **********************************************************************************/
     std::shared_ptr<Plato::Geometric::GeometryScalarFunction<PhysicsType>> getMassFunction(
-        const Plato::SpatialModel& aSpatialModel);
+        const plato::domain::SpatialModel& aSpatialModel);
 
     /******************************************************************************/
     /**
@@ -115,7 +116,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \return scalar function base
      **********************************************************************************/
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> getFirstMomentOverMassRatio(
-        const Plato::SpatialModel& aSpatialModel, const std::string& aMomentType);
+        const plato::domain::SpatialModel& aSpatialModel, const std::string& aMomentType);
 
     /******************************************************************************/
     /**
@@ -124,8 +125,8 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aMomentType second mass moment type (XX, XY, YY, ...)
      * \return scalar function base
      **********************************************************************************/
-    std::shared_ptr<Plato::Geometric::ScalarFunctionBase> getSecondMassMoment(const Plato::SpatialModel& aSpatialModel,
-                                                                              const std::string& aMomentType);
+    std::shared_ptr<Plato::Geometric::ScalarFunctionBase> getSecondMassMoment(
+        const plato::domain::SpatialModel& aSpatialModel, const std::string& aMomentType);
 
     /******************************************************************************/
     /**
@@ -134,8 +135,8 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aAxes axes about which to compute the moment of inertia (XX, YY, ..)
      * \return scalar function base
      **********************************************************************************/
-    std::shared_ptr<Plato::Geometric::ScalarFunctionBase> getMomentOfInertia(const Plato::SpatialModel& aSpatialModel,
-                                                                             const std::string& aAxes);
+    std::shared_ptr<Plato::Geometric::ScalarFunctionBase> getMomentOfInertia(
+        const plato::domain::SpatialModel& aSpatialModel, const std::string& aAxes);
 
     /******************************************************************************/
     /**
@@ -144,7 +145,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \return scalar function base
      **********************************************************************************/
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> getMomentOfInertiaRotatedAboutCG(
-        const Plato::SpatialModel& aSpatialModel, const std::string& aAxes);
+        const plato::domain::SpatialModel& aSpatialModel, const std::string& aAxes);
 
     /******************************************************************************/
     /**
@@ -166,7 +167,7 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    MassPropertiesFunction(const Plato::SpatialModel& aSpatialModel,
+    MassPropertiesFunction(const plato::domain::SpatialModel& aSpatialModel,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aProblemParams,
                            std::string& aName);

@@ -16,7 +16,7 @@ namespace Hyperbolic
 {
 
 template <typename EvaluationType, typename IndicatorFunctionType>
-StressPNorm<EvaluationType, IndicatorFunctionType>::StressPNorm(const Plato::SpatialDomain& aSpatialDomain,
+StressPNorm<EvaluationType, IndicatorFunctionType>::StressPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                                                                 Plato::DataMap& aDataMap,
                                                                 Teuchos::ParameterList& aProblemParams,
                                                                 Teuchos::ParameterList& aPenaltyParams,
@@ -26,7 +26,7 @@ StressPNorm<EvaluationType, IndicatorFunctionType>::StressPNorm(const Plato::Spa
       mApplyWeighting(mIndicatorFunction)
 {
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aProblemParams);
-    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.materialName());
 
     auto params = aProblemParams.sublist("Criteria").get<Teuchos::ParameterList>(aFunctionName);
 

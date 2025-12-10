@@ -15,7 +15,7 @@ namespace Elliptic
 {
 
 template <typename EvaluationType, typename IndicatorFunctionType>
-StressPNorm<EvaluationType, IndicatorFunctionType>::StressPNorm(const Plato::SpatialDomain& aSpatialDomain,
+StressPNorm<EvaluationType, IndicatorFunctionType>::StressPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                                                                 Plato::DataMap& aDataMap,
                                                                 Teuchos::ParameterList& aProblemParams,
                                                                 Teuchos::ParameterList& aPenaltyParams,
@@ -26,7 +26,7 @@ StressPNorm<EvaluationType, IndicatorFunctionType>::StressPNorm(const Plato::Spa
 /**************************************************************************/
 {
     Plato::ElasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-    mMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = mmfactory.create(aSpatialDomain.materialName());
 
     auto params = aProblemParams.sublist("Criteria").get<Teuchos::ParameterList>(aFunctionName);
 

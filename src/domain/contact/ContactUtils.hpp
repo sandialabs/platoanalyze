@@ -22,7 +22,8 @@ ContactPair parse_contact_pair(const Teuchos::ParameterList& aParams, Plato::Mes
 
 void parse_contact_penalty(const Teuchos::ParameterList& aParams, ContactPair& aContactPair);
 
-Plato::SpatialDomain get_domain(const std::string& aDomainName, const std::vector<Plato::SpatialDomain>& aDomains);
+plato::domain::SpatialDomain get_domain(const std::string& aDomainName,
+                                        const std::vector<plato::domain::SpatialDomain>& aDomains);
 
 Plato::ScalarMultiVector compute_node_locations(Plato::Mesh aMesh,
                                                 const Plato::OrdinalVectorT<const Plato::OrdinalType>& aNodes);
@@ -45,30 +46,30 @@ void check_for_missing_parent_elements(const Plato::OrdinalVector& aParentElemen
 template <typename ElementType>
 void set_parent_data_for_surface(ContactSurface& aSurface,
                                  const Teuchos::Array<Plato::Scalar>& aTranslation,
-                                 const Plato::SpatialModel& aSpatialModel,
+                                 const plato::domain::SpatialModel& aSpatialModel,
                                  Plato::Scalar aSearchTolerance)
 {
     auto tChildNodes = aSurface.childNodes();
-    auto tGlobalLocalChildNodeOrdMap = global_local_child_node_ord_map(tChildNodes, aSpatialModel.Mesh->NumNodes());
+    auto tGlobalLocalChildNodeOrdMap = global_local_child_node_ord_map(tChildNodes, aSpatialModel.mMesh->NumNodes());
     auto tElementWiseChildNodeOrdMap =
         convert_to_elementwise_map(aSurface.childElements(), aSurface.childFaceLocalNodes(),
-                                   tGlobalLocalChildNodeOrdMap, aSpatialModel.Mesh, ElementType::mNumNodesPerFace);
+                                   tGlobalLocalChildNodeOrdMap, aSpatialModel.mMesh, ElementType::mNumNodesPerFace);
 
-    auto tChildLocations = compute_node_locations(aSpatialModel.Mesh, tChildNodes);
+    auto tChildLocations = compute_node_locations(aSpatialModel.mMesh, tChildNodes);
     auto tMappedChildLocations = map_node_locations(tChildLocations, aTranslation);
-    Plato::SpatialDomain tDomain = get_domain(aSurface.parentBlock(), aSpatialModel.Domains);
+    plato::domain::SpatialDomain tDomain = get_domain(aSurface.parentBlock(), aSpatialModel.mDomains);
 
     Plato::OrdinalVector tParentElements("parent elements", tChildNodes.size());
     if (aSearchTolerance > 0)
     {
-        Plato::Geometry::findParentElements<ElementType, Plato::Scalar>(aSpatialModel.Mesh, tDomain.cellOrdinals(),
+        Plato::Geometry::findParentElements<ElementType, Plato::Scalar>(aSpatialModel.mMesh, tDomain.cellOrdinals(),
                                                                         tChildLocations, tMappedChildLocations,
                                                                         tParentElements, aSearchTolerance);
     }
     else
     {
         Plato::Geometry::findParentElements<ElementType, Plato::Scalar>(
-            aSpatialModel.Mesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
+            aSpatialModel.mMesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
     }
 
     check_for_missing_parent_elements(tParentElements);
@@ -77,7 +78,7 @@ void set_parent_data_for_surface(ContactSurface& aSurface,
 }
 
 template <typename ElementType>
-void set_parent_data_for_pairs(std::vector<ContactPair>& aPairs, const Plato::SpatialModel& aSpatialModel)
+void set_parent_data_for_pairs(std::vector<ContactPair>& aPairs, const plato::domain::SpatialModel& aSpatialModel)
 {
     for (auto& tPair : aPairs)
     {

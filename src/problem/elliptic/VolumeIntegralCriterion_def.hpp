@@ -52,7 +52,7 @@ void VolumeIntegralCriterion<EvaluationType>::readInputs(Teuchos::ParameterList&
  * \param [in] aFuncName user defined function name
  **********************************************************************************/
 template <typename EvaluationType>
-VolumeIntegralCriterion<EvaluationType>::VolumeIntegralCriterion(const Plato::SpatialDomain& aSpatialDomain,
+VolumeIntegralCriterion<EvaluationType>::VolumeIntegralCriterion(const plato::domain::SpatialDomain& aSpatialDomain,
                                                                  Plato::DataMap& aDataMap,
                                                                  Teuchos::ParameterList& aInputParams,
                                                                  const std::string& aFuncName)
@@ -71,7 +71,7 @@ VolumeIntegralCriterion<EvaluationType>::VolumeIntegralCriterion(const Plato::Sp
  * \param [in] aDataMap PLATO Engine and Analyze data map
  **********************************************************************************/
 template <typename EvaluationType>
-VolumeIntegralCriterion<EvaluationType>::VolumeIntegralCriterion(const Plato::SpatialDomain& aSpatialDomain,
+VolumeIntegralCriterion<EvaluationType>::VolumeIntegralCriterion(const plato::domain::SpatialDomain& aSpatialDomain,
                                                                  Plato::DataMap& aDataMap)
     : FunctionBaseType(aSpatialDomain, aDataMap, "Volume Integral Criterion"),
       mPenalty(3),

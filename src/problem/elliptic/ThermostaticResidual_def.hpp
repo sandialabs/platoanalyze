@@ -18,7 +18,7 @@ namespace Elliptic
 
 template <typename EvaluationType, typename IndicatorFunctionType>
 ThermostaticResidual<EvaluationType, IndicatorFunctionType>::ThermostaticResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& penaltyParams)
@@ -35,7 +35,7 @@ ThermostaticResidual<EvaluationType, IndicatorFunctionType>::ThermostaticResidua
     mDofNames.push_back("temperature");
 
     Plato::ThermalConductionModelFactory<mNumSpatialDims> tMaterialFactory(aProblemParams);
-    mMaterialModel = tMaterialFactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = tMaterialFactory.create(aSpatialDomain.materialName());
 }
 
 /****************************************************************************/
@@ -140,7 +140,7 @@ void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate(
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 void ThermostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

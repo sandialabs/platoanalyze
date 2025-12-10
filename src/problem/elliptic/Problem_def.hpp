@@ -30,7 +30,7 @@ namespace Elliptic
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine)
     : AbstractProblem(aMesh, aProblemParams),
-      mSpatialModel(aMesh, aProblemParams, mDataMap),
+      mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
       mPDE(std::make_shared<VectorFunctionType>(
           mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint"))),
       mNumNewtonSteps(Plato::ParseTools::getSubParam<int>(aProblemParams, "Newton Iteration", "Maximum Iterations", 1)),
@@ -123,7 +123,7 @@ void Problem<PhysicsType>::output(const std::string& aFilepath)
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();
     auto tSolutionOutput = mPDE->getSolutionStateOutputData(tSolution);
-    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.Mesh);
+    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.mMesh);
 }
 
 /******************************************************************************/
@@ -466,7 +466,7 @@ void Problem<PhysicsType>::readEssentialBoundaryConditions(Teuchos::ParameterLis
         ANALYZE_THROWERR("ESSENTIAL BOUNDARY CONDITIONS SUBLIST IS NOT DEFINED IN THE INPUT FILE.")
     }
     Plato::EssentialBCs<ElementType> tEssentialBoundaryConditions(
-        aProblemParams.sublist("Essential Boundary Conditions", false), mSpatialModel.Mesh);
+        aProblemParams.sublist("Essential Boundary Conditions", false), mSpatialModel.mMesh);
     tEssentialBoundaryConditions.get(mBcDofs, mBcValues);
 
     if (mMPCs)
@@ -556,7 +556,7 @@ void Problem<PhysicsType>::initialize(Teuchos::ParameterList& aProblemParams)
     if (aProblemParams.isSublist("Contact") == true)
     {
         auto& tMyParams = aProblemParams.sublist("Contact", false);
-        auto tPairs = Plato::Contact::parse_contact(tMyParams, mSpatialModel.Mesh);
+        auto tPairs = Plato::Contact::parse_contact(tMyParams, mSpatialModel.mMesh);
         Plato::Contact::set_parent_data_for_pairs<ElementType>(tPairs, mSpatialModel);
 
         mSpatialModel.addContact(tPairs);

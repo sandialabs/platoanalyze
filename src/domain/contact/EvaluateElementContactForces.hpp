@@ -11,7 +11,7 @@
 namespace Plato::Contact
 {
 template <typename EvaluationType>
-[[nodiscard]] auto element_contact_force_contribution(const Plato::SpatialModel& aSpatialModel,
+[[nodiscard]] auto element_contact_force_contribution(const plato::domain::SpatialModel& aSpatialModel,
                                                       const Plato::ScalarVector& aState,
                                                       Plato::Scalar aTimeStep = 0.0)
     -> Plato::ScalarMultiVectorT<typename EvaluationType::ResultScalarType>
@@ -22,9 +22,9 @@ template <typename EvaluationType>
     using StateScalar = typename EvaluationType::StateScalarType;
     using ResultScalar = typename EvaluationType::ResultScalarType;
 
-    const auto tNumCells = aSpatialModel.Mesh->NumElements();
+    const auto tNumCells = aSpatialModel.mMesh->NumElements();
 
-    const Plato::WorksetBase<ElementType> tWorksetBase(aSpatialModel.Mesh);
+    const Plato::WorksetBase<ElementType> tWorksetBase(aSpatialModel.mMesh);
 
     // workset config
     Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, ElementType::mNumNodesPerCell,
@@ -52,7 +52,7 @@ template <typename EvaluationType>
         tIntegrateContactForceChildA(tStateWS, tConfigWS, tElementContactForceValues, aTimeStep);
 
         auto tComputeParentSurfaceDispA =
-            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceA, aSpatialModel.Mesh, -1.0);
+            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceA, aSpatialModel.mMesh, -1.0);
         for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
         {
             tComputeParentSurfaceDispA->setChildNode(iChildNode);
@@ -68,7 +68,7 @@ template <typename EvaluationType>
         tIntegrateContactForceChildB(tStateWS, tConfigWS, tElementContactForceValues, aTimeStep);
 
         auto tComputeParentSurfaceDispB =
-            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceB, aSpatialModel.Mesh, -1.0);
+            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceB, aSpatialModel.mMesh, -1.0);
         for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
         {
             tComputeParentSurfaceDispB->setChildNode(iChildNode);
@@ -82,7 +82,7 @@ template <typename EvaluationType>
 }
 
 template <typename EvaluationType, typename EntryOrdinalType>
-void assemble_contact_force_nonlocal_jacobian(const Plato::SpatialModel& aSpatialModel,
+void assemble_contact_force_nonlocal_jacobian(const plato::domain::SpatialModel& aSpatialModel,
                                               Teuchos::RCP<Plato::CrsMatrixType> aInputMatrix,
                                               const EntryOrdinalType& aEntryOrdinal,
                                               const Plato::ScalarVector& aState,
@@ -94,9 +94,9 @@ void assemble_contact_force_nonlocal_jacobian(const Plato::SpatialModel& aSpatia
     using StateScalar = typename EvaluationType::StateScalarType;
     using ResultScalar = typename EvaluationType::ResultScalarType;
 
-    const auto tNumCells = aSpatialModel.Mesh->NumElements();
+    const auto tNumCells = aSpatialModel.mMesh->NumElements();
 
-    const Plato::WorksetBase<ElementType> tWorksetBase(aSpatialModel.Mesh);
+    const Plato::WorksetBase<ElementType> tWorksetBase(aSpatialModel.mMesh);
 
     // workset config
     Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, ElementType::mNumNodesPerCell,
@@ -133,7 +133,7 @@ void assemble_contact_force_nonlocal_jacobian(const Plato::SpatialModel& aSpatia
                                          tResultA, tMatEntries);
 
         auto tComputeParentSurfaceDispA =
-            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceA, aSpatialModel.Mesh, -1.0);
+            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceA, aSpatialModel.mMesh, -1.0);
         for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
         {
             tComputeParentSurfaceDispA->setChildNode(iChildNode);
@@ -163,7 +163,7 @@ void assemble_contact_force_nonlocal_jacobian(const Plato::SpatialModel& aSpatia
                                          tResultB, tMatEntries);
 
         auto tComputeParentSurfaceDispB =
-            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceB, aSpatialModel.Mesh, -1.0);
+            tSurfaceDisplacementFactory.createParentContribution(tPair.surfaceB, aSpatialModel.mMesh, -1.0);
         for (Plato::OrdinalType iChildNode = 0; iChildNode < ElementType::mNumNodesPerFace; iChildNode++)
         {
             tComputeParentSurfaceDispB->setChildNode(iChildNode);

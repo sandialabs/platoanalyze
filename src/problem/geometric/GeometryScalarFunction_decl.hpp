@@ -46,7 +46,7 @@ class GeometryScalarFunction : public Plato::Geometric::ScalarFunctionBase,
     std::map<std::string, GradientXFunction> mGradientXFunctions;
     std::map<std::string, GradientZFunction> mGradientZFunctions;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap;  /*!< output data map */
     std::string mFunctionName; /*!< User defined function name */
@@ -69,7 +69,7 @@ class GeometryScalarFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    GeometryScalarFunction(const Plato::SpatialModel& aSpatialModel,
+    GeometryScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                            Plato::DataMap& aDataMap,
                            Teuchos::ParameterList& aProblemParams,
                            const std::string& aName);
@@ -79,7 +79,7 @@ class GeometryScalarFunction : public Plato::Geometric::ScalarFunctionBase,
      * \brief Secondary physics scalar function constructor, used for unit testing
      * \param [in] aMesh mesh database
      **********************************************************************************/
-    GeometryScalarFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    GeometryScalarFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

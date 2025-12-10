@@ -49,7 +49,7 @@ class TMStressPNorm : public EvaluationType::ElementType, public Plato::Elliptic
 
    public:
     /**************************************************************************/
-    TMStressPNorm(const Plato::SpatialDomain& aSpatialDomain,
+    TMStressPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                   Plato::DataMap& aDataMap,
                   Teuchos::ParameterList& aProblemParams,
                   Teuchos::ParameterList& aPenaltyParams,

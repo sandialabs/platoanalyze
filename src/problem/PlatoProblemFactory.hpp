@@ -27,10 +27,6 @@
 #include "element/Quad4.hpp"
 #endif
 
-#ifdef PLATO_PLASTICITY
-#include "PlasticityProblem.hpp"
-#endif
-
 #ifdef PLATO_ELLIPTIC
 #include "problem/elliptic/Problem.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
@@ -159,68 +155,6 @@ inline std::shared_ptr<Plato::AbstractProblem> create_mechanical_problem(Plato::
     }
 }
 // function create_mechanical_problem
-
-/******************************************************************************/
-/**
- * \brief Create plasticity problem.
- * \param [in] aMesh        Plato mesh database
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine     mpi communicator interface
- * \returns shared pointer to abstract problem of type plasticity
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_plasticity_problem(Plato::Mesh aMesh,
-                                                                         Teuchos::ParameterList& aPlatoProb,
-                                                                         Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-
-#ifdef PLATO_ELLIPTIC
-#ifdef PLATO_PLASTICITY
-    if (tLowerPDE == "elliptic")
-    {
-        auto tOutput = std::make_shared<PlasticityProblem<::Plato::InfinitesimalStrainPlasticity<SpatialDim>>>(
-            aMesh, aPlatoProb, aMachine);
-        tOutput->readEssentialBoundaryConditions(aPlatoProb);
-        return tOutput;
-    }
-#endif
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_plasticity_problem
-
-/******************************************************************************/
-/**
- * \brief Create a thermoplasticity problem.
- * \param [in] aMesh      mesh metadata
- * \param [in] aPlatoProb input xml metadata
- * \param [in] aMachine   mpi communicator interface
- * \returns shared pointer to abstract problem of type thermoplasticity
- **********************************************************************************/
-inline std::shared_ptr<Plato::AbstractProblem> create_thermoplasticity_problem(Plato::Mesh aMesh,
-                                                                               Teuchos::ParameterList& aPlatoProb,
-                                                                               Comm::Machine aMachine)
-{
-    auto tLowerPDE = Plato::is_pde_constraint_supported(aPlatoProb);
-
-#ifdef PLATO_ELLIPTIC
-#ifdef PLATO_PLASTICITY
-    if (tLowerPDE == "elliptic")
-    {
-        auto tOutput = std::make_shared<PlasticityProblem<::Plato::InfinitesimalStrainThermoPlasticity<SpatialDim>>>(
-            aMesh, aPlatoProb, aMachine);
-        tOutput->readEssentialBoundaryConditions(aPlatoProb);
-        return tOutput;
-    }
-#endif
-#endif
-    {
-        ANALYZE_THROWERR(std::string("'PDE Constraint' of type '") + tLowerPDE + "' is not supported.");
-    }
-}
-// function create_thermoplasticity_problem
 
 /******************************************************************************/
 /**

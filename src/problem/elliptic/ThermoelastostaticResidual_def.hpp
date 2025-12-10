@@ -22,7 +22,7 @@ namespace Elliptic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::ThermoelastostaticResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams)
@@ -45,7 +45,7 @@ ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::Thermoelastos
     // create material model and get stiffness
     //
     Plato::ThermoelasticModelFactory<mNumSpatialDims> mmfactory(aProblemParams);
-    mMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = mmfactory.create(aSpatialDomain.materialName());
 }
 
 /****************************************************************************/
@@ -194,7 +194,7 @@ void ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 void ThermoelastostaticResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

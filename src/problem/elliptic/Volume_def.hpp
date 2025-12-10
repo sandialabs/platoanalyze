@@ -10,7 +10,7 @@ namespace Elliptic
 
 /**************************************************************************/
 template <typename EvaluationType, typename PenaltyFunctionType>
-Volume<EvaluationType, PenaltyFunctionType>::Volume(const Plato::SpatialDomain& aSpatialDomain,
+Volume<EvaluationType, PenaltyFunctionType>::Volume(const plato::domain::SpatialDomain& aSpatialDomain,
                                                     Plato::DataMap& aDataMap,
                                                     Teuchos::ParameterList& aProblemParams,
                                                     Teuchos::ParameterList& aPenaltyParams,

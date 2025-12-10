@@ -23,7 +23,7 @@ namespace Elliptic
  **********************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 InternalThermalEnergy<EvaluationType, IndicatorFunctionType>::InternalThermalEnergy(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams,
@@ -33,7 +33,7 @@ InternalThermalEnergy<EvaluationType, IndicatorFunctionType>::InternalThermalEne
       mApplyWeighting(mIndicatorFunction)
 {
     Plato::ThermalConductionModelFactory<mNumSpatialDims> tMaterialModelFactory(aProblemParams);
-    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.materialName());
 }
 
 /******************************************************************************/

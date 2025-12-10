@@ -200,7 +200,8 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, SolutionReducesResidualBelowToleranc
     const auto tLastState = Kokkos::subview(tAllStates, tNumAnalysisSteps, Kokkos::ALL());
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tri3>;
     Plato::Elliptic::VectorFunction<FiniteDeformationMechanics<typename ElementType::TopoElementType>> tPDE(

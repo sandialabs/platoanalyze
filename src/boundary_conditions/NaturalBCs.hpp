@@ -119,7 +119,7 @@ class NaturalBCs
               typename ControlScalarType,
               typename ConfigScalarType,
               typename ResultScalarType>
-    void get(const Plato::SpatialModel&,
+    void get(const plato::domain::SpatialModel&,
              const Plato::ScalarMultiVectorT<StateScalarType>&,
              const Plato::ScalarMultiVectorT<ControlScalarType>&,
              const Plato::ScalarArray3DT<ConfigScalarType>&,
@@ -386,7 +386,7 @@ template <typename ElementType,
           Plato::OrdinalType DofOffset>
 template <typename StateScalarType, typename ControlScalarType, typename ConfigScalarType, typename ResultScalarType>
 void NaturalBCs<ElementType, NumDofs, DofsPerNode, DofOffset>::get(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
     const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

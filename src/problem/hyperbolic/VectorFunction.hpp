@@ -74,22 +74,22 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
     GradientXFunction mBoundaryLoadsGradientXFunction;
     GradientZFunction mBoundaryLoadsGradientZFunction;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap;
 
    public:
-    VectorFunction(const Plato::SpatialModel& aSpatialModel,
+    VectorFunction(const plato::domain::SpatialModel& aSpatialModel,
                    Plato::DataMap& aDataMap,
                    Teuchos::ParameterList& aParamList,
                    std::string& aProblemType)
-        : Plato::WorksetBase<ElementType>(aSpatialModel.Mesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
+        : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
     {
         typename PhysicsType::FunctionFactory tFunctionFactory;
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             mResidualFunctions[tName] =
                 tFunctionFactory.template createVectorFunction<Residual>(tDomain, aDataMap, aParamList, aProblemType);
@@ -105,7 +105,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
                 tFunctionFactory.template createVectorFunction<GradientX>(tDomain, aDataMap, aParamList, aProblemType);
         }
         // any block can compute the boundary terms for the entire mesh.  We'll use the first block.
-        auto tFirstBlockName = aSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = aSpatialModel.mDomains.front().domainName();
 
         mBoundaryLoadsResidualFunction = mResidualFunctions[tFirstBlockName];
         mBoundaryLoadsGradientUFunction = mGradientUFunctions[tFirstBlockName];
@@ -124,19 +124,19 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
     std::vector<std::string> getDofNames() const
     {
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
         return mResidualFunctions.at(tFirstBlockName)->getDofNames();
     }
 
     std::vector<std::string> getDofDotNames() const
     {
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
         return mResidualFunctions.at(tFirstBlockName)->getDofDotNames();
     }
 
     std::vector<std::string> getDofDotDotNames() const
     {
-        auto tFirstBlockName = mSpatialModel.Domains.front().getDomainName();
+        auto tFirstBlockName = mSpatialModel.mDomains.front().domainName();
         return mResidualFunctions.at(tFirstBlockName)->getDofDotDotNames();
     }
 
@@ -151,10 +151,10 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         using ConfigScalar = typename Residual::ConfigScalarType;
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell,
                                                           mNumSpatialDims);
@@ -186,10 +186,10 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
 
         Plato::ScalarVector tReturnValue("Assembled Residual", mNumDofsPerNode * mNumNodes);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", tNumCells, mNumDofsPerCell);
             Plato::WorksetBase<ElementType>::worksetState(aState, tStateWS, tDomain);
@@ -217,7 +217,7 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         }
 
         {
-            auto tNumCells = mSpatialModel.Mesh->NumElements();
+            auto tNumCells = mSpatialModel.mMesh->NumElements();
 
             Plato::ScalarMultiVectorT<StateScalar> tStateWS("State Workset", tNumCells, mNumDofsPerCell);
             Plato::WorksetBase<ElementType>::worksetState(aState, tStateWS);
@@ -262,14 +262,14 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         using ControlScalar = typename GradientX::ControlScalarType;
         using ResultScalar = typename GradientX::ResultScalarType;
 
-        auto tMesh = mSpatialModel.Mesh;
+        auto tMesh = mSpatialModel.mMesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumSpatialDims, mNumDofsPerNode>(mSpatialModel);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell,
                                                           mNumSpatialDims);
@@ -350,14 +350,14 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         using ControlScalar = typename GradientU::ControlScalarType;
         using ResultScalar = typename GradientU::ResultScalarType;
 
-        auto tMesh = mSpatialModel.Mesh;
+        auto tMesh = mSpatialModel.mMesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>(mSpatialModel);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell,
                                                           mNumSpatialDims);
@@ -437,14 +437,14 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         using ControlScalar = typename GradientV::ControlScalarType;
         using ResultScalar = typename GradientV::ResultScalarType;
 
-        auto tMesh = mSpatialModel.Mesh;
+        auto tMesh = mSpatialModel.mMesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>(mSpatialModel);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell,
                                                           mNumSpatialDims);
@@ -524,14 +524,14 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         using ControlScalar = typename GradientA::ControlScalarType;
         using ResultScalar = typename GradientA::ResultScalarType;
 
-        auto tMesh = mSpatialModel.Mesh;
+        auto tMesh = mSpatialModel.mMesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumDofsPerNode, mNumDofsPerNode>(mSpatialModel);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell,
                                                           mNumSpatialDims);
@@ -611,14 +611,14 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
         using ControlScalar = typename GradientZ::ControlScalarType;
         using ResultScalar = typename GradientZ::ResultScalarType;
 
-        auto tMesh = mSpatialModel.Mesh;
+        auto tMesh = mSpatialModel.mMesh;
         Teuchos::RCP<Plato::CrsMatrixType> tJacobianMat =
             Plato::CreateBlockMatrix<Plato::CrsMatrixType, mNumControl, mNumDofsPerNode>(mSpatialModel);
 
-        for (const auto& tDomain : mSpatialModel.Domains)
+        for (const auto& tDomain : mSpatialModel.mDomains)
         {
             auto tNumCells = tDomain.numCells();
-            auto tName = tDomain.getDomainName();
+            auto tName = tDomain.domainName();
 
             Plato::ScalarArray3DT<ConfigScalar> tConfigWS("Config Workset", tNumCells, mNumNodesPerCell,
                                                           mNumSpatialDims);

@@ -63,7 +63,7 @@ class ThermoelastostaticResidual : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    ThermoelastostaticResidual(const Plato::SpatialDomain& aSpatialDomain,
+    ThermoelastostaticResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                                Plato::DataMap& aDataMap,
                                Teuchos::ParameterList& aProblemParams,
                                Teuchos::ParameterList& aPenaltyParams);
@@ -84,7 +84,7 @@ class ThermoelastostaticResidual : public EvaluationType::ElementType,
                   Plato::Scalar aTimeStep = 0.0) const override;
 
     /**************************************************************************/
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                            const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

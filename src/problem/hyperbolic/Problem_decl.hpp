@@ -28,7 +28,7 @@ class Problem : public Plato::AbstractProblem
 
     using VectorFunctionType = Plato::Hyperbolic::VectorFunction<PhysicsType>;
 
-    Plato::SpatialModel mSpatialModel;
+    plato::domain::SpatialModel mSpatialModel;
 
     VectorFunctionType mPDEConstraint;
 

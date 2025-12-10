@@ -72,7 +72,8 @@ Plato::Scalar surfaceIntegralSum(Teuchos::ParameterList aInputParams)
     Plato::WorksetBase<ElementType> tWorksetBase(tMesh);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, aInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(aInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     const Plato::OrdinalType tNumCells = tMesh->NumElements();
     constexpr Plato::OrdinalType tNumNodesPerCell = ElementType::mNumNodesPerCell;

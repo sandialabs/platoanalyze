@@ -18,7 +18,7 @@ namespace Parabolic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 HeatEquationResidual<EvaluationType, IndicatorFunctionType>::HeatEquationResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& problemParams,
     Teuchos::ParameterList& penaltyParams)
@@ -35,12 +35,12 @@ HeatEquationResidual<EvaluationType, IndicatorFunctionType>::HeatEquationResidua
 
     {
         Plato::ThermalConductionModelFactory<mNumSpatialDims> mmfactory(problemParams);
-        mThermalConductivityMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+        mThermalConductivityMaterialModel = mmfactory.create(aSpatialDomain.materialName());
     }
 
     {
         Plato::ThermalMassModelFactory<mNumSpatialDims> mmfactory(problemParams);
-        mThermalMassMaterialModel = mmfactory.create(aSpatialDomain.getMaterialName());
+        mThermalMassMaterialModel = mmfactory.create(aSpatialDomain.materialName());
     }
 
     // parse boundary Conditions
@@ -144,7 +144,7 @@ void HeatEquationResidual<EvaluationType, IndicatorFunctionType>::evaluate(
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 void HeatEquationResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,

@@ -29,7 +29,7 @@ class AbstractLocalMeasure : public EvaluationType::ElementType
     using ConfigT = typename EvaluationType::ConfigScalarType;
     using ResultT = typename EvaluationType::ResultScalarType;
 
-    const Plato::SpatialDomain& mSpatialDomain;
+    const plato::domain::SpatialDomain& mSpatialDomain;
     Plato::DataMap& mDataMap;
 
     const std::string mName; /*!< Local measure name */
@@ -41,7 +41,7 @@ class AbstractLocalMeasure : public EvaluationType::ElementType
      * \param [in] aInputParams input parameters database
      * \param [in] aName local measure name
      **********************************************************************************/
-    AbstractLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
+    AbstractLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
                          Plato::DataMap& aDataMap,
                          Teuchos::ParameterList& aInputParams,
                          const std::string& aName)
@@ -54,7 +54,9 @@ class AbstractLocalMeasure : public EvaluationType::ElementType
      * \brief Constructor tailored for unit testing
      * \param [in] aName local measure name
      **********************************************************************************/
-    AbstractLocalMeasure(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap, const std::string& aName)
+    AbstractLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
+                         Plato::DataMap& aDataMap,
+                         const std::string& aName)
         : mSpatialDomain(aSpatialDomain), mDataMap(aDataMap), mName(aName)
     {
     }

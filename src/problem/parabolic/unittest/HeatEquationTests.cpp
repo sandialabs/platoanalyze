@@ -477,7 +477,8 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
     auto Tdot = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), Tdot_host_view);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::Parabolic::VectorFunction<::Plato::Thermal<Plato::Tet4>> vectorFunction(
         tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -688,7 +689,8 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
         });
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     std::string tMyFunction("Internal Energy");
     Plato::Parabolic::PhysicsScalarFunction<::Plato::Thermal<Plato::Tet4>> scalarFunction(tSpatialModel, tDataMap,

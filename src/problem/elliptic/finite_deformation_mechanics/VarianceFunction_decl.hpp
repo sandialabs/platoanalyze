@@ -47,7 +47,7 @@ class VarianceFunction : public Plato::Elliptic::ScalarFunctionBase,
     using GradientZ = typename Plato::Elliptic::Evaluation<ElementType>::GradientZ;
 
    public:
-    VarianceFunction(const Plato::SpatialModel& aSpatialModel,
+    VarianceFunction(const plato::domain::SpatialModel& aSpatialModel,
                      Plato::DataMap& aDataMap,
                      Teuchos::ParameterList& aProblemParams,
                      const std::string& aName);
@@ -89,7 +89,7 @@ class VarianceFunction : public Plato::Elliptic::ScalarFunctionBase,
         -> std::map<std::string, Plato::ScalarVectorT<typename EvaluationType::ResultScalarType>>;
 
    private:
-    Plato::SpatialModel mSpatialModel;
+    plato::domain::SpatialModel mSpatialModel;
     Plato::DataMap mDataMap;
     std::string mFunctionName;
     Plato::OrdinalType mNumTotalCells;
@@ -104,23 +104,23 @@ namespace detail
 Plato::ScalarVector get_last_time_step_state(const Plato::Solutions& aSolution);
 
 template <typename ResultScalarType>
-Plato::Scalar compute_field_mean(const Plato::SpatialModel& aSpatialModel,
+Plato::Scalar compute_field_mean(const plato::domain::SpatialModel& aSpatialModel,
                                  const std::map<std::string, Plato::ScalarVectorT<ResultScalarType>>& aDomainResults,
                                  const Plato::OrdinalType aNumTotalCells);
 
 template <>
-Plato::Scalar compute_field_mean(const Plato::SpatialModel& aSpatialModel,
+Plato::Scalar compute_field_mean(const plato::domain::SpatialModel& aSpatialModel,
                                  const std::map<std::string, Plato::ScalarVectorT<Plato::Scalar>>& aDomainResults,
                                  const Plato::OrdinalType aNumTotalCells);
 
-Plato::Scalar compute_field_variance(const Plato::SpatialModel& aSpatialModel,
+Plato::Scalar compute_field_variance(const plato::domain::SpatialModel& aSpatialModel,
                                      const std::map<std::string, Plato::ScalarVectorT<Plato::Scalar>>& aDomainResults,
                                      const Plato::Scalar aMean,
                                      const Plato::OrdinalType aNumTotalCells);
 
 template <typename ResultScalarType>
 void scale_result_by_variance_derivative(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const std::map<std::string, Plato::ScalarVectorT<ResultScalarType>>& aDomainResults,
     const Plato::Scalar aMean,
     const Plato::OrdinalType aNumTotalCells);

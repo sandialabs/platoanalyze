@@ -8,7 +8,7 @@
 
 /****************************************************************************/
 template <typename ElementT>
-Plato::PbcMultipointConstraint<ElementT>::PbcMultipointConstraint(const Plato::SpatialModel& aSpatialModel,
+Plato::PbcMultipointConstraint<ElementT>::PbcMultipointConstraint(const plato::domain::SpatialModel& aSpatialModel,
                                                                   const std::string& aName,
                                                                   Teuchos::ParameterList& aParam)
     : Plato::MultipointConstraint(aName)
@@ -38,7 +38,7 @@ Plato::PbcMultipointConstraint<ElementT>::PbcMultipointConstraint(const Plato::S
 
     // parse child node set
     std::string tChildNodeSet = aParam.get<std::string>("Child");
-    auto tChildNodeLids = aSpatialModel.Mesh->GetNodeSetNodes(tChildNodeSet);
+    auto tChildNodeLids = aSpatialModel.mMesh->GetNodeSetNodes(tChildNodeSet);
     auto tNumberChildNodes = tChildNodeLids.size();
 
     // Fill in child nodes
@@ -51,15 +51,15 @@ Plato::PbcMultipointConstraint<ElementT>::PbcMultipointConstraint(const Plato::S
     Plato::ScalarMultiVector tMappedChildNodeLocations("mapped child node locations", ElementT::mNumSpatialDims,
                                                        tNumberChildNodes);
 
-    this->mapChildVertexLocations(aSpatialModel.Mesh, tTranslation, tChildNodeLocations, tMappedChildNodeLocations);
+    this->mapChildVertexLocations(aSpatialModel.mMesh, tTranslation, tChildNodeLocations, tMappedChildNodeLocations);
 
     // get parent domain element data
     std::string tParentDomainName = aParam.get<std::string>("Parent");
     Plato::OrdinalVector tDomainCellMap;
     bool tFindName = 0;
-    for (auto& tDomain : aSpatialModel.Domains)
+    for (auto& tDomain : aSpatialModel.mDomains)
     {
-        auto tName = tDomain.getDomainName();
+        auto tName = tDomain.domainName();
         if (tName == tParentDomainName) tDomainCellMap = tDomain.cellOrdinals();
         tFindName = 1;
     }
@@ -75,16 +75,16 @@ Plato::PbcMultipointConstraint<ElementT>::PbcMultipointConstraint(const Plato::S
 
     // find elements that contain mapped child node locations (in specified domain)
     Plato::OrdinalVector tParentElements("mapped elements", tNumberChildNodes);
-    Plato::Geometry::findParentElements<ElementT, Plato::Scalar>(aSpatialModel.Mesh, tDomainCellMap,
+    Plato::Geometry::findParentElements<ElementT, Plato::Scalar>(aSpatialModel.mMesh, tDomainCellMap,
                                                                  tChildNodeLocations, tMappedChildNodeLocations,
                                                                  tParentElements, tTolerance);
 
     // get global IDs of unique parent nodes
     Plato::OrdinalVector tParentGlobalLocalMap;
-    this->getUniqueParentNodes(aSpatialModel.Mesh, tParentElements, tParentGlobalLocalMap);
+    this->getUniqueParentNodes(aSpatialModel.mMesh, tParentElements, tParentGlobalLocalMap);
 
     // fill in mpc matrix values
-    this->setMatrixValues(aSpatialModel.Mesh, tParentElements, tMappedChildNodeLocations, tParentGlobalLocalMap);
+    this->setMatrixValues(aSpatialModel.mMesh, tParentElements, tMappedChildNodeLocations, tParentGlobalLocalMap);
 }
 
 /****************************************************************************/

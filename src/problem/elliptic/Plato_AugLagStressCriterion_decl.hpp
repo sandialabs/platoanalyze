@@ -91,7 +91,7 @@ class AugLagStressCriterion : public EvaluationType::ElementType,
      * \param [in] aDataMap Plato Analyze data map
      * \param [in] aInputParams input parameters database
      **********************************************************************************/
-    AugLagStressCriterion(const Plato::SpatialDomain& aSpatialDomain,
+    AugLagStressCriterion(const plato::domain::SpatialDomain& aSpatialDomain,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aInputParams,
                           const std::string& aFunctionName);
@@ -102,7 +102,7 @@ class AugLagStressCriterion : public EvaluationType::ElementType,
      * \param [in] aSpatialDomain Plato Analyze spatial domain
      * \param [in] aDataMap Plato Analyze data map
      **********************************************************************************/
-    AugLagStressCriterion(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
+    AugLagStressCriterion(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

@@ -29,7 +29,7 @@ namespace Elliptic
  **********************************************************************************/
 template <typename PhysicsType>
 std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> ScalarFunctionBaseFactory<PhysicsType>::create(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     const std::string& aFunctionName) const

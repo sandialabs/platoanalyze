@@ -42,7 +42,7 @@ class LinearTMKinetics : public Plato::AbstractTMKinetics<EvaluationType, Elemen
      * \param [in] aMaterialModel material model
      **********************************************************************************/
     LinearTMKinetics(const Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> aMaterialModel,
-                     const Plato::SpatialDomain& aSpatialDomain,
+                     const plato::domain::SpatialDomain& aSpatialDomain,
                      const Plato::DataMap& aDataMap)
         : AbstractTMKinetics<EvaluationType, ElementType>(aMaterialModel, aSpatialDomain, aDataMap),
           mRefTemperature(aMaterialModel->getScalarConstant("Reference Temperature")),

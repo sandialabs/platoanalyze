@@ -18,16 +18,17 @@
 namespace plato::elliptic::finite_deformation_mechanics
 {
 template <typename EvaluationType, typename IndicatorFunctionType>
-StrainInvariant<EvaluationType, IndicatorFunctionType>::StrainInvariant(const Plato::SpatialDomain& aSpatialDomain,
-                                                                        Plato::DataMap& aDataMap,
-                                                                        Teuchos::ParameterList& aProblemParams,
-                                                                        Teuchos::ParameterList& aPenaltyParams,
-                                                                        const std::string& aFunctionName)
+StrainInvariant<EvaluationType, IndicatorFunctionType>::StrainInvariant(
+    const plato::domain::SpatialDomain& aSpatialDomain,
+    Plato::DataMap& aDataMap,
+    Teuchos::ParameterList& aProblemParams,
+    Teuchos::ParameterList& aPenaltyParams,
+    const std::string& aFunctionName)
     : FunctionBaseType(aSpatialDomain, aDataMap, aProblemParams, aFunctionName),
       mIndicatorFunction(aPenaltyParams),
       mApplyWeighting(mIndicatorFunction),
       mNeoHookeanParameters{composable_function_objects::material::get_neo_hookean_parameters(
-          aProblemParams.sublist("Material Models").sublist(aSpatialDomain.getMaterialName()))}
+          aProblemParams.sublist("Material Models").sublist(aSpatialDomain.materialName()))}
 {
 }
 

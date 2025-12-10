@@ -17,17 +17,6 @@
 namespace Plato
 {
 
-struct partial
-{
-    enum derivative_t
-    {
-        CONTROL = 0,
-        STATE = 1,
-        CONFIGURATION = 2,
-    };
-};
-// end struct partial
-
 /******************************************************************************/
 /**
  * \brief Abstract interface for a PLATO problem

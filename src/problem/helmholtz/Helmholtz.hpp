@@ -16,7 +16,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Helmholtz::AbstractVectorFunction<EvaluationType>> createVectorFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aParamList,
         std::string aFunctionType)

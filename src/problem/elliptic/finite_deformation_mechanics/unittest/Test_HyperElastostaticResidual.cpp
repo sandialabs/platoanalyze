@@ -46,7 +46,8 @@ Plato::ScalarVector compute_residual_over_mesh(const Plato::Mesh& aMesh,
     Teuchos::ParameterList tParamList = create_param_list();
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(tParamList, aMesh);
+    plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
 
     Plato::Elliptic::VectorFunction<FiniteDeformationMechanics<typename ElementType::TopoElementType>> tPDE(
         tSpatialModel, tDataMap, tParamList, tParamList.get<std::string>("PDE Constraint"));

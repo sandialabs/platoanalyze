@@ -48,7 +48,7 @@ class InternalThermalEnergy : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    InternalThermalEnergy(const Plato::SpatialDomain& aSpatialDomain,
+    InternalThermalEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aProblemParams,
                           Teuchos::ParameterList& aPenaltyParams,

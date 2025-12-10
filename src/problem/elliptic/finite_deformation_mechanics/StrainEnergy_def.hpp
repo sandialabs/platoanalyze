@@ -17,7 +17,7 @@
 namespace plato::elliptic::finite_deformation_mechanics
 {
 template <typename EvaluationType, typename IndicatorFunctionType>
-StrainEnergy<EvaluationType, IndicatorFunctionType>::StrainEnergy(const Plato::SpatialDomain& aSpatialDomain,
+StrainEnergy<EvaluationType, IndicatorFunctionType>::StrainEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                                                                   Plato::DataMap& aDataMap,
                                                                   Teuchos::ParameterList& aProblemParams,
                                                                   Teuchos::ParameterList& aPenaltyParams,
@@ -30,7 +30,7 @@ StrainEnergy<EvaluationType, IndicatorFunctionType>::StrainEnergy(const Plato::S
     // Note: including composable_function_objects/material/NeoHookeanModel.hpp in the decl file causes weird errors
     // with std::pow and Fad types even though nothing changes in how they are used. Because of this,
     // NeoHookeanParameters can't be used as a member variable
-    const auto tMaterialName = aSpatialDomain.getMaterialName();
+    const auto tMaterialName = aSpatialDomain.materialName();
     const auto tMaterialParameters = aProblemParams.sublist("Material Models").sublist(tMaterialName);
     const auto tNeoHookeanParameters =
         composable_function_objects::material::get_neo_hookean_parameters(tMaterialParameters);

@@ -46,7 +46,7 @@ class StressPNorm : public EvaluationType::ElementType, public Plato::Elliptic::
 
    public:
     /**************************************************************************/
-    StressPNorm(const Plato::SpatialDomain& aSpatialDomain,
+    StressPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                 Plato::DataMap& aDataMap,
                 Teuchos::ParameterList& aProblemParams,
                 Teuchos::ParameterList& aPenaltyParams,

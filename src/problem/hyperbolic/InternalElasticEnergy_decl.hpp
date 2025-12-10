@@ -40,7 +40,7 @@ class InternalElasticEnergy : public EvaluationType::ElementType,
     Teuchos::RCP<Plato::LinearElasticMaterial<mNumSpatialDims>> mMaterialModel;
 
    public:
-    InternalElasticEnergy(const Plato::SpatialDomain& aSpatialDomain,
+    InternalElasticEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aProblemParams,
                           Teuchos::ParameterList& aPenaltyParams,

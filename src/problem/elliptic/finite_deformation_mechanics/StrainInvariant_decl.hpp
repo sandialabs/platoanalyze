@@ -36,7 +36,7 @@ class StrainInvariant : public EvaluationType::ElementType,
     using ResultScalarType = typename EvaluationType::ResultScalarType;
 
    public:
-    StrainInvariant(const Plato::SpatialDomain& aSpatialDomain,
+    StrainInvariant(const plato::domain::SpatialDomain& aSpatialDomain,
                     Plato::DataMap& aDataMap,
                     Teuchos::ParameterList& aProblemParams,
                     Teuchos::ParameterList& aPenaltyParams,

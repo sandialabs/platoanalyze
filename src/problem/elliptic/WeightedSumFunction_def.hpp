@@ -56,11 +56,11 @@ void WeightedSumFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProbl
  * \param [in] aName user defined function name
  **********************************************************************************/
 template <typename PhysicsType>
-WeightedSumFunction<PhysicsType>::WeightedSumFunction(const Plato::SpatialModel& aSpatialModel,
+WeightedSumFunction<PhysicsType>::WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                       Plato::DataMap& aDataMap,
                                                       Teuchos::ParameterList& aProblemParams,
                                                       const std::string& aName)
-    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -74,9 +74,9 @@ WeightedSumFunction<PhysicsType>::WeightedSumFunction(const Plato::SpatialModel&
  * \param [in] aSpatialModel Plato Analyze spatial model
  **********************************************************************************/
 template <typename PhysicsType>
-WeightedSumFunction<PhysicsType>::WeightedSumFunction(const Plato::SpatialModel& aSpatialModel,
+WeightedSumFunction<PhysicsType>::WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                       Plato::DataMap& aDataMap)
-    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.Mesh),
+    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Weighted Sum")

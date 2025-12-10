@@ -18,7 +18,7 @@ namespace Geometric
  * \param [in] aInputParams input parameters database
  **********************************************************************************/
 template <typename EvaluationType>
-MassMoment<EvaluationType>::MassMoment(const Plato::SpatialDomain& aSpatialDomain,
+MassMoment<EvaluationType>::MassMoment(const plato::domain::SpatialDomain& aSpatialDomain,
                                        Plato::DataMap& aDataMap,
                                        Teuchos::ParameterList& aInputParams)
     : FunctionBaseType(aSpatialDomain, aDataMap, aInputParams, "MassMoment"),
@@ -37,7 +37,7 @@ MassMoment<EvaluationType>::MassMoment(const Plato::SpatialDomain& aSpatialDomai
  * \param [in] aDataMap Plato Engine and Analyze data map
  **********************************************************************************/
 template <typename EvaluationType>
-MassMoment<EvaluationType>::MassMoment(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
+MassMoment<EvaluationType>::MassMoment(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap)
     : FunctionBaseType(aSpatialDomain, aDataMap, "MassMoment"), mCellMaterialDensity(1.0), mCalculationType("")
 {
 }

@@ -22,7 +22,7 @@ namespace Hyperbolic
 {
 template <typename EvaluationType, typename IndicatorFunctionType>
 TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::TransientMechanicsResidual(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams)
@@ -54,7 +54,7 @@ TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::TransientMech
     }
 
     Plato::ElasticModelFactory<mNumSpatialDims> tMaterialModelFactory(aProblemParams);
-    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.getMaterialName());
+    mMaterialModel = tMaterialModelFactory.create(aSpatialDomain.materialName());
 
     mRayleighDamping = (mMaterialModel->getRayleighA() != 0.0) || (mMaterialModel->getRayleighB() != 0.0);
 }
@@ -351,7 +351,7 @@ void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate
 
 template <typename EvaluationType, typename IndicatorFunctionType>
 void TransientMechanicsResidual<EvaluationType, IndicatorFunctionType>::evaluate_boundary(
-    const Plato::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
     const Plato::ScalarMultiVectorT<StateDotDotScalarType>& aStateDotDot,

@@ -46,7 +46,7 @@ class StressPNorm : public EvaluationType::ElementType, public Plato::Hyperbolic
     Teuchos::RCP<Plato::LinearElasticMaterial<mNumSpatialDims>> mMaterialModel;
 
    public:
-    StressPNorm(const Plato::SpatialDomain& aSpatialDomain,
+    StressPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
                 Plato::DataMap& aDataMap,
                 Teuchos::ParameterList& aProblemParams,
                 Teuchos::ParameterList& aPenaltyParams,

@@ -28,7 +28,7 @@ struct FunctionFactory
     /******************************************************************************/
     template <typename EvaluationType>
     std::shared_ptr<Plato::Elliptic::AbstractVectorFunction<EvaluationType>> createVectorFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aPDE)
@@ -47,7 +47,7 @@ struct FunctionFactory
 
     template <typename EvaluationType>
     std::shared_ptr<Plato::Parabolic::AbstractVectorFunction<EvaluationType>> createVectorFunctionParabolic(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aPDE)
@@ -70,7 +70,7 @@ struct FunctionFactory
 
     template <typename EvaluationType>
     std::shared_ptr<Plato::Elliptic::AbstractScalarFunction<EvaluationType>> createScalarFunction(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aFuncType,
@@ -95,7 +95,7 @@ struct FunctionFactory
 
     template <typename EvaluationType>
     std::shared_ptr<Plato::Parabolic::AbstractScalarFunction<EvaluationType>> createScalarFunctionParabolic(
-        const Plato::SpatialDomain& aSpatialDomain,
+        const plato::domain::SpatialDomain& aSpatialDomain,
         Plato::DataMap& aDataMap,
         Teuchos::ParameterList& aProblemParams,
         std::string aFuncType,

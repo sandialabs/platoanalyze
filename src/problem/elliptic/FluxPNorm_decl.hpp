@@ -40,7 +40,7 @@ class FluxPNorm : public EvaluationType::ElementType, public Plato::Elliptic::Ab
 
    public:
     /**************************************************************************/
-    FluxPNorm(const Plato::SpatialDomain& aSpatialDomain,
+    FluxPNorm(const plato::domain::SpatialDomain& aSpatialDomain,
               Plato::DataMap& aDataMap,
               Teuchos::ParameterList& aProblemParams,
               Teuchos::ParameterList& aPenaltyParams,

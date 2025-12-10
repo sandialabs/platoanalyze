@@ -20,7 +20,7 @@ PLATO_ELEMENT_DEF(plato::elliptic::finite_deformation_mechanics::VarianceFunctio
 PLATO_ELEMENT_DEF(plato::elliptic::finite_deformation_mechanics::VarianceFunction, Plato::Thermomechanics)
 PLATO_ELEMENT_DEF(plato::elliptic::finite_deformation_mechanics::VarianceFunction,
                   plato::elliptic::finite_deformation_mechanics::FiniteDeformationMechanics)
-
+#endif
 namespace plato::elliptic::finite_deformation_mechanics
 {
 namespace detail
@@ -32,16 +32,16 @@ Plato::ScalarVector get_last_time_step_state(const Plato::Solutions& aSolution)
     return Kokkos::subview(tStates, tNumSteps - 1, Kokkos::ALL());
 }
 
-Plato::Scalar compute_field_variance(const Plato::SpatialModel& aSpatialModel,
+Plato::Scalar compute_field_variance(const plato::domain::SpatialModel& aSpatialModel,
                                      const std::map<std::string, Plato::ScalarVectorT<Plato::Scalar>>& aDomainResults,
                                      const Plato::Scalar aMean,
                                      const Plato::OrdinalType aNumTotalCells)
 {
     Plato::Scalar tVariance{0.0};
-    for (const auto& tDomain : aSpatialModel.Domains)
+    for (const auto& tDomain : aSpatialModel.mDomains)
     {
         const auto tNumCells = tDomain.numCells();
-        const auto tResult = aDomainResults.at(tDomain.getDomainName());
+        const auto tResult = aDomainResults.at(tDomain.domainName());
         Kokkos::parallel_reduce(
             Kokkos::RangePolicy<>(0, tNumCells),
             KOKKOS_LAMBDA(const Plato::OrdinalType tCellOrdinal, Plato::Scalar& aUpdate) {
@@ -53,4 +53,3 @@ Plato::Scalar compute_field_variance(const Plato::SpatialModel& aSpatialModel,
 }
 }  // namespace detail
 }  // namespace plato::elliptic::finite_deformation_mechanics
-#endif

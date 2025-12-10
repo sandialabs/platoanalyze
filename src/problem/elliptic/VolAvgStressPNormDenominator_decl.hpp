@@ -42,7 +42,7 @@ class VolAvgStressPNormDenominator : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    VolAvgStressPNormDenominator(const Plato::SpatialDomain& aSpatialDomain,
+    VolAvgStressPNormDenominator(const plato::domain::SpatialDomain& aSpatialDomain,
                                  Plato::DataMap& aDataMap,
                                  Teuchos::ParameterList& aProblemParams,
                                  Teuchos::ParameterList& aPenaltyParams,

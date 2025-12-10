@@ -34,7 +34,7 @@ class VolumeAverageCriterionDenominator : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    VolumeAverageCriterionDenominator(const Plato::SpatialDomain& aSpatialDomain,
+    VolumeAverageCriterionDenominator(const plato::domain::SpatialDomain& aSpatialDomain,
                                       Plato::DataMap& aDataMap,
                                       Teuchos::ParameterList& aProblemParams,
                                       std::string& aFunctionName);

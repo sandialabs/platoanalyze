@@ -50,7 +50,7 @@ class HyperElastostaticResidual : public EvaluationType::ElementType,
     using ResultScalarType = typename EvaluationType::ResultScalarType;
 
    public:
-    HyperElastostaticResidual(const Plato::SpatialDomain& aSpatialDomain,
+    HyperElastostaticResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                               Plato::DataMap& aDataMap,
                               Teuchos::ParameterList& aProblemParams,
                               Teuchos::ParameterList& aPenaltyParams);
@@ -66,7 +66,7 @@ class HyperElastostaticResidual : public EvaluationType::ElementType,
                   Plato::Scalar aTimeStep = 0.0) const override final;
 
     /// @brief function to compute Natural Boundary Condition contributions for the residual.
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                            const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,

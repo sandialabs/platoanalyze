@@ -37,7 +37,7 @@ class AbstractTMKinetics : public ElementType
      * \param [in] aMaterialModel material model
      **********************************************************************************/
     AbstractTMKinetics(Teuchos::RCP<Plato::MaterialModel<mNumSpatialDims>> const aMaterialModel,
-                       Plato::SpatialDomain const& aSpatialDomain,
+                       plato::domain::SpatialDomain const& aSpatialDomain,
                        Plato::DataMap const& aDataMap)
     {
         UniformMaterialBasisFactory tUniformFactory;

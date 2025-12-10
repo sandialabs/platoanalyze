@@ -29,7 +29,7 @@ class LeastSquaresFunction : public Plato::Elliptic::ScalarFunctionBase,
     std::vector<Plato::Scalar> mFunctionNormalization;
     std::vector<std::shared_ptr<Plato::Elliptic::ScalarFunctionBase>> mScalarFunctionBaseContainer;
 
-    const Plato::SpatialModel& mSpatialModel;
+    const plato::domain::SpatialModel& mSpatialModel;
 
     Plato::DataMap& mDataMap;
 
@@ -56,7 +56,7 @@ class LeastSquaresFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aProblemParams input parameters database
      * \param [in] aName user defined function name
      **********************************************************************************/
-    LeastSquaresFunction(const Plato::SpatialModel& aSpatialModel,
+    LeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
                          Plato::DataMap& aDataMap,
                          Teuchos::ParameterList& aProblemParams,
                          const std::string& aName);
@@ -67,7 +67,7 @@ class LeastSquaresFunction : public Plato::Elliptic::ScalarFunctionBase,
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aDataMap Plato Analyze data map
      **********************************************************************************/
-    LeastSquaresFunction(const Plato::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    LeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**

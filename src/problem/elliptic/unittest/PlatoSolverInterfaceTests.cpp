@@ -148,7 +148,8 @@ Plato::ScalarVector::HostMirror test_elastic_problem_solution(const Plato::Mesh&
     Teuchos::RCP<Teuchos::ParameterList> tParamList = elastic_2d_xml_parameters();
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(aMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, aMesh);
+    plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *tParamList,
                                                                 tParamList->get<std::string>("PDE Constraint"));
 
@@ -311,7 +312,8 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, MatrixConversionTpetra)
 
     Plato::DataMap tDataMap;
 
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tri3>> vectorFunction(
         tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -418,7 +420,8 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, MatrixConversionTpetra_wrongSize)
 
     Plato::DataMap tDataMap;
 
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::Elliptic::VectorFunction<::Plato::Mechanics<Plato::Tri3>> vectorFunction(
         tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
@@ -776,7 +779,8 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, TpetraSolver_accept_parameterlist_input)
 
     Plato::DataMap tDataMap;
 
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::Elliptic::VectorFunction<PhysicsType> vectorFunction(tSpatialModel, tDataMap, *tParamList,
                                                                 tParamList->get<std::string>("PDE Constraint"));

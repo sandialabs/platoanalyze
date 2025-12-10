@@ -279,9 +279,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_EvaluateVonMises)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterionQuadratic<Residual> tCriterion(tOnlyDomain, tDataMap);
 
@@ -383,9 +384,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_EvaluateTensileEnergyDe
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterionQuadratic<Residual> tCriterion(tOnlyDomain, tDataMap);
 
@@ -470,9 +472,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_EvalTensileEnergyScalar
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tri3>> tWeightedSum(tSpatialModel, tDataMap);
 
@@ -496,7 +499,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_EvalTensileEnergyScalar
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFunc->setEvaluator(tCriterion, tOnlyDomain.getDomainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterion, tOnlyDomain.domainName());
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFunc);
     tWeightedSum.appendFunctionWeight(1.0);
 
@@ -583,9 +586,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_CheckThermalVonMises3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     const std::string tName = "ThermalVonMises";
     Plato::ThermalVonMisesLocalMeasure<Residual> tLocalMeasure(tOnlyDomain, tDataMap, *tParamList, tName);
@@ -611,11 +615,12 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tet4>> tWeightedSum(tSpatialModel, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     using GradientZ = typename Plato::Elliptic::Evaluation<ElementType>::GradientZ;
@@ -636,8 +641,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tet4>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFunc->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFunc->setEvaluator(tCriterionGradZ, tOnlyDomain.getDomainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterionGradZ, tOnlyDomain.domainName());
 
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFunc);
     tWeightedSum.appendFunctionWeight(1.0);
@@ -654,10 +659,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tri3>> tWeightedSum(tSpatialModel, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Jacobian = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
@@ -679,8 +685,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFunc->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFunc->setEvaluator(tCriterionGradU, tOnlyDomain.getDomainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterionGradU, tOnlyDomain.domainName());
 
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFunc);
     tWeightedSum.appendFunctionWeight(1.0);
@@ -697,10 +703,11 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tet4>> tWeightedSum(tSpatialModel, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Jacobian = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
@@ -722,8 +729,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tet4>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFunc->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFunc->setEvaluator(tCriterionGradU, tOnlyDomain.getDomainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFunc->setEvaluator(tCriterionGradU, tOnlyDomain.domainName());
 
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFunc);
     tWeightedSum.appendFunctionWeight(1.0);
@@ -778,9 +785,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_EvaluateTensileEnergyDe
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterionQuadratic<Residual> tCriterion(tOnlyDomain, tDataMap);
 
@@ -824,9 +832,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     using GradientZ = typename Plato::Elliptic::Evaluation<ElementType>::GradientZ;
@@ -851,9 +860,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     using GradientZ = typename Plato::Elliptic::Evaluation<ElementType>::GradientZ;
@@ -878,9 +888,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     using Jacobian = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
@@ -906,9 +917,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_FiniteDiff_TensileEnerg
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     using Jacobian = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
@@ -935,9 +947,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_UpdateMultipliers1)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     Plato::AugLagStressCriterionQuadratic<Residual> tCriterion(tOnlyDomain, tDataMap);
@@ -1028,9 +1041,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagQuadratic_UpdateMultipliers2)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<ElementType>::Residual;
     Plato::AugLagStressCriterionQuadratic<Residual> tCriterion(tOnlyDomain, tDataMap);
@@ -1257,9 +1271,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_ComputeStructuralMass_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<Plato::MechanicsElement<Plato::Tet4>>::Residual;
     Plato::AugLagStressCriterion<Residual> tCriterion(tOnlyDomain, tDataMap);
@@ -1318,9 +1333,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_CriterionEval_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterion<Residual> tCriterion(tOnlyDomain, tDataMap);
 
@@ -1364,9 +1380,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_FiniteDiff_CriterionGradZ_2D)
     using ElementType = typename Plato::MechanicsElement<Plato::Tri3>;
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using GradientZ = typename Plato::Elliptic::Evaluation<ElementType>::GradientZ;
     Plato::AugLagStressCriterion<GradientZ> tCriterion(tOnlyDomain, tDataMap);
@@ -1396,9 +1413,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_FiniteDiff_CriterionGradU_2D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Jacobian = typename Plato::Elliptic::Evaluation<ElementType>::Jacobian;
     Plato::AugLagStressCriterion<Jacobian> tCriterion(tOnlyDomain, tDataMap);
@@ -1434,9 +1452,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_FiniteDiff_CriterionGradZ_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterion<GradientZ> tCriterion(tOnlyDomain, tDataMap);
 
@@ -1471,9 +1490,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_FiniteDiff_CriterionGradU_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterion<Jacobian> tCriterion(tOnlyDomain, tDataMap);
 
@@ -1500,9 +1520,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_UpdateMultipliers1)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
 
@@ -1598,9 +1619,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_UpdateMultipliers2)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
 
@@ -1697,9 +1719,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagGeneral_FiniteDiff_CriterionGradZ
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tri3>;
 
@@ -1724,9 +1747,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagGeneral_FiniteDiff_CriterionGradU
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tri3>;
 
@@ -1759,9 +1783,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagGeneral_FiniteDiff_CriterionGradZ
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterionGeneral<GradientZ> tCriterion(tOnlyDomain, tDataMap);
 
@@ -1791,9 +1816,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagGeneral_FiniteDiff_CriterionGradU
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::AugLagStressCriterionGeneral<Jacobian> tCriterion(tOnlyDomain, tDataMap);
 
@@ -1814,9 +1840,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLagGeneral_computeStructuralMass)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using Residual = typename Plato::Elliptic::Evaluation<Plato::MechanicsElement<Plato::Tet4>>::Residual;
     Plato::AugLagStressCriterionGeneral<Residual> tCriterion(tOnlyDomain, tDataMap);
@@ -1836,9 +1863,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_UpdateProbelm1)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
 
@@ -1925,9 +1953,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, AugLag_UpdateProblem2)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
 
@@ -2076,9 +2105,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusTensileEnergy2D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tri3>> tWeightedSum(tSpatialModel, tDataMap);
 
@@ -2105,7 +2135,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusTensileEnergy2D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.domainName());
 
     const Plato::Scalar tMassFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncMass);
@@ -2117,7 +2147,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusTensileEnergy2D)
                                                                                                 tDataMap);
 
     const Plato::Scalar tTensileEnergyFunctionWeight = 0.5;
-    tPhysicsScalarFuncTensileEnergy->setEvaluator(tTensileEnergyCriterion, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncTensileEnergy->setEvaluator(tTensileEnergyCriterion, tOnlyDomain.domainName());
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncTensileEnergy);
     tWeightedSum.appendFunctionWeight(tTensileEnergyFunctionWeight);
 
@@ -2149,9 +2179,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradZ_2D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tri3>> tWeightedSum(tSpatialModel, tDataMap);
 
@@ -2181,8 +2212,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradZ_2D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradZ, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradZ, tOnlyDomain.domainName());
 
     const Plato::Scalar tVonMisesFunctionWeight = 1.0;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncVonMises);
@@ -2204,8 +2235,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradZ_2D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradZ, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.domainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradZ, tOnlyDomain.domainName());
 
     const Plato::Scalar tMassFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncMass);
@@ -2226,9 +2257,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradZ_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tet4>> tWeightedSum(tSpatialModel, tDataMap);
 
@@ -2258,8 +2290,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradZ_3D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tet4>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradZ, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradZ, tOnlyDomain.domainName());
 
     const Plato::Scalar tVonMisesFunctionWeight = 1.0;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncVonMises);
@@ -2279,8 +2311,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradZ_3D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tet4>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradZ, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.domainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradZ, tOnlyDomain.domainName());
 
     const Plato::Scalar tMassFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncMass);
@@ -2301,9 +2333,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradU_2D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tri3>> tWeightedSum(tSpatialModel, tDataMap);
 
@@ -2333,8 +2366,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradU_2D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradU, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradU, tOnlyDomain.domainName());
 
     const Plato::Scalar tVonMisesFunctionWeight = 1.0;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncVonMises);
@@ -2354,8 +2387,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradU_2D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tri3>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradU, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.domainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradU, tOnlyDomain.domainName());
 
     const Plato::Scalar tMassFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncMass);
@@ -2376,9 +2409,10 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradU_3D)
 
     // ALLOCATE PLATO CRITERION
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tGenericParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tGenericParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     Plato::Elliptic::WeightedSumFunction<Plato::Mechanics<Plato::Tet4>> tWeightedSum(tSpatialModel, tDataMap);
 
@@ -2408,8 +2442,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradU_3D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tet4>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradU, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionResidual, tOnlyDomain.domainName());
+    tPhysicsScalarFuncVonMises->setEvaluator(tCriterionGradU, tOnlyDomain.domainName());
 
     const Plato::Scalar tVonMisesFunctionWeight = 1.0;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncVonMises);
@@ -2429,8 +2463,8 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPlusVonMises_GradU_3D)
         std::make_shared<Plato::Elliptic::PhysicsScalarFunction<Plato::Mechanics<Plato::Tet4>>>(tSpatialModel,
                                                                                                 tDataMap);
 
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.getDomainName());
-    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradU, tOnlyDomain.getDomainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterion, tOnlyDomain.domainName());
+    tPhysicsScalarFuncMass->setEvaluator(tMassCriterionGradU, tOnlyDomain.domainName());
 
     const Plato::Scalar tMassFunctionWeight = 0.75;
     tWeightedSum.allocateScalarFunctionBase(tPhysicsScalarFuncMass);

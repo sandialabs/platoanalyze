@@ -38,7 +38,7 @@ class Volume : public EvaluationType::ElementType, public Plato::Geometric::Abst
 
    public:
     /**************************************************************************/
-    Volume(const Plato::SpatialDomain& aSpatialDomain,
+    Volume(const plato::domain::SpatialDomain& aSpatialDomain,
            Plato::DataMap& aDataMap,
            Teuchos::ParameterList& aInputs,
            Teuchos::ParameterList& aPenaltyParams,

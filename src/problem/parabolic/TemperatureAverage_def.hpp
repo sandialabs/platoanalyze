@@ -13,7 +13,7 @@ namespace Parabolic
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
 TemperatureAverage<EvaluationType, IndicatorFunctionType>::TemperatureAverage(
-    const Plato::SpatialDomain& aSpatialDomain,
+    const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
     Teuchos::ParameterList& aPenaltyParams,

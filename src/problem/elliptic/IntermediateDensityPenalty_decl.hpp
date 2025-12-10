@@ -32,7 +32,7 @@ class IntermediateDensityPenalty : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    IntermediateDensityPenalty(const Plato::SpatialDomain& aSpatialDomain,
+    IntermediateDensityPenalty(const plato::domain::SpatialDomain& aSpatialDomain,
                                Plato::DataMap& aDataMap,
                                Teuchos::ParameterList& aInputParams,
                                std::string aFunctionName);
@@ -40,7 +40,7 @@ class IntermediateDensityPenalty : public EvaluationType::ElementType,
     /**************************************************************************
      * Unit testing constructor
      **************************************************************************/
-    IntermediateDensityPenalty(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
+    IntermediateDensityPenalty(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
 
     /**************************************************************************/
     void evaluate_conditional(const Plato::ScalarMultiVectorT<StateScalarType>& aState,

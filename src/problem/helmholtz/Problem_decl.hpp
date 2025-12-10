@@ -37,7 +37,7 @@ class Problem : public Plato::AbstractProblem
 
     using VectorFunctionType = Plato::Helmholtz::VectorFunction<PhysicsType>;
 
-    Plato::SpatialModel mSpatialModel; /*!< SpatialModel instance contains the mesh, meshsets, domains, etc. */
+    plato::domain::SpatialModel mSpatialModel; /*!< SpatialModel instance contains the mesh, meshsets, domains, etc. */
 
     // required
     std::shared_ptr<VectorFunctionType> mPDE; /*!< equality constraint interface */

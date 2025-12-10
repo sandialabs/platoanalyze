@@ -53,7 +53,7 @@ class HelmholtzResidual : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    HelmholtzResidual(const Plato::SpatialDomain& aSpatialDomain,
+    HelmholtzResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                       Plato::DataMap& aDataMap,
                       Teuchos::ParameterList& aProblemParams)
         : FunctionBaseType(aSpatialDomain, aDataMap)
@@ -155,7 +155,7 @@ class HelmholtzResidual : public EvaluationType::ElementType,
     }
 
     /**************************************************************************/
-    void evaluate_boundary(const Plato::SpatialModel& aSpatialModel,
+    void evaluate_boundary(const plato::domain::SpatialModel& aSpatialModel,
                            const Plato::ScalarMultiVectorT<StateScalarType>& aState,
                            const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
                            const Plato::ScalarArray3DT<ConfigScalarType>& aConfig,
@@ -172,8 +172,8 @@ class HelmholtzResidual : public EvaluationType::ElementType,
         Plato::SurfaceArea<ElementType> surfaceArea;
 
         // get sideset faces
-        auto tElementOrds = aSpatialModel.Mesh->GetSideSetElementsComplement(mSymmetryPlaneSides);
-        auto tNodeOrds = aSpatialModel.Mesh->GetSideSetLocalNodesComplement(mSymmetryPlaneSides);
+        auto tElementOrds = aSpatialModel.mMesh->GetSideSetElementsComplement(mSymmetryPlaneSides);
+        auto tNodeOrds = aSpatialModel.mMesh->GetSideSetLocalNodesComplement(mSymmetryPlaneSides);
         Plato::OrdinalType tNumFaces = tElementOrds.size();
 
         // evaluate integral

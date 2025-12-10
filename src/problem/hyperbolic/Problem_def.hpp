@@ -211,7 +211,7 @@ void Problem<PhysicsType>::output(const std::string& aFilepath)
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();
     auto tSolutionOutput = mPDEConstraint.getSolutionStateOutputData(tSolution);
-    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.Mesh);
+    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.mMesh);
 }
 
 template <typename PhysicsType>

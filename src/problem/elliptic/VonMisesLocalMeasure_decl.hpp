@@ -41,7 +41,7 @@ class VonMisesLocalMeasure : public AbstractLocalMeasure<EvaluationType>
      * \param [in] aInputParams input parameters database
      * \param [in] aName local measure name
      **********************************************************************************/
-    VonMisesLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
+    VonMisesLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
                          Plato::DataMap& aDataMap,
                          Teuchos::ParameterList& aInputParams,
                          const std::string& aName);
@@ -52,7 +52,7 @@ class VonMisesLocalMeasure : public AbstractLocalMeasure<EvaluationType>
      * \param [in] aCellStiffMatrix stiffness matrix
      * \param [in] aName local measure name
      **********************************************************************************/
-    VonMisesLocalMeasure(const Plato::SpatialDomain& aSpatialDomain,
+    VonMisesLocalMeasure(const plato::domain::SpatialDomain& aSpatialDomain,
                          Plato::DataMap& aDataMap,
                          const MatrixType& aCellStiffMatrix,
                          const std::string aName);

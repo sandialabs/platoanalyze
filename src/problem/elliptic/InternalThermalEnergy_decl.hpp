@@ -54,7 +54,7 @@ class InternalThermalEnergy : public EvaluationType::ElementType,
      * \param aProblemParams input database for overall problem
      * \param aPenaltyParams input database for penalty function
      **********************************************************************************/
-    InternalThermalEnergy(const Plato::SpatialDomain& aSpatialDomain,
+    InternalThermalEnergy(const plato::domain::SpatialDomain& aSpatialDomain,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aProblemParams,
                           Teuchos::ParameterList& aPenaltyParams,

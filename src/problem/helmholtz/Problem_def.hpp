@@ -17,7 +17,7 @@ namespace Helmholtz
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine)
     : AbstractProblem(aMesh, aProblemParams),
-      mSpatialModel(aMesh, aProblemParams, mDataMap),
+      mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
       mPDE(std::make_shared<VectorFunctionType>(
           mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint"))),
       mResidual("MyResidual", mPDE->size()),
@@ -96,7 +96,7 @@ void Problem<PhysicsType>::output(const std::string& aFilepath)
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();
     auto tSolutionOutput = mPDE->getSolutionStateOutputData(tSolution);
-    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.Mesh);
+    Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.mMesh);
 }
 
 /******************************************************************************/

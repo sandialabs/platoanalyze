@@ -103,9 +103,10 @@ TEUCHOS_UNIT_TEST(TransientMechanicsElementTests, ElementFunctors3D)
     using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tParamList, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    auto tOnlyDomain = tSpatialModel.Domains.front();
+    auto tOnlyDomain = tSpatialModel.mDomains.front();
 
     int tNumCells = tMesh->NumElements();
     auto tCubPoints = ElementType::getCubPoints();
@@ -156,7 +157,7 @@ TEUCHOS_UNIT_TEST(TransientMechanicsElementTests, ElementFunctors3D)
     Plato::SmallStrain<ElementType> computeVoigtStrain;
 
     Plato::ElasticModelFactory<tSpatialDims> mmfactory(*tParamList);
-    auto tMaterialModel = mmfactory.create(tOnlyDomain.getMaterialName());
+    auto tMaterialModel = mmfactory.create(tOnlyDomain.materialName());
     auto tCellStiffness = tMaterialModel->getStiffnessMatrix();
 
     Plato::LinearStress<Plato::Hyperbolic::ResidualTypes<ElementType>, ElementType> computeVoigtStress(tCellStiffness);
@@ -551,7 +552,8 @@ TEUCHOS_UNIT_TEST(TransientMechanicsResidualTests, 3D_NoMass)
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
     Plato::Hyperbolic::VectorFunction<::Plato::Hyperbolic::Mechanics<Plato::Tet4>> tVectorFunction(
         tSpatialModel, tDataMap, *tInputParams, tInputParams->get<std::string>("PDE Constraint"));
@@ -874,7 +876,8 @@ TEUCHOS_UNIT_TEST(TransientMechanicsResidualTests, 3D_WithMass)
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", cMeshWidth);
 
     Plato::DataMap tDataMap;
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Hyperbolic::VectorFunction<::Plato::Hyperbolic::Mechanics<Plato::Tet4>> tVectorFunction(
         tSpatialModel, tDataMap, *tInputParams, tInputParams->get<std::string>("PDE Constraint"));
 
@@ -1386,7 +1389,8 @@ TEUCHOS_UNIT_TEST(TransientMechanicsResidualTests, 3D_ScalarFunction)
 
     Plato::DataMap tDataMap;
     std::string tMyFunction("Internal Energy");
-    Plato::SpatialModel tSpatialModel(tMesh, *tInputParams, tDataMap);
+    const auto tParsedDomains = plato::domain::parse_domains(*tInputParams, tMesh);
+    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
     Plato::Hyperbolic::PhysicsScalarFunction<::Plato::Hyperbolic::Mechanics<Plato::Tet4>> tScalarFunction(
         tSpatialModel, tDataMap, *tInputParams, tMyFunction);
 

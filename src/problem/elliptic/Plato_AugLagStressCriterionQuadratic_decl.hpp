@@ -84,7 +84,7 @@ class AugLagStressCriterionQuadratic : public EvaluationType::ElementType,
      * \param [in] aInputParams input parameters database
      * \param [in] aFuncName user defined function name
      **********************************************************************************/
-    AugLagStressCriterionQuadratic(const Plato::SpatialDomain& aSpatialDomain,
+    AugLagStressCriterionQuadratic(const plato::domain::SpatialDomain& aSpatialDomain,
                                    Plato::DataMap& aDataMap,
                                    Teuchos::ParameterList& aInputParams,
                                    const std::string& aFuncName);
@@ -95,7 +95,7 @@ class AugLagStressCriterionQuadratic : public EvaluationType::ElementType,
      * \param [in] aSpatialDomain Plato Analyze spatial domain
      * \param [in] aDataMap PLATO Engine and Analyze data map
      **********************************************************************************/
-    AugLagStressCriterionQuadratic(const Plato::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
+    AugLagStressCriterionQuadratic(const plato::domain::SpatialDomain& aSpatialDomain, Plato::DataMap& aDataMap);
 
     /******************************************************************************/
     /**
