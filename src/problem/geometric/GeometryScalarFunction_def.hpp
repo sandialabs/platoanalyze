@@ -48,7 +48,7 @@ GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const plato::domain::S
                                                           Plato::DataMap& aDataMap,
                                                           Teuchos::ParameterList& aProblemParams,
                                                           const std::string& aName)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -64,7 +64,7 @@ GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const plato::domain::S
 template <typename GeometryT>
 GeometryScalarFunction<GeometryT>::GeometryScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Undefined Name")
@@ -121,10 +121,10 @@ void GeometryScalarFunction<GeometryT>::updateProblem(const Plato::ScalarVector&
         auto tName = tDomain.domainName();
 
         Plato::ScalarMultiVector tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
 
         Plato::ScalarArray3D tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
 
         mValueFunctions.at(tName)->updateProblem(tControlWS, tConfigWS);
         mGradientZFunctions.at(tName)->updateProblem(tControlWS, tConfigWS);
@@ -154,12 +154,12 @@ Plato::Scalar GeometryScalarFunction<GeometryT>::value(const Plato::ScalarVector
         // workset control
         //
         Plato::ScalarMultiVectorT<ControlScalar> tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
 
         // workset config
         //
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
 
         // create result view
         //
@@ -184,12 +184,12 @@ Plato::Scalar GeometryScalarFunction<GeometryT>::value(const Plato::ScalarVector
         // workset control
         //
         Plato::ScalarMultiVectorT<ControlScalar> tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
 
         // workset config
         //
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS);
 
         // create result view
         //
@@ -234,12 +234,12 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_x(const Plato::S
         // workset control
         //
         Plato::ScalarMultiVectorT<ControlScalar> tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
 
         // workset config
         //
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
 
         // create return view
         //
@@ -266,12 +266,12 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_x(const Plato::S
         // workset control
         //
         Plato::ScalarMultiVectorT<ControlScalar> tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
 
         // workset config
         //
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS);
 
         // create return view
         //
@@ -319,12 +319,12 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_z(const Plato::S
         // workset control
         //
         Plato::ScalarMultiVectorT<ControlScalar> tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS, tDomain);
 
         // workset config
         //
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
 
         // create result
         //
@@ -350,12 +350,12 @@ Plato::ScalarVector GeometryScalarFunction<GeometryT>::gradient_z(const Plato::S
         // workset control
         //
         Plato::ScalarMultiVectorT<ControlScalar> tControlWS("control workset", tNumCells, mNumNodesPerCell);
-        Plato::Geometric::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
+        Plato::WorksetBase<ElementType>::worksetControl(aControl, tControlWS);
 
         // workset config
         //
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
-        Plato::Geometric::WorksetBase<ElementType>::worksetConfig(tConfigWS);
+        Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS);
 
         // create result
         //

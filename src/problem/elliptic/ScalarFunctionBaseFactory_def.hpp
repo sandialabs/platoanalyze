@@ -1,13 +1,10 @@
 #pragma once
 
 #include "problem/elliptic/DivisionFunction.hpp"
-#include "problem/elliptic/LeastSquaresFunction.hpp"
-#include "problem/elliptic/MassPropertiesFunction.hpp"
 #include "problem/elliptic/PhysicsScalarFunction.hpp"
 #include "problem/elliptic/ScalarFunctionBase.hpp"
 #include "problem/elliptic/SolutionFunction.hpp"
 #include "problem/elliptic/VolumeAverageCriterion.hpp"
-#include "problem/elliptic/WeightedSumFunction.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/VarianceFunction.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
@@ -37,22 +34,7 @@ std::shared_ptr<Plato::Elliptic::ScalarFunctionBase> ScalarFunctionBaseFactory<P
     auto tFunctionParams = aProblemParams.sublist("Criteria").sublist(aFunctionName);
     auto tFunctionType = tFunctionParams.get<std::string>("Type", "Not Defined");
 
-    if (tFunctionType == "Mass Properties")
-    {
-        return std::make_shared<MassPropertiesFunction<PhysicsType>>(aSpatialModel, aDataMap, aProblemParams,
-                                                                     aFunctionName);
-    }
-    else if (tFunctionType == "Least Squares")
-    {
-        return std::make_shared<LeastSquaresFunction<PhysicsType>>(aSpatialModel, aDataMap, aProblemParams,
-                                                                   aFunctionName);
-    }
-    else if (tFunctionType == "Weighted Sum")
-    {
-        return std::make_shared<WeightedSumFunction<PhysicsType>>(aSpatialModel, aDataMap, aProblemParams,
-                                                                  aFunctionName);
-    }
-    else if (tFunctionType == "Solution")
+    if (tFunctionType == "Solution")
     {
         return std::make_shared<SolutionFunction<PhysicsType>>(aSpatialModel, aDataMap, aProblemParams, aFunctionName);
     }

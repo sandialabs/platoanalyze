@@ -58,7 +58,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
 
     auto tOnlyDomain = tSpatialModel.mDomains.front();
 
-    using ElementType = typename Plato::GeometricalElement<Plato::Tet4>;
+    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
     using ResidualT = typename Plato::Geometric::Evaluation<ElementType>::Residual;
 
     std::string tFunctionName("Geometry Misfit");
@@ -102,7 +102,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, Misfit)
 
     // evaluate the function
     //
-    using WorksetBaseT = typename Plato::Geometric::WorksetBase<ElementType>;
+    using WorksetBaseT = typename Plato::WorksetBase<ElementType>;
     WorksetBaseT tWorksetBase(tMesh);
 
     {

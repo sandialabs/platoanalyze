@@ -8,11 +8,11 @@
 #include <fstream>
 
 #include "ExpInstMacros.hpp"
+#include "domain/WorksetBase.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/ImplicitFunctors.hpp"
 #include "problem/geometric/AbstractScalarFunction.hpp"
 #include "problem/geometric/EvaluationTypes.hpp"
-#include "problem/geometric/WorksetBase.hpp"
 #include "utilities/SurfaceArea.hpp"
 
 namespace Plato
