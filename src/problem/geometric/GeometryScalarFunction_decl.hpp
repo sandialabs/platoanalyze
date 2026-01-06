@@ -1,10 +1,10 @@
 #pragma once
 
+#include "domain/WorksetBase.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/geometric/AbstractScalarFunction.hpp"
 #include "problem/geometric/EvaluationTypes.hpp"
 #include "problem/geometric/ScalarFunctionBase.hpp"
-#include "problem/geometric/WorksetBase.hpp"
 
 namespace Plato
 {
@@ -18,20 +18,20 @@ namespace Geometric
  **********************************************************************************/
 template <typename GeometryT>
 class GeometryScalarFunction : public Plato::Geometric::ScalarFunctionBase,
-                               public Plato::Geometric::WorksetBase<typename GeometryT::ElementType>
+                               public Plato::WorksetBase<typename GeometryT::ElementType>
 {
    private:
     using ElementType = typename GeometryT::ElementType;
 
-    using Plato::Geometric::WorksetBase<ElementType>::mNumNodesPerCell; /*!< number of nodes per cell/element */
-    using Plato::Geometric::WorksetBase<ElementType>::mNumSpatialDims;  /*!< number of spatial dimensions */
-    using Plato::Geometric::WorksetBase<ElementType>::mNumControl;      /*!< number of control variables */
-    using Plato::Geometric::WorksetBase<ElementType>::mNumNodes;        /*!< total number of nodes in the mesh */
-    using Plato::Geometric::WorksetBase<ElementType>::mNumCells; /*!< total number of cells/elements in the mesh */
+    using Plato::WorksetBase<ElementType>::mNumNodesPerCell; /*!< number of nodes per cell/element */
+    using Plato::WorksetBase<ElementType>::mNumSpatialDims;  /*!< number of spatial dimensions */
+    using Plato::WorksetBase<ElementType>::mNumControl;      /*!< number of control variables */
+    using Plato::WorksetBase<ElementType>::mNumNodes;        /*!< total number of nodes in the mesh */
+    using Plato::WorksetBase<ElementType>::mNumCells;        /*!< total number of cells/elements in the mesh */
 
-    using Plato::Geometric::WorksetBase<ElementType>::mControlEntryOrdinal; /*!< number of degree of freedom per
+    using Plato::WorksetBase<ElementType>::mControlEntryOrdinal; /*!< number of degree of freedom per
                                                                                cell/element */
-    using Plato::Geometric::WorksetBase<ElementType>::mConfigEntryOrdinal;  /*!< number of degree of freedom per
+    using Plato::WorksetBase<ElementType>::mConfigEntryOrdinal;  /*!< number of degree of freedom per
                                                                                cell/element */
 
     using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;

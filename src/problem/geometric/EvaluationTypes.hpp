@@ -1,6 +1,6 @@
 #pragma once
 
-#include "problem/geometric/FadTypes.hpp"
+#include "core_types/FadTypes.hpp"
 
 namespace Plato
 {
@@ -29,7 +29,7 @@ struct ResidualTypes : EvaluationTypes<ElementTypeT>
 template <typename ElementTypeT>
 struct GradientXTypes : EvaluationTypes<ElementTypeT>
 {
-    using SFadType = typename Plato::Geometry::FadTypes<ElementTypeT>::ConfigFad;
+    using SFadType = typename Plato::FadTypes<ElementTypeT>::ConfigFad;
 
     using ControlScalarType = Plato::Scalar;
     using ConfigScalarType = SFadType;
@@ -39,7 +39,7 @@ struct GradientXTypes : EvaluationTypes<ElementTypeT>
 template <typename ElementTypeT>
 struct GradientZTypes : EvaluationTypes<ElementTypeT>
 {
-    using SFadType = typename Plato::Geometry::FadTypes<ElementTypeT>::ControlFad;
+    using SFadType = typename Plato::FadTypes<ElementTypeT>::ControlFad;
 
     using ControlScalarType = SFadType;
     using ConfigScalarType = Plato::Scalar;

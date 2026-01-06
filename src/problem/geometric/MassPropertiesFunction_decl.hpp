@@ -1,10 +1,10 @@
 #pragma once
 
+#include "domain/WorksetBase.hpp"
 #include "linear_algebra/PlatoMathTypes.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/geometric/GeometryScalarFunction.hpp"
 #include "problem/geometric/LeastSquaresFunction.hpp"
-#include "problem/geometric/WorksetBase.hpp"
 
 namespace Plato
 {
@@ -18,29 +18,68 @@ namespace Geometric
  **********************************************************************************/
 template <typename PhysicsType>
 class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
-                               public Plato::Geometric::WorksetBase<typename PhysicsType::ElementType>
+                               public Plato::WorksetBase<typename PhysicsType::ElementType>
 {
+   public:
+    /******************************************************************************/
+    /**
+     * \brief Primary Mass Properties Function constructor
+     * \param [in] aSpatialModel Plato Analyze spatial model
+     * \param [in] aDataMap Plato Analyze data map
+     * \param [in] aProblemParams input parameters database
+     * \param [in] aName user defined function name
+     **********************************************************************************/
+    MassPropertiesFunction(const plato::domain::SpatialModel& aSpatialModel,
+                           Plato::DataMap& aDataMap,
+                           Teuchos::ParameterList& aProblemParams,
+                           std::string& aName);
+
+    /******************************************************************************/
+    /**
+     * \brief Compute the X, Y, and Z extents of the mesh (e.g. (X_max - X_min))
+     * \param [in] aMesh mesh database
+     **********************************************************************************/
+    void computeMeshExtent(Plato::Mesh aMesh);
+
+    /******************************************************************************/
+    /**
+     * \brief Update physics-based parameters within optimization iterations
+     * \param [in] aControl 1D view of control variables
+     **********************************************************************************/
+    void updateProblem(const Plato::ScalarVector& aControl) const override;
+
+    /******************************************************************************/
+    /**
+     * \brief Evaluate Mass Properties Function
+     * \param [in] aControl 1D view of control variables
+     * \return scalar function evaluation
+     **********************************************************************************/
+    Plato::Scalar value(const Plato::ScalarVector& aControl) const override;
+
+    /******************************************************************************/
+    /**
+     * \brief Evaluate gradient of the Mass Properties Function with respect to (wrt) the configuration parameters
+     * \param [in] aControl 1D view of control variables
+     * \return 1D view with the gradient of the scalar function wrt the configuration parameters
+     **********************************************************************************/
+    Plato::ScalarVector gradient_x(const Plato::ScalarVector& aControl) const override;
+
+    /******************************************************************************/
+    /**
+     * \brief Evaluate gradient of the Mass Properties Function with respect to (wrt) the control variables
+     * \param [in] aControl 1D view of control variables
+     * \return 1D view with the gradient of the scalar function wrt the control variables
+     **********************************************************************************/
+    Plato::ScalarVector gradient_z(const Plato::ScalarVector& aControl) const override;
+
+    /******************************************************************************/
+    /**
+     * \brief Return user defined function name
+     * \return User defined function name
+     **********************************************************************************/
+    std::string name() const override;
+
    private:
-    using ElementType = typename PhysicsType::ElementType;
-
-    using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;
-    using GradientX = typename Plato::Geometric::Evaluation<ElementType>::GradientX;
-    using GradientZ = typename Plato::Geometric::Evaluation<ElementType>::GradientZ;
-
-    std::shared_ptr<Plato::Geometric::LeastSquaresFunction<PhysicsType>> mLeastSquaresFunction;
-
-    const plato::domain::SpatialModel& mSpatialModel;
-
-    Plato::DataMap& mDataMap; /*!< PLATO Engine and Analyze data map */
-
-    std::string mFunctionName; /*!< User defined function name */
-
-    std::map<std::string, Plato::Scalar> mMaterialDensities; /*!< material density */
-
-    Plato::Matrix<3, 3> mInertiaRotationMatrix;
-    Plato::Array<3> mInertiaPrincipalValues;
-    Plato::Matrix<3, 3> mMinusRotatedParallelAxisTheoremMatrix;
-
     /******************************************************************************/
     /**
      * \brief Initialization of Mass Properties Function
@@ -158,64 +197,28 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
                                   Plato::Scalar& aMassWeight,
                                   const std::string& aAxes);
 
-   public:
-    /******************************************************************************/
-    /**
-     * \brief Primary Mass Properties Function constructor
-     * \param [in] aSpatialModel Plato Analyze spatial model
-     * \param [in] aDataMap Plato Analyze data map
-     * \param [in] aProblemParams input parameters database
-     * \param [in] aName user defined function name
-     **********************************************************************************/
-    MassPropertiesFunction(const plato::domain::SpatialModel& aSpatialModel,
-                           Plato::DataMap& aDataMap,
-                           Teuchos::ParameterList& aProblemParams,
-                           std::string& aName);
+   private:
+    using ElementType = typename PhysicsType::ElementType;
 
-    /******************************************************************************/
-    /**
-     * \brief Compute the X, Y, and Z extents of the mesh (e.g. (X_max - X_min))
-     * \param [in] aMesh mesh database
-     **********************************************************************************/
-    void computeMeshExtent(Plato::Mesh aMesh);
+    using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;
+    using GradientX = typename Plato::Geometric::Evaluation<ElementType>::GradientX;
+    using GradientZ = typename Plato::Geometric::Evaluation<ElementType>::GradientZ;
 
-    /******************************************************************************/
-    /**
-     * \brief Update physics-based parameters within optimization iterations
-     * \param [in] aControl 1D view of control variables
-     **********************************************************************************/
-    void updateProblem(const Plato::ScalarVector& aControl) const override;
+    std::shared_ptr<Plato::Geometric::LeastSquaresFunction<PhysicsType>> mLeastSquaresFunction;
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate Mass Properties Function
-     * \param [in] aControl 1D view of control variables
-     * \return scalar function evaluation
-     **********************************************************************************/
-    Plato::Scalar value(const Plato::ScalarVector& aControl) const override;
+    const plato::domain::SpatialModel& mSpatialModel;
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate gradient of the Mass Properties Function with respect to (wrt) the configuration parameters
-     * \param [in] aControl 1D view of control variables
-     * \return 1D view with the gradient of the scalar function wrt the configuration parameters
-     **********************************************************************************/
-    Plato::ScalarVector gradient_x(const Plato::ScalarVector& aControl) const override;
+    Plato::DataMap& mDataMap; /*!< PLATO Engine and Analyze data map */
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate gradient of the Mass Properties Function with respect to (wrt) the control variables
-     * \param [in] aControl 1D view of control variables
-     * \return 1D view with the gradient of the scalar function wrt the control variables
-     **********************************************************************************/
-    Plato::ScalarVector gradient_z(const Plato::ScalarVector& aControl) const override;
+    std::string mFunctionName; /*!< User defined function name */
 
-    /******************************************************************************/
-    /**
-     * \brief Return user defined function name
-     * \return User defined function name
-     **********************************************************************************/
-    std::string name() const override;
+    std::map<std::string, Plato::Scalar> mMaterialDensities; /*!< material density */
+
+    Plato::Matrix<3, 3> mInertiaRotationMatrix;
+    Plato::Array<3> mInertiaPrincipalValues;
+    Plato::Matrix<3, 3> mMinusRotatedParallelAxisTheoremMatrix;
+
+    unsigned int mLeastSquaresExponent = 2;
 };
 // class MassPropertiesFunction
 

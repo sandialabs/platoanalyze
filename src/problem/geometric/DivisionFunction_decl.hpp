@@ -1,8 +1,8 @@
 #pragma once
 
+#include "domain/WorksetBase.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/geometric/ScalarFunctionBase.hpp"
-#include "problem/geometric/WorksetBase.hpp"
 
 namespace Plato
 {
@@ -16,13 +16,13 @@ namespace Geometric
  **********************************************************************************/
 template <typename PhysicsType>
 class DivisionFunction : public Plato::Geometric::ScalarFunctionBase,
-                         public Plato::Geometric::WorksetBase<typename PhysicsType::ElementType>
+                         public Plato::WorksetBase<typename PhysicsType::ElementType>
 {
    private:
     using ElementType = typename PhysicsType::ElementType;
 
-    using Plato::Geometric::WorksetBase<ElementType>::mNumSpatialDims;
-    using Plato::Geometric::WorksetBase<ElementType>::mNumNodes;
+    using Plato::WorksetBase<ElementType>::mNumSpatialDims;
+    using Plato::WorksetBase<ElementType>::mNumNodes;
 
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> mScalarFunctionBaseNumerator;
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> mScalarFunctionBaseDenominator;

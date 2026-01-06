@@ -1,9 +1,9 @@
 #pragma once
 
+#include "domain/WorksetBase.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/geometric/ScalarFunctionBase.hpp"
 #include "problem/geometric/ScalarFunctionBaseFactory.hpp"
-#include "problem/geometric/WorksetBase.hpp"
 
 namespace Plato
 {
@@ -44,7 +44,7 @@ DivisionFunction<PhysicsType>::DivisionFunction(const plato::domain::SpatialMode
                                                 Plato::DataMap& aDataMap,
                                                 Teuchos::ParameterList& aProblemParams,
                                                 const std::string& aName)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)
@@ -60,7 +60,7 @@ DivisionFunction<PhysicsType>::DivisionFunction(const plato::domain::SpatialMode
 template <typename PhysicsType>
 DivisionFunction<PhysicsType>::DivisionFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                 Plato::DataMap& aDataMap)
-    : Plato::Geometric::WorksetBase<ElementType>(aSpatialModel.mMesh),
+    : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName("Division Function")

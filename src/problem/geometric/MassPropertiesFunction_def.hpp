@@ -4,6 +4,7 @@
 
 #include "linear_algebra/BLAS1.hpp"
 #include "linear_algebra/PlatoEigen.hpp"
+#include "parsing/ParseTools.hpp"
 #include "problem/geometric/DivisionFunction.hpp"
 #include "problem/geometric/GeometryScalarFunction.hpp"
 #include "problem/geometric/MassMoment.hpp"
@@ -53,11 +54,14 @@ void MassPropertiesFunction<PhysicsType>::createLeastSquaresFunction(const plato
 
     auto tPropertyNamesArray = tFunctionParams.get<Teuchos::Array<std::string>>("Properties");
     auto tPropertyWeightsArray = tFunctionParams.get<Teuchos::Array<Plato::Scalar>>("Weights");
-    auto tPropertyGoldValuesArray = tFunctionParams.get<Teuchos::Array<Plato::Scalar>>("Gold Values");
+    auto tPropertyGoldValuesArray = tFunctionParams.get<Teuchos::Array<Plato::Scalar>>(
+        "Gold Values", Teuchos::Array<Plato::Scalar>(tPropertyNamesArray.size(), 0.0));
 
     auto tPropertyNames = tPropertyNamesArray.toVector();
     auto tPropertyWeights = tPropertyWeightsArray.toVector();
     auto tPropertyGoldValues = tPropertyGoldValuesArray.toVector();
+
+    mLeastSquaresExponent = Plato::ParseTools::getParam<unsigned int>(tFunctionParams, "Least Squares Exponent");
 
     if (tPropertyNames.size() != tPropertyWeights.size())
     {
@@ -70,6 +74,21 @@ void MassPropertiesFunction<PhysicsType>::createLeastSquaresFunction(const plato
     {
         const std::string tErrorString = std::string("Number of 'Gold Values' in '") + mFunctionName +
                                          "' parameter list does not equal the number of 'Properties'";
+        ANALYZE_THROWERR(tErrorString)
+    }
+
+    if (mLeastSquaresExponent == 1 && std::any_of(tPropertyGoldValues.begin(), tPropertyGoldValues.end(),
+                                                  [](double aEntry) { return aEntry != 0.0; }))
+    {
+        const std::string tErrorString = std::string("'Gold values' in '") + mFunctionName +
+                                         "' parameter must be set to zero for a 'Least Squares Exponent' of 1";
+        ANALYZE_THROWERR(tErrorString)
+    }
+    if (mLeastSquaresExponent != 1 && mLeastSquaresExponent != 2)
+    {
+        const std::string tErrorString =
+            std::string("'Least Squares Exponent' in '") + mFunctionName +
+            "' must be either 1 or 2. Found value: " + std::to_string(mLeastSquaresExponent);
         ANALYZE_THROWERR(tErrorString)
     }
 
@@ -163,8 +182,8 @@ void MassPropertiesFunction<PhysicsType>::createAllMassPropertiesLeastSquaresFun
     const std::vector<Plato::Scalar>& aPropertyGoldValues)
 {
     std::cout << "Creating all mass properties function.\n";
-    mLeastSquaresFunction =
-        std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(aSpatialModel, mDataMap);
+    mLeastSquaresFunction = std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(
+        aSpatialModel, mDataMap, mLeastSquaresExponent);
     std::map<std::string, Plato::Scalar> tWeightMap;
     std::map<std::string, Plato::Scalar> tGoldValueMap;
     for (Plato::OrdinalType tPropertyIndex = 0; tPropertyIndex < aPropertyNames.size(); ++tPropertyIndex)
@@ -297,8 +316,8 @@ void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
     const std::vector<Plato::Scalar>& aPropertyGoldValues)
 {
     std::cout << "Creating itemized mass properties function.\n";
-    mLeastSquaresFunction =
-        std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(aSpatialModel, mDataMap);
+    mLeastSquaresFunction = std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(
+        aSpatialModel, mDataMap, mLeastSquaresExponent);
     for (Plato::OrdinalType tPropertyIndex = 0; tPropertyIndex < aPropertyNames.size(); ++tPropertyIndex)
     {
         const std::string tPropertyName = aPropertyNames[tPropertyIndex];
@@ -719,7 +738,7 @@ MassPropertiesFunction<PhysicsType>::MassPropertiesFunction(const plato::domain:
                                                             Plato::DataMap& aDataMap,
                                                             Teuchos::ParameterList& aProblemParams,
                                                             std::string& aName)
-    : Plato::Geometric::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
+    : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
       mFunctionName(aName)

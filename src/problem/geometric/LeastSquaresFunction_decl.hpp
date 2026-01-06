@@ -4,8 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include "domain/WorksetBase.hpp"
 #include "problem/geometric/ScalarFunctionBase.hpp"
-#include "problem/geometric/WorksetBase.hpp"
 
 namespace Plato
 {
@@ -19,35 +19,8 @@ namespace Geometric
  **********************************************************************************/
 template <typename PhysicsType>
 class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
-                             public Plato::Geometric::WorksetBase<typename PhysicsType::ElementType>
+                             public Plato::WorksetBase<typename PhysicsType::ElementType>
 {
-   private:
-    using ElementType = typename PhysicsType::ElementType;
-
-    using Plato::Geometric::WorksetBase<ElementType>::mNumSpatialDims;
-    using Plato::Geometric::WorksetBase<ElementType>::mNumNodes;
-
-    std::vector<Plato::Scalar> mFunctionWeights;
-    std::vector<Plato::Scalar> mFunctionGoldValues;
-    std::vector<Plato::Scalar> mFunctionNormalization;
-    std::vector<std::shared_ptr<Plato::Geometric::ScalarFunctionBase>> mScalarFunctionBaseContainer;
-
-    const plato::domain::SpatialModel& mSpatialModel;
-
-    Plato::DataMap& mDataMap;
-
-    std::string mFunctionName;
-
-    /*!< if (|GoldValue| > 0.1) then ((f - f_gold) / f_gold)^2 ; otherwise  (f - f_gold)^2 */
-    const Plato::Scalar mFunctionNormalizationCutoff = 0.1;
-
-    /******************************************************************************/
-    /**
-     * \brief Initialization of Least Squares Function
-     * \param [in] aProblemParams input parameters database
-     **********************************************************************************/
-    void initialize(Teuchos::ParameterList& aProblemParams);
-
    public:
     /******************************************************************************/
     /**
@@ -68,7 +41,9 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aSpatialModel Plato Analyze spatial model
      * \param [in] aDataMap Plato Analyze data map
      **********************************************************************************/
-    LeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel, Plato::DataMap& aDataMap);
+    LeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
+                         Plato::DataMap& aDataMap,
+                         const unsigned int aPower);
 
     /******************************************************************************/
     /**
@@ -136,6 +111,34 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
      * \return User defined function name
      **********************************************************************************/
     std::string name() const override;
+
+   private:
+    using ElementType = typename PhysicsType::ElementType;
+
+    using Plato::WorksetBase<ElementType>::mNumSpatialDims;
+    using Plato::WorksetBase<ElementType>::mNumNodes;
+
+    std::vector<Plato::Scalar> mFunctionWeights;
+    std::vector<Plato::Scalar> mFunctionGoldValues;
+    std::vector<Plato::Scalar> mFunctionNormalization;
+    std::vector<std::shared_ptr<Plato::Geometric::ScalarFunctionBase>> mScalarFunctionBaseContainer;
+
+    const plato::domain::SpatialModel& mSpatialModel;
+
+    Plato::DataMap& mDataMap;
+
+    std::string mFunctionName;
+
+    /*!< if (|GoldValue| > 0.1) then ((f - f_gold) / f_gold)^2 ; otherwise  (f - f_gold)^2 */
+    const Plato::Scalar mFunctionNormalizationCutoff = 0.1;
+
+    unsigned int mPower = 2;
+    /******************************************************************************/
+    /**
+     * \brief Initialization of Least Squares Function
+     * \param [in] aProblemParams input parameters database
+     **********************************************************************************/
+    void initialize(Teuchos::ParameterList& aProblemParams);
 };
 // class LeastSquaresFunction
 
