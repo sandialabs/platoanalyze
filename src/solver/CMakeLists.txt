@@ -35,10 +35,10 @@ if(PLATOANALYZE_ENABLE_UMFPACK)
   list(APPEND EXTERNAL_INCLUDE_DIRECTORIES ${UMFPACK_INC_DIR})
 endif()
 
-if(PLATOANALYZE_ENABLE_TPETRA)
-  list(APPEND FOLDERS "tpetra")
-  list(APPEND LINK_LIBS TpetraCore::tpetra)
-endif()
+
+list(APPEND FOLDERS "tpetra")
+list(APPEND LINK_LIBS TpetraCore::tpetra)
+
 
 if(PLATOANALYZE_ENABLE_MESHMAP)
     list(APPEND FOLDERS "multipoint_constraint")

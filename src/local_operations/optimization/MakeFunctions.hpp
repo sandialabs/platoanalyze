@@ -1,14 +1,11 @@
 #pragma once
 
 #include "domain/SpatialModel.hpp"
+#include "local_operations/optimization/Heaviside.hpp"
 #include "local_operations/optimization/NoPenalty.hpp"
+#include "local_operations/optimization/Ramp.hpp"
 #include "local_operations/optimization/Simp.hpp"
 #include "utilities/PlatoUtilities.hpp"
-
-#ifdef PLATO_ALL_PENALTY
-#include "local_operations/optimization/Heaviside.hpp"
-#include "local_operations/optimization/Ramp.hpp"
-#endif
 
 namespace Plato
 {
@@ -30,21 +27,13 @@ inline std::shared_ptr<typename FunctionT<EvaluationT, Plato::NoPenalty>::Abstra
     }
     else if (tLowerPenaltyT == "ramp")
     {
-#ifdef PLATO_ALL_PENALTY
         return std::make_shared<FunctionT<EvaluationT, Plato::RAMP>>(aSpatialDomain, aDataMap, aProblemParams,
                                                                      tPenaltyParams);
-#else
-        ANALYZE_THROWERR("Plato Analyze was not compiled with the 'Ramp' penalty function");
-#endif
     }
     else if (tLowerPenaltyT == "heaviside")
     {
-#ifdef PLATO_ALL_PENALTY
         return std::make_shared<FunctionT<EvaluationT, Plato::Heaviside>>(aSpatialDomain, aDataMap, aProblemParams,
                                                                           tPenaltyParams);
-#else
-        ANALYZE_THROWERR("Plato Analyze was not compiled with the 'Heaviside' penalty function");
-#endif
     }
     else if (tLowerPenaltyT == "nopenalty")
     {
@@ -71,21 +60,13 @@ inline std::shared_ptr<typename FunctionT<EvaluationT, Plato::NoPenalty>::Abstra
     }
     else if (tLowerPenaltyT == "ramp")
     {
-#ifdef PLATO_ALL_PENALTY
         return std::make_shared<FunctionT<EvaluationT, Plato::RAMP>>(aSpatialDomain, aDataMap, aProblemParams,
                                                                      tPenaltyParams, aFuncName);
-#else
-        ANALYZE_THROWERR("Plato Analyze was not compiled with the 'Ramp' penalty function");
-#endif
     }
     else if (tLowerPenaltyT == "heaviside")
     {
-#ifdef PLATO_ALL_PENALTY
         return std::make_shared<FunctionT<EvaluationT, Plato::Heaviside>>(aSpatialDomain, aDataMap, aProblemParams,
                                                                           tPenaltyParams, aFuncName);
-#else
-        ANALYZE_THROWERR("Plato Analyze was not compiled with the 'Heaviside' penalty function");
-#endif
     }
     else if (tLowerPenaltyT == "nopenalty")
     {

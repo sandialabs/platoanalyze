@@ -7,14 +7,10 @@
 #include "problem/Mechanics.hpp"
 #include "problem/elliptic/VectorFunction.hpp"
 #include "solver/PlatoSolverFactory.hpp"
+#include "solver/tpetra/TpetraLinearSolver.hpp"
+#include "solver/umfpack/UMFPACKLinearSolver.hpp"
 #include "test_utilities/PlatoMathTestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
-
-#ifdef PLATO_TPETRA
-#include "solver/tpetra/TpetraLinearSolver.hpp"
-#endif
-
-#include "solver/umfpack/UMFPACKLinearSolver.hpp"
 
 #ifdef HAVE_AMGX
 #include "solver/amgx/AmgXSparseLinearProblem.hpp"
@@ -247,7 +243,6 @@ void test_vs_analytic_2d_solution(const std::string& aSolverParameters,
 }
 }  // namespace
 
-#ifdef PLATO_TPETRA
 /******************************************************************************/
 /*!
   \brief Test matrix conversion
@@ -947,7 +942,6 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, TpetraSolver_invalid_solver_stack)
     Plato::SolverFactory tSolverFactory(*tSolverParams);
     TEST_THROW(tSolverFactory.create(tMesh->NumNodes(), tMachine, tNumDofsPerNode), std::invalid_argument);
 }
-#endif  // PLATO_TPETRA
 
 void nonBlockMatrixTest(const std::string& aSolverStack, Teuchos::FancyOStream& aOut, bool& aSuccess)
 {

@@ -12,6 +12,9 @@
 #include <sstream>
 #include <stdexcept>
 
+#include "element/Hex27.hpp"
+#include "element/Hex8.hpp"
+#include "element/Quad4.hpp"
 #include "element/Tet10.hpp"
 #include "element/Tet4.hpp"
 #include "mesh/PlatoMesh.hpp"
@@ -20,12 +23,6 @@
 #include "problem/Thermomechanics.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 #include "utilities/ParallelComm.hpp"
-
-#ifdef PLATO_HEX_ELEMENTS
-#include "element/Hex27.hpp"
-#include "element/Hex8.hpp"
-#include "element/Quad4.hpp"
-#endif
 
 #ifdef PLATO_ELLIPTIC
 #include "problem/elliptic/Problem.hpp"
@@ -42,12 +39,9 @@
 #include "problem/hyperbolic/Problem.hpp"
 
 #endif
-
-#ifdef PLATO_HELMHOLTZ
 #include "problem/helmholtz/AdjointProblem.hpp"
 #include "problem/helmholtz/Helmholtz.hpp"
 #include "problem/helmholtz/Problem.hpp"
-#endif
 
 // #include "StructuralDynamicsProblem.hpp"
 
@@ -94,27 +88,15 @@ inline std::shared_ptr<Plato::AbstractProblem> makeProblem(Plato::Mesh aMesh,
     if (Plato::tolower(tElementType) == "hex8" || Plato::tolower(tElementType) == "hexa8" ||
         Plato::tolower(tElementType) == "hex")
     {
-#ifdef PLATO_HEX_ELEMENTS
         return std::make_shared<ProblemT<PhysicsT<Plato::Hex8>>>(aMesh, aPlatoProb, aMachine);
-#else
-        ANALYZE_THROWERR("Not compiled with hex8 elements");
-#endif
     }
     if (Plato::tolower(tElementType) == "hex27" || Plato::tolower(tElementType) == "hexa27")
     {
-#ifdef PLATO_HEX_ELEMENTS
         return std::make_shared<ProblemT<PhysicsT<Plato::Hex27>>>(aMesh, aPlatoProb, aMachine);
-#else
-        ANALYZE_THROWERR("Not compiled with hex27 elements");
-#endif
     }
     if (Plato::tolower(tElementType) == "quad4")
     {
-#ifdef PLATO_HEX_ELEMENTS
         return std::make_shared<ProblemT<PhysicsT<Plato::Quad4>>>(aMesh, aPlatoProb, aMachine);
-#else
-        ANALYZE_THROWERR("Not compiled with quad4 elements");
-#endif
     }
     {
         std::stringstream ss;
@@ -285,7 +267,6 @@ class ProblemFactory
             return (Plato::create_thermomechanical_problem(aMesh, tInputData, aMachine));
         }
 
-#ifdef PLATO_HELMHOLTZ
         if (tLowerPhysics == "helmholtz filter")
         {
             return makeProblem<Plato::Helmholtz::Problem, Plato::HelmholtzFilter>(aMesh, tInputData, aMachine);
@@ -294,7 +275,7 @@ class ProblemFactory
         {
             return makeProblem<Plato::Helmholtz::AdjointProblem, Plato::HelmholtzFilter>(aMesh, tInputData, aMachine);
         }
-#endif
+
         {
             ANALYZE_THROWERR(std::string("'Physics' of type ") + tLowerPhysics + "' is not supported.");
         }

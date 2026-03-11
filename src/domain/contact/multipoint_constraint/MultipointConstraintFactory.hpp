@@ -11,15 +11,12 @@
 #include "TieMultipointConstraint.hpp"
 #include "domain/SpatialModel.hpp"
 #include "domain/contact/multipoint_constraint/MultipointConstraint.hpp"
-#include "element/Tet10.hpp"
-#include "element/Tet4.hpp"
-#include "utilities/PlatoUtilities.hpp"
-
-#ifdef PLATO_HEX_ELEMENTS
 #include "element/Hex27.hpp"
 #include "element/Hex8.hpp"
 #include "element/Quad4.hpp"
-#endif
+#include "element/Tet10.hpp"
+#include "element/Tet4.hpp"
+#include "utilities/PlatoUtilities.hpp"
 
 namespace Plato
 {
@@ -81,27 +78,15 @@ class MultipointConstraintFactory
         }
         else if (Plato::tolower(tElementType) == "hex8" || Plato::tolower(tElementType) == "hexa8")
         {
-#ifdef PLATO_HEX_ELEMENTS
             return std::make_shared<MPCType<Plato::Hex8>>(aSpatialModel, aName, mParamList);
-#else
-            ANALYZE_THROWERR("Not compiled with hex8 elements.");
-#endif
         }
         else if (Plato::tolower(tElementType) == "hex27" || Plato::tolower(tElementType) == "hexa27")
         {
-#ifdef PLATO_HEX_ELEMENTS
             return std::make_shared<MPCType<Plato::Hex27>>(aSpatialModel, aName, mParamList);
-#else
-            ANALYZE_THROWERR("Not compiled with hex27 elements.");
-#endif
         }
         else if (Plato::tolower(tElementType) == "quad4")
         {
-#ifdef PLATO_HEX_ELEMENTS
             return std::make_shared<MPCType<Plato::Quad4>>(aSpatialModel, aName, mParamList);
-#else
-            ANALYZE_THROWERR("Not compiled with quad4 elements.");
-#endif
         }
         else if (Plato::tolower(tElementType) == "tri3")
         {

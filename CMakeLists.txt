@@ -10,32 +10,17 @@ set (CMAKE_CXX_STANDARD 20)
 
 option( WARNINGS_AS_ERRORS "Builds platoanalyze with warnings as errors" OFF )
 option( BUILD_WITH_SANITIZER_FLAGS "Builds platoanalyze with sanitizers" OFF )
-
 option(PLATOANALYZE_ENABLE_CUDA "Build for Nvidia GPUs using CUDA" OFF)
-
 option(PLATOANALYZE_ENABLE_MESHMAP  "Enable Plato MeshMap"  ON )
-
 option(PLATOANALYZE_ENABLE_ENGINEMESH "Enable EngineMesh"           ON )
-option(PLATOANALYZE_ENABLE_TPETRA     "Enable Tpetra"               OFF)
-
 option(ELLIPTIC        "Compile with Elliptic physics"       ON )
 option(PARABOLIC       "Compile with Parabolic physics"      ON )
 option(HYPERBOLIC      "Compile with Hyperbolic physics"     OFF )
-
-option(HELMHOLTZ       "Compile with Helmholtz filter"       ON )
 option(CUSTOMMATERIALS "Compile with custom materials"       OFF)
-
-option(HEX_ELEMENTS    "Compile with hex*, quad* elements"   OFF )
-option(ALL_PENALTY     "Compile with Ramp and Heaviside"     OFF )
-
-
 option(PLATOANALYZE_UNIT_TEST   "Flag to enable unit tests"  ON)
 option(PLATOANALYZE_SMOKE_TESTS "Flag to enable smoke tests" ON)
-
 option(PLATOANALYZE_LONG_LONG_ORDINALTYPE "Flag to change Plato::OrdinalType to 'long long'" OFF)
-
 option( PLATOANALYZE_CHECK_FPE "Flag to enable Plato Analyze checks for floating point exceptions" OFF)
-
 
 MESSAGE("\n\nConfiguring Plato Analyze Version ${PLATOANALYZE_VERSION_MAJOR}.${PLATOANALYZE_VERSION_MINOR}.${PLATOANALYZE_VERSION_PATCH}")
 
@@ -235,24 +220,9 @@ if(HYPERBOLIC)
   ADD_DEFINITIONS(-DPLATO_HYPERBOLIC)
 endif()
 
-if(HELMHOLTZ)
-  message("-- Plato: Helmholtz filter added")
-  ADD_DEFINITIONS(-DPLATO_HELMHOLTZ)
-endif()
-
 if(CUSTOMMATERIALS)
   message("-- Plato: Custom materials added")
   ADD_DEFINITIONS(-DPLATO_CUSTOM_MATERIALS)
-endif()
-
-if(HEX_ELEMENTS)
-  message("-- Plato: Hex and quad elements added")
-  ADD_DEFINITIONS(-DPLATO_HEX_ELEMENTS)
-endif()
-
-if(ALL_PENALTY)
-  message("-- Plato: Ramp and Heaviside penalty added")
-  ADD_DEFINITIONS(-DPLATO_ALL_PENALTY)
 endif()
 
 if (PLATOANALYZE_ENABLE_MESHMAP)
@@ -276,13 +246,11 @@ ELSE()
   ENDIF()
 ENDIF()
 
-if (PLATOANALYZE_ENABLE_TPETRA)
-  find_package(Tpetra REQUIRED)
-  find_package(Belos REQUIRED)
-  find_package(Ifpack2 REQUIRED)
-  message("adding define: -DPLATO_TPETRA")
-  add_definitions(-DPLATO_TPETRA)
-endif()
+
+find_package(Tpetra REQUIRED)
+find_package(Belos REQUIRED)
+find_package(Ifpack2 REQUIRED)
+
 
 set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
 find_package(PlatoEngine REQUIRED COMPONENTS PlatoEngine::PlatoCommonInterface PlatoEngine::PlatoUtilitiesInterface PlatoEngine::PlatoTestUtilitiesInterface PlatoEngine::PlatoCommonTestUtilitiesInterface HINTS ${PLATOENGINE_PREFIX})
