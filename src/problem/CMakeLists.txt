@@ -9,9 +9,9 @@ endif()
 if(PARABOLIC)
   add_subdirectory(./parabolic)
 endif()
-if(HELMHOLTZ)
-  add_subdirectory(./helmholtz)
-endif()
+
+add_subdirectory(./helmholtz)
+
 if(HYPERBOLIC)
   add_subdirectory(./hyperbolic)
 endif()

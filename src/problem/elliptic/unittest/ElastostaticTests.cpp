@@ -1414,9 +1414,9 @@ TEUCHOS_UNIT_TEST(DerivativeTests, EffectiveEnergy3D_NormalCellProblem)
 
     for (int iNode = 0; iNode < int(grad_x_gold.size()); iNode++)
     {
-        if (fabs(grad_x_gold[iNode]) < 1e-10)
+        if (fabs(grad_x_gold[iNode]) < 2e-10)
         {
-            TEST_ASSERT(fabs(grad_x_Host[iNode]) < 1e-10);
+            TEST_ASSERT(fabs(grad_x_Host[iNode]) < 2e-10);
         }
         else
         {

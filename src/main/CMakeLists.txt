@@ -17,9 +17,9 @@ endif()
 if(HYPERBOLIC)
   list(APPEND LINK_LIBS AnalyzeHyperbolic)
 endif()
-if(HELMHOLTZ)
-  list(APPEND LINK_LIBS AnalyzeHelmholtz)
-endif()
+
+list(APPEND LINK_LIBS AnalyzeHelmholtz)
+
 
 create_plato_analyze_header_library(AnalyzeLib "${FOLDERS}" "${LINK_LIBS}")
 SET_TARGET_PROPERTIES(AnalyzeLib PROPERTIES OUTPUT_NAME analyze)

@@ -1,10 +1,9 @@
 #include "solver/PlatoSolverFactory.hpp"
 
 #include "solver/amgx/AmgXLinearSolver.hpp"
-#include "utilities/PlatoUtilities.hpp"
-#ifdef PLATO_TPETRA
 #include "solver/tpetra/TpetraLinearSolver.hpp"
-#endif
+#include "utilities/PlatoUtilities.hpp"
+
 #ifdef PLATO_TACHO
 #include "solver/tacho/TachoLinearSolver.hpp"
 #endif
@@ -30,10 +29,8 @@ std::string determine_solver_stack(const Teuchos::ParameterList& tSolverParams)
         tSolverStack = "Tacho";
 #elif HAVE_AMGX
         tSolverStack = "AmgX";
-#elif PLATO_TPETRA
-        tSolverStack = "Tpetra";
 #else
-        ANALYZE_THROWERR("PLato Analyze was compiled without a linear solver!.  Exiting.");
+        tSolverStack = "Tpetra";
 #endif
     }
 
@@ -54,13 +51,9 @@ rcp<AbstractSolver> SolverFactory::create(Plato::OrdinalType aNumNodes,
 
     if (tLowerSolverStack == "tpetra")
     {
-#ifdef PLATO_TPETRA
         const Plato::OrdinalType tNumCondensedNodes = (aMPCs == nullptr) ? aNumNodes : aMPCs->getNumCondensedNodes();
         return std::make_shared<Plato::TpetraLinearSolver>(mSolverParams, tNumCondensedNodes, aMachine, aDofsPerNode,
                                                            aMPCs);
-#else
-        ANALYZE_THROWERR("Not compiled with Tpetra");
-#endif
     }
     else if (tLowerSolverStack == "amgx")
     {
