@@ -4,13 +4,13 @@
 #include <array>
 #include <memory>
 
-#include "NaturalBCTypes.hpp"
-#include "Plato_NamedType.hpp"
+#include "boundary_conditions/NaturalBCTypes.hpp"
 #include "boundary_conditions/PlatoMathExpr.hpp"
 #include "linear_algebra/PlatoMathTypes.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/AbstractPlatoMesh.hpp"
 #include "mesh/PlatoMesh.hpp"
+#include "utilities/Plato_NamedType.hpp"
 
 namespace Plato
 {
