@@ -706,7 +706,10 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
     tSolution.set("StateDot", Tdot);
     auto value = scalarFunction.value(tSolution, z, timeStep);
 
-    Plato::Scalar value_gold = 4.73200000000000095e9;
+    const Plato::Scalar tTrapezoidIntegrationConstant =
+        0.5 * timeStep;  // Only 2 steps so both are scaled by 0.5 (first and last steps)
+
+    Plato::Scalar value_gold = tTrapezoidIntegrationConstant * 4.73200000000000095e9;
     TEST_FLOATING_EQUALITY(value, value_gold, 1e-13);
 
     // compute and test objective gradient wrt state, u
@@ -729,7 +732,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
         }
         else
         {
-            TEST_FLOATING_EQUALITY(grad_u_Host[iNode], grad_u_gold[iNode], 1e-13);
+            TEST_FLOATING_EQUALITY(grad_u_Host[iNode], tTrapezoidIntegrationConstant * grad_u_gold[iNode], 1e-13);
         }
     }
 
@@ -750,7 +753,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
 
     for (int iNode = 0; iNode < int(grad_z_gold.size()); iNode++)
     {
-        TEST_FLOATING_EQUALITY(grad_z_Host[iNode], grad_z_gold[iNode], 1e-13);
+        TEST_FLOATING_EQUALITY(grad_z_Host[iNode], tTrapezoidIntegrationConstant * grad_z_gold[iNode], 1e-13);
     }
 
     // compute and test objective gradient wrt node position, x
@@ -770,7 +773,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
 
     for (int iNode = 0; iNode < int(grad_x_gold.size()); iNode++)
     {
-        TEST_FLOATING_EQUALITY(grad_x_Host[iNode], grad_x_gold[iNode], 1e-13);
+        TEST_FLOATING_EQUALITY(grad_x_Host[iNode], tTrapezoidIntegrationConstant * grad_x_gold[iNode], 1e-13);
     }
 }
 

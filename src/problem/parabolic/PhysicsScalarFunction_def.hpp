@@ -1,5 +1,7 @@
 #pragma once
 
+#include "linear_algebra/BLAS1.hpp"
+
 namespace Plato
 {
 
@@ -147,9 +149,11 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
     ResultScalar tReturnVal(0.0);
     for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
     {
+        const auto tTrapezoidIntegrationConstant =
+            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
         auto tName = mSpatialModel.mDomains[0].domainName();
         mValueFunctions.at(tName)->postEvaluate(tValues[tStepIndex]);
-        tReturnVal += tValues[tStepIndex];
+        tReturnVal += tTrapezoidIntegrationConstant * tValues[tStepIndex];
     }
 
     return tReturnVal;
@@ -177,11 +181,14 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
     auto tStates = aSolution.get("State");
     auto tStateDots = aSolution.get("StateDot");
 
+    auto tNumSteps = tStates.extent(0);
+
     // create return view
     //
-    Plato::ScalarVector tObjGradientX("objective gradient configuration", mNumSpatialDims * mNumNodes);
+    Plato::ScalarMultiVector tObjGradientXSteps("objective gradient configuration", tNumSteps,
+                                                mNumSpatialDims * mNumNodes);
 
-    Plato::Scalar tValue(0.0);
+    std::vector<Plato::Scalar> tValues(tNumSteps, 0.0);
     for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
@@ -200,11 +207,11 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
         Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
 
+        // create result view
+        //
         Plato::ScalarVectorT<ResultScalar> tResult("result", tNumCells);
 
-        auto tNumSteps = tStates.extent(0);
-        auto tLastStepIndex = tNumSteps - 1;
-        for (decltype(tNumSteps) tStepIndex = tLastStepIndex; tStepIndex > 0; --tStepIndex)
+        for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
         {
             // workset state
             //
@@ -221,14 +228,27 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
             Kokkos::deep_copy(tResult, 0.0);
             mGradientXFunctions.at(tName)->evaluate(tStateWS, tStateDotWS, tControlWS, tConfigWS, tResult, aTimeStep);
 
+            Plato::ScalarVector tObjGradientXStep = Kokkos::subview(tObjGradientXSteps, tStepIndex, Kokkos::ALL());
             Plato::assemble_vector_gradient_fad<mNumNodesPerCell, mNumSpatialDims>(tDomain, mConfigEntryOrdinal,
-                                                                                   tResult, tObjGradientX);
+                                                                                   tResult, tObjGradientXStep);
 
-            tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
+            tValues[tStepIndex] += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
         }
     }
-    auto tName = mSpatialModel.mDomains[0].domainName();
-    mGradientXFunctions.at(tName)->postEvaluate(tObjGradientX, tValue);
+
+    Plato::ScalarVector tObjGradientX("objective gradient wrt config", mNumSpatialDims * mNumNodes);
+    for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
+    {
+        Plato::ScalarVector tObjGradientXStep = Kokkos::subview(tObjGradientXSteps, tStepIndex, Kokkos::ALL());
+        auto tName = mSpatialModel.mDomains[0].domainName();
+        mGradientXFunctions.at(tName)->postEvaluate(tObjGradientXStep, tValues[tStepIndex]);
+
+        const auto tTrapezoidIntegrationConstant =
+            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
+        Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientXStep);
+
+        Plato::blas1::axpy(1.0, tObjGradientXStep, tObjGradientX);
+    }
 
     return tObjGradientX;
 }
@@ -308,6 +328,11 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
     auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientUFunctions.at(tName)->postEvaluate(tObjGradientU, tValue);
 
+    auto tNumSteps = tStates.extent(0);
+    const auto tTrapezoidIntegrationConstant =
+        aStepIndex == 1 || aStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
+    Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientU);
+
     return tObjGradientU;
 }
 
@@ -382,6 +407,11 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
     }
     auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientVFunctions.at(tName)->postEvaluate(tObjGradientV, tValue);
+
+    auto tNumSteps = tStates.extent(0);
+    const auto tTrapezoidIntegrationConstant =
+        aStepIndex == 1 || aStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
+    Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientV);
 
     return tObjGradientV;
 }
@@ -468,6 +498,11 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
         Plato::ScalarVector tObjGradientZStep = Kokkos::subview(tObjGradientZSteps, tStepIndex, Kokkos::ALL());
         auto tName = mSpatialModel.mDomains[0].domainName();
         mGradientZFunctions.at(tName)->postEvaluate(tObjGradientZStep, tValues[tStepIndex]);
+
+        const auto tTrapezoidIntegrationConstant =
+            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
+        Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientZStep);
+
         Plato::blas1::axpy(1.0, tObjGradientZStep, tObjGradientZ);
     }
 
