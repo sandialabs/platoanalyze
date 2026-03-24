@@ -36,7 +36,7 @@ class ScalarFunctionBaseFactory
     std::shared_ptr<Plato::Parabolic::ScalarFunctionBase> create(plato::domain::SpatialModel& aSpatialModel,
                                                                  Plato::DataMap& aDataMap,
                                                                  Teuchos::ParameterList& aInputParams,
-                                                                 std::string& aFunctionName);
+                                                                 const std::string& aFunctionName) const;
 };
 // class ScalarFunctionBaseFactory
 

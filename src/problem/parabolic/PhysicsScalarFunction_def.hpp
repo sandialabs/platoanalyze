@@ -50,7 +50,7 @@ template <typename PhysicsType>
 PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap,
                                                           Teuchos::ParameterList& aInputParams,
-                                                          std::string& aName)
+                                                          const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),

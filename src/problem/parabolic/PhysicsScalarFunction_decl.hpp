@@ -78,7 +78,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
     PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aInputParams,
-                          std::string& aName);
+                          const std::string& aName);
 
     /******************************************************************************/
     /**

@@ -1,184 +1,111 @@
 #pragma once
 
+#include <fstream>
+#include <map>
+#include <memory>
+#include <optional>
+
+#include "boundary_conditions/EssentialBCs.hpp"
+#include "core_types/PlatoTypes.hpp"
 #include "domain/Solutions.hpp"
 #include "domain/SpatialModel.hpp"
-#include "mesh/ComputedField.hpp"
+#include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
 #include "problem/PlatoAbstractProblem.hpp"
-#include "problem/elliptic/ScalarFunctionBase.hpp"
-#include "problem/geometric/ScalarFunctionBase.hpp"
 #include "problem/parabolic/ScalarFunctionBase.hpp"
 #include "problem/parabolic/TrapezoidIntegrator.hpp"
 #include "problem/parabolic/VectorFunction.hpp"
-#include "solver/PlatoSolverFactory.hpp"
+#include "solver/PlatoAbstractSolver.hpp"
+#include "utilities/ParallelComm.hpp"
 
-namespace Plato
+namespace plato::parabolic
 {
-
-namespace Parabolic
-{
-
+/// @brief class to manage solution of PDE, computation of criterion values, and computation of criterion gradients.
+/// @tparam PhysicsType struct specifying element and function factory types for physics.
 template <typename PhysicsType>
 class Problem : public Plato::AbstractProblem
 {
    private:
-    using Criterion = std::shared_ptr<Plato::Parabolic::ScalarFunctionBase>;
-    using Criteria = std::map<std::string, Criterion>;
-
-    using LinearCriterion = std::shared_ptr<Plato::Geometric::ScalarFunctionBase>;
-    using LinearCriteria = std::map<std::string, LinearCriterion>;
-
-    using ElementType = typename PhysicsType::ElementType;
-    using TopoElementType = typename ElementType::TopoElementType;
-
     using VectorFunctionType = Plato::Parabolic::VectorFunction<PhysicsType>;
+    using ElementType = typename PhysicsType::ElementType;
 
-    plato::domain::SpatialModel mSpatialModel; /*!< SpatialModel instance contains the mesh, meshsets, domains, etc. */
-
-    VectorFunctionType mPDEConstraint;
-
-    Plato::Parabolic::TrapezoidIntegrator mTrapezoidIntegrator;
-
-    Plato::OrdinalType mNumSteps, mNumNewtonSteps;
-    Plato::Scalar mTimeStep, mNewtonResTol, mNewtonIncTol;
-
-    bool mSaveState;
-
-    Criteria mCriteria;
-    LinearCriteria mLinearCriteria;
-
-    Plato::ScalarVector mResidual;
-    Plato::ScalarVector mResidualV;
-
-    Plato::ScalarMultiVector mAdjoints_U;
-    Plato::ScalarMultiVector mAdjoints_V;
-
-    Plato::ScalarMultiVector mState;
-    Plato::ScalarMultiVector mStateDot;
-
-    Teuchos::RCP<Plato::CrsMatrixType> mJacobianU;
-    Teuchos::RCP<Plato::CrsMatrixType> mJacobianV;
-
-    Teuchos::RCP<Plato::ComputedFields<ElementType::mNumSpatialDims>> mComputedFields;
-
-    Plato::OrdinalVector mStateBcDofs;
-    Plato::ScalarVector mStateBcValues;
-
-    std::shared_ptr<Plato::MultipointConstraints> mMPCs;
-
-    rcp<Plato::AbstractSolver> mSolver;
-
-    std::string mPDE;     /*!< partial differential equation type */
-    std::string mPhysics; /*!< physics used for the simulation */
+    using Criterion = std::shared_ptr<Plato::Parabolic::ScalarFunctionBase>;
 
    public:
-    /******************************************************************************/
-    Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine);
+    Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Plato::Comm::Machine aMachine);
 
-    /******************************************************************************/
-    /**
-     * \brief Is criterion independent of the solution state?
-     * \param [in] aName Name of criterion.
-     **********************************************************************************/
-    bool criterionIsLinear(const std::string& aName) override;
-
-    /******************************************************************************/
-    void applyConstraints(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix, const Plato::ScalarVector& aVector);
-
-    /******************************************************************************/
+    /// @brief apply essential boundary conditions as state constraints on the linear system matrix @a aMatrix and
+    /// vector @a aVector.
+    /// Essential boundary condition values will be scaled by @a aScale.
     void applyStateConstraints(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix,
                                const Plato::ScalarVector& aVector,
                                Plato::Scalar aScale);
 
-    /******************************************************************************/
-    /**
-     * \brief Output solution to
-     *visualization file. \param [in]
-     *aFilepath output/visualizaton
-     *file path
-     **********************************************************************************/
+    /// @brief write solution fields to output file with path @a FilePath.
     void output(const std::string& aFilepath) override final;
 
-    /******************************************************************************/
-    /**
-     * \brief Update physics-based parameters within optimization iterations
-     * \param [in] aState 2D container of state variables
-     * \param [in] aControl 1D container of control variables
-     **********************************************************************************/
+    /// @brief update criteria with control values @a aControl and state stored in @a aSolution.
+    /// @note this implementation is currently a no-op
     void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override final;
 
-    /******************************************************************************/
+    /// @brief solve the PDE forward problem using control values @a aControl.
     Plato::Solutions solution(const Plato::ScalarVector& aControl) override final;
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion function
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aSolution solution database
-     * \param [in] aName Name of criterion.
-     * \return criterion function value
-     **********************************************************************************/
+    /// @brief compute the value of criterion with name @a aName using control values @a aControl and state stored in @a
+    /// aSolution.
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
                                  const Plato::Solutions& aSolution,
                                  const std::string& aName) override final;
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion gradient wrt control variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aSolution solution database
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion gradient wrt control variables
-     **********************************************************************************/
+    /// @brief compute the gradient w.r.t control of criterion with name @a aName using control values @a aControl and
+    /// state stored in @a aSolution.
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
                                           const std::string& aName) override final;
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion gradient wrt control variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aSolution solution database
-     * \param [in] aCriterion criterion to be evaluated
-     * \return 1D view - criterion gradient wrt control variables
-     **********************************************************************************/
+    /// @brief implementation of gradient computation w.r.t control for criterion @a aCriterion using control values @a
+    /// aControl and state stored in @a aSolution.
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
                                           Criterion aCriterion);
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion gradient wrt configuration variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aSolution solution database
-     * \param [in] aName Name of criterion.
-     * \return 1D view - criterion gradient wrt control variables
-     **********************************************************************************/
+    /// @brief compute the gradient w.r.t nodal coordinates of criterion with name @a aName using control values
+    /// @a aControl and state stored in @a aSolution.
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
                                            const std::string& aName) override final;
 
-    /******************************************************************************/
-    /**
-     * \brief Evaluate criterion gradient wrt configuration variables
-     * \param [in] aControl 1D view of control variables
-     * \param [in] aGlobalState 2D view of state variables
-     * \param [in] aCriterion criterion to be evaluated
-     * \return 1D view - criterion gradient wrt configuration variables
-     **********************************************************************************/
+    /// @brief implementation of gradient computation w.r.t nodal coordinates for criterion @a aCriterion using control
+    /// values @a aControl and state stored in @a aSolution.
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
                                            Criterion aCriterion);
 
-   private:
-    /******************************************************************************/
-    /**
-     * \brief Return solution database.
-     * \return solution database
-     **********************************************************************************/
+    /// @brief returns the state stored in mState and mStateDot.
     Plato::Solutions getSolution() const override;
+
+   private:
+    plato::domain::SpatialModel mSpatialModel;
+    std::shared_ptr<VectorFunctionType> mPDE;
+    std::string mPDEType;
+    std::string mPhysics;
+    std::optional<std::ofstream> mOutputFileStream;
+    std::ostream& mOutputStream;
+    Plato::Parabolic::TrapezoidIntegrator mTrapezoidIntegrator;
+    Plato::OrdinalType mNumSteps;
+    Plato::Scalar mTimeStep;
+    Plato::OrdinalType mNumNewtonSteps;
+    Plato::Scalar mNewtonResTol;
+    Plato::Scalar mNewtonIncTol;
+    Plato::ScalarMultiVector mState;
+    Plato::ScalarMultiVector mStateDot;
+    bool mSaveState;
+    Plato::EssentialBCs<ElementType> mEssentialBCs;
+    std::shared_ptr<Plato::MultipointConstraints> mMPCs;
+    Plato::rcp<Plato::AbstractSolver> mSolver;
+    std::map<std::string, Criterion> mCriteriaMap;
+    Plato::ScalarMultiVector mAdjointStates;
+    Plato::ScalarMultiVector mAdjointStatesV;
 };
 
-}  // namespace Parabolic
-
-}  // namespace Plato
+}  // namespace plato::parabolic

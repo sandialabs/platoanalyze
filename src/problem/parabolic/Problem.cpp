@@ -7,7 +7,7 @@
 #include "problem/Thermomechanics.hpp"
 #include "problem/parabolic/Problem_def.hpp"
 
-PLATO_ELEMENT_DEF(Plato::Parabolic::Problem, Plato::Thermal)
-PLATO_ELEMENT_DEF(Plato::Parabolic::Problem, Plato::Thermomechanics)
+PLATO_ELEMENT_DEF(plato::parabolic::Problem, Plato::Thermal)
+PLATO_ELEMENT_DEF(plato::parabolic::Problem, Plato::Thermomechanics)
 
 #endif

@@ -112,7 +112,7 @@ void check_gradient_over_mesh(Teuchos::ParameterList& aParamList,
                               Teuchos::FancyOStream& aOutStream,
                               bool& aSuccess)
 {
-    Plato::Parabolic::Problem<Plato::Thermal<ElementType>> tProblem(aMesh, aParamList, dummy_comm_machine());
+    parabolic::Problem<Plato::Thermal<ElementType>> tProblem(aMesh, aParamList, dummy_comm_machine());
 
     auto tCriterionValue = [&aCriterionName, &tProblem](const std::valarray<Plato::Scalar>& aControlVector)
     {
@@ -158,7 +158,7 @@ void check_gradient_over_mesh(Teuchos::ParameterList& aParamList,
 }
 }  // namespace
 
-TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPassesGradientCheckSelfAdjoint)
+TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPassesGradientCheck)
 {
     constexpr Plato::OrdinalType tNumAnalysisSteps = 2;
     constexpr Plato::Scalar tAppliedFlux = 1.0;
@@ -166,7 +166,6 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPasses
     append_internal_thermal_energy_criterion_to_parameter_list(tParamList);
     append_fixed_temperature_boundary_conditions_to_parameter_list(tParamList);
     append_applied_flux_boundary_conditions_to_parameter_list(tParamList, tAppliedFlux);
-    tParamList.set("Self-Adjoint", true);
 
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);

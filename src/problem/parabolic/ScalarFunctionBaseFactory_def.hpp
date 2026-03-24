@@ -22,7 +22,7 @@ std::shared_ptr<Plato::Parabolic::ScalarFunctionBase> ScalarFunctionBaseFactory<
     plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
-    std::string& aFunctionName)
+    const std::string& aFunctionName) const
 {
     auto tProblemFunction = aProblemParams.sublist("Criteria").sublist(aFunctionName);
     auto tFunctionType = tProblemFunction.get<std::string>("Type", "Not Defined");
