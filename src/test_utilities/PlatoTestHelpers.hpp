@@ -40,11 +40,11 @@ typename ViewType::HostMirror get(ViewType aView)
  * \param[in] aVector
  * @returns Mirror on device
  **********************************************************************************/
-template <typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(const std::vector<ScalarT>& aVector)
+template <template <typename> typename ContainerT, typename ScalarT>
+Plato::ScalarVectorT<ScalarT> create_device_view(const ContainerT<ScalarT>& aVector)
 {
     Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aVector.size());
-    std::copy(aVector.begin(), aVector.end(), Kokkos::Experimental::begin(tHostView));
+    std::copy(begin(aVector), end(aVector), Kokkos::Experimental::begin(tHostView));
     return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
 
@@ -210,14 +210,15 @@ Plato::Scalar compute_criterion_over_mesh(const CreateCriterion& aCreateCriterio
                                           const Plato::Mesh& aMesh,
                                           Teuchos::ParameterList& aParameterList,
                                           const Plato::Solutions& aSolution,
-                                          const Plato::ScalarVector& aControl)
+                                          const Plato::ScalarVector& aControl,
+                                          const Plato::Scalar aTimeStep = 0.0)
 {
     Plato::DataMap tDataMap;
     const auto tParsedDomains = plato::domain::parse_domains(aParameterList, aMesh);
     plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
     const auto tCriterion = aCreateCriterion(tSpatialModel, tDataMap, aParameterList);
 
-    return tCriterion.value(aSolution, aControl);
+    return tCriterion.value(aSolution, aControl, aTimeStep);
 }
 
 /// @brief creates a linear displacement field defined over a mesh @a aMesh using @a aConstantDisplacementGradient such

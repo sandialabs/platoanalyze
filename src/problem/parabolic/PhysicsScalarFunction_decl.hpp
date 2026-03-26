@@ -98,7 +98,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::Scalar value(const Plato::Solutions& aSolution,
                         const Plato::ScalarVector& aControl,
-                        Plato::Scalar aTimeStep = 0.0) const override;
+                        const Plato::Scalar aTimeStep = 0.0) const override;
 
     /******************************************************************************/
     /**
@@ -110,7 +110,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_x(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::Scalar aTimeStep = 0.0) const override;
+                                   const Plato::Scalar aTimeStep = 0.0) const override;
 
     /******************************************************************************/
     /**
@@ -123,8 +123,8 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_u(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::OrdinalType aStepIndex,
-                                   Plato::Scalar aTimeStep) const override;
+                                   const Plato::OrdinalType aStepIndex,
+                                   const Plato::Scalar aTimeStep) const override;
 
     /******************************************************************************/
     /**
@@ -137,8 +137,8 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_v(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::OrdinalType aStepIndex,
-                                   Plato::Scalar aTimeStep) const override;
+                                   const Plato::OrdinalType aStepIndex,
+                                   const Plato::Scalar aTimeStep) const override;
 
     /******************************************************************************/
     /**
@@ -150,7 +150,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_z(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::Scalar aTimeStep = 0.0) const override;
+                                   const Plato::Scalar aTimeStep = 0.0) const override;
 
     /******************************************************************************/
     /**

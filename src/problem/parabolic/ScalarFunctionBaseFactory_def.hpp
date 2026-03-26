@@ -2,6 +2,7 @@
 
 #include "ScalarFunctionBase.hpp"
 #include "problem/parabolic/PhysicsScalarFunction.hpp"
+#include "problem/parabolic/TimeIntegratedStateAverageFunction.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
@@ -31,6 +32,11 @@ std::shared_ptr<Plato::Parabolic::ScalarFunctionBase> ScalarFunctionBaseFactory<
     {
         return std::make_shared<Plato::Parabolic::PhysicsScalarFunction<PhysicsT>>(aSpatialModel, aDataMap,
                                                                                    aProblemParams, aFunctionName);
+    }
+    else if (tFunctionType == "Time Integrated State Average")
+    {
+        return std::make_shared<plato::parabolic::TimeIntegratedStateAverageFunction<PhysicsT>>(
+            aSpatialModel, aDataMap, aProblemParams, aFunctionName);
     }
     else
     {

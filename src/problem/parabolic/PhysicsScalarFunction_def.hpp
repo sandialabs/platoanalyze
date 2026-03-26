@@ -86,7 +86,7 @@ PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const plato::domain::S
 template <typename PhysicsType>
 Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& aSolution,
                                                         const Plato::ScalarVector& aControl,
-                                                        Plato::Scalar aTimeStep) const
+                                                        const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename Residual::ConfigScalarType;
     using StateScalar = typename Residual::StateScalarType;
@@ -170,7 +170,7 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientX::ConfigScalarType;
     using StateScalar = typename GradientX::StateScalarType;
@@ -265,8 +265,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::OrdinalType aStepIndex,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::OrdinalType aStepIndex,
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientU::ConfigScalarType;
     using StateScalar = typename GradientU::StateScalarType;
@@ -348,8 +348,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::OrdinalType aStepIndex,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::OrdinalType aStepIndex,
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientV::ConfigScalarType;
     using StateScalar = typename GradientV::StateScalarType;
@@ -427,7 +427,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientZ::ConfigScalarType;
     using StateScalar = typename GradientZ::StateScalarType;

@@ -35,7 +35,7 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::Scalar value(const Plato::Solutions& aSolution,
                                 const Plato::ScalarVector& aControl,
-                                Plato::Scalar aTimeStep = 0.0) const = 0;
+                                const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -47,7 +47,7 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_z(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -60,8 +60,8 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_u(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::OrdinalType aStepIndex,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::OrdinalType aStepIndex,
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -74,8 +74,8 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_v(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::OrdinalType aStepIndex,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::OrdinalType aStepIndex,
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -87,7 +87,7 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_x(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
 };  // class ScalarFunctionBase
 
