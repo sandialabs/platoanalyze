@@ -7,7 +7,7 @@
 #ifdef PLATO_PARABOLIC
 #include "problem/parabolic/HeatEquationResidual.hpp"
 #include "problem/parabolic/InternalThermalEnergy.hpp"
-#include "problem/parabolic/TemperatureAverage.hpp"
+#include "problem/parabolic/TemperatureIntegral.hpp"
 #endif
 
 #include "local_operations/optimization/MakeFunctions.hpp"
@@ -108,9 +108,9 @@ struct FunctionFactory
             return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::InternalThermalEnergy>(
                 aSpatialDomain, aDataMap, aProblemParams, aFuncName);
         }
-        else if (tLowerFuncType == "temperature average")
+        else if (tLowerFuncType == "temperature integral")
         {
-            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::TemperatureAverage>(
+            return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::TemperatureIntegral>(
                 aSpatialDomain, aDataMap, aProblemParams, aFuncName);
         }
         else

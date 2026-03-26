@@ -12,7 +12,7 @@ namespace Parabolic
 
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
-TemperatureAverage<EvaluationType, IndicatorFunctionType>::TemperatureAverage(
+TemperatureIntegral<EvaluationType, IndicatorFunctionType>::TemperatureIntegral(
     const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
@@ -27,7 +27,7 @@ TemperatureAverage<EvaluationType, IndicatorFunctionType>::TemperatureAverage(
 
 /**************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
-void TemperatureAverage<EvaluationType, IndicatorFunctionType>::evaluate_conditional(
+void TemperatureIntegral<EvaluationType, IndicatorFunctionType>::evaluate_conditional(
     const Plato::ScalarMultiVectorT<StateScalarType>& aState,
     const Plato::ScalarMultiVectorT<StateDotScalarType>& aStateDot,
     const Plato::ScalarMultiVectorT<ControlScalarType>& aControl,
