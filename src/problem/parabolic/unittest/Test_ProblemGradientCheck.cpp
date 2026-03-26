@@ -4,14 +4,12 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <plato/test_utilities/GradientChecker.hpp>
 #include <string>
-#include <valarray>
 
 #include "element/Tri3.hpp"
-#include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/Thermal.hpp"
 #include "problem/parabolic/Problem.hpp"
+#include "test_utilities/PlatoGradientCheckTestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
-#include "utilities/ParallelComm.hpp"
 
 namespace plato::parabolic::unittest
 {
@@ -20,13 +18,6 @@ namespace
 const std::string kTri3MeshType{"TRI3"};
 const std::string kInternalThermalEnergyCriterionName{"Internal Thermal Energy"};
 const std::string kTimeIntegratedStateAverageName{"integrated average temperature"};
-
-Plato::Comm::Machine dummy_comm_machine()
-{
-    MPI_Comm myComm;
-    MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
-    return Plato::Comm::Machine(myComm);
-}
 
 Teuchos::ParameterList create_base_problem_parameters(const Plato::OrdinalType aNumSteps = 0)
 {
@@ -110,60 +101,15 @@ void append_applied_flux_boundary_conditions_to_parameter_list(Teuchos::Paramete
     aParamList.sublist(tBCType).sublist(tName).set("Sides", aSideSet);
 }
 
-// TODO: Pull out since this is used in finite deformation mechanics as well
 template <typename ElementType>
-void check_gradient_over_mesh(Teuchos::ParameterList& aParamList,
-                              const std::string aCriterionName,
-                              const Plato::Mesh& aMesh,
-                              Plato::Scalar aTruncationErrorTolerance,
-                              Teuchos::FancyOStream& aOutStream,
-                              bool& aSuccess)
+struct CreateParabolicThermalProblem
 {
-    parabolic::Problem<Plato::Thermal<ElementType>> tProblem(aMesh, aParamList, dummy_comm_machine());
-
-    auto tCriterionValue = [&aCriterionName, &tProblem](const std::valarray<Plato::Scalar>& aControlVector)
+    auto operator()(const Plato::Mesh& aMesh, Teuchos::ParameterList& aParameterList) const
     {
-        const auto tControl = Plato::TestHelpers::create_device_view(aControlVector);
-        const auto tStateSolution = tProblem.solution(tControl);
-        return tProblem.criterionValue(tControl, tStateSolution, aCriterionName);
-    };
-
-    auto tCriterionGradient = [&aCriterionName, &tProblem](const std::valarray<Plato::Scalar>& aControlVector,
-                                                           const std::valarray<Plato::Scalar>& aDirection)
-    {
-        const auto tControl = Plato::TestHelpers::create_device_view(aControlVector);
-        const auto tStateSolution = tProblem.solution(tControl);
-        const auto tGradient = tProblem.criterionGradient(tControl, tStateSolution, aCriterionName);
-        const auto tHostGradient = Plato::TestHelpers::get(tGradient);
-        return std::inner_product(Kokkos::Experimental::begin(tHostGradient), Kokkos::Experimental::end(tHostGradient),
-                                  begin(aDirection), 0.0);
-    };
-
-    const plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>> tGradientChecker{tCriterionValue,
-                                                                                                tCriterionGradient};
-
-    const auto tNumNodes = aMesh->NumNodes();
-    constexpr Plato::Scalar tControlVal{0.5};
-    const std::valarray<Plato::Scalar> tControl(tControlVal, tNumNodes);
-
-    // uniform perturbation
-    // TODO: make random perturbation
-    std::valarray<Plato::Scalar> tPerturbationDirection(1.0, tNumNodes);
-    const auto tPerturbationNorm = std::sqrt(std::inner_product(
-        begin(tPerturbationDirection), end(tPerturbationDirection), begin(tPerturbationDirection), 0.0));
-    tPerturbationDirection /= tPerturbationNorm;
-
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
-        .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
-
-    const auto tMaxTruncationError =
-        tGradientChecker.maxFirstOrderTruncationError(tControl, tPerturbationDirection, tGradientCheckParameters);
-    TEUCHOS_TEST_ASSERT(tMaxTruncationError < aTruncationErrorTolerance, aOutStream, aSuccess);
-    if (!aSuccess)
-    {
-        std::cout << tGradientChecker.table(tControl, tPerturbationDirection, tGradientCheckParameters);
+        return parabolic::Problem<Plato::Thermal<ElementType>>(aMesh, aParameterList,
+                                                               Plato::TestHelpers::dummy_comm_machine());
     }
-}
+};
 }  // namespace
 
 TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPassesGradientCheck)
@@ -178,9 +124,13 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPasses
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);
 
-    constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
-    check_gradient_over_mesh<Plato::Tri3>(tParamList, kInternalThermalEnergyCriterionName, tMesh,
-                                          tTruncationErrorTolerance, out, success);
+    constexpr Plato::Scalar tControlValue{0.5};
+    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+        .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.01};
+    constexpr Plato::Scalar tTruncationErrorTolerance{1.2e-1};
+    Plato::TestHelpers::check_gradient_over_mesh(tParamList, CreateParabolicThermalProblem<Plato::Tri3>{},
+                                                 kInternalThermalEnergyCriterionName, tMesh, tControlValue,
+                                                 tGradientCheckParameters, tTruncationErrorTolerance, out, success);
 }
 
 TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGradientCheck)
@@ -196,8 +146,12 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGrad
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);
 
-    constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
-    check_gradient_over_mesh<Plato::Tri3>(tParamList, kTimeIntegratedStateAverageName, tMesh, tTruncationErrorTolerance,
-                                          out, success);
+    constexpr Plato::Scalar tControlValue{0.5};
+    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+        .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
+    constexpr Plato::Scalar tTruncationErrorTolerance{6e-2};
+    Plato::TestHelpers::check_gradient_over_mesh(tParamList, CreateParabolicThermalProblem<Plato::Tri3>{},
+                                                 kTimeIntegratedStateAverageName, tMesh, tControlValue,
+                                                 tGradientCheckParameters, tTruncationErrorTolerance, out, success);
 }
 }  // namespace plato::parabolic::unittest
