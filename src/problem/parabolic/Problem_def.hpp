@@ -266,11 +266,6 @@ Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aCont
             mDataMap.saveState();
         }
     }
-    if (mSaveState)
-    {
-        // write output
-        this->output("pa_output.exo");
-    }
 
     auto tSolution = this->getSolution();
     return tSolution;
