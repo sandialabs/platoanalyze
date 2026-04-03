@@ -41,11 +41,20 @@ typename ViewType::HostMirror get(ViewType aView)
  * \param[in] aVector
  * @returns Mirror on device
  **********************************************************************************/
-template <template <typename> typename ContainerT, typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(const ContainerT<ScalarT>& aVector)
+template <typename ScalarT>
+Plato::ScalarVectorT<ScalarT> create_device_view(const std::vector<ScalarT>& aValues)
 {
-    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aVector.size());
-    std::copy(begin(aVector), end(aVector), Kokkos::Experimental::begin(tHostView));
+    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aValues.size());
+    std::copy(begin(aValues), end(aValues), Kokkos::Experimental::begin(tHostView));
+    return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
+}
+
+/// @brief overload for valarray
+template <typename ScalarT>
+Plato::ScalarVectorT<ScalarT> create_device_view(const std::valarray<ScalarT>& aValues)
+{
+    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aValues.size());
+    std::copy(begin(aValues), end(aValues), Kokkos::Experimental::begin(tHostView));
     return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
 
