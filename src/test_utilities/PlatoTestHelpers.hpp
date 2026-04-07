@@ -13,7 +13,6 @@
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
 #include "test_utilities/BamG/BamG.hpp"
-#include "utilities/ParallelComm.hpp"
 
 namespace Plato
 {
@@ -53,9 +52,6 @@ auto create_device_view(const Container& aValues)
 
 /// @brief construct a Plato::Solutions object with a single solution. Overload to take a std::vector of state values.
 [[nodiscard]] Plato::Solutions single_step_solutions(const std::vector<Plato::Scalar>& aStateValues);
-
-/// @brief constructs a Plato::Comm::Machine from MPI_COMM_WORLD.
-Plato::Comm::Machine dummy_comm_machine();
 
 /******************************************************************************/
 /*! Return a 2D view with specified control values.

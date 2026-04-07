@@ -37,13 +37,6 @@ Plato::Solutions single_step_solutions(const std::vector<Plato::Scalar>& aStateV
     return single_step_solution_impl(tStateView);
 }
 
-Plato::Comm::Machine dummy_comm_machine()
-{
-    MPI_Comm myComm;
-    MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
-    return Plato::Comm::Machine(myComm);
-}
-
 void setControlWS(std::vector<std::vector<Plato::Scalar>>& aValues, Plato::ScalarMultiVectorT<Plato::Scalar>& aControl)
 {
     const auto tNumCells = aValues.size();

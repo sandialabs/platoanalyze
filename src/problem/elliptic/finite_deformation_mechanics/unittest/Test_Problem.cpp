@@ -17,6 +17,7 @@
 #include "problem/elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/Problem.hpp"
 #include "test_utilities/PlatoGradientCheckTestHelpers.hpp"
+#include "test_utilities/PlatoMPITestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::elliptic::finite_deformation_mechanics::unittest
@@ -127,7 +128,7 @@ struct CreateFiniteDeformationMechanicsProblem
     auto operator()(const Plato::Mesh& aMesh, Teuchos::ParameterList& aParameterList) const
     {
         return Problem<FiniteDeformationMechanics<ElementType>>(aMesh, aParameterList,
-                                                                Plato::TestHelpers::dummy_comm_machine());
+                                                                Plato::TestHelpers::duplicate_comm_world());
     }
 };
 }  // namespace
@@ -151,7 +152,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, SolutionReducesResidualBelowToleranc
 
     // solve PDE
     Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList,
-                                                              Plato::TestHelpers::dummy_comm_machine());
+                                                              Plato::TestHelpers::duplicate_comm_world());
     const auto tStateSolution = tProblem.solution(tControl);
 
     // evaluate residual at solution
@@ -227,7 +228,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, UniaxialExtensionSolutionProducesAna
     Plato::blas1::fill(static_cast<Plato::Scalar>(1.0), tControl);
 
     Problem<FiniteDeformationMechanics<Plato::Tet4>> tProblem(tMesh, tParamList,
-                                                              Plato::TestHelpers::dummy_comm_machine());
+                                                              Plato::TestHelpers::duplicate_comm_world());
     const auto tStateSolution = tProblem.solution(tControl);
     const auto tDataMaps = tProblem.getDataMap();
     const auto tNumStates = tDataMaps.stateDataMaps.size();
@@ -291,7 +292,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, ValueProducesExpectedUniaxialStrainE
         Plato::blas1::fill(static_cast<Plato::Scalar>(1.0), tControl);
 
         Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList,
-                                                                  Plato::TestHelpers::dummy_comm_machine());
+                                                                  Plato::TestHelpers::duplicate_comm_world());
         const auto tStateSolution = tProblem.solution(tControl);
 
         const auto tValue = tProblem.criterionValue(tControl, tStateSolution, kStrainEnergyCriterionName);
@@ -305,7 +306,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, ValueProducesExpectedUniaxialStrainE
         Plato::blas1::fill(static_cast<Plato::Scalar>(tControlVal), tControl);
 
         Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList,
-                                                                  Plato::TestHelpers::dummy_comm_machine());
+                                                                  Plato::TestHelpers::duplicate_comm_world());
         const auto tStateSolution = tProblem.solution(tControl);
 
         const auto tValue = tProblem.criterionValue(tControl, tStateSolution, kStrainEnergyCriterionName);

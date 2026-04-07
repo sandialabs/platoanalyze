@@ -9,6 +9,7 @@
 #include "problem/Thermal.hpp"
 #include "problem/parabolic/Problem.hpp"
 #include "test_utilities/PlatoGradientCheckTestHelpers.hpp"
+#include "test_utilities/PlatoMPITestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::parabolic::unittest
@@ -107,7 +108,7 @@ struct CreateParabolicThermalProblem
     auto operator()(const Plato::Mesh& aMesh, Teuchos::ParameterList& aParameterList) const
     {
         return parabolic::Problem<Plato::Thermal<ElementType>>(aMesh, aParameterList,
-                                                               Plato::TestHelpers::dummy_comm_machine());
+                                                               Plato::TestHelpers::duplicate_comm_world());
     }
 };
 }  // namespace
