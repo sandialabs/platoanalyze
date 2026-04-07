@@ -6,6 +6,7 @@
 
 #include "domain/SpatialModel.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
+#include "problem/parabolic/CriterionUtilities.hpp"
 #include "problem/parabolic/TimeIntegratedStateAverageFunction_decl.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
@@ -68,9 +69,7 @@ Plato::Scalar TimeIntegratedStateAverageFunction<PhysicsType>::value(const Plato
             },
             tNodalSum);
 
-        const auto tTrapezoidIntegrationConstant =
-            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-        tReturnValue += tTrapezoidIntegrationConstant * tNodalSum;
+        tReturnValue += trapezoid_integration_constant(tStepIndex, aTimeStep, tNumSteps) * tNodalSum;
     }
 
     return tReturnValue / tNumNodes;
@@ -102,9 +101,7 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_u(
         });
 
     auto tNumSteps = tStates.extent(0);
-    const auto tTrapezoidIntegrationConstant =
-        aStepIndex == 1 || aStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-    Plato::blas1::scale(tTrapezoidIntegrationConstant, tGradientU);
+    Plato::blas1::scale(trapezoid_integration_constant(aStepIndex, aTimeStep, tNumSteps), tGradientU);
     return tGradientU;
 }
 

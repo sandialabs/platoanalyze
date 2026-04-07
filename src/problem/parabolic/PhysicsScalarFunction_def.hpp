@@ -1,6 +1,7 @@
 #pragma once
 
 #include "linear_algebra/BLAS1.hpp"
+#include "problem/parabolic/CriterionUtilities.hpp"
 
 namespace Plato
 {
@@ -149,11 +150,10 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
     ResultScalar tReturnVal(0.0);
     for (Plato::OrdinalType tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
     {
-        const auto tTrapezoidIntegrationConstant =
-            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-        auto tName = mSpatialModel.mDomains[0].domainName();
+        const auto tName = mSpatialModel.mDomains[0].domainName();
         mValueFunctions.at(tName)->postEvaluate(tValues[tStepIndex]);
-        tReturnVal += tTrapezoidIntegrationConstant * tValues[tStepIndex];
+        tReturnVal +=
+            plato::parabolic::trapezoid_integration_constant(tStepIndex, aTimeStep, tNumSteps) * tValues[tStepIndex];
     }
 
     return tReturnVal;
@@ -243,9 +243,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
         auto tName = mSpatialModel.mDomains[0].domainName();
         mGradientXFunctions.at(tName)->postEvaluate(tObjGradientXStep, tValues[tStepIndex]);
 
-        const auto tTrapezoidIntegrationConstant =
-            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-        Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientXStep);
+        Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(tStepIndex, aTimeStep, tNumSteps),
+                            tObjGradientXStep);
 
         Plato::blas1::axpy(1.0, tObjGradientXStep, tObjGradientX);
     }
@@ -329,9 +328,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
     mGradientUFunctions.at(tName)->postEvaluate(tObjGradientU, tValue);
 
     const auto tNumSteps = tStates.extent(0);
-    const auto tTrapezoidIntegrationConstant =
-        aStepIndex == 1 || aStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-    Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientU);
+    Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(aStepIndex, aTimeStep, tNumSteps),
+                        tObjGradientU);
 
     return tObjGradientU;
 }
@@ -409,9 +407,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
     mGradientVFunctions.at(tName)->postEvaluate(tObjGradientV, tValue);
 
     const auto tNumSteps = tStates.extent(0);
-    const auto tTrapezoidIntegrationConstant =
-        aStepIndex == 1 || aStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-    Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientV);
+    Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(aStepIndex, aTimeStep, tNumSteps),
+                        tObjGradientV);
 
     return tObjGradientV;
 }
@@ -499,9 +496,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
         const auto tName = mSpatialModel.mDomains[0].domainName();
         mGradientZFunctions.at(tName)->postEvaluate(tObjGradientZStep, tValues[tStepIndex]);
 
-        const auto tTrapezoidIntegrationConstant =
-            tStepIndex == 1 || tStepIndex == tNumSteps - 1 ? 0.5 * aTimeStep : aTimeStep;
-        Plato::blas1::scale(tTrapezoidIntegrationConstant, tObjGradientZStep);
+        Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(tStepIndex, aTimeStep, tNumSteps),
+                            tObjGradientZStep);
 
         Plato::blas1::axpy(1.0, tObjGradientZStep, tObjGradientZ);
     }
