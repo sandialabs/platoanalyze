@@ -28,12 +28,12 @@ std::shared_ptr<Plato::Parabolic::ScalarFunctionBase> ScalarFunctionBaseFactory<
     auto tProblemFunction = aProblemParams.sublist("Criteria").sublist(aFunctionName);
     auto tFunctionType = tProblemFunction.get<std::string>("Type", "Not Defined");
 
-    if (tFunctionType == "Scalar Function")
+    if (tFunctionType == Plato::Parabolic::physics_scalar_function_name())
     {
         return std::make_shared<Plato::Parabolic::PhysicsScalarFunction<PhysicsT>>(aSpatialModel, aDataMap,
                                                                                    aProblemParams, aFunctionName);
     }
-    else if (tFunctionType == "Time Integrated State Average")
+    else if (tFunctionType == plato::parabolic::time_integrated_state_average_function_name())
     {
         return std::make_shared<plato::parabolic::TimeIntegratedStateAverageFunction<PhysicsT>>(
             aSpatialModel, aDataMap, aProblemParams, aFunctionName);

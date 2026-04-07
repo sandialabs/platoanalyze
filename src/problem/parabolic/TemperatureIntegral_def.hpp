@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_TEMPERATUREINTEGRAL_DEF
+#define PLATO_PROBLEM_PARABOLIC_TEMPERATUREINTEGRAL_DEF
 
 #include "core_types/FadTypes.hpp"
 #include "linear_algebra/ScalarProduct.hpp"
@@ -74,3 +75,5 @@ void TemperatureIntegral<EvaluationType, IndicatorFunctionType>::evaluate_condit
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

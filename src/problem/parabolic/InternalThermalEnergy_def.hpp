@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_INTERNALTHERMALENERGY_DEF
+#define PLATO_PROBLEM_PARABOLIC_INTERNALTHERMALENERGY_DEF
 
 #include "core_types/FadTypes.hpp"
 #include "linear_algebra/ScalarGrad.hpp"
@@ -94,3 +95,5 @@ void InternalThermalEnergy<EvaluationType, IndicatorFunctionType>::evaluate_cond
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

@@ -1,5 +1,5 @@
-#ifndef PLATO_THERMAL_HPP
-#define PLATO_THERMAL_HPP
+#ifndef PLATO_PROBLEM_THERMAL_HPP
+#define PLATO_PROBLEM_THERMAL_HPP
 
 #include "problem/parabolic/AbstractScalarFunction.hpp"
 #include "problem/parabolic/AbstractVectorFunction.hpp"
@@ -103,12 +103,12 @@ struct FunctionFactory
     {
 #ifdef PLATO_PARABOLIC
         auto tLowerFuncType = Plato::tolower(aFuncType);
-        if (tLowerFuncType == "internal thermal energy")
+        if (tLowerFuncType == Plato::Parabolic::internal_thermal_energy_function_name())
         {
             return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::InternalThermalEnergy>(
                 aSpatialDomain, aDataMap, aProblemParams, aFuncName);
         }
-        else if (tLowerFuncType == "temperature integral")
+        else if (tLowerFuncType == Plato::Parabolic::temperature_integral_function_name())
         {
             return Plato::makeScalarFunction<EvaluationType, Plato::Parabolic::TemperatureIntegral>(
                 aSpatialDomain, aDataMap, aProblemParams, aFuncName);

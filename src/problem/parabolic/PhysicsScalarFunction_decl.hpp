@@ -1,6 +1,8 @@
 #ifndef PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DECL
 #define PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DECL
 
+#include <string_view>
+
 #include "domain/WorksetBase.hpp"
 #include "problem/parabolic/AbstractScalarFunction.hpp"
 #include "problem/parabolic/EvaluationTypes.hpp"
@@ -11,6 +13,7 @@ namespace Plato
 
 namespace Parabolic
 {
+[[nodiscard]] auto physics_scalar_function_name() -> std::string_view;
 
 /******************************************************************************/
 /**

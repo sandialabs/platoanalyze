@@ -1,4 +1,7 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_TEMPERATUREINTEGRAL_DECL
+#define PLATO_PROBLEM_PARABOLIC_TEMPERATUREINTEGRAL_DECL
+
+#include <string_view>
 
 #include "local_operations/optimization/ApplyWeighting.hpp"
 #include "problem/parabolic/AbstractScalarFunction.hpp"
@@ -8,6 +11,7 @@ namespace Plato
 
 namespace Parabolic
 {
+[[nodiscard]] auto temperature_integral_function_name() -> std::string_view;
 
 /******************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
@@ -58,3 +62,5 @@ class TemperatureIntegral : public EvaluationType::ElementType,
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

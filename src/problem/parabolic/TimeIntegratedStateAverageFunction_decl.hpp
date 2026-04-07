@@ -3,6 +3,7 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <string>
+#include <string_view>
 
 #include "domain/SpatialModel.hpp"
 #include "domain/WorksetBase.hpp"
@@ -11,6 +12,8 @@
 
 namespace plato::parabolic
 {
+[[nodiscard]] auto time_integrated_state_average_function_name() -> std::string_view;
+
 /// @brief class for computing criteria consisting of the time integral of states averaged over a nodeset. Time
 /// integration is carried out using the trapezoid rule.
 template <typename PhysicsType>
