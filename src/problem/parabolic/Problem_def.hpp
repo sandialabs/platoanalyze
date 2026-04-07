@@ -67,7 +67,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
 
         if (mCriteriaMap.size())
         {
-            auto tLength = mPDE->size();
+            const auto tLength = mPDE->size();
             mAdjointStates = Plato::ScalarMultiVector("Adjoint States", mNumSteps, tLength);
             mAdjointStatesV = Plato::ScalarMultiVector("Adjoint States V", mNumSteps, tLength);
         }
@@ -75,7 +75,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
 
     if (aProblemParams.isSublist("Multipoint Constraints") == true)
     {
-        Plato::OrdinalType tNumDofsPerNode = mPDE->numDofsPerNode();
+        const Plato::OrdinalType tNumDofsPerNode = mPDE->numDofsPerNode();
         auto& tMyParams = aProblemParams.sublist("Multipoint Constraints", false);
         mMPCs = std::make_shared<Plato::MultipointConstraints>(mSpatialModel, tNumDofsPerNode, tMyParams);
         mMPCs->setupTransform();
@@ -99,7 +99,7 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
 
         Plato::ScalarVector tInitialState = Kokkos::subview(mState, 0, Kokkos::ALL());
 
-        auto tDofNames = mPDE->getDofNames();
+        const auto tDofNames = mPDE->getDofNames();
 
         auto tInitStateParams = aProblemParams.sublist("Initial State");
         for (auto i = tInitStateParams.begin(); i != tInitStateParams.end(); ++i)
@@ -158,9 +158,9 @@ void Problem<PhysicsType>::applyStateConstraints(const Teuchos::RCP<Plato::CrsMa
 template <typename PhysicsType>
 void Problem<PhysicsType>::output(const std::string& aFilepath)
 {
-    auto tDataMap = this->getDataMap();
-    auto tSolution = this->getSolution();
-    auto tSolutionOutput = mPDE->getSolutionStateOutputData(tSolution);
+    const auto tDataMap = this->getDataMap();
+    const auto tSolution = this->getSolution();
+    const auto tSolutionOutput = mPDE->getSolutionStateOutputData(tSolution);
     Plato::universal_solution_output(aFilepath, tSolutionOutput, tDataMap, mSpatialModel.mMesh);
 }
 

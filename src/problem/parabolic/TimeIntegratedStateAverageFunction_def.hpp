@@ -19,7 +19,7 @@ TimeIntegratedStateAverageFunction<PhysicsType>::TimeIntegratedStateAverageFunct
     const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh), mName(aName), mSpatialModel(aSpatialModel)
 {
-    auto tCriterionParams = aProblemParams.sublist("Criteria").sublist(mName);
+    const auto tCriterionParams = aProblemParams.sublist("Criteria").sublist(mName);
 
     const auto tNodeSet = tCriterionParams.get<std::string>("Nodeset");
     const auto tNodeSetsInMesh = aSpatialModel.mMesh->GetNodeSetNames();
