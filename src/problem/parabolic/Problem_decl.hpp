@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_PROBLEM_DECL
+#define PLATO_PROBLEM_PARABOLIC_PROBLEM_DECL
 
 #include <fstream>
 #include <map>
@@ -109,3 +110,5 @@ class Problem : public Plato::AbstractProblem
 };
 
 }  // namespace plato::parabolic
+
+#endif

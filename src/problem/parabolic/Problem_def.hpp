@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_PROBLEM_DEF
+#define PLATO_PROBLEM_PARABOLIC_PROBLEM_DEF
 
 #include "boundary_conditions/ApplyConstraints.hpp"
 #include "boundary_conditions/EssentialBCs.hpp"
@@ -502,3 +503,5 @@ Plato::Solutions Problem<PhysicsType>::getSolution() const
     return tSolution;
 }
 }  // namespace plato::parabolic
+
+#endif

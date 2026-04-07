@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DEF
+#define PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DEF
 
 #include "linear_algebra/BLAS1.hpp"
 #include "problem/parabolic/CriterionUtilities.hpp"
@@ -529,3 +530,5 @@ std::string PhysicsScalarFunction<PhysicsType>::name() const
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

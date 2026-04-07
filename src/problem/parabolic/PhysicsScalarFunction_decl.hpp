@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DECL
+#define PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DECL
 
 #include "domain/WorksetBase.hpp"
 #include "problem/parabolic/AbstractScalarFunction.hpp"
@@ -171,3 +172,5 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

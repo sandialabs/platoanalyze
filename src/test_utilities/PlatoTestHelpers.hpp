@@ -1,5 +1,5 @@
-#ifndef PLATOTESTHELPERS_HPP_
-#define PLATOTESTHELPERS_HPP_
+#ifndef PLATO_TEST_UTILITIES_PLATOTESTHELPERS
+#define PLATO_TEST_UTILITIES_PLATOTESTHELPERS
 
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_ParameterList.hpp>
@@ -265,4 +265,4 @@ Plato::ScalarVector create_linear_displacement_field(
 }  // namespace TestHelpers
 }  // namespace Plato
 
-#endif /* PLATOTESTHELPERS_HPP_ */
+#endif
