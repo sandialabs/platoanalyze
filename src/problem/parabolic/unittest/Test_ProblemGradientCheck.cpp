@@ -125,13 +125,17 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPasses
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);
 
-    constexpr Plato::Scalar tControlValue{0.5};
     const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.01};
     constexpr Plato::Scalar tTruncationErrorTolerance{1.2e-1};
-    Plato::TestHelpers::check_gradient_over_mesh(tParamList, CreateParabolicThermalProblem<Plato::Tri3>{},
-                                                 kInternalThermalEnergyCriterionName, tMesh, tControlValue,
-                                                 tGradientCheckParameters, tTruncationErrorTolerance, out, success);
+
+    constexpr Plato::Scalar tControlValue{0.5};
+    const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
+
+    Plato::TestHelpers::check_control_gradient(
+        Plato::TestHelpers::make_criterion_gradient_checker(
+            CreateParabolicThermalProblem<Plato::Tri3>{}(tMesh, tParamList), kInternalThermalEnergyCriterionName),
+        tGradientCheckParameters, tControl, tTruncationErrorTolerance, out, success);
 }
 
 TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGradientCheck_TempOnSurfaceWithFlux)
@@ -147,13 +151,17 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGrad
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);
 
-    constexpr Plato::Scalar tControlValue{0.5};
     const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{6e-2};
-    Plato::TestHelpers::check_gradient_over_mesh(tParamList, CreateParabolicThermalProblem<Plato::Tri3>{},
-                                                 kTimeIntegratedStateAverageName, tMesh, tControlValue,
-                                                 tGradientCheckParameters, tTruncationErrorTolerance, out, success);
+
+    constexpr Plato::Scalar tControlValue{0.5};
+    const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
+
+    Plato::TestHelpers::check_control_gradient(
+        Plato::TestHelpers::make_criterion_gradient_checker(
+            CreateParabolicThermalProblem<Plato::Tri3>{}(tMesh, tParamList), kTimeIntegratedStateAverageName),
+        tGradientCheckParameters, tControl, tTruncationErrorTolerance, out, success);
 }
 
 TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGradientCheck_TempOnSurfaceOppositeFlux)
@@ -167,12 +175,16 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGrad
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);
 
-    constexpr Plato::Scalar tControlValue{0.5};
     const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
-    Plato::TestHelpers::check_gradient_over_mesh(tParamList, CreateParabolicThermalProblem<Plato::Tri3>{},
-                                                 kTimeIntegratedStateAverageName, tMesh, tControlValue,
-                                                 tGradientCheckParameters, tTruncationErrorTolerance, out, success);
+
+    constexpr Plato::Scalar tControlValue{0.5};
+    const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
+
+    Plato::TestHelpers::check_control_gradient(
+        Plato::TestHelpers::make_criterion_gradient_checker(
+            CreateParabolicThermalProblem<Plato::Tri3>{}(tMesh, tParamList), kTimeIntegratedStateAverageName),
+        tGradientCheckParameters, tControl, tTruncationErrorTolerance, out, success);
 }
 }  // namespace plato::parabolic::unittest

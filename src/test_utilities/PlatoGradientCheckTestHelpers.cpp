@@ -24,4 +24,26 @@ auto random_perturbation_valarray(const Plato::OrdinalType aSize, std::default_r
 
     return tRandomValues;
 }
+
+void check_control_gradient(
+    const plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>>& aGradientChecker,
+    const plato::test_utilities::GradientCheckParameters& aGradientCheckParameters,
+    const std::valarray<Plato::Scalar>& aX,
+    const Plato::Scalar aTruncationErrorTolerance,
+    Teuchos::FancyOStream& aOutStream,
+    bool& aSuccess)
+{
+    auto tRandomEngine = std::default_random_engine{123};
+    const auto tPerturbationDirection = random_perturbation_valarray(aX.size(), tRandomEngine);
+
+    const auto tMaxTruncationError =
+        aGradientChecker.maxFirstOrderTruncationError(aX, tPerturbationDirection, aGradientCheckParameters);
+    TEUCHOS_TEST_ASSERT(tMaxTruncationError < aTruncationErrorTolerance, aOutStream, aSuccess);
+    if (!aSuccess)
+    {
+        aOutStream << "\n Failing gradient check table is: \n";
+        aOutStream << aGradientChecker.table(aX, tPerturbationDirection, aGradientCheckParameters);
+        aOutStream << "\n Max first order truncation error is: " << tMaxTruncationError << "\n";
+    }
+}
 }  // namespace Plato::TestHelpers
