@@ -485,8 +485,8 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test value
     //
-    auto timeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
-    auto residual = vectorFunction.value(T, Tdot, z, timeStep);
+    auto tTimeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
+    auto residual = vectorFunction.value(T, Tdot, z, tTimeStep);
 
     auto residual_Host = Kokkos::create_mirror_view(residual);
     Kokkos::deep_copy(residual_Host, residual);
@@ -515,7 +515,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test gradient wrt state, T. (i.e., jacobian)
     //
-    auto jacobian = vectorFunction.gradient_u(T, Tdot, z, timeStep);
+    auto jacobian = vectorFunction.gradient_u(T, Tdot, z, tTimeStep);
 
     auto jac_entries = jacobian->entries();
     auto jac_entriesHost = Kokkos::create_mirror_view(jac_entries);
@@ -552,7 +552,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test gradient wrt previous state, T. (i.e., jacobian)
     //
-    auto jacobian_v = vectorFunction.gradient_v(T, Tdot, z, timeStep);
+    auto jacobian_v = vectorFunction.gradient_v(T, Tdot, z, tTimeStep);
 
     auto jac_v_entries = jacobian_v->entries();
     auto jac_v_entriesHost = Kokkos::create_mirror_view(jac_v_entries);
@@ -573,7 +573,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test objective gradient wrt control, z
     //
-    auto gradient_z = vectorFunction.gradient_z(T, Tdot, z, timeStep);
+    auto gradient_z = vectorFunction.gradient_z(T, Tdot, z, tTimeStep);
 
     auto grad_entries = gradient_z->entries();
     auto grad_entriesHost = Kokkos::create_mirror_view(grad_entries);
@@ -595,7 +595,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test objective gradient wrt node position, x
     //
-    auto gradient_x = vectorFunction.gradient_x(T, Tdot, z, timeStep);
+    auto gradient_x = vectorFunction.gradient_x(T, Tdot, z, tTimeStep);
 
     auto grad_x_entries = gradient_x->entries();
     auto grad_x_entriesHost = Kokkos::create_mirror_view(grad_x_entries);
@@ -696,7 +696,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
     Plato::Parabolic::PhysicsScalarFunction<::Plato::Thermal<Plato::Tet4>> scalarFunction(tSpatialModel, tDataMap,
                                                                                           *tParamList, tMyFunction);
 
-    auto timeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
+    auto tTimeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
     int timeIncIndex = 1;
 
     // compute and test objective value
@@ -704,46 +704,46 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
     Plato::Solutions tSolution;
     tSolution.set("State", T);
     tSolution.set("StateDot", Tdot);
-    auto value = scalarFunction.value(tSolution, z, timeStep);
+    auto value = scalarFunction.value(tSolution, z, tTimeStep);
 
     const Plato::Scalar tTrapezoidIntegrationConstant =
-        0.5 * timeStep;  // Only 2 steps so both are scaled by 0.5 (first and last steps)
+        0.5 * tTimeStep;  // Only 2 steps so both are scaled by 0.5 (first and last steps)
 
-    Plato::Scalar value_gold = tTrapezoidIntegrationConstant * 4.73200000000000095e9;
-    TEST_FLOATING_EQUALITY(value, value_gold, 1e-13);
+    Plato::Scalar tGoldValue = tTrapezoidIntegrationConstant * 4.73200000000000095e9;
+    TEST_FLOATING_EQUALITY(value, tGoldValue, 1e-13);
 
     // compute and test objective gradient wrt state, u
     //
-    auto grad_u = scalarFunction.gradient_u(tSolution, z, timeIncIndex, timeStep);
+    auto grad_u = scalarFunction.gradient_u(tSolution, z, timeIncIndex, tTimeStep);
 
     auto grad_u_Host = Kokkos::create_mirror_view(grad_u);
     Kokkos::deep_copy(grad_u_Host, grad_u);
 
-    std::vector<Plato::Scalar> grad_u_gold = {-8.666666666666668e6, -1.200000000000000e7, -3.333333333333333e6,
-                                              -1.000000000000000e7, -1.800000000000000e7, -7.999999999999999e6,
-                                              -1.333333333333333e6, -6.000000000000001e6, -4.666666666666665e6,
-                                              -3.999999999999999e6, -6.000000000000002e6, -1.999999999999998e6};
+    std::vector<Plato::Scalar> tGoldGradientU = {-8.666666666666668e6, -1.200000000000000e7, -3.333333333333333e6,
+                                                 -1.000000000000000e7, -1.800000000000000e7, -7.999999999999999e6,
+                                                 -1.333333333333333e6, -6.000000000000001e6, -4.666666666666665e6,
+                                                 -3.999999999999999e6, -6.000000000000002e6, -1.999999999999998e6};
 
-    for (int iNode = 0; iNode < int(grad_u_gold.size()); iNode++)
+    for (int iNode = 0; iNode < int(tGoldGradientU.size()); iNode++)
     {
-        if (grad_u_gold[iNode] == 0.0)
+        if (tGoldGradientU[iNode] == 0.0)
         {
             TEST_ASSERT(fabs(grad_u_Host[iNode]) < 1e-12);
         }
         else
         {
-            TEST_FLOATING_EQUALITY(grad_u_Host[iNode], tTrapezoidIntegrationConstant * grad_u_gold[iNode], 1e-13);
+            TEST_FLOATING_EQUALITY(grad_u_Host[iNode], tTrapezoidIntegrationConstant * tGoldGradientU[iNode], 1e-13);
         }
     }
 
     // compute and test objective gradient wrt control, z
     //
-    auto grad_z = scalarFunction.gradient_z(tSolution, z, timeStep);
+    auto grad_z = scalarFunction.gradient_z(tSolution, z, tTimeStep);
 
     auto grad_z_Host = Kokkos::create_mirror_view(grad_z);
     Kokkos::deep_copy(grad_z_Host, grad_z);
 
-    std::vector<Plato::Scalar> grad_z_gold = {
+    std::vector<Plato::Scalar> tGoldGradientZ = {
         1.478750000000000e8, 1.971666666666667e8, 4.929166666666666e7, 1.971666666666667e8, 2.957500000000000e8,
         9.858333333333334e7, 4.929166666666667e7, 9.858333333333333e7, 4.929166666666666e7, 1.971666666666667e8,
         2.957500000000000e8, 9.858333333333334e7, 2.957500000000000e8, 5.914999999999999e8, 2.957500000000000e8,
@@ -751,19 +751,19 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
         4.929166666666666e7, 9.858333333333334e7, 2.957499999999999e8, 1.971666666666667e8, 4.929166666666666e7,
         1.971666666666666e8, 1.478750000000000e8};
 
-    for (int iNode = 0; iNode < int(grad_z_gold.size()); iNode++)
+    for (int iNode = 0; iNode < int(tGoldGradientZ.size()); iNode++)
     {
-        TEST_FLOATING_EQUALITY(grad_z_Host[iNode], tTrapezoidIntegrationConstant * grad_z_gold[iNode], 1e-13);
+        TEST_FLOATING_EQUALITY(grad_z_Host[iNode], tTrapezoidIntegrationConstant * tGoldGradientZ[iNode], 1e-13);
     }
 
     // compute and test objective gradient wrt node position, x
     //
-    auto grad_x = scalarFunction.gradient_x(tSolution, z, timeStep);
+    auto grad_x = scalarFunction.gradient_x(tSolution, z, tTimeStep);
 
     auto grad_x_Host = Kokkos::create_mirror_view(grad_x);
     Kokkos::deep_copy(grad_x_Host, grad_x);
 
-    std::vector<Plato::Scalar> grad_x_gold = {
+    std::vector<Plato::Scalar> tGoldGradientX = {
         6.196666666666666e8,  -5.633333333333331e7, -2.816666666666667e8, 8.125000000000000e8,  -1.235000000000000e8,
         1.560000000000000e8,  1.928333333333333e8,  -6.716666666666669e7, 4.376666666666666e8,  5.785000000000000e8,
         3.900000000000000e8,  -4.615000000000000e8, 9.230000000000000e8,  7.020000000000001e8,  2.340000000000000e8,
@@ -771,9 +771,9 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
         -1.798333333333333e8,
     };
 
-    for (int iNode = 0; iNode < int(grad_x_gold.size()); iNode++)
+    for (int iNode = 0; iNode < int(tGoldGradientX.size()); iNode++)
     {
-        TEST_FLOATING_EQUALITY(grad_x_Host[iNode], tTrapezoidIntegrationConstant * grad_x_gold[iNode], 1e-13);
+        TEST_FLOATING_EQUALITY(grad_x_Host[iNode], tTrapezoidIntegrationConstant * tGoldGradientX[iNode], 1e-13);
     }
 }
 

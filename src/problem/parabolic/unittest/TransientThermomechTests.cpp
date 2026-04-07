@@ -446,8 +446,8 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, TransientThermomechResidual3D)
 
     // compute and test value
     //
-    auto timeStep = params->sublist("Time Integration").get<Plato::Scalar>("Time Step");
-    auto residual = vectorFunction.value(state, stateDot, z, timeStep);
+    auto tTimeStep = params->sublist("Time Integration").get<Plato::Scalar>("Time Step");
+    auto residual = vectorFunction.value(state, stateDot, z, tTimeStep);
 
     auto residual_Host = Kokkos::create_mirror_view(residual);
     Kokkos::deep_copy(residual_Host, residual);
@@ -474,7 +474,7 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, TransientThermomechResidual3D)
 
     // compute and test gradient wrt state. (i.e., jacobian)
     //
-    auto jacobian = vectorFunction.gradient_u(state, stateDot, z, timeStep);
+    auto jacobian = vectorFunction.gradient_u(state, stateDot, z, tTimeStep);
 
     auto jac_entries = jacobian->entries();
     auto jac_entriesHost = Kokkos::create_mirror_view(jac_entries);
@@ -553,7 +553,7 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, TransientThermomechResidual3D)
 
     // compute and test gradient wrt state dot (i.e., jacobianV)
     //
-    auto jacobian_v = vectorFunction.gradient_v(state, stateDot, z, timeStep);
+    auto jacobian_v = vectorFunction.gradient_v(state, stateDot, z, tTimeStep);
 
     auto jac_v_entries = jacobian_v->entries();
     auto jac_v_entriesHost = Kokkos::create_mirror_view(jac_v_entries);
@@ -572,7 +572,7 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, TransientThermomechResidual3D)
 
     // compute and test objective gradient wrt control, z
     //
-    auto gradient_z = vectorFunction.gradient_z(state, stateDot, z, timeStep);
+    auto gradient_z = vectorFunction.gradient_z(state, stateDot, z, tTimeStep);
 
     auto grad_entries = gradient_z->entries();
     auto grad_entriesHost = Kokkos::create_mirror_view(grad_entries);
@@ -592,7 +592,7 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, TransientThermomechResidual3D)
 
     // compute and test objective gradient wrt node position, x
     //
-    auto gradient_x = vectorFunction.gradient_x(state, stateDot, z, timeStep);
+    auto gradient_x = vectorFunction.gradient_x(state, stateDot, z, tTimeStep);
 
     auto grad_x_entries = gradient_x->entries();
     auto grad_x_entriesHost = Kokkos::create_mirror_view(grad_x_entries);
