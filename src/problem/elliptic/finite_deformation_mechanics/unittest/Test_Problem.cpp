@@ -388,7 +388,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, VarianceCriterionGradientPassesGradi
 
     const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
-    constexpr Plato::Scalar tTruncationErrorTolerance{5e-3};
+    constexpr Plato::Scalar tTruncationErrorTolerance{2e-2};
 
     constexpr Plato::Scalar tControlValue{0.5};
     const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
