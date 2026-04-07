@@ -12,11 +12,6 @@
 
 namespace Plato::TestHelpers
 {
-/// @brief Create a valarray of size @a aSize whose components are random values between [-1,1] generated with @a
-/// aRandomEngine. The vector is then normalized.
-auto random_perturbation_valarray(const Plato::OrdinalType aSize, std::default_random_engine& aRandomEngine)
-    -> std::valarray<double>;
-
 /// @brief constructs a gradient checker for a given problem @a aProblem with criterion @a aCriterionName.
 /// This is used to check gradient consistency with respect to controls.
 template <typename ProblemType>
@@ -54,6 +49,16 @@ void check_control_gradient(
     const Plato::Scalar aTruncationErrorTolerance,
     Teuchos::FancyOStream& aOutStream,
     bool& aSuccess);
+
+namespace detail
+{
+using RandomEngineSeedType = std::default_random_engine::result_type;
+/// @brief Create a valarray of size @a aSize whose components are random values between [-1,1] generated with a
+/// std::default_random_engine using seed @a aSeed
+[[nodiscard]] auto random_perturbation(const Plato::OrdinalType aSize, const RandomEngineSeedType aSeed)
+    -> std::valarray<double>;
+}  // namespace detail
+
 }  // namespace Plato::TestHelpers
 
 #endif
