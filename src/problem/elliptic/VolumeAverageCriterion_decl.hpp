@@ -133,13 +133,6 @@ class VolumeAverageCriterion : public Plato::Elliptic::ScalarFunctionBase,
     Plato::ScalarVector gradient_z(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
                                    Plato::Scalar aTimeStep = 0.0) const override;
-
-    /******************************************************************************/
-    /**
-     * \brief Return user defined function name
-     * \return User defined function name
-     **********************************************************************************/
-    std::string name() const override;
 };
 // class VolumeAverageCriterion
 

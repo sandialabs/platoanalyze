@@ -233,17 +233,6 @@ Plato::ScalarVector VolumeAverageCriterion<PhysicsType>::gradient_z(const Plato:
     Plato::ScalarVector tGradientZ = mDivisionFunction->gradient_z(aSolution, aControl, aTimeStep);
     return tGradientZ;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string VolumeAverageCriterion<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
 }  // namespace Elliptic
 
 }  // namespace Plato

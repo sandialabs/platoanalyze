@@ -684,17 +684,6 @@ void SolutionFunction<PhysicsType>::setFunctionName(const std::string& aFunction
 {
     mFunctionName = aFunctionName;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string SolutionFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
 }  // namespace Elliptic
 
 }  // namespace Plato

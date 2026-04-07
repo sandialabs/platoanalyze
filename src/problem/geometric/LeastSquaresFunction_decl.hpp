@@ -105,13 +105,6 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_z(const Plato::ScalarVector& aControl) const override;
 
-    /******************************************************************************/
-    /**
-     * \brief Return user defined function name
-     * \return User defined function name
-     **********************************************************************************/
-    std::string name() const override;
-
    private:
     using ElementType = typename PhysicsType::ElementType;
 

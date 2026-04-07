@@ -135,12 +135,6 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_x(
     Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tGradientZ);
     return tGradientZ;
 }
-
-template <typename PhysicsType>
-std::string TimeIntegratedStateAverageFunction<PhysicsType>::name() const
-{
-    return std::string{};
-}
 }  // namespace plato::parabolic
 
 #endif

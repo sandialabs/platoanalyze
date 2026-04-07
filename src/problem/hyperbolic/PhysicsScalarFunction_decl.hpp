@@ -175,13 +175,6 @@ class PhysicsScalarFunction : public Plato::Hyperbolic::ScalarFunctionBase,
      * \param [in] function name
      **********************************************************************************/
     void setFunctionName(const std::string aFunctionName);
-
-    /******************************************************************************/
-    /**
-     * \brief Return user defined function name
-     * \return User defined function name
-     **********************************************************************************/
-    std::string name() const override;
 };  // class PhysicsScalarFunction
 
 }  // namespace Hyperbolic

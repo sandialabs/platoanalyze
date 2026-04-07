@@ -198,17 +198,6 @@ void WeightedSumFunction<PhysicsType>::setFunctionName(const std::string aFuncti
 {
     mFunctionName = aFunctionName;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string WeightedSumFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
 }  // namespace Geometric
 
 }  // namespace Plato

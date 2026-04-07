@@ -624,18 +624,6 @@ void PhysicsScalarFunction<PhysicsType>::setFunctionName(const std::string aFunc
 {
     mFunctionName = aFunctionName;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string PhysicsScalarFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
-
 }  // namespace Hyperbolic
 
 }  // namespace Plato

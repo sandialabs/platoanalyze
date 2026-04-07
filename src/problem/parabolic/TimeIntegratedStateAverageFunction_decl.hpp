@@ -64,9 +64,6 @@ class TimeIntegratedStateAverageFunction : public Plato::Parabolic::ScalarFuncti
                                    const Plato::ScalarVector& aControl,
                                    const Plato::Scalar aTimeStep = 0.0) const override final;
 
-    ///@brief returns the name of the criterion being computed
-    std::string name() const override final;
-
    private:
     std::string mName;
     plato::domain::SpatialModel mSpatialModel;

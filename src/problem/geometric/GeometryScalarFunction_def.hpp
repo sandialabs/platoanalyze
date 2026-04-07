@@ -387,17 +387,6 @@ void GeometryScalarFunction<GeometryT>::setFunctionName(const std::string aFunct
 {
     mFunctionName = aFunctionName;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename GeometryT>
-std::string GeometryScalarFunction<GeometryT>::name() const
-{
-    return mFunctionName;
-}
 }  // namespace Geometric
 
 }  // namespace Plato
