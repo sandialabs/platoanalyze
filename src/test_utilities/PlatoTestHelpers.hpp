@@ -4,6 +4,7 @@
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -34,27 +35,15 @@ typename ViewType::HostMirror get(ViewType aView)
     return tView;
 }
 
-/******************************************************************************/
-/**
- * \brief create device view from std::vector
- *
- * \param[in] aVector
- * @returns Mirror on device
- **********************************************************************************/
-template <typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(const std::vector<ScalarT>& aValues)
+/// @brief create a device view from a standard library container
+template <class Container>
+    requires std::ranges::sized_range<Container> && std::ranges::contiguous_range<Container> &&
+             (!std::is_const_v<std::remove_reference_t<std::ranges::range_value_t<Container>>>)
+auto create_device_view(const Container& aValues)
 {
-    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aValues.size());
-    std::copy(begin(aValues), end(aValues), Kokkos::Experimental::begin(tHostView));
-    return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
-}
-
-/// @brief overload for valarray
-template <typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(const std::valarray<ScalarT>& aValues)
-{
-    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aValues.size());
-    std::copy(begin(aValues), end(aValues), Kokkos::Experimental::begin(tHostView));
+    using ScalarT = std::ranges::range_value_t<Container>;
+    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", std::ranges::size(aValues));
+    std::copy(std::ranges::begin(aValues), std::ranges::end(aValues), Kokkos::Experimental::begin(tHostView));
     return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
 
