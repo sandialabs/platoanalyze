@@ -5,13 +5,10 @@
 #include "boundary_conditions/EssentialBCs.hpp"
 #include "domain/AnalyzeOutput.hpp"
 #include "linear_algebra/BLAS1.hpp"
-#include "mesh/ComputedField.hpp"
 #include "mesh/PlatoMesh.hpp"
 #include "parsing/ParseTools.hpp"
 #include "parsing/TeuchosParsingUtilities.hpp"
-#include "problem/Geometrical.hpp"
-#include "problem/elliptic/ScalarFunctionBaseFactory.hpp"
-#include "problem/geometric/ScalarFunctionBaseFactory.hpp"
+#include "problem/parabolic/ParsingUtilities.hpp"
 #include "problem/parabolic/ScalarFunctionBaseFactory.hpp"
 #include "solver/PlatoAbstractSolver.hpp"
 #include "solver/PlatoSolverFactory.hpp"
@@ -34,52 +31,27 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
       mTrapezoidIntegrator(aProblemParams.sublist("Time Integration")),
       mNumSteps(Plato::ParseTools::getSubParam<int>(aProblemParams, "Time Integration", "Number Time Steps", 1)),
       mTimeStep(Plato::ParseTools::getSubParam<Plato::Scalar>(aProblemParams, "Time Integration", "Time Step", 1.0)),
-      mNumNewtonSteps(Plato::ParseTools::getSubParam<int>(aProblemParams, "Newton Iteration", "Maximum Iterations", 1)),
-      mNewtonResTol(
-          Plato::ParseTools::getSubParam<double>(aProblemParams, "Newton Iteration", "Residual Tolerance", 0.0)),
-      mNewtonIncTol(
-          Plato::ParseTools::getSubParam<double>(aProblemParams, "Newton Iteration", "Increment Tolerance", 0.0)),
       mState("State", mNumSteps, mPDE->size()),
       mStateDot("StateDot", mNumSteps, mPDE->size()),
       mSaveState(aProblemParams.sublist("Parabolic").isType<Teuchos::Array<std::string>>("Plottable")),
       mEssentialBCs(aProblemParams.sublist("Essential Boundary Conditions", false), aMesh),
-      mMPCs(nullptr)
+      mMPCs(parse_multipoint_constraints(aProblemParams, mSpatialModel, mPDE->numDofsPerNode())),
+      mCriteriaMap(parse_criteria<PhysicsType, Criterion>(aProblemParams, mSpatialModel, mDataMap)),
+      mSolver(parse_linear_solver(aProblemParams.sublist("Linear Solver"),
+                                  mPhysics,
+                                  aMesh->NumNodes(),
+                                  aMachine,
+                                  ElementType::mNumDofsPerNode,
+                                  mMPCs)),
+      mNewtonSolver(parse_newton_solver(aProblemParams, mSolver))
 {
-    const auto tSystemType = mPhysics == "Thermomechanical" ? Plato::LinearSystemType::SYMMETRIC_PATTERN
-                                                            : Plato::LinearSystemType::SYMMETRIC_INDEFINITE;
-    auto tSolverFactory = Plato::SolverFactory{aProblemParams.sublist("Linear Solver"), tSystemType};
-    mSolver = tSolverFactory.create(aMesh->NumNodes(), aMachine, ElementType::mNumDofsPerNode, mMPCs);
-
-    if (aProblemParams.isSublist("Criteria"))
+    if (!mCriteriaMap.empty())
     {
-        auto tAddCriteria = [&tCriteriaMap = mCriteriaMap, &tSpatialModel = mSpatialModel, &tDataMap = mDataMap,
-                             &tProblemParams = aProblemParams,
-                             tCriterionBaseFactory =
-                                 Plato::Parabolic::ScalarFunctionBaseFactory<PhysicsType>{}](const std::string& aName)
-        {
-            const auto tCriterion = tCriterionBaseFactory.create(tSpatialModel, tDataMap, tProblemParams, aName);
-            if (tCriterion)
-            {
-                tCriteriaMap[aName] = tCriterion;
-            }
-        };
-        utilities::for_each_sublist(aProblemParams.sublist("Criteria"), tAddCriteria);
-
-        if (mCriteriaMap.size())
-        {
-            const auto tLength = mPDE->size();
-            mAdjointStates = Plato::ScalarMultiVector("Adjoint States", mNumSteps, tLength);
-            mAdjointStatesV = Plato::ScalarMultiVector("Adjoint States V", mNumSteps, tLength);
-        }
+        const auto tLength = mPDE->size();
+        mAdjointStates = Plato::ScalarMultiVector("Adjoint States", mNumSteps, tLength);
+        mAdjointStatesV = Plato::ScalarMultiVector("Adjoint States V", mNumSteps, tLength);
     }
 
-    if (aProblemParams.isSublist("Multipoint Constraints") == true)
-    {
-        const Plato::OrdinalType tNumDofsPerNode = mPDE->numDofsPerNode();
-        auto& tMyParams = aProblemParams.sublist("Multipoint Constraints", false);
-        mMPCs = std::make_shared<Plato::MultipointConstraints>(mSpatialModel, tNumDofsPerNode, tMyParams);
-        mMPCs->setupTransform();
-    }
     if (mMPCs)
     {
         Plato::OrdinalVector tBcDofs;
@@ -88,52 +60,8 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
         mMPCs->checkEssentialBcsConflicts(tBcDofs);
     }
 
-    if (aProblemParams.isSublist("Initial State"))
-    {
-        if (!aProblemParams.isSublist("Computed Fields"))
-        {
-            ANALYZE_THROWERR("No 'Computed Fields' have been defined");
-        }
-        const auto tComputedFields = Teuchos::rcp(
-            new Plato::ComputedFields<ElementType::mNumSpatialDims>(aMesh, aProblemParams.sublist("Computed Fields")));
-
-        Plato::ScalarVector tInitialState = Kokkos::subview(mState, 0, Kokkos::ALL());
-
-        const auto tDofNames = mPDE->getDofNames();
-
-        auto tInitStateParams = aProblemParams.sublist("Initial State");
-        for (auto i = tInitStateParams.begin(); i != tInitStateParams.end(); ++i)
-        {
-            const auto& tEntry = tInitStateParams.entry(i);
-            const auto& tName = tInitStateParams.name(i);
-
-            if (tEntry.isList())
-            {
-                auto& tStateList = tInitStateParams.sublist(tName);
-                auto tFieldName = tStateList.get<std::string>("Computed Field");
-                int tDofIndex = -1;
-                for (int j = 0; j < tDofNames.size(); ++j)
-                {
-                    if (Plato::tolower(tDofNames[j]) == Plato::tolower(tName))
-                    {
-                        tDofIndex = j;
-                    }
-                }
-                if (tDofIndex == -1)
-                {
-                    std::stringstream ss;
-                    ss << "Tried to initialize non-existent state field: " << Plato::tolower(tName) << std::endl;
-                    ss << "Available states are: " << std::endl;
-                    for (const auto& tDofName : tDofNames)
-                    {
-                        ss << "  " << Plato::tolower(tDofName) << std::endl;
-                    }
-                    ANALYZE_THROWERR(ss.str());
-                }
-                tComputedFields->get(tFieldName, tDofIndex, tDofNames.size(), tInitialState);
-            }
-        }
-    }
+    Plato::ScalarVector tInitialState = Kokkos::subview(mState, 0, Kokkos::ALL());
+    parse_initial_state<ElementType>(aProblemParams, tInitialState, aMesh, mPDE->getDofNames());
 }
 
 template <typename PhysicsType>
@@ -173,9 +101,6 @@ template <typename PhysicsType>
 Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aControl)
 {
     mDataMap.clearStates();
-
-    const auto tNewtonSolver =
-        algorithms::nonlinear_solvers::NewtonSolver{mNumNewtonSteps, mNewtonResTol, mNewtonIncTol, mSolver};
 
     Plato::ScalarVector tStateInit = Kokkos::subview(mState, /*StepIndex=*/0, Kokkos::ALL());
     Plato::ScalarVector tStateDotInit = Kokkos::subview(mStateDot, /*StepIndex=*/0, Kokkos::ALL());
@@ -253,7 +178,7 @@ Plato::Solutions Problem<PhysicsType>::solution(const Plato::ScalarVector& aCont
         };
 
         const bool tNewtonHasConverged =
-            tNewtonSolver.solve(tState, tComputeResidual, tComputeJacobian, tApplyBoundaryConditions, mOutputStream);
+            mNewtonSolver.solve(tState, tComputeResidual, tComputeJacobian, tApplyBoundaryConditions, mOutputStream);
 
         // update state dot
         Plato::blas1::axpy(-1.0, mTrapezoidIntegrator.v_value(tState, tStatePrev, tStateDot, tStateDotPrev, mTimeStep),

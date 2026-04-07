@@ -17,6 +17,7 @@
 #include "problem/parabolic/TrapezoidIntegrator.hpp"
 #include "problem/parabolic/VectorFunction.hpp"
 #include "solver/PlatoAbstractSolver.hpp"
+#include "solver/nonlinear_solvers/NewtonSolver.hpp"
 #include "utilities/ParallelComm.hpp"
 
 namespace plato::parabolic
@@ -95,16 +96,14 @@ class Problem : public Plato::AbstractProblem
     Plato::Parabolic::TrapezoidIntegrator mTrapezoidIntegrator;
     Plato::OrdinalType mNumSteps;
     Plato::Scalar mTimeStep;
-    Plato::OrdinalType mNumNewtonSteps;
-    Plato::Scalar mNewtonResTol;
-    Plato::Scalar mNewtonIncTol;
     Plato::ScalarMultiVector mState;
     Plato::ScalarMultiVector mStateDot;
     bool mSaveState;
     Plato::EssentialBCs<ElementType> mEssentialBCs;
     std::shared_ptr<Plato::MultipointConstraints> mMPCs;
-    Plato::rcp<Plato::AbstractSolver> mSolver;
     std::map<std::string, Criterion> mCriteriaMap;
+    Plato::rcp<Plato::AbstractSolver> mSolver;
+    algorithms::nonlinear_solvers::NewtonSolver mNewtonSolver;
     Plato::ScalarMultiVector mAdjointStates;
     Plato::ScalarMultiVector mAdjointStatesV;
 };
