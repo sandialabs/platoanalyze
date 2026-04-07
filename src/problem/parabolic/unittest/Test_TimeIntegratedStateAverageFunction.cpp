@@ -12,6 +12,7 @@
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/Thermal.hpp"
 #include "problem/parabolic/TimeIntegratedStateAverageFunction.hpp"
+#include "problem/parabolic/test_utilities/CommonInputParameters.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::parabolic::unittest
@@ -20,28 +21,6 @@ namespace
 {
 const std::string kTri3MeshType{"TRI3"};
 const std::string kCriterionName{"integrated average temperature"};
-
-Teuchos::ParameterList create_base_param_list()
-{
-    const std::string tMaterialName = "tapioca";
-
-    Teuchos::ParameterList tParameterList;
-    tParameterList.setName("Plato Problem");
-    tParameterList.set("PDE Constraint", "Parabolic");
-    tParameterList.set("Physics", "Thermal");
-
-    tParameterList.sublist("Spatial Model").sublist("Domains").sublist("Body").set("Element Block", "body");
-    tParameterList.sublist("Spatial Model").sublist("Domains").sublist("Body").set("Material Model", tMaterialName);
-
-    return tParameterList;
-}
-
-void append_valid_criterion_param_list(Teuchos::ParameterList& aParamList, const std::string& aNodeSet)
-{
-    aParamList.sublist("Criteria").sublist(kCriterionName).set("Type", "Time Integrated State Average");
-    aParamList.sublist("Criteria").sublist(kCriterionName).set("Nodeset", aNodeSet);
-    aParamList.sublist("Criteria").sublist(kCriterionName).set("State Component", 0);
-}
 
 template <typename ElementType>
 struct CreateTimeIntegratedStateAverageCriterion
@@ -91,8 +70,9 @@ void test_criterion_value_against_gold(const std::vector<std::vector<double>> aS
     const auto tNumDofs = ElementType::mNumSpatialDims * tNumNodes;
 
     const std::string tNodeSet{"x-"};
-    Teuchos::ParameterList tParamList = create_base_param_list();
-    append_valid_criterion_param_list(tParamList, tNodeSet);
+    Teuchos::ParameterList tParamList = test_utilities::create_base_thermal_problem_parameters();
+    test_utilities::append_time_integrated_state_average_criterion_to_parameter_list(tParamList, kCriterionName,
+                                                                                     tNodeSet);
 
     const Plato::Solutions tSolution = multi_step_solution_from_vector(aStatesVector);
 
@@ -114,7 +94,7 @@ TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, ConstructorParsingErrors)
     constexpr Plato::OrdinalType tMeshWidth = 1;
     const auto tMesh = Plato::TestHelpers::get_box_mesh(kTri3MeshType, tMeshWidth);
 
-    Teuchos::ParameterList tBaseParamList = create_base_param_list();
+    Teuchos::ParameterList tBaseParamList = test_utilities::create_base_thermal_problem_parameters();
     tBaseParamList.sublist("Criteria").sublist(kCriterionName).set("Type", "Time Integrated State Average");
 
     Plato::DataMap tDataMap;

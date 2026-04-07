@@ -8,6 +8,7 @@
 #include "element/Tri3.hpp"
 #include "problem/Thermal.hpp"
 #include "problem/parabolic/Problem.hpp"
+#include "problem/parabolic/test_utilities/CommonInputParameters.hpp"
 #include "test_utilities/PlatoGradientCheckTestHelpers.hpp"
 #include "test_utilities/PlatoMPITestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
@@ -19,35 +20,6 @@ namespace
 const std::string kTri3MeshType{"TRI3"};
 const std::string kInternalThermalEnergyCriterionName{"Internal Thermal Energy"};
 const std::string kTimeIntegratedStateAverageName{"integrated average temperature"};
-
-Teuchos::ParameterList create_base_problem_parameters(const Plato::OrdinalType aNumSteps = 0)
-{
-    Teuchos::ParameterList tParameterList;
-    tParameterList.setName("Plato Problem");
-    tParameterList.set("PDE Constraint", "Parabolic");
-    tParameterList.set("Physics", "Thermal");
-    tParameterList.set("Output File", "test_solution_output.txt");
-
-    tParameterList.sublist("Parabolic").sublist("Penalty Function").set("Exponent", 1.0);
-
-    tParameterList.sublist("Spatial Model").sublist("Domains").sublist("Body").set("Element Block", "body");
-    tParameterList.sublist("Spatial Model").sublist("Domains").sublist("Body").set("Material Model", "tapioca");
-
-    tParameterList.sublist("Material Models")
-        .sublist("tapioca")
-        .sublist("Thermal Conduction")
-        .set("Thermal Conductivity", 1.0);
-    tParameterList.sublist("Material Models")
-        .sublist("tapioca")
-        .sublist("Thermal Mass")
-        .set("Temperature Dependent", false);
-    tParameterList.sublist("Material Models").sublist("tapioca").sublist("Thermal Mass").set("Specific Heat", 1.0);
-    tParameterList.sublist("Material Models").sublist("tapioca").sublist("Thermal Mass").set("Mass Density", 1.0);
-
-    tParameterList.sublist("Time Integration").set("Number Time Steps", aNumSteps);
-
-    return tParameterList;
-}
 
 void append_internal_thermal_energy_criterion_to_parameter_list(Teuchos::ParameterList& aParamList)
 {
@@ -67,16 +39,6 @@ void append_internal_thermal_energy_criterion_to_parameter_list(Teuchos::Paramet
         .sublist(kInternalThermalEnergyCriterionName)
         .sublist("Penalty Function")
         .set("Minimum Value", 1e-16);
-}
-
-void append_time_integrated_state_average_criterion_to_parameter_list(Teuchos::ParameterList& aParamList,
-                                                                      const std::string& aNodeSet)
-{
-    aParamList.sublist("Criteria")
-        .sublist(kTimeIntegratedStateAverageName)
-        .set("Type", "Time Integrated State Average");
-    aParamList.sublist("Criteria").sublist(kTimeIntegratedStateAverageName).set("Nodeset", aNodeSet);
-    aParamList.sublist("Criteria").sublist(kTimeIntegratedStateAverageName).set("State Component", 0);
 }
 
 void append_fixed_temperature_boundary_conditions_to_parameter_list(Teuchos::ParameterList& aParamList,
@@ -117,7 +79,8 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPasses
 {
     constexpr Plato::OrdinalType tNumAnalysisSteps = 2;
     constexpr Plato::Scalar tAppliedFlux = 1.0;
-    Teuchos::ParameterList tParamList = create_base_problem_parameters(tNumAnalysisSteps);
+    Teuchos::ParameterList tParamList = test_utilities::create_base_thermal_problem_parameters();
+    tParamList.sublist("Time Integration").set("Number Time Steps", tNumAnalysisSteps);
     append_internal_thermal_energy_criterion_to_parameter_list(tParamList);
     append_fixed_temperature_boundary_conditions_to_parameter_list(tParamList, /*aSideSet=*/"x-");
     append_applied_flux_boundary_conditions_to_parameter_list(tParamList, /*aSideSet=*/"x+", tAppliedFlux);
@@ -141,9 +104,11 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientPasses
 TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGradientCheck_TempOnSurfaceWithFlux)
 {
     constexpr Plato::OrdinalType tNumAnalysisSteps = 4;
-    Teuchos::ParameterList tParamList = create_base_problem_parameters(tNumAnalysisSteps);
+    Teuchos::ParameterList tParamList = test_utilities::create_base_thermal_problem_parameters();
+    tParamList.sublist("Time Integration").set("Number Time Steps", tNumAnalysisSteps);
     const std::string tNodeSet = "x+";
-    append_time_integrated_state_average_criterion_to_parameter_list(tParamList, tNodeSet);
+    test_utilities::append_time_integrated_state_average_criterion_to_parameter_list(
+        tParamList, kTimeIntegratedStateAverageName, tNodeSet);
     append_fixed_temperature_boundary_conditions_to_parameter_list(tParamList, /*aSideSet=*/"x-");
     constexpr Plato::Scalar tAppliedFlux = 1.0;
     append_applied_flux_boundary_conditions_to_parameter_list(tParamList, tNodeSet, tAppliedFlux);
@@ -167,8 +132,10 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGrad
 TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGradientCheck_TempOnSurfaceOppositeFlux)
 {
     constexpr Plato::OrdinalType tNumAnalysisSteps = 4;
-    Teuchos::ParameterList tParamList = create_base_problem_parameters(tNumAnalysisSteps);
-    append_time_integrated_state_average_criterion_to_parameter_list(tParamList, /*aNodeSet=*/"x-");
+    Teuchos::ParameterList tParamList = test_utilities::create_base_thermal_problem_parameters();
+    tParamList.sublist("Time Integration").set("Number Time Steps", tNumAnalysisSteps);
+    test_utilities::append_time_integrated_state_average_criterion_to_parameter_list(
+        tParamList, kTimeIntegratedStateAverageName, /*aNodeSet=*/"x-");
     constexpr Plato::Scalar tAppliedFlux = 1.0;
     append_applied_flux_boundary_conditions_to_parameter_list(tParamList, /*aSideSet=*/"x+", tAppliedFlux);
 
