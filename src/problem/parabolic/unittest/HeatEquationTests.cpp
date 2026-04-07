@@ -480,8 +480,8 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
     const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
     plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    Plato::Parabolic::VectorFunction<::Plato::Thermal<Plato::Tet4>> vectorFunction(
-        tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
+    Plato::Parabolic::VectorFunction<::Plato::Thermal<Plato::Tet4>> vectorFunction(tSpatialModel, tDataMap,
+                                                                                   *tParamList);
 
     // compute and test value
     //

@@ -23,8 +23,7 @@ template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Plato::Comm::Machine aMachine)
     : AbstractProblem(aMesh, aProblemParams),
       mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
-      mPDE(std::make_shared<VectorFunctionType>(
-          mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint"))),
+      mPDE(std::make_shared<VectorFunctionType>(mSpatialModel, mDataMap, aProblemParams)),
       mPDEType(aProblemParams.get<std::string>("PDE Constraint")),
       mPhysics(aProblemParams.get<std::string>("Physics")),
       mOutputFileStream(aProblemParams.isParameter("Output File") ? std::optional<std::ofstream>{std::ofstream{

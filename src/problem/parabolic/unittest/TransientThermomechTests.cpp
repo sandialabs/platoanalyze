@@ -441,8 +441,8 @@ TEUCHOS_UNIT_TEST(TransientThermomechTests, TransientThermomechResidual3D)
     Plato::DataMap tDataMap;
     const auto tParsedDomains = plato::domain::parse_domains(*params, tMesh);
     plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
-    Plato::Parabolic::VectorFunction<::Plato::Thermomechanics<Plato::Tet4>> vectorFunction(
-        tSpatialModel, tDataMap, *params, params->get<std::string>("PDE Constraint"));
+    Plato::Parabolic::VectorFunction<::Plato::Thermomechanics<Plato::Tet4>> vectorFunction(tSpatialModel, tDataMap,
+                                                                                           *params);
 
     // compute and test value
     //
