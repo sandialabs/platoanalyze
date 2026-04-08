@@ -8,21 +8,20 @@ namespace plato::parabolic::unittest
 TEUCHOS_UNIT_TEST(CriterionUtilities, TrapezoidIntegrationConstant)
 {
     constexpr Plato::OrdinalType tNumSteps{86};
-    constexpr Plato::Scalar tTimeStep{21.0};
     // first time step
     {
         constexpr Plato::OrdinalType tStepIndex{1};
-        TEST_EQUALITY(trapezoid_integration_constant(tStepIndex, tTimeStep, tNumSteps), 0.5 * tTimeStep);
+        TEST_EQUALITY(trapezoid_integration_constant(tStepIndex, tNumSteps), 0.5);
     }
     // last time step
     {
         constexpr Plato::OrdinalType tStepIndex{tNumSteps - 1};
-        TEST_EQUALITY(trapezoid_integration_constant(tStepIndex, tTimeStep, tNumSteps), 0.5 * tTimeStep);
+        TEST_EQUALITY(trapezoid_integration_constant(tStepIndex, tNumSteps), 0.5);
     }
     // other time step
     {
         constexpr Plato::OrdinalType tStepIndex{21};
-        TEST_EQUALITY(trapezoid_integration_constant(tStepIndex, tTimeStep, tNumSteps), tTimeStep);
+        TEST_EQUALITY(trapezoid_integration_constant(tStepIndex, tNumSteps), 1.0);
     }
 }
 }  // namespace plato::parabolic::unittest

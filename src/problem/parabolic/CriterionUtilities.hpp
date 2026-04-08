@@ -6,7 +6,6 @@
 namespace plato::parabolic
 {
 [[nodiscard]] Plato::Scalar trapezoid_integration_constant(const Plato::OrdinalType aStepIndex,
-                                                           const Plato::Scalar aTimeStep,
                                                            const Plato::OrdinalType aNumSteps);
 }
 #endif

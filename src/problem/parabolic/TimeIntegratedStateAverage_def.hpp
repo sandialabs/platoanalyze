@@ -68,7 +68,7 @@ Plato::Scalar TimeIntegratedStateAverage<PhysicsType>::value(const Plato::Soluti
             },
             tNodalSum);
 
-        tReturnValue += trapezoid_integration_constant(tStepIndex, aTimeStep, tNumSteps) * tNodalSum;
+        tReturnValue += plato::parabolic::trapezoid_integration_constant(tStepIndex, tNumSteps) * aTimeStep * tNodalSum;
     }
 
     return tReturnValue / tNumNodes;
@@ -101,7 +101,8 @@ Plato::ScalarVector TimeIntegratedStateAverage<PhysicsType>::gradient_u(const Pl
         });
 
     auto tNumSteps = tStates.extent(0);
-    Plato::blas1::scale(trapezoid_integration_constant(aStepIndex, aTimeStep, tNumSteps), tGradientU);
+    Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(aStepIndex, tNumSteps) * aTimeStep,
+                        tGradientU);
     return tGradientU;
 }
 
