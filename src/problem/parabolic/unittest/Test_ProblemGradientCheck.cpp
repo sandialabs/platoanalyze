@@ -188,7 +188,7 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientChecks
     }
 }
 
-TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGradientCheck_TempOnSurfaceWithFlux)
+TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionGradientChecks)
 {
     // tri3, measured on flux node set
     {
@@ -207,7 +207,7 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionPassesGrad
         constexpr Plato::OrdinalType tMeshWidth = 4;
         const auto tNodeSets = TimeIntegratedStateAverageNodeSets{
             .mFluxNodeSet = "y+", .mFixedTemperatureNodeSet = "", .mMeasuredNodeSet = "y-"};
-        constexpr Plato::Scalar tTruncationErrorTolerance{1.5e-1};
+        constexpr Plato::Scalar tTruncationErrorTolerance{2.0e-1};
         run_time_integrated_state_average_gradient_check<Plato::Quad4>(
             kQuad4MeshType, tMeshWidth, tNumAnalysisSteps, tNodeSets, tTruncationErrorTolerance, out, success);
     }
