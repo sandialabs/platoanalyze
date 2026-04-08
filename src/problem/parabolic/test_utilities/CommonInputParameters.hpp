@@ -1,3 +1,6 @@
+#ifndef PLATO_PROBLEM_PARABOLIC_TESTUTILITIES_COMMONINPUTPARAMETERS
+#define PLATO_PROBLEM_PARABOLIC_TESTUTILITIES_COMMONINPUTPARAMETERS
+
 #include <Teuchos_ParameterList.hpp>
 
 namespace plato::parabolic::test_utilities
@@ -8,3 +11,5 @@ void append_time_integrated_state_average_criterion_to_parameter_list(Teuchos::P
                                                                       const std::string& aName,
                                                                       const std::string& aNodeSet);
 }  // namespace plato::parabolic::test_utilities
+
+#endif
