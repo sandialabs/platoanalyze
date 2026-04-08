@@ -56,7 +56,8 @@ Plato::Scalar TimeIntegratedStateAverage<PhysicsType>::value(const Plato::Soluti
     Plato::Scalar tReturnValue(0.0);
     const auto tNumDofsPerNode = mNumDofsPerNode;
     const auto tStateDof = mStateComponent;
-    for (Plato::OrdinalType tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
+    std::vector<Plato::Scalar> tValues(tNumSteps);
+    for (Plato::OrdinalType tStepIndex = kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
     {
         Plato::Scalar tNodalSum(0.0);
         const auto tStepState = Kokkos::subview(tStates, tStepIndex, Kokkos::ALL());
@@ -67,11 +68,9 @@ Plato::Scalar TimeIntegratedStateAverage<PhysicsType>::value(const Plato::Soluti
                 aSum += tStepState(tNumDofsPerNode * tIndex + tStateDof);
             },
             tNodalSum);
-
-        tReturnValue += plato::parabolic::trapezoid_integration_constant(tStepIndex, tNumSteps) * aTimeStep * tNodalSum;
+        tValues.push_back(tNodalSum);
     }
-
-    return tReturnValue / tNumNodes;
+    return trapezoidal_rule_integration(tValues, aTimeStep) / tNumNodes;
 }
 
 template <typename PhysicsType>

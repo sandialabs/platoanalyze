@@ -13,6 +13,7 @@
 #include "problem/Thermal.hpp"
 #include "problem/parabolic/TimeIntegratedStateAverage.hpp"
 #include "problem/parabolic/test_utilities/CommonInputParameters.hpp"
+#include "problem/parabolic/test_utilities/DataUtilities.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::parabolic::unittest
@@ -36,19 +37,7 @@ struct CreateTimeIntegratedStateAverageCriterion
 
 Plato::Solutions multi_step_solution_from_vector(const std::vector<std::vector<double>>& aStatesVector)
 {
-    const Plato::OrdinalType tNumSteps = aStatesVector.size();
-    assert(tNumSteps > 0);
-    const Plato::OrdinalType tNumDofs = aStatesVector[0].size();
-    Plato::ScalarMultiVector tStateMultiVector("state", tNumSteps, tNumDofs);
-    for (Plato::OrdinalType tStep = 0; tStep < tNumSteps; tStep++)
-    {
-        const auto tStateView = Plato::TestHelpers::create_device_view(aStatesVector[tStep]);
-        Kokkos::parallel_for(
-            "multidimensional view", Kokkos::RangePolicy<int>(0, tNumDofs),
-            KOKKOS_LAMBDA(Plato::OrdinalType tDofOrdinal) {
-                tStateMultiVector(tStep, tDofOrdinal) = tStateView(tDofOrdinal);
-            });
-    }
+    const auto tStateMultiVector = test_utilities::multi_dimension_view_from_vector(aStatesVector);
     Plato::Solutions tSolution(std::string{}, std::string{});
     tSolution.set("State", tStateMultiVector);
 
@@ -161,7 +150,8 @@ TEUCHOS_UNIT_TEST(TimeIntegratedStateAverage, PrescribedTemperatureGivesExpected
 {
     const std::vector<std::vector<Plato::Scalar>> tStatesVector{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                 {86.0, 21.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
-    constexpr double tGoldValue = 53.5 / 2.0;  // first step divided by 2 from trapezoid rule
+    constexpr double tGoldValue =
+        53.5 / 2.0;  // node set has 2 nodes (used in average), first step divided by 2 from trapezoid rule
     test_criterion_value_against_gold(tStatesVector, tGoldValue, out, success);
 }
 
@@ -171,7 +161,8 @@ TEUCHOS_UNIT_TEST(TimeIntegratedStateAverage, PrescribedTemperatureGivesExpected
                                                                 {86.0, 21.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                 {77.0, 93.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                 {88.0, 38.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
-    constexpr double tGoldValue = 143.25;  // first and last step values divided by 2 in trapezoid rule
+    constexpr double tGoldValue =
+        170.0;  // node set has 2 nodes (used in average), first step divided by 2 from trapezoid rule
     test_criterion_value_against_gold(tStatesVector, tGoldValue, out, success);
 }
 

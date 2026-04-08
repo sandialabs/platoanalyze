@@ -9,12 +9,12 @@ create_plato_analyze_library(AnalyzeParabolic "${FOLDERS}" "${LINK_LIBS}")
 if( PLATOANALYZE_UNIT_TEST )
 
   set(FOLDERS "test_utilities") 
-  set(LINK_LIBS TeuchosCore::teuchoscore)
+  set(LINK_LIBS TeuchosCore::teuchoscore
+                AnalyzeTestUtilities)
   create_plato_analyze_library(AnalyzeParabolicTestUtilities "${FOLDERS}" "${LINK_LIBS}")
 
   set(FOLDERS "unittest") 
   set(LINK_LIBS AnalyzeParabolicTestUtilities
-                AnalyzeTestUtilities
                 AnalyzeUtilities) 
   create_plato_analyze_teuchos_unittester(AnalyzeParabolic "${FOLDERS}" "${LINK_LIBS}")
 endif()
