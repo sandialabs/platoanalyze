@@ -93,11 +93,12 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_u(
 
     const auto tNumDofsPerNode = mNumDofsPerNode;
     const auto tStateDof = mStateComponent;
+    const Plato::Scalar tWeighting = 1.0 / tNumNodes;
     Kokkos::parallel_for(
         "gradient w.r.t. state", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumNodes),
         KOKKOS_LAMBDA(const Plato::OrdinalType aNodeOrdinal) {
             const auto tIndex = tNodeIds[aNodeOrdinal];
-            tGradientU(tNumDofsPerNode * tIndex + tStateDof) = 1.0 / tNumNodes;
+            tGradientU(tNumDofsPerNode * tIndex + tStateDof) = tWeighting;
         });
 
     auto tNumSteps = tStates.extent(0);
@@ -131,9 +132,9 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_x(
                                                                                 const Plato::ScalarVector& aControl,
                                                                                 const Plato::Scalar aTimeStep) const
 {
-    const Plato::ScalarVector tGradientZ("gradient w.r.t nodal coordinates", mNumSpatialDims * mNumNodes);
-    Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tGradientZ);
-    return tGradientZ;
+    const Plato::ScalarVector tGradientX("gradient w.r.t nodal coordinates", mNumSpatialDims * mNumNodes);
+    Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tGradientX);
+    return tGradientX;
 }
 }  // namespace plato::parabolic
 
