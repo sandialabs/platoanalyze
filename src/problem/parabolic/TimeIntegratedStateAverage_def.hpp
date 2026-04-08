@@ -1,5 +1,5 @@
-#ifndef PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGEFUNCTION_DEF
-#define PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGEFUNCTION_DEF
+#ifndef PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGE_DEF
+#define PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGE_DEF
 
 #include <Teuchos_ParameterList.hpp>
 #include <string>
@@ -7,17 +7,16 @@
 #include "domain/SpatialModel.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/parabolic/CriterionUtilities.hpp"
-#include "problem/parabolic/TimeIntegratedStateAverageFunction_decl.hpp"
+#include "problem/parabolic/TimeIntegratedStateAverage_decl.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
 namespace plato::parabolic
 {
 template <typename PhysicsType>
-TimeIntegratedStateAverageFunction<PhysicsType>::TimeIntegratedStateAverageFunction(
-    const plato::domain::SpatialModel& aSpatialModel,
-    Plato::DataMap& aDataMap,
-    Teuchos::ParameterList& aProblemParams,
-    const std::string& aName)
+TimeIntegratedStateAverage<PhysicsType>::TimeIntegratedStateAverage(const plato::domain::SpatialModel& aSpatialModel,
+                                                                    Plato::DataMap& aDataMap,
+                                                                    Teuchos::ParameterList& aProblemParams,
+                                                                    const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh), mName(aName), mSpatialModel(aSpatialModel)
 {
     const auto tCriterionParams = aProblemParams.sublist("Criteria").sublist(mName);
@@ -44,9 +43,9 @@ TimeIntegratedStateAverageFunction<PhysicsType>::TimeIntegratedStateAverageFunct
 }
 
 template <typename PhysicsType>
-Plato::Scalar TimeIntegratedStateAverageFunction<PhysicsType>::value(const Plato::Solutions& aSolution,
-                                                                     const Plato::ScalarVector& aControl,
-                                                                     const Plato::Scalar aTimeStep) const
+Plato::Scalar TimeIntegratedStateAverage<PhysicsType>::value(const Plato::Solutions& aSolution,
+                                                             const Plato::ScalarVector& aControl,
+                                                             const Plato::Scalar aTimeStep) const
 {
     const auto tNodeIds = mSpatialModel.mMesh->GetNodeSetNodes(mNodeSet);
     const auto tNumNodes = tNodeIds.size();
@@ -76,10 +75,10 @@ Plato::Scalar TimeIntegratedStateAverageFunction<PhysicsType>::value(const Plato
 }
 
 template <typename PhysicsType>
-Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_u(const Plato::Solutions& aSolution,
-                                                                                const Plato::ScalarVector& aControl,
-                                                                                const Plato::OrdinalType aStepIndex,
-                                                                                const Plato::Scalar aTimeStep) const
+Plato::ScalarVector TimeIntegratedStateAverage<PhysicsType>::gradient_u(const Plato::Solutions& aSolution,
+                                                                        const Plato::ScalarVector& aControl,
+                                                                        const Plato::OrdinalType aStepIndex,
+                                                                        const Plato::Scalar aTimeStep) const
 {
     const auto tNodeIds = mSpatialModel.mMesh->GetNodeSetNodes(mNodeSet);
     const auto tNumNodes = tNodeIds.size();
@@ -107,10 +106,10 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_u(
 }
 
 template <typename PhysicsType>
-Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_v(const Plato::Solutions& aSolution,
-                                                                                const Plato::ScalarVector& aControl,
-                                                                                const Plato::OrdinalType aStepIndex,
-                                                                                const Plato::Scalar aTimeStep) const
+Plato::ScalarVector TimeIntegratedStateAverage<PhysicsType>::gradient_v(const Plato::Solutions& aSolution,
+                                                                        const Plato::ScalarVector& aControl,
+                                                                        const Plato::OrdinalType aStepIndex,
+                                                                        const Plato::Scalar aTimeStep) const
 {
     const Plato::ScalarVector tGradientV("gradient w.r.t state dot", mNumDofsPerNode * mNumNodes);
     Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tGradientV);
@@ -118,9 +117,9 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_v(
 }
 
 template <typename PhysicsType>
-Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_z(const Plato::Solutions& aSolution,
-                                                                                const Plato::ScalarVector& aControl,
-                                                                                const Plato::Scalar aTimeStep) const
+Plato::ScalarVector TimeIntegratedStateAverage<PhysicsType>::gradient_z(const Plato::Solutions& aSolution,
+                                                                        const Plato::ScalarVector& aControl,
+                                                                        const Plato::Scalar aTimeStep) const
 {
     const Plato::ScalarVector tGradientZ("gradient w.r.t control", mNumNodes);
     Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tGradientZ);
@@ -128,9 +127,9 @@ Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_z(
 }
 
 template <typename PhysicsType>
-Plato::ScalarVector TimeIntegratedStateAverageFunction<PhysicsType>::gradient_x(const Plato::Solutions& aSolution,
-                                                                                const Plato::ScalarVector& aControl,
-                                                                                const Plato::Scalar aTimeStep) const
+Plato::ScalarVector TimeIntegratedStateAverage<PhysicsType>::gradient_x(const Plato::Solutions& aSolution,
+                                                                        const Plato::ScalarVector& aControl,
+                                                                        const Plato::Scalar aTimeStep) const
 {
     const Plato::ScalarVector tGradientX("gradient w.r.t nodal coordinates", mNumSpatialDims * mNumNodes);
     Plato::blas1::fill(static_cast<Plato::Scalar>(0.0), tGradientX);

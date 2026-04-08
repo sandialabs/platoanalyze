@@ -1,5 +1,5 @@
-#ifndef PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGEFUNCTION_DECL
-#define PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGEFUNCTION_DECL
+#ifndef PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGE_DECL
+#define PLATO_PROBLEM_PARABOLIC_TIMEINTEGRATEDSTATEAVERAGE_DECL
 
 #include <Teuchos_ParameterList.hpp>
 #include <string>
@@ -17,8 +17,8 @@ namespace plato::parabolic
 /// @brief class for computing criteria consisting of the time integral of states averaged over a nodeset. Time
 /// integration is carried out using the trapezoid rule.
 template <typename PhysicsType>
-class TimeIntegratedStateAverageFunction : public Plato::Parabolic::ScalarFunctionBase,
-                                           public Plato::WorksetBase<typename PhysicsType::ElementType>
+class TimeIntegratedStateAverage : public Plato::Parabolic::ScalarFunctionBase,
+                                   public Plato::WorksetBase<typename PhysicsType::ElementType>
 {
    private:
     using ElementType = typename PhysicsType::ElementType;
@@ -28,10 +28,10 @@ class TimeIntegratedStateAverageFunction : public Plato::Parabolic::ScalarFuncti
     using Plato::WorksetBase<ElementType>::mNumSpatialDims;
 
    public:
-    TimeIntegratedStateAverageFunction(const plato::domain::SpatialModel& aSpatialModel,
-                                       Plato::DataMap& aDataMap,
-                                       Teuchos::ParameterList& aProblemParams,
-                                       const std::string& aName);
+    TimeIntegratedStateAverage(const plato::domain::SpatialModel& aSpatialModel,
+                               Plato::DataMap& aDataMap,
+                               Teuchos::ParameterList& aProblemParams,
+                               const std::string& aName);
 
     ///@brief computes the criterion for a given solution @a aSolution and controls @a aControls.
     Plato::Scalar value(const Plato::Solutions& aSolution,

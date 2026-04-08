@@ -11,7 +11,7 @@
 #include "linear_algebra/BLAS1.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/Thermal.hpp"
-#include "problem/parabolic/TimeIntegratedStateAverageFunction.hpp"
+#include "problem/parabolic/TimeIntegratedStateAverage.hpp"
 #include "problem/parabolic/test_utilities/CommonInputParameters.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
@@ -29,9 +29,8 @@ struct CreateTimeIntegratedStateAverageCriterion
                     Plato::DataMap& aDataMap,
                     Teuchos::ParameterList& aParameterList) const
     {
-        return plato::parabolic::TimeIntegratedStateAverageFunction<
-            Plato::Thermal<typename ElementType::TopoElementType>>(aSpatialModel, aDataMap, aParameterList,
-                                                                   kCriterionName);
+        return plato::parabolic::TimeIntegratedStateAverage<Plato::Thermal<typename ElementType::TopoElementType>>(
+            aSpatialModel, aDataMap, aParameterList, kCriterionName);
     }
 };
 
@@ -87,7 +86,7 @@ void test_criterion_value_against_gold(const std::vector<std::vector<double>> aS
 }
 }  // namespace
 
-TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, ConstructorParsingErrors)
+TEUCHOS_UNIT_TEST(TimeIntegratedStateAverage, ConstructorParsingErrors)
 {
     using ElementType = typename Plato::ThermalElement<Plato::Tri3>;
 
@@ -149,7 +148,7 @@ TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, ConstructorParsingErrors)
     }
 }
 
-TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, ZeroTemperatureGivesZeroValue)
+TEUCHOS_UNIT_TEST(TimeIntegratedStateAverage, ZeroTemperatureGivesZeroValue)
 {
     constexpr Plato::OrdinalType tNumDofs = 8;  // for the mesh used in test_criterion_value_against_gold
     const std::vector<std::vector<Plato::Scalar>> tStatesVector{
@@ -158,7 +157,7 @@ TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, ZeroTemperatureGivesZeroVa
     test_criterion_value_against_gold(tStatesVector, tGoldValue, out, success);
 }
 
-TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, PrescribedTemperatureGivesExpectedValue)
+TEUCHOS_UNIT_TEST(TimeIntegratedStateAverage, PrescribedTemperatureGivesExpectedValue)
 {
     const std::vector<std::vector<Plato::Scalar>> tStatesVector{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                 {86.0, 21.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
@@ -166,7 +165,7 @@ TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, PrescribedTemperatureGives
     test_criterion_value_against_gold(tStatesVector, tGoldValue, out, success);
 }
 
-TEUCHOS_UNIT_TEST(TimeIntegratedStateAverageFunction, PrescribedTemperatureGivesExpectedValue_MultipleSteps)
+TEUCHOS_UNIT_TEST(TimeIntegratedStateAverage, PrescribedTemperatureGivesExpectedValue_MultipleSteps)
 {
     const std::vector<std::vector<Plato::Scalar>> tStatesVector{{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
                                                                 {86.0, 21.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},

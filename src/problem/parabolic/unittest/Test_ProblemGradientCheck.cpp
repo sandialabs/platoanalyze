@@ -188,7 +188,7 @@ TEUCHOS_UNIT_TEST(ParabolicProblem, InternalThermalEnergyCriterionGradientChecks
     }
 }
 
-TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageFunctionGradientChecks)
+TEUCHOS_UNIT_TEST(ParabolicProblem, TimeIntegratedStateAverageGradientChecks)
 {
     // tri3, measured on flux node set
     {
