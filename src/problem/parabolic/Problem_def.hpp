@@ -8,6 +8,7 @@
 #include "mesh/PlatoMesh.hpp"
 #include "parsing/ParseTools.hpp"
 #include "parsing/TeuchosParsingUtilities.hpp"
+#include "problem/parabolic/CriterionUtilities.hpp"
 #include "problem/parabolic/ParsingUtilities.hpp"
 #include "problem/parabolic/ScalarFunctionBaseFactory.hpp"
 #include "solver/PlatoAbstractSolver.hpp"
@@ -248,7 +249,7 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarV
     auto t_dFdz = aCriterion->gradient_z(tSolution, aControl, mTimeStep);
 
     auto tLastStepIndex = mNumSteps - 1;
-    for (Plato::OrdinalType tStepIndex = tLastStepIndex; tStepIndex > 0; tStepIndex--)
+    for (Plato::OrdinalType tStepIndex = tLastStepIndex; tStepIndex >= kFirstTimeStep; tStepIndex--)
     {
         auto tU = Kokkos::subview(mState, tStepIndex, Kokkos::ALL());
         auto tV = Kokkos::subview(mStateDot, tStepIndex, Kokkos::ALL());
@@ -351,7 +352,7 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
     auto t_dFdx = aCriterion->gradient_x(tSolution, aControl, mTimeStep);
 
     auto tLastStepIndex = mNumSteps - 1;
-    for (Plato::OrdinalType tStepIndex = tLastStepIndex; tStepIndex > 0; tStepIndex--)
+    for (Plato::OrdinalType tStepIndex = tLastStepIndex; tStepIndex >= kFirstTimeStep; tStepIndex--)
     {
         auto tU = Kokkos::subview(mState, tStepIndex, Kokkos::ALL());
         auto tV = Kokkos::subview(mStateDot, tStepIndex, Kokkos::ALL());
