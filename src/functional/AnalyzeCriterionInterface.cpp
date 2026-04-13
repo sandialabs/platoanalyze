@@ -46,7 +46,8 @@ double AnalyzeCriterionInterface::value(const analysis::AnalysisDomainMesh& aAna
 
     const std::string tCriterionName = first_criterion_name(mFunctionalInterface.parameterList());
     const double tResult = mFunctionalInterface.problem().criterionValue(tControl, tSolution, tCriterionName);
-    std::cout << "Criterion " << tCriterionName << " value: " << tResult << std::endl;
+    std::cout.precision(3);
+    std::cout << "Criterion " << tCriterionName << " value: " << std::scientific << tResult << std::endl;
     return tResult;
 }
 
