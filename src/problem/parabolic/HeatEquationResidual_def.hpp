@@ -8,6 +8,7 @@
 #include "local_operations/mapping/ProjectToNode.hpp"
 #include "material/ThermalFlux.hpp"
 #include "problem/ThermalContent.hpp"
+#include "problem/parabolic/ParsingUtilities.hpp"
 
 namespace Plato
 {
@@ -20,10 +21,10 @@ template <typename EvaluationType, typename IndicatorFunctionType>
 HeatEquationResidual<EvaluationType, IndicatorFunctionType>::HeatEquationResidual(
     const plato::domain::SpatialDomain& aSpatialDomain,
     Plato::DataMap& aDataMap,
-    Teuchos::ParameterList& problemParams,
-    Teuchos::ParameterList& penaltyParams)
+    Teuchos::ParameterList& aProblemParameters,
+    Teuchos::ParameterList& aPenaltyParameters)
     : FunctionBaseType(aSpatialDomain, aDataMap),
-      mIndicatorFunction(penaltyParams),
+      mIndicatorFunction(aPenaltyParameters),
       mApplyFluxWeighting(mIndicatorFunction),
       mApplyMassWeighting(mIndicatorFunction),
       mBoundaryLoads(nullptr)
@@ -34,21 +35,23 @@ HeatEquationResidual<EvaluationType, IndicatorFunctionType>::HeatEquationResidua
     mDofDotNames.push_back("temperature rate");
 
     {
-        Plato::ThermalConductionModelFactory<mNumSpatialDims> mmfactory(problemParams);
+        Plato::ThermalConductionModelFactory<mNumSpatialDims> mmfactory(aProblemParameters);
         mThermalConductivityMaterialModel = mmfactory.create(aSpatialDomain.materialName());
     }
 
     {
-        Plato::ThermalMassModelFactory<mNumSpatialDims> mmfactory(problemParams);
+        Plato::ThermalMassModelFactory<mNumSpatialDims> mmfactory(aProblemParameters);
         mThermalMassMaterialModel = mmfactory.create(aSpatialDomain.materialName());
     }
 
+    plato::parabolic::check_time_step(aProblemParameters, aSpatialDomain);
+
     // parse boundary Conditions
     //
-    if (problemParams.isSublist("Natural Boundary Conditions"))
+    if (aProblemParameters.isSublist("Natural Boundary Conditions"))
     {
         mBoundaryLoads = std::make_shared<Plato::NaturalBCs<ElementType, mNumDofsPerNode>>(
-            problemParams.sublist("Natural Boundary Conditions"));
+            aProblemParameters.sublist("Natural Boundary Conditions"));
     }
 }
 

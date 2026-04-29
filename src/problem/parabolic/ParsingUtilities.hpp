@@ -59,6 +59,10 @@ auto parse_linear_solver(Teuchos::ParameterList& aSolverParameters,
 auto parse_newton_solver(Teuchos::ParameterList& aProblemParams, const Plato::rcp<Plato::AbstractSolver>& aLinearSolver)
     -> algorithms::nonlinear_solvers::NewtonSolver;
 
+/// @brief uses the parameters list @a aProblemParams and material model specified for @a aSpatialDomain to produce a
+/// warning on what the characteristic mesh size should be to ensure a Fourier number below 0.5.
+void check_time_step(Teuchos::ParameterList& aProblemParams, const plato::domain::SpatialDomain& aSpatialDomain);
+
 /// @brief populates the ScalarVector @a aInitialState with initial state values defined in @a aProblemParams
 template <typename ElementType>
 void parse_initial_state(Teuchos::ParameterList& aProblemParams,
