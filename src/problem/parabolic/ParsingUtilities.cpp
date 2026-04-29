@@ -70,7 +70,16 @@ void check_time_step(Teuchos::ParameterList& aProblemParams, const plato::domain
     auto tThermalMassParameters = tModelParamList.sublist("Thermal Mass");
     const auto tConductivity = tConductionParameters.get<Plato::Scalar>("Thermal Conductivity");
     const auto tDensity = tThermalMassParameters.get<Plato::Scalar>("Mass Density");
-    const auto tSpecificHeat = tThermalMassParameters.get<Plato::Scalar>("Specific Heat");
+    Plato::Scalar tSpecificHeat = 1.0;
+    if (tThermalMassParameters.isType<Plato::Scalar>("Specific Heat"))
+    {
+        tSpecificHeat = tThermalMassParameters.get<Plato::Scalar>("Specific Heat");
+    }
+    else if (tThermalMassParameters.isSublist("Specific Heat"))
+    {
+        tSpecificHeat = tThermalMassParameters.sublist("Specific Heat").get<Plato::Scalar>("c0");
+    }
+
     const auto tDiffusivity = tConductivity / tDensity / tSpecificHeat;
     const auto tTimeStep =
         Plato::ParseTools::getSubParam<Plato::Scalar>(aProblemParams, "Time Integration", "Time Step", 1.0);
