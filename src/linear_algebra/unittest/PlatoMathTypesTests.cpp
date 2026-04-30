@@ -160,20 +160,20 @@ TEUCHOS_UNIT_TEST(PlatoMathTypesTests, Math)
     // norm of vector
     {
         Plato::Array<3, double> v1({1, 1, 1});
-        TEST_FLOATING_EQUALITY(Plato::norm(v1), sqrt(3.0), DBL_EPSILON);
+        TEST_FLOATING_EQUALITY(Plato::norm(v1), sqrt(3.0), std::numeric_limits<double>::epsilon());
     }
     // norm of matrix
     {
         Plato::Matrix<3, 3, double> m1({1, 1, 1, 1, 1, 1, 1, 1, 1});
         auto d1 = Plato::norm(m1);
-        TEST_FLOATING_EQUALITY(d1, sqrt(9.0), DBL_EPSILON);
+        TEST_FLOATING_EQUALITY(d1, sqrt(9.0), std::numeric_limits<double>::epsilon());
     }
     // sum of two matrices
     {
         Plato::Matrix<3, 3, double> m1({2, 2, 2, 2, 2, 2, 2, 2, 2});
         Plato::Matrix<3, 3, double> m2({1, 1, 1, 1, 1, 1, 1, 1, 1});
         auto d1 = Plato::plus(m1, m2, -1.0);
-        TEST_FLOATING_EQUALITY(Plato::norm(d1), sqrt(9.0), DBL_EPSILON);
+        TEST_FLOATING_EQUALITY(Plato::norm(d1), sqrt(9.0), std::numeric_limits<double>::epsilon());
         TEST_EQUALITY(d1(1, 1), 1.0);
     }
     // transpose of square matrix
@@ -230,13 +230,13 @@ TEUCHOS_UNIT_TEST(PlatoMathTypesTests, Math)
     // identity matrix
     {
         auto m1 = Plato::identity<3, double>();
-        TEST_FLOATING_EQUALITY(Plato::norm(m1), sqrt(3.0), DBL_EPSILON);
+        TEST_FLOATING_EQUALITY(Plato::norm(m1), sqrt(3.0), std::numeric_limits<double>::epsilon());
         TEST_EQUALITY(m1(0, 0), 1.0);
     }
     // scaled identity matrix
     {
         auto m1 = Plato::identity<3, double>(2.0);
-        TEST_FLOATING_EQUALITY(Plato::norm(m1), sqrt(12.0), DBL_EPSILON);
+        TEST_FLOATING_EQUALITY(Plato::norm(m1), sqrt(12.0), std::numeric_limits<double>::epsilon());
         TEST_EQUALITY(m1(0, 0), 2.0);
     }
     // outer product
@@ -277,20 +277,20 @@ TEUCHOS_UNIT_TEST(PlatoMathTypesTests, Eigen)
     Plato::Array<3> tValues;
     Plato::decomposeEigenJacobi(tMatrix, tVectors, tValues);
 
-    TEST_FLOATING_EQUALITY(tVectors(0, 0), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tVectors(1, 0), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tVectors(2, 0), 0, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tVectors(0, 0), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tVectors(1, 0), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tVectors(2, 0), 0, std::numeric_limits<double>::epsilon());
 
-    TEST_FLOATING_EQUALITY(tVectors(0, 1), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tVectors(1, 1), 2.0 / sqrt(5.0), DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tVectors(2, 1), -1.0 / sqrt(5.0), DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tVectors(0, 1), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tVectors(1, 1), 2.0 / sqrt(5.0), std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tVectors(2, 1), -1.0 / sqrt(5.0), std::numeric_limits<double>::epsilon());
 
-    TEST_FLOATING_EQUALITY(tVectors(0, 2), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tVectors(1, 2), 1.0 / sqrt(5.0), DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tVectors(2, 2), 2.0 / sqrt(5.0), DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tVectors(0, 2), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tVectors(1, 2), 1.0 / sqrt(5.0), std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tVectors(2, 2), 2.0 / sqrt(5.0), std::numeric_limits<double>::epsilon());
 
-    TEST_FLOATING_EQUALITY(tValues(0), 2.0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tValues(1), 1.0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tValues(2), 11.0, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tValues(0), 2.0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tValues(1), 1.0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tValues(2), 11.0, std::numeric_limits<double>::epsilon());
 }
 }  // namespace PlatoTestMathTypes
