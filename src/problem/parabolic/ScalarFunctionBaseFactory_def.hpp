@@ -2,6 +2,7 @@
 
 #include "ScalarFunctionBase.hpp"
 #include "problem/parabolic/PhysicsScalarFunction.hpp"
+#include "problem/parabolic/TimeIntegratedStateAverage.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato
@@ -19,18 +20,23 @@ namespace Parabolic
  **********************************************************************************/
 template <typename PhysicsT>
 std::shared_ptr<Plato::Parabolic::ScalarFunctionBase> ScalarFunctionBaseFactory<PhysicsT>::create(
-    plato::domain::SpatialModel& aSpatialModel,
+    const plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
-    std::string& aFunctionName)
+    const std::string& aFunctionName) const
 {
     auto tProblemFunction = aProblemParams.sublist("Criteria").sublist(aFunctionName);
     auto tFunctionType = tProblemFunction.get<std::string>("Type", "Not Defined");
 
-    if (tFunctionType == "Scalar Function")
+    if (tFunctionType == Plato::Parabolic::physics_scalar_function_name())
     {
         return std::make_shared<Plato::Parabolic::PhysicsScalarFunction<PhysicsT>>(aSpatialModel, aDataMap,
                                                                                    aProblemParams, aFunctionName);
+    }
+    else if (tFunctionType == plato::parabolic::time_integrated_state_average_function_name())
+    {
+        return std::make_shared<plato::parabolic::TimeIntegratedStateAverage<PhysicsT>>(aSpatialModel, aDataMap,
+                                                                                        aProblemParams, aFunctionName);
     }
     else
     {

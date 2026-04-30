@@ -1,9 +1,10 @@
-#ifndef PLATOTESTHELPERS_HPP_
-#define PLATOTESTHELPERS_HPP_
+#ifndef PLATO_TEST_UTILITIES_PLATOTESTHELPERS
+#define PLATO_TEST_UTILITIES_PLATOTESTHELPERS
 
 #include <Kokkos_StdAlgorithms.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -33,18 +34,15 @@ typename ViewType::HostMirror get(ViewType aView)
     return tView;
 }
 
-/******************************************************************************/
-/**
- * \brief create device view from std::vector
- *
- * \param[in] aVector
- * @returns Mirror on device
- **********************************************************************************/
-template <typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(const std::vector<ScalarT>& aVector)
+/// @brief create a device view from a standard library container
+template <class Container>
+    requires std::ranges::sized_range<Container> && std::ranges::contiguous_range<Container> &&
+             (!std::is_const_v<std::remove_reference_t<std::ranges::range_value_t<Container>>>)
+auto create_device_view(const Container& aValues)
 {
-    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aVector.size());
-    std::copy(aVector.begin(), aVector.end(), Kokkos::Experimental::begin(tHostView));
+    using ScalarT = std::ranges::range_value_t<Container>;
+    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", std::ranges::size(aValues));
+    std::copy(std::ranges::begin(aValues), std::ranges::end(aValues), Kokkos::Experimental::begin(tHostView));
     return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
 }
 
@@ -210,14 +208,15 @@ Plato::Scalar compute_criterion_over_mesh(const CreateCriterion& aCreateCriterio
                                           const Plato::Mesh& aMesh,
                                           Teuchos::ParameterList& aParameterList,
                                           const Plato::Solutions& aSolution,
-                                          const Plato::ScalarVector& aControl)
+                                          const Plato::ScalarVector& aControl,
+                                          const Plato::Scalar aTimeStep = 0.0)
 {
     Plato::DataMap tDataMap;
     const auto tParsedDomains = plato::domain::parse_domains(aParameterList, aMesh);
     plato::domain::SpatialModel tSpatialModel(aMesh, tParsedDomains, tDataMap);
     const auto tCriterion = aCreateCriterion(tSpatialModel, tDataMap, aParameterList);
 
-    return tCriterion.value(aSolution, aControl);
+    return tCriterion.value(aSolution, aControl, aTimeStep);
 }
 
 /// @brief creates a linear displacement field defined over a mesh @a aMesh using @a aConstantDisplacementGradient such
@@ -251,4 +250,4 @@ Plato::ScalarVector create_linear_displacement_field(
 }  // namespace TestHelpers
 }  // namespace Plato
 
-#endif /* PLATOTESTHELPERS_HPP_ */
+#endif

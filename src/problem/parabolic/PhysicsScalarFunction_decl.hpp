@@ -1,4 +1,7 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DECL
+#define PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DECL
+
+#include <string_view>
 
 #include "domain/WorksetBase.hpp"
 #include "problem/parabolic/AbstractScalarFunction.hpp"
@@ -10,6 +13,7 @@ namespace Plato
 
 namespace Parabolic
 {
+[[nodiscard]] auto physics_scalar_function_name() -> std::string_view;
 
 /******************************************************************************/
 /**
@@ -78,7 +82,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
     PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                           Plato::DataMap& aDataMap,
                           Teuchos::ParameterList& aInputParams,
-                          std::string& aName);
+                          const std::string& aName);
 
     /******************************************************************************/
     /**
@@ -98,7 +102,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::Scalar value(const Plato::Solutions& aSolution,
                         const Plato::ScalarVector& aControl,
-                        Plato::Scalar aTimeStep = 0.0) const override;
+                        const Plato::Scalar aTimeStep = 0.0) const override;
 
     /******************************************************************************/
     /**
@@ -110,7 +114,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_x(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::Scalar aTimeStep = 0.0) const override;
+                                   const Plato::Scalar aTimeStep = 0.0) const override;
 
     /******************************************************************************/
     /**
@@ -123,8 +127,8 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_u(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::OrdinalType aStepIndex,
-                                   Plato::Scalar aTimeStep) const override;
+                                   const Plato::OrdinalType aStepIndex,
+                                   const Plato::Scalar aTimeStep) const override;
 
     /******************************************************************************/
     /**
@@ -137,8 +141,8 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_v(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::OrdinalType aStepIndex,
-                                   Plato::Scalar aTimeStep) const override;
+                                   const Plato::OrdinalType aStepIndex,
+                                   const Plato::Scalar aTimeStep) const override;
 
     /******************************************************************************/
     /**
@@ -150,7 +154,7 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      **********************************************************************************/
     Plato::ScalarVector gradient_z(const Plato::Solutions& aSolution,
                                    const Plato::ScalarVector& aControl,
-                                   Plato::Scalar aTimeStep = 0.0) const override;
+                                   const Plato::Scalar aTimeStep = 0.0) const override;
 
     /******************************************************************************/
     /**
@@ -158,16 +162,11 @@ class PhysicsScalarFunction : public Plato::Parabolic::ScalarFunctionBase,
      * \param [in] function name
      **********************************************************************************/
     void setFunctionName(const std::string aFunctionName);
-
-    /******************************************************************************/
-    /**
-     * \brief Return user defined function name
-     * \return User defined function name
-     **********************************************************************************/
-    std::string name() const override;
 };
 // class PhysicsScalarFunction
 
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

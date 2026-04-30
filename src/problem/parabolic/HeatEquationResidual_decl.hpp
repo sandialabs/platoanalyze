@@ -53,8 +53,8 @@ class HeatEquationResidual : public EvaluationType::ElementType,
     /**************************************************************************/
     HeatEquationResidual(const plato::domain::SpatialDomain& aSpatialDomain,
                          Plato::DataMap& aDataMap,
-                         Teuchos::ParameterList& problemParams,
-                         Teuchos::ParameterList& penaltyParams);
+                         Teuchos::ParameterList& aProblemParameters,
+                         Teuchos::ParameterList& aPenaltyParameters);
 
     Plato::Solutions getSolutionStateOutputData(const Plato::Solutions& aSolutions) const override;
 

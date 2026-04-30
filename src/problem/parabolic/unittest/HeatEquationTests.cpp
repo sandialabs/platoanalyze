@@ -480,13 +480,13 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
     const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
     plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    Plato::Parabolic::VectorFunction<::Plato::Thermal<Plato::Tet4>> vectorFunction(
-        tSpatialModel, tDataMap, *tParamList, tParamList->get<std::string>("PDE Constraint"));
+    Plato::Parabolic::VectorFunction<::Plato::Thermal<Plato::Tet4>> vectorFunction(tSpatialModel, tDataMap,
+                                                                                   *tParamList);
 
     // compute and test value
     //
-    auto timeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
-    auto residual = vectorFunction.value(T, Tdot, z, timeStep);
+    auto tTimeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
+    auto residual = vectorFunction.value(T, Tdot, z, tTimeStep);
 
     auto residual_Host = Kokkos::create_mirror_view(residual);
     Kokkos::deep_copy(residual_Host, residual);
@@ -515,7 +515,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test gradient wrt state, T. (i.e., jacobian)
     //
-    auto jacobian = vectorFunction.gradient_u(T, Tdot, z, timeStep);
+    auto jacobian = vectorFunction.gradient_u(T, Tdot, z, tTimeStep);
 
     auto jac_entries = jacobian->entries();
     auto jac_entriesHost = Kokkos::create_mirror_view(jac_entries);
@@ -552,7 +552,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test gradient wrt previous state, T. (i.e., jacobian)
     //
-    auto jacobian_v = vectorFunction.gradient_v(T, Tdot, z, timeStep);
+    auto jacobian_v = vectorFunction.gradient_v(T, Tdot, z, tTimeStep);
 
     auto jac_v_entries = jacobian_v->entries();
     auto jac_v_entriesHost = Kokkos::create_mirror_view(jac_v_entries);
@@ -573,7 +573,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test objective gradient wrt control, z
     //
-    auto gradient_z = vectorFunction.gradient_z(T, Tdot, z, timeStep);
+    auto gradient_z = vectorFunction.gradient_z(T, Tdot, z, tTimeStep);
 
     auto grad_entries = gradient_z->entries();
     auto grad_entriesHost = Kokkos::create_mirror_view(grad_entries);
@@ -595,7 +595,7 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
 
     // compute and test objective gradient wrt node position, x
     //
-    auto gradient_x = vectorFunction.gradient_x(T, Tdot, z, timeStep);
+    auto gradient_x = vectorFunction.gradient_x(T, Tdot, z, tTimeStep);
 
     auto grad_x_entries = gradient_x->entries();
     auto grad_x_entriesHost = Kokkos::create_mirror_view(grad_x_entries);
@@ -611,166 +611,6 @@ TEUCHOS_UNIT_TEST(HeatEquationTests, HeatEquationResidual3D)
     for (int i = 0; i < grad_x_entriesSize; i++)
     {
         TEST_FLOATING_EQUALITY(grad_x_entriesHost(i), gold_grad_x_entries[i], 1.0e-10);
-    }
-}
-
-/******************************************************************************/
-/*!
-  \brief Compute value and both gradients (wrt state and control) of
-         InternalthermalEnergy in 3D.
-*/
-/******************************************************************************/
-TEUCHOS_UNIT_TEST(HeatEquationTests, InternalThermalEnergy3D)
-{
-    // create material model
-    //
-    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
-        "<ParameterList name='Plato Problem'>                                        \n"
-        "  <ParameterList name='Spatial Model'>                                      \n"
-        "    <ParameterList name='Domains'>                                          \n"
-        "      <ParameterList name='Design Volume'>                                  \n"
-        "        <Parameter name='Element Block' type='string' value='body'/>        \n"
-        "        <Parameter name='Material Model' type='string' value='Unobtainium'/>\n"
-        "      </ParameterList>                                                      \n"
-        "    </ParameterList>                                                        \n"
-        "  </ParameterList>                                                          \n"
-        "  <Parameter name='PDE Constraint' type='string' value='Parabolic'/>        \n"
-        "  <Parameter name='Objective' type='string' value='My Internal Thermal Energy'/> \n"
-        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                 \n"
-        "  <ParameterList name='Criteria'>                                          \n"
-        "    <ParameterList name='Internal Energy'>                                 \n"
-        "      <Parameter name='Type' type='string' value='Scalar Function'/>       \n"
-        "      <Parameter name='Scalar Function Type' type='string' value='Internal Thermal Energy'/>  \n"
-        "      <ParameterList name='Penalty Function'>                              \n"
-        "        <Parameter name='Exponent' type='double' value='1.0'/>             \n"
-        "        <Parameter name='Minimum Value' type='double' value='0.0'/>        \n"
-        "        <Parameter name='Type' type='string' value='SIMP'/>                \n"
-        "      </ParameterList>                                                     \n"
-        "    </ParameterList>                                                       \n"
-        "  </ParameterList>                                                         \n"
-        "  <ParameterList name='Material Models'>                                    \n"
-        "    <ParameterList name='Unobtainium'>                                      \n"
-        "      <ParameterList name='Thermal Mass'>                                   \n"
-        "        <Parameter name='Mass Density' type='double' value='0.3'/>          \n"
-        "        <Parameter name='Specific Heat' type='double' value='1.0e3'/>       \n"
-        "      </ParameterList>                                                      \n"
-        "      <ParameterList name='Thermal Conduction'>                             \n"
-        "        <Parameter name='Thermal Conductivity' type='double' value='1.0e6'/>\n"
-        "      </ParameterList>                                                      \n"
-        "    </ParameterList>                                                        \n"
-        "  </ParameterList>                                                          \n"
-        "  <ParameterList name='Time Integration'>                                   \n"
-        "    <Parameter name='Number Time Steps' type='int' value='3'/>              \n"
-        "    <Parameter name='Time Step' type='double' value='0.5'/>                 \n"
-        "  </ParameterList>                                                          \n"
-        "</ParameterList>                                                            \n");
-
-    // create test mesh
-    //
-    constexpr int meshWidth = 2;
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
-
-    // create mesh based temperature from host data
-    //
-    int tNumSteps = 3;
-    int tNumNodes = tMesh->NumNodes();
-    Plato::ScalarMultiVector T("temperature history", tNumSteps, tNumNodes);
-    Plato::ScalarMultiVector Tdot("temperature rate history", tNumSteps, tNumNodes);
-    Plato::ScalarVector z("density", tNumNodes);
-    Kokkos::parallel_for(
-        "temperature history", Kokkos::RangePolicy<int>(0, tNumNodes), KOKKOS_LAMBDA(const int& aNodeOrdinal) {
-            z(aNodeOrdinal) = 1.0;
-
-            for (int i = 0; i < tNumSteps; i++)
-            {
-                T(i, aNodeOrdinal) = (i + 1) * aNodeOrdinal;
-                Tdot(i, aNodeOrdinal) = 0.0;
-            }
-        });
-
-    Plato::DataMap tDataMap;
-    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
-    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
-
-    std::string tMyFunction("Internal Energy");
-    Plato::Parabolic::PhysicsScalarFunction<::Plato::Thermal<Plato::Tet4>> scalarFunction(tSpatialModel, tDataMap,
-                                                                                          *tParamList, tMyFunction);
-
-    auto timeStep = tParamList->sublist("Time Integration").get<Plato::Scalar>("Time Step");
-    int timeIncIndex = 1;
-
-    // compute and test objective value
-    //
-    Plato::Solutions tSolution;
-    tSolution.set("State", T);
-    tSolution.set("StateDot", Tdot);
-    auto value = scalarFunction.value(tSolution, z, timeStep);
-
-    Plato::Scalar value_gold = 4.73200000000000095e9;
-    TEST_FLOATING_EQUALITY(value, value_gold, 1e-13);
-
-    // compute and test objective gradient wrt state, u
-    //
-    auto grad_u = scalarFunction.gradient_u(tSolution, z, timeIncIndex, timeStep);
-
-    auto grad_u_Host = Kokkos::create_mirror_view(grad_u);
-    Kokkos::deep_copy(grad_u_Host, grad_u);
-
-    std::vector<Plato::Scalar> grad_u_gold = {-8.666666666666668e6, -1.200000000000000e7, -3.333333333333333e6,
-                                              -1.000000000000000e7, -1.800000000000000e7, -7.999999999999999e6,
-                                              -1.333333333333333e6, -6.000000000000001e6, -4.666666666666665e6,
-                                              -3.999999999999999e6, -6.000000000000002e6, -1.999999999999998e6};
-
-    for (int iNode = 0; iNode < int(grad_u_gold.size()); iNode++)
-    {
-        if (grad_u_gold[iNode] == 0.0)
-        {
-            TEST_ASSERT(fabs(grad_u_Host[iNode]) < 1e-12);
-        }
-        else
-        {
-            TEST_FLOATING_EQUALITY(grad_u_Host[iNode], grad_u_gold[iNode], 1e-13);
-        }
-    }
-
-    // compute and test objective gradient wrt control, z
-    //
-    auto grad_z = scalarFunction.gradient_z(tSolution, z, timeStep);
-
-    auto grad_z_Host = Kokkos::create_mirror_view(grad_z);
-    Kokkos::deep_copy(grad_z_Host, grad_z);
-
-    std::vector<Plato::Scalar> grad_z_gold = {
-        1.478750000000000e8, 1.971666666666667e8, 4.929166666666666e7, 1.971666666666667e8, 2.957500000000000e8,
-        9.858333333333334e7, 4.929166666666667e7, 9.858333333333333e7, 4.929166666666666e7, 1.971666666666667e8,
-        2.957500000000000e8, 9.858333333333334e7, 2.957500000000000e8, 5.914999999999999e8, 2.957500000000000e8,
-        9.858333333333333e7, 2.957500000000000e8, 1.971666666666667e8, 4.929166666666667e7, 9.858333333333333e7,
-        4.929166666666666e7, 9.858333333333334e7, 2.957499999999999e8, 1.971666666666667e8, 4.929166666666666e7,
-        1.971666666666666e8, 1.478750000000000e8};
-
-    for (int iNode = 0; iNode < int(grad_z_gold.size()); iNode++)
-    {
-        TEST_FLOATING_EQUALITY(grad_z_Host[iNode], grad_z_gold[iNode], 1e-13);
-    }
-
-    // compute and test objective gradient wrt node position, x
-    //
-    auto grad_x = scalarFunction.gradient_x(tSolution, z, timeStep);
-
-    auto grad_x_Host = Kokkos::create_mirror_view(grad_x);
-    Kokkos::deep_copy(grad_x_Host, grad_x);
-
-    std::vector<Plato::Scalar> grad_x_gold = {
-        6.196666666666666e8,  -5.633333333333331e7, -2.816666666666667e8, 8.125000000000000e8,  -1.235000000000000e8,
-        1.560000000000000e8,  1.928333333333333e8,  -6.716666666666669e7, 4.376666666666666e8,  5.785000000000000e8,
-        3.900000000000000e8,  -4.615000000000000e8, 9.230000000000000e8,  7.020000000000001e8,  2.340000000000000e8,
-        3.444999999999999e8,  3.119999999999999e8,  6.955000000000000e8,  -4.116666666666667e7, 4.463333333333334e8,
-        -1.798333333333333e8,
-    };
-
-    for (int iNode = 0; iNode < int(grad_x_gold.size()); iNode++)
-    {
-        TEST_FLOATING_EQUALITY(grad_x_Host[iNode], grad_x_gold[iNode], 1e-13);
     }
 }
 

@@ -19,13 +19,6 @@ class ScalarFunctionBase
 
     /******************************************************************************/
     /**
-     * \brief Return function name
-     * \return user defined function name
-     **********************************************************************************/
-    virtual std::string name() const = 0;
-
-    /******************************************************************************/
-    /**
      * \brief Return function value
      * \param [in] aControl design variables
      * \return function value

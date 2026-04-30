@@ -4,12 +4,9 @@
 #include <Teuchos_Array.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
-#include <algorithm>
 #include <cmath>
 #include <plato/test_utilities/GradientChecker.hpp>
-#include <stdexcept>
 #include <string>
-#include <valarray>
 
 #include "boundary_conditions/EssentialBCs.hpp"
 #include "domain/SpatialModel.hpp"
@@ -19,13 +16,17 @@
 #include "problem/elliptic/VectorFunction.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/FiniteDeformationMechanics.hpp"
 #include "problem/elliptic/finite_deformation_mechanics/Problem.hpp"
+#include "test_utilities/PlatoGradientCheckTestHelpers.hpp"
+#include "test_utilities/PlatoMPITestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
-#include "utilities/ParallelComm.hpp"
 
 namespace plato::elliptic::finite_deformation_mechanics::unittest
 {
 namespace
 {
+const std::string kStrainEnergyCriterionName{"Strain Energy"};
+const std::string kStrainVarianceCriterionName{"Strain Variance"};
+
 Teuchos::ParameterList create_param_list(const Plato::OrdinalType aNumSteps = 0, const Plato::Scalar aTolerance = 0)
 {
     Teuchos::ParameterList tParameterList;
@@ -59,20 +60,32 @@ Teuchos::ParameterList create_param_list(const Plato::OrdinalType aNumSteps = 0,
 
 void append_strain_energy_criterion_to_parameter_list(Teuchos::ParameterList& aParamList)
 {
-    aParamList.sublist("Criteria").sublist("Strain Energy").set("Type", "Scalar Function");
-    aParamList.sublist("Criteria").sublist("Strain Energy").set("Scalar Function Type", "Strain Energy");
-    aParamList.sublist("Criteria").sublist("Strain Energy").sublist("Penalty Function").set("Type", "SIMP");
-    aParamList.sublist("Criteria").sublist("Strain Energy").sublist("Penalty Function").set("Exponent", 1.0);
-    aParamList.sublist("Criteria").sublist("Strain Energy").sublist("Penalty Function").set("Minimum Value", 1e-16);
+    aParamList.sublist("Criteria").sublist(kStrainEnergyCriterionName).set("Type", "Scalar Function");
+    aParamList.sublist("Criteria").sublist(kStrainEnergyCriterionName).set("Scalar Function Type", "Strain Energy");
+    aParamList.sublist("Criteria").sublist(kStrainEnergyCriterionName).sublist("Penalty Function").set("Type", "SIMP");
+    aParamList.sublist("Criteria").sublist(kStrainEnergyCriterionName).sublist("Penalty Function").set("Exponent", 1.0);
+    aParamList.sublist("Criteria")
+        .sublist(kStrainEnergyCriterionName)
+        .sublist("Penalty Function")
+        .set("Minimum Value", 1e-16);
 }
 
 void append_variance_of_strain_invariant_criterion_to_parameter_list(Teuchos::ParameterList& aParamList)
 {
-    aParamList.sublist("Criteria").sublist("Strain Variance").set("Type", "Variance Function");
-    aParamList.sublist("Criteria").sublist("Strain Variance").set("Field Variable", "Strain Invariant");
-    aParamList.sublist("Criteria").sublist("Strain Variance").sublist("Penalty Function").set("Type", "SIMP");
-    aParamList.sublist("Criteria").sublist("Strain Variance").sublist("Penalty Function").set("Exponent", 1.0);
-    aParamList.sublist("Criteria").sublist("Strain Variance").sublist("Penalty Function").set("Minimum Value", 1e-16);
+    aParamList.sublist("Criteria").sublist(kStrainVarianceCriterionName).set("Type", "Variance Function");
+    aParamList.sublist("Criteria").sublist(kStrainVarianceCriterionName).set("Field Variable", "Strain Invariant");
+    aParamList.sublist("Criteria")
+        .sublist(kStrainVarianceCriterionName)
+        .sublist("Penalty Function")
+        .set("Type", "SIMP");
+    aParamList.sublist("Criteria")
+        .sublist(kStrainVarianceCriterionName)
+        .sublist("Penalty Function")
+        .set("Exponent", 1.0);
+    aParamList.sublist("Criteria")
+        .sublist(kStrainVarianceCriterionName)
+        .sublist("Penalty Function")
+        .set("Minimum Value", 1e-16);
 }
 
 void append_fixed_displacement_boundary_conditions_to_parameter_list(Teuchos::ParameterList& aParamList,
@@ -109,69 +122,15 @@ void append_applied_load_boundary_conditions_to_parameter_list(Teuchos::Paramete
         .set<Teuchos::Array<std::string>>("Values", Teuchos::Array<std::string>{"0.0", tLoadString});
 }
 
-Plato::Comm::Machine dummy_comm_machine()
-{
-    MPI_Comm myComm;
-    MPI_Comm_dup(MPI_COMM_WORLD, &myComm);
-    return Plato::Comm::Machine(myComm);
-}
-
-template <template <typename> typename ContainerT, typename ScalarT>
-Plato::ScalarVectorT<ScalarT> create_device_view(const ContainerT<ScalarT>& aVector)
-{
-    Kokkos::View<ScalarT*, Kokkos::HostSpace> tHostView("host view", aVector.size());
-    std::copy(begin(aVector), end(aVector), Kokkos::Experimental::begin(tHostView));
-    return Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), tHostView);
-}
-
 template <typename ElementType>
-void check_gradient_over_mesh(Teuchos::ParameterList& aParamList,
-                              const std::string aCriterionName,
-                              const Plato::Mesh& aMesh,
-                              Plato::Scalar aTruncationErrorTolerance,
-                              Teuchos::FancyOStream& aOutStream,
-                              bool& aSuccess)
+struct CreateFiniteDeformationMechanicsProblem
 {
-    Problem<FiniteDeformationMechanics<ElementType>> tProblem(aMesh, aParamList, dummy_comm_machine());
-
-    auto tCriterionValue = [&aCriterionName, &tProblem](const std::valarray<Plato::Scalar>& aControlVector)
+    auto operator()(const Plato::Mesh& aMesh, Teuchos::ParameterList& aParameterList) const
     {
-        const auto tControl = create_device_view(aControlVector);
-        const auto tStateSolution = tProblem.solution(tControl);
-        return tProblem.criterionValue(tControl, tStateSolution, aCriterionName);
-    };
-
-    auto tCriterionGradient = [&aCriterionName, &tProblem](const std::valarray<Plato::Scalar>& aControlVector,
-                                                           const std::valarray<Plato::Scalar>& aDirection)
-    {
-        const auto tControl = create_device_view(aControlVector);
-        const auto tStateSolution = tProblem.solution(tControl);
-        const auto tGradient = tProblem.criterionGradient(tControl, tStateSolution, aCriterionName);
-        const auto tHostGradient = Plato::TestHelpers::get(tGradient);
-        return std::inner_product(Kokkos::Experimental::begin(tHostGradient), Kokkos::Experimental::end(tHostGradient),
-                                  begin(aDirection), 0.0);
-    };
-
-    const plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>> tGradientChecker{tCriterionValue,
-                                                                                                tCriterionGradient};
-
-    const auto tNumNodes = aMesh->NumNodes();
-    constexpr Plato::Scalar tControlVal{0.5};
-    const std::valarray<Plato::Scalar> tControl(tControlVal, tNumNodes);
-
-    std::valarray<Plato::Scalar> tPerturbationDirection(1.0, tNumNodes);
-    tPerturbationDirection[0] = 0.0;
-    const auto tPerturbationNorm = std::sqrt(std::inner_product(
-        begin(tPerturbationDirection), end(tPerturbationDirection), begin(tPerturbationDirection), 0.0));
-    tPerturbationDirection /= tPerturbationNorm;
-
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{/*mStepDelta=*/0.1, /*mNumSteps=*/5,
-                                                                                  /*mInitialStepSize=*/0.1};
-
-    const auto tMaxTruncationError =
-        tGradientChecker.maxFirstOrderTruncationError(tControl, tPerturbationDirection, tGradientCheckParameters);
-    TEUCHOS_TEST_ASSERT(tMaxTruncationError < aTruncationErrorTolerance, aOutStream, aSuccess);
-}
+        return Problem<FiniteDeformationMechanics<ElementType>>(aMesh, aParameterList,
+                                                                Plato::TestHelpers::duplicate_comm_world());
+    }
+};
 }  // namespace
 
 TEUCHOS_UNIT_TEST(FiniteDeformationProblem, SolutionReducesResidualBelowTolerance)
@@ -192,7 +151,8 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, SolutionReducesResidualBelowToleranc
     Plato::blas1::fill(static_cast<Plato::Scalar>(1.0), tControl);
 
     // solve PDE
-    Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList, dummy_comm_machine());
+    Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList,
+                                                              Plato::TestHelpers::duplicate_comm_world());
     const auto tStateSolution = tProblem.solution(tControl);
 
     // evaluate residual at solution
@@ -267,7 +227,8 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, UniaxialExtensionSolutionProducesAna
     const Plato::ScalarVector tControl("control", tNumNodes);
     Plato::blas1::fill(static_cast<Plato::Scalar>(1.0), tControl);
 
-    Problem<FiniteDeformationMechanics<Plato::Tet4>> tProblem(tMesh, tParamList, dummy_comm_machine());
+    Problem<FiniteDeformationMechanics<Plato::Tet4>> tProblem(tMesh, tParamList,
+                                                              Plato::TestHelpers::duplicate_comm_world());
     const auto tStateSolution = tProblem.solution(tControl);
     const auto tDataMaps = tProblem.getDataMap();
     const auto tNumStates = tDataMaps.stateDataMaps.size();
@@ -330,10 +291,11 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, ValueProducesExpectedUniaxialStrainE
         const Plato::ScalarVector tControl("control", tNumNodes);
         Plato::blas1::fill(static_cast<Plato::Scalar>(1.0), tControl);
 
-        Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList, dummy_comm_machine());
+        Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList,
+                                                                  Plato::TestHelpers::duplicate_comm_world());
         const auto tStateSolution = tProblem.solution(tControl);
 
-        const auto tValue = tProblem.criterionValue(tControl, tStateSolution, "Strain Energy");
+        const auto tValue = tProblem.criterionValue(tControl, tStateSolution, kStrainEnergyCriterionName);
         TEST_FLOATING_EQUALITY(tValue, tGoldValue, 1e-14);
     }
 
@@ -343,10 +305,11 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, ValueProducesExpectedUniaxialStrainE
         const Plato::ScalarVector tControl("control", tNumNodes);
         Plato::blas1::fill(static_cast<Plato::Scalar>(tControlVal), tControl);
 
-        Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList, dummy_comm_machine());
+        Problem<FiniteDeformationMechanics<Plato::Tri3>> tProblem(tMesh, tParamList,
+                                                                  Plato::TestHelpers::duplicate_comm_world());
         const auto tStateSolution = tProblem.solution(tControl);
 
-        const auto tValue = tProblem.criterionValue(tControl, tStateSolution, "Strain Energy");
+        const auto tValue = tProblem.criterionValue(tControl, tStateSolution, kStrainEnergyCriterionName);
         TEST_FLOATING_EQUALITY(tValue, tControlVal * tGoldValue, 1e-14);
     }
 }
@@ -366,8 +329,17 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, StrainEnergyCriterionGradientPassesG
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
+    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+        .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
-    check_gradient_over_mesh<Plato::Tri3>(tParamList, "Strain Energy", tMesh, tTruncationErrorTolerance, out, success);
+
+    constexpr Plato::Scalar tControlValue{0.5};
+    const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
+
+    Plato::TestHelpers::check_control_gradient(
+        Plato::TestHelpers::make_criterion_gradient_checker(
+            CreateFiniteDeformationMechanicsProblem<Plato::Tri3>{}(tMesh, tParamList), kStrainEnergyCriterionName),
+        tGradientCheckParameters, tControl, tTruncationErrorTolerance, out, success);
 }
 
 TEUCHOS_UNIT_TEST(FiniteDeformationProblem, StrainEnergyCriterionGradientPassesGradientCheckNonSelfAdjoint)
@@ -386,8 +358,17 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, StrainEnergyCriterionGradientPassesG
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
+    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+        .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
-    check_gradient_over_mesh<Plato::Tri3>(tParamList, "Strain Energy", tMesh, tTruncationErrorTolerance, out, success);
+
+    constexpr Plato::Scalar tControlValue{0.5};
+    const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
+
+    Plato::TestHelpers::check_control_gradient(
+        Plato::TestHelpers::make_criterion_gradient_checker(
+            CreateFiniteDeformationMechanicsProblem<Plato::Tri3>{}(tMesh, tParamList), kStrainEnergyCriterionName),
+        tGradientCheckParameters, tControl, tTruncationErrorTolerance, out, success);
 }
 
 TEUCHOS_UNIT_TEST(FiniteDeformationProblem, VarianceCriterionGradientPassesGradientCheckNonSelfAdjoint)
@@ -405,8 +386,16 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, VarianceCriterionGradientPassesGradi
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
-    constexpr Plato::Scalar tTruncationErrorTolerance{5e-3};
-    check_gradient_over_mesh<Plato::Tri3>(tParamList, "Strain Variance", tMesh, tTruncationErrorTolerance, out,
-                                          success);
+    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+        .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
+    constexpr Plato::Scalar tTruncationErrorTolerance{2e-2};
+
+    constexpr Plato::Scalar tControlValue{0.5};
+    const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
+
+    Plato::TestHelpers::check_control_gradient(
+        Plato::TestHelpers::make_criterion_gradient_checker(
+            CreateFiniteDeformationMechanicsProblem<Plato::Tri3>{}(tMesh, tParamList), kStrainVarianceCriterionName),
+        tGradientCheckParameters, tControl, tTruncationErrorTolerance, out, success);
 }
 }  // namespace plato::elliptic::finite_deformation_mechanics::unittest

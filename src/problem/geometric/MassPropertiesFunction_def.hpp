@@ -795,17 +795,6 @@ Plato::ScalarVector MassPropertiesFunction<PhysicsType>::gradient_z(const Plato:
     Plato::ScalarVector tGradientZ = mLeastSquaresFunction->gradient_z(aControl);
     return tGradientZ;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string MassPropertiesFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
 }  // namespace Geometric
 
 }  // namespace Plato

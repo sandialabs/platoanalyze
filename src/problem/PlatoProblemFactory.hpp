@@ -155,7 +155,7 @@ inline std::shared_ptr<Plato::AbstractProblem> create_thermal_problem(Plato::Mes
 #ifdef PLATO_PARABOLIC
     if (tLowerPDE == "parabolic")
     {
-        return makeProblem<Plato::Parabolic::Problem, Plato::Thermal>(aMesh, aPlatoProb, aMachine);
+        return makeProblem<plato::parabolic::Problem, Plato::Thermal>(aMesh, aPlatoProb, aMachine);
     }
 #endif
 #ifdef PLATO_ELLIPTIC
@@ -187,7 +187,7 @@ inline std::shared_ptr<Plato::AbstractProblem> create_thermomechanical_problem(P
 #ifdef PLATO_PARABOLIC
     if (tLowerPDE == "parabolic")
     {
-        return makeProblem<Plato::Parabolic::Problem, Plato::Thermomechanics>(aMesh, aPlatoProb, aMachine);
+        return makeProblem<plato::parabolic::Problem, Plato::Thermomechanics>(aMesh, aPlatoProb, aMachine);
     }
 #endif
 #ifdef PLATO_ELLIPTIC

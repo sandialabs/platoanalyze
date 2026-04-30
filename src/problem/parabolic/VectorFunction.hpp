@@ -87,29 +87,29 @@ class VectorFunction : public Plato::WorksetBase<typename PhysicsType::ElementTy
      ******************************************************************************/
     VectorFunction(const plato::domain::SpatialModel& aSpatialModel,
                    Plato::DataMap& aDataMap,
-                   Teuchos::ParameterList& aParamList,
-                   std::string& aProblemType)
+                   Teuchos::ParameterList& aParamList)
         : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh), mSpatialModel(aSpatialModel), mDataMap(aDataMap)
     {
         typename PhysicsType::FunctionFactory tFunctionFactory;
 
         for (const auto& tDomain : mSpatialModel.mDomains)
         {
-            auto tName = tDomain.domainName();
+            const auto tProblemType = aParamList.get<std::string>("PDE Constraint");
+            const auto tName = tDomain.domainName();
             mResidualFunctions[tName] = tFunctionFactory.template createVectorFunctionParabolic<Residual>(
-                tDomain, aDataMap, aParamList, aProblemType);
+                tDomain, aDataMap, aParamList, tProblemType);
             mGradientUFunctions[tName] = tFunctionFactory.template createVectorFunctionParabolic<GradientU>(
-                tDomain, aDataMap, aParamList, aProblemType);
+                tDomain, aDataMap, aParamList, tProblemType);
             mGradientVFunctions[tName] = tFunctionFactory.template createVectorFunctionParabolic<GradientV>(
-                tDomain, aDataMap, aParamList, aProblemType);
+                tDomain, aDataMap, aParamList, tProblemType);
             mGradientZFunctions[tName] = tFunctionFactory.template createVectorFunctionParabolic<GradientZ>(
-                tDomain, aDataMap, aParamList, aProblemType);
+                tDomain, aDataMap, aParamList, tProblemType);
             mGradientXFunctions[tName] = tFunctionFactory.template createVectorFunctionParabolic<GradientX>(
-                tDomain, aDataMap, aParamList, aProblemType);
+                tDomain, aDataMap, aParamList, tProblemType);
         }
 
         // any block can compute the boundary terms for the entire mesh.  We'll use the first block.
-        auto tFirstBlockName = aSpatialModel.mDomains[0].domainName();
+        const auto tFirstBlockName = aSpatialModel.mDomains[0].domainName();
 
         mBoundaryLoadsResidualFunction = mResidualFunctions[tFirstBlockName];
         mBoundaryLoadsGradientUFunction = mGradientUFunctions[tFirstBlockName];

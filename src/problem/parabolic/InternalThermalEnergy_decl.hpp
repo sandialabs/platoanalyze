@@ -1,4 +1,7 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_INTERNALTHERMALENERGY_DECL
+#define PLATO_PROBLEM_PARABOLIC_INTERNALTHERMALENERGY_DECL
+
+#include <string_view>
 
 #include "local_operations/optimization/ApplyWeighting.hpp"
 #include "material/ThermalConductivityMaterial.hpp"
@@ -9,6 +12,7 @@ namespace Plato
 
 namespace Parabolic
 {
+[[nodiscard]] auto internal_thermal_energy_function_name() -> std::string_view;
 
 /******************************************************************************/
 /**
@@ -67,3 +71,5 @@ class InternalThermalEnergy : public EvaluationType::ElementType,
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

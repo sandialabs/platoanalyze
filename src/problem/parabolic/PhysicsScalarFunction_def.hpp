@@ -1,4 +1,8 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DEF
+#define PLATO_PROBLEM_PARABOLIC_PHYSICSSCALARFUNCTION_DEF
+
+#include "linear_algebra/BLAS1.hpp"
+#include "problem/parabolic/CriterionUtilities.hpp"
 
 namespace Plato
 {
@@ -48,7 +52,7 @@ template <typename PhysicsType>
 PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                           Plato::DataMap& aDataMap,
                                                           Teuchos::ParameterList& aInputParams,
-                                                          std::string& aName)
+                                                          const std::string& aName)
     : Plato::WorksetBase<ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),
@@ -84,7 +88,7 @@ PhysicsScalarFunction<PhysicsType>::PhysicsScalarFunction(const plato::domain::S
 template <typename PhysicsType>
 Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& aSolution,
                                                         const Plato::ScalarVector& aControl,
-                                                        Plato::Scalar aTimeStep) const
+                                                        const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename Residual::ConfigScalarType;
     using StateScalar = typename Residual::StateScalarType;
@@ -92,10 +96,10 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
     using ControlScalar = typename Residual::ControlScalarType;
     using ResultScalar = typename Residual::ResultScalarType;
 
-    auto tStates = aSolution.get("State");
-    auto tStateDots = aSolution.get("StateDot");
+    const auto tStates = aSolution.get("State");
+    const auto tStateDots = aSolution.get("StateDot");
 
-    auto tNumSteps = tStates.extent(0);
+    const auto tNumSteps = tStates.extent(0);
 
     std::vector<ResultScalar> tValues(tNumSteps, 0.0);
     for (const auto& tDomain : mSpatialModel.mDomains)
@@ -121,7 +125,7 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
         Plato::ScalarMultiVectorT<StateScalar> tStateWS("state workset", tNumCells, mNumDofsPerCell);
         Plato::ScalarMultiVectorT<StateDotScalar> tStateDotWS("state dot workset", tNumCells, mNumDofsPerCell);
 
-        for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
+        for (Plato::OrdinalType tStepIndex = plato::parabolic::kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
         {
             // workset state
             //
@@ -144,15 +148,14 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
         }
     }
 
-    ResultScalar tReturnVal(0.0);
-    for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
+    // post-evaluate
+    for (Plato::OrdinalType tStepIndex = plato::parabolic::kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
     {
-        auto tName = mSpatialModel.mDomains[0].domainName();
+        const auto tName = mSpatialModel.mDomains[0].domainName();
         mValueFunctions.at(tName)->postEvaluate(tValues[tStepIndex]);
-        tReturnVal += tValues[tStepIndex];
     }
 
-    return tReturnVal;
+    return plato::parabolic::trapezoidal_rule_integration(tValues, aTimeStep);
 }
 
 /******************************************************************************/
@@ -166,7 +169,7 @@ Plato::Scalar PhysicsScalarFunction<PhysicsType>::value(const Plato::Solutions& 
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientX::ConfigScalarType;
     using StateScalar = typename GradientX::StateScalarType;
@@ -174,14 +177,17 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
     using ControlScalar = typename GradientX::ControlScalarType;
     using ResultScalar = typename GradientX::ResultScalarType;
 
-    auto tStates = aSolution.get("State");
-    auto tStateDots = aSolution.get("StateDot");
+    const auto tStates = aSolution.get("State");
+    const auto tStateDots = aSolution.get("StateDot");
+
+    const auto tNumSteps = tStates.extent(0);
 
     // create return view
     //
-    Plato::ScalarVector tObjGradientX("objective gradient configuration", mNumSpatialDims * mNumNodes);
+    Plato::ScalarMultiVector tObjGradientXSteps("objective gradient configuration", tNumSteps,
+                                                mNumSpatialDims * mNumNodes);
 
-    Plato::Scalar tValue(0.0);
+    std::vector<Plato::Scalar> tValues(tNumSteps, 0.0);
     for (const auto& tDomain : mSpatialModel.mDomains)
     {
         auto tNumCells = tDomain.numCells();
@@ -200,11 +206,11 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
         Plato::ScalarArray3DT<ConfigScalar> tConfigWS("config workset", tNumCells, mNumNodesPerCell, mNumSpatialDims);
         Plato::WorksetBase<ElementType>::worksetConfig(tConfigWS, tDomain);
 
+        // create result view
+        //
         Plato::ScalarVectorT<ResultScalar> tResult("result", tNumCells);
 
-        auto tNumSteps = tStates.extent(0);
-        auto tLastStepIndex = tNumSteps - 1;
-        for (decltype(tNumSteps) tStepIndex = tLastStepIndex; tStepIndex > 0; --tStepIndex)
+        for (Plato::OrdinalType tStepIndex = plato::parabolic::kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
         {
             // workset state
             //
@@ -221,16 +227,23 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
             Kokkos::deep_copy(tResult, 0.0);
             mGradientXFunctions.at(tName)->evaluate(tStateWS, tStateDotWS, tControlWS, tConfigWS, tResult, aTimeStep);
 
+            Plato::ScalarVector tObjGradientXStep = Kokkos::subview(tObjGradientXSteps, tStepIndex, Kokkos::ALL());
             Plato::assemble_vector_gradient_fad<mNumNodesPerCell, mNumSpatialDims>(tDomain, mConfigEntryOrdinal,
-                                                                                   tResult, tObjGradientX);
+                                                                                   tResult, tObjGradientXStep);
 
-            tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
+            tValues[tStepIndex] += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
         }
     }
-    auto tName = mSpatialModel.mDomains[0].domainName();
-    mGradientXFunctions.at(tName)->postEvaluate(tObjGradientX, tValue);
 
-    return tObjGradientX;
+    // post-evaluate
+    for (Plato::OrdinalType tStepIndex = plato::parabolic::kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
+    {
+        auto tName = mSpatialModel.mDomains[0].domainName();
+        Plato::ScalarVector tObjGradientXStep = Kokkos::subview(tObjGradientXSteps, tStepIndex, Kokkos::ALL());
+        mGradientXFunctions.at(tName)->postEvaluate(tObjGradientXStep, tValues[tStepIndex]);
+    }
+
+    return plato::parabolic::trapezoidal_rule_integration(tObjGradientXSteps, aTimeStep);
 }
 
 /******************************************************************************/
@@ -245,8 +258,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_x(const Plato::
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::OrdinalType aStepIndex,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::OrdinalType aStepIndex,
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientU::ConfigScalarType;
     using StateScalar = typename GradientU::StateScalarType;
@@ -305,8 +318,12 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
 
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
-    auto tName = mSpatialModel.mDomains[0].domainName();
+    const auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientUFunctions.at(tName)->postEvaluate(tObjGradientU, tValue);
+
+    const auto tNumSteps = tStates.extent(0);
+    Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(aStepIndex, tNumSteps) * aTimeStep,
+                        tObjGradientU);
 
     return tObjGradientU;
 }
@@ -323,8 +340,8 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_u(const Plato::
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::OrdinalType aStepIndex,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::OrdinalType aStepIndex,
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientV::ConfigScalarType;
     using StateScalar = typename GradientV::StateScalarType;
@@ -380,8 +397,12 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
 
         tValue += Plato::assemble_scalar_func_value<Plato::Scalar>(tNumCells, tResult);
     }
-    auto tName = mSpatialModel.mDomains[0].domainName();
+    const auto tName = mSpatialModel.mDomains[0].domainName();
     mGradientVFunctions.at(tName)->postEvaluate(tObjGradientV, tValue);
+
+    const auto tNumSteps = tStates.extent(0);
+    Plato::blas1::scale(plato::parabolic::trapezoid_integration_constant(aStepIndex, tNumSteps) * aTimeStep,
+                        tObjGradientV);
 
     return tObjGradientV;
 }
@@ -397,7 +418,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_v(const Plato::
 template <typename PhysicsType>
 Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::Solutions& aSolution,
                                                                    const Plato::ScalarVector& aControl,
-                                                                   Plato::Scalar aTimeStep) const
+                                                                   const Plato::Scalar aTimeStep) const
 {
     using ConfigScalar = typename GradientZ::ConfigScalarType;
     using StateScalar = typename GradientZ::StateScalarType;
@@ -405,10 +426,10 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
     using ControlScalar = typename GradientZ::ControlScalarType;
     using ResultScalar = typename GradientZ::ResultScalarType;
 
-    auto tStates = aSolution.get("State");
-    auto tStateDots = aSolution.get("StateDot");
+    const auto tStates = aSolution.get("State");
+    const auto tStateDots = aSolution.get("StateDot");
 
-    auto tNumSteps = tStates.extent(0);
+    const auto tNumSteps = tStates.extent(0);
 
     // create return vector
     //
@@ -437,7 +458,7 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
         //
         Plato::ScalarVectorT<ResultScalar> tResult("result", tNumCells);
 
-        for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
+        for (Plato::OrdinalType tStepIndex = plato::parabolic::kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
         {
             // workset state
             //
@@ -462,16 +483,15 @@ Plato::ScalarVector PhysicsScalarFunction<PhysicsType>::gradient_z(const Plato::
         }
     }
 
-    Plato::ScalarVector tObjGradientZ("objective gradient wrt control", mNumNodes);
-    for (decltype(tNumSteps) tStepIndex = 1; tStepIndex < tNumSteps; ++tStepIndex)
+    // post-evaluate
+    for (Plato::OrdinalType tStepIndex = plato::parabolic::kFirstTimeStep; tStepIndex < tNumSteps; ++tStepIndex)
     {
-        Plato::ScalarVector tObjGradientZStep = Kokkos::subview(tObjGradientZSteps, tStepIndex, Kokkos::ALL());
         auto tName = mSpatialModel.mDomains[0].domainName();
+        Plato::ScalarVector tObjGradientZStep = Kokkos::subview(tObjGradientZSteps, tStepIndex, Kokkos::ALL());
         mGradientZFunctions.at(tName)->postEvaluate(tObjGradientZStep, tValues[tStepIndex]);
-        Plato::blas1::axpy(1.0, tObjGradientZStep, tObjGradientZ);
     }
 
-    return tObjGradientZ;
+    return plato::parabolic::trapezoidal_rule_integration(tObjGradientZSteps, aTimeStep);
 }
 
 /******************************************************************************/
@@ -484,17 +504,8 @@ void PhysicsScalarFunction<PhysicsType>::setFunctionName(const std::string aFunc
 {
     mFunctionName = aFunctionName;
 }
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string PhysicsScalarFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

@@ -1,4 +1,7 @@
-#pragma once
+#ifndef PLATO_PROBLEM_PARABOLIC_TEMPERATUREINTEGRAL_DECL
+#define PLATO_PROBLEM_PARABOLIC_TEMPERATUREINTEGRAL_DECL
+
+#include <string_view>
 
 #include "local_operations/optimization/ApplyWeighting.hpp"
 #include "problem/parabolic/AbstractScalarFunction.hpp"
@@ -8,11 +11,12 @@ namespace Plato
 
 namespace Parabolic
 {
+[[nodiscard]] auto temperature_integral_function_name() -> std::string_view;
 
 /******************************************************************************/
 template <typename EvaluationType, typename IndicatorFunctionType>
-class TemperatureAverage : public EvaluationType::ElementType,
-                           public Plato::Parabolic::AbstractScalarFunction<EvaluationType>
+class TemperatureIntegral : public EvaluationType::ElementType,
+                            public Plato::Parabolic::AbstractScalarFunction<EvaluationType>
 /******************************************************************************/
 {
    private:
@@ -39,11 +43,11 @@ class TemperatureAverage : public EvaluationType::ElementType,
 
    public:
     /**************************************************************************/
-    TemperatureAverage(const plato::domain::SpatialDomain& aSpatialDomain,
-                       Plato::DataMap& aDataMap,
-                       Teuchos::ParameterList& aProblemParams,
-                       Teuchos::ParameterList& aPenaltyParams,
-                       const std::string& aFunctionName);
+    TemperatureIntegral(const plato::domain::SpatialDomain& aSpatialDomain,
+                        Plato::DataMap& aDataMap,
+                        Teuchos::ParameterList& aProblemParams,
+                        Teuchos::ParameterList& aPenaltyParams,
+                        const std::string& aFunctionName);
 
     /**************************************************************************/
     void evaluate_conditional(const Plato::ScalarMultiVectorT<StateScalarType>& aState,
@@ -53,8 +57,10 @@ class TemperatureAverage : public EvaluationType::ElementType,
                               Plato::ScalarVectorT<ResultScalarType>& aResult,
                               Plato::Scalar aTimeStep = 0.0) const override;
 };
-// class TemperatureAverage
+// class TemperatureIntegral
 
 }  // namespace Parabolic
 
 }  // namespace Plato
+
+#endif

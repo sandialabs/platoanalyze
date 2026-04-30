@@ -52,9 +52,6 @@ class VarianceFunction : public Plato::Elliptic::ScalarFunctionBase,
                      Teuchos::ParameterList& aProblemParams,
                      const std::string& aName);
 
-    /// @brief Return user defined function name
-    std::string name() const override final;
-
     /// @brief Compute the variance of local quantities
     Plato::Scalar value(const Plato::Solutions& aSolution,
                         const Plato::ScalarVector& aControl,

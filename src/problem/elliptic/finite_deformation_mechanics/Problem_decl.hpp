@@ -12,7 +12,6 @@
 #include "core_types/PlatoTypes.hpp"
 #include "domain/Solutions.hpp"
 #include "domain/SpatialModel.hpp"
-#include "linear_algebra/CrsMatrix.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
 #include "problem/PlatoAbstractProblem.hpp"
@@ -45,21 +44,18 @@ class Problem : public Plato::AbstractProblem
 
     /// @brief compute the value of criterion with name @a aName using control values @a aControl and state stored in @a
     /// aSolution.
-    /// This is the preferred overload.
     Plato::Scalar criterionValue(const Plato::ScalarVector& aControl,
                                  const Plato::Solutions& aSolution,
                                  const std::string& aName) override final;
 
     /// @brief compute the gradient w.r.t control of criterion with name @a aName using control values @a aControl and
     /// state stored in @a aSolution.
-    /// This is the preferred overload.
     Plato::ScalarVector criterionGradient(const Plato::ScalarVector& aControl,
                                           const Plato::Solutions& aSolution,
                                           const std::string& aName) override final;
 
     /// @brief compute the gradient w.r.t nodal coordinates of criterion with name @a aName using control values
     /// @a aControl and state stored in @a aSolution.
-    /// This is the preferred overload.
     Plato::ScalarVector criterionGradientX(const Plato::ScalarVector& aControl,
                                            const Plato::Solutions& aSolution,
                                            const std::string& aName) override final;

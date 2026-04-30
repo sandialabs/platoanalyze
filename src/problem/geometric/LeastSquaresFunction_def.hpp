@@ -197,8 +197,7 @@ Plato::Scalar LeastSquaresFunction<PhysicsType>::value(const Plato::ScalarVector
                                          : (tFunctionValue - tFunctionGoldValue);
         std::cout << std::format(
             "{:.20s} = {:12.4e} * (({:12.4e} - {:12.4e}) / {:12.4e})^{} =  {:12.4e} (PercDiff = {:10.1f})\n",
-            mScalarFunctionBaseContainer[tFunctionIndex]->name().c_str(), tFunctionWeight, tFunctionValue,
-            tFunctionGoldValue, tFunctionScale, mPower,
+            mFunctionName.c_str(), tFunctionWeight, tFunctionValue, tFunctionGoldValue, tFunctionScale, mPower,
             tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, mPower), tPercentDiff);
     }
     return tResult;
@@ -262,17 +261,6 @@ Plato::ScalarVector LeastSquaresFunction<PhysicsType>::gradient_z(const Plato::S
             });
     }
     return tGradientZ;
-}
-
-/******************************************************************************/
-/**
- * \brief Return user defined function name
- * \return User defined function name
- **********************************************************************************/
-template <typename PhysicsType>
-std::string LeastSquaresFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
 }
 }  // namespace Geometric
 

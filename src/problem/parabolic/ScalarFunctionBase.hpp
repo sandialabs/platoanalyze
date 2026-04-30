@@ -20,13 +20,6 @@ class ScalarFunctionBase
 
     /******************************************************************************/
     /**
-     * \brief Return function name
-     * \return user defined function name
-     **********************************************************************************/
-    virtual std::string name() const = 0;
-
-    /******************************************************************************/
-    /**
      * \brief Return function value
      * \param [in] aSolution state variables
      * \param [in] aControl design variables
@@ -35,7 +28,7 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::Scalar value(const Plato::Solutions& aSolution,
                                 const Plato::ScalarVector& aControl,
-                                Plato::Scalar aTimeStep = 0.0) const = 0;
+                                const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -47,7 +40,7 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_z(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -60,8 +53,8 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_u(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::OrdinalType aStepIndex,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::OrdinalType aStepIndex,
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -74,8 +67,8 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_v(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::OrdinalType aStepIndex,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::OrdinalType aStepIndex,
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
     /******************************************************************************/
     /**
@@ -87,7 +80,7 @@ class ScalarFunctionBase
      **********************************************************************************/
     virtual Plato::ScalarVector gradient_x(const Plato::Solutions& aSolution,
                                            const Plato::ScalarVector& aControl,
-                                           Plato::Scalar aTimeStep = 0.0) const = 0;
+                                           const Plato::Scalar aTimeStep = 0.0) const = 0;
 
 };  // class ScalarFunctionBase
 

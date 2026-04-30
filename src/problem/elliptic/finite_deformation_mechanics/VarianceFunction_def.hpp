@@ -47,12 +47,6 @@ VarianceFunction<PhysicsType>::VarianceFunction(const plato::domain::SpatialMode
 }
 
 template <typename PhysicsType>
-std::string VarianceFunction<PhysicsType>::name() const
-{
-    return mFunctionName;
-}
-
-template <typename PhysicsType>
 Plato::Scalar VarianceFunction<PhysicsType>::value(const Plato::Solutions& aSolution,
                                                    const Plato::ScalarVector& aControl,
                                                    Plato::Scalar aTimeStep) const

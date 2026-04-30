@@ -139,13 +139,6 @@ class GeometryScalarFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] function name
      **********************************************************************************/
     void setFunctionName(const std::string aFunctionName);
-
-    /******************************************************************************/
-    /**
-     * \brief Return user defined function name
-     * \return User defined function name
-     **********************************************************************************/
-    std::string name() const override;
 };
 // class GeometryScalarFunction
 
