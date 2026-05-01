@@ -8,7 +8,7 @@
 #include "domain/contact/ContactPair.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
-#include "mesh/Plato_MeshMap.hpp"
+#include "mesh/Plato_MeshMapUtils.hpp"
 
 namespace Plato
 {

@@ -6,7 +6,6 @@
 #include "local_operations/optimization/Ramp.hpp"
 #include "local_operations/optimization/Simp.hpp"
 #include "problem/geometric/AbstractScalarFunction.hpp"
-#include "problem/geometric/GeometryMisfit.hpp"
 #include "problem/geometric/Volume.hpp"
 #include "utilities/PlatoUtilities.hpp"
 
@@ -32,11 +31,6 @@ struct FunctionFactory
         {
             return Plato::makeScalarFunction<EvaluationType, Plato::Geometric::Volume>(aSpatialDomain, aDataMap,
                                                                                        aParamList, aFuncName);
-        }
-        else if (tLowerFuncType == "geometry misfit")
-        {
-            return std::make_shared<Plato::Geometric::GeometryMisfit<EvaluationType>>(aSpatialDomain, aDataMap,
-                                                                                      aParamList, aFuncName);
         }
         else
         {
