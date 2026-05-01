@@ -70,16 +70,16 @@ std::pair<Ordinal, Ordinal> matrix_indices_transpose(const std::pair<Ordinal, Or
 }
 
 template <typename Ordinal>
-using RowVectorOnHost = typename Plato::CrsMatrix<Ordinal>::RowMapVectorT::HostMirror;
+using RowVectorOnHost = typename Plato::CrsMatrix<Ordinal>::RowMapVectorT::host_mirror_type;
 
 template <typename Ordinal>
-using OrdinalVectorOnHost = typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT::HostMirror;
+using OrdinalVectorOnHost = typename Plato::CrsMatrix<Ordinal>::OrdinalVectorT::host_mirror_type;
 
 template <typename Ordinal>
-using ScalarVectorOnHost = typename Plato::CrsMatrix<Ordinal>::ScalarVectorT::HostMirror;
+using ScalarVectorOnHost = typename Plato::CrsMatrix<Ordinal>::ScalarVectorT::host_mirror_type;
 
 template <typename KokkosViewLike>
-typename KokkosViewLike::HostMirror host_mirror(const KokkosViewLike& aViewLike)
+typename KokkosViewLike::host_mirror_type host_mirror(const KokkosViewLike& aViewLike)
 {
     auto tViewLikeOnHost = Kokkos::create_mirror_view(aViewLike);
     Kokkos::deep_copy(tViewLikeOnHost, aViewLike);

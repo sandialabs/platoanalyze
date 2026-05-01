@@ -119,7 +119,7 @@ ElasticProblemParameters elastic_2d_parameters(const Plato::Scalar aMeshPhysical
             /*.mMeshWidth = */ aMeshPhysicalWidth};
 }
 
-Plato::ScalarVector::HostMirror test_elastic_problem_solution(const Plato::Mesh& aMesh,
+Plato::ScalarVector::host_mirror_type test_elastic_problem_solution(const Plato::Mesh& aMesh,
                                                               const std::string& aSolverParameters)
 {
     using PhysicsType = ::Plato::Mechanics<Plato::Tri3>;
@@ -180,7 +180,7 @@ Plato::ScalarVector::HostMirror test_elastic_problem_solution(const Plato::Mesh&
     Plato::ScalarVector tStateSolution("state", tNumDofs);
     Kokkos::deep_copy(tStateSolution, tState);
 
-    Plato::ScalarVector::HostMirror tStateSolutionHost = Kokkos::create_mirror_view(tStateSolution);
+    Plato::ScalarVector::host_mirror_type tStateSolutionHost = Kokkos::create_mirror_view(tStateSolution);
     Kokkos::deep_copy(tStateSolutionHost, tStateSolution);
     return tStateSolutionHost;
 }
@@ -471,17 +471,17 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionToTpetraVector)
 
     auto tConvertedVector = tSystem.fromVector(tTestVector);
 
-    auto tTestVectorHostMirror = Kokkos::create_mirror_view(tTestVector);
-    Kokkos::deep_copy(tTestVectorHostMirror, tTestVector);
+    auto tTestVectorhost_mirror_type = Kokkos::create_mirror_view(tTestVector);
+    Kokkos::deep_copy(tTestVectorhost_mirror_type, tTestVector);
 
     auto tConvertedVectorDeviceView2D = tConvertedVector->getLocalView<Plato::DeviceType>(Tpetra::Access::ReadWrite);
     auto tConvertedVectorDeviceView1D = Kokkos::subview(tConvertedVectorDeviceView2D, Kokkos::ALL(), 0);
-    auto tConvertedVectorHostMirror = Kokkos::create_mirror_view(tConvertedVectorDeviceView1D);
-    Kokkos::deep_copy(tConvertedVectorHostMirror, tConvertedVectorDeviceView1D);
+    auto tConvertedVectorhost_mirror_type = Kokkos::create_mirror_view(tConvertedVectorDeviceView1D);
+    Kokkos::deep_copy(tConvertedVectorhost_mirror_type, tConvertedVectorDeviceView1D);
 
     for (int i = 0; i < tNumDofs; ++i)
     {
-        TEST_FLOATING_EQUALITY(tTestVectorHostMirror(i), tConvertedVectorHostMirror(i), 1.0e-15);
+        TEST_FLOATING_EQUALITY(tTestVectorhost_mirror_type(i), tConvertedVectorhost_mirror_type(i), 1.0e-15);
     }
 }
 
@@ -553,17 +553,17 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionFromTpetraVector)
 
     tSystem.toVector(tConvertedVector, tTestVector);
 
-    auto tConvertedVectorHostMirror = Kokkos::create_mirror_view(tConvertedVector);
-    Kokkos::deep_copy(tConvertedVectorHostMirror, tConvertedVector);
+    auto tConvertedVectorhost_mirror_type = Kokkos::create_mirror_view(tConvertedVector);
+    Kokkos::deep_copy(tConvertedVectorhost_mirror_type, tConvertedVector);
 
     auto tTestVectorDeviceView2D = tTestVector->getLocalView<Plato::DeviceType>(Tpetra::Access::ReadWrite);
     auto tTestVectorDeviceView1D = Kokkos::subview(tTestVectorDeviceView2D, Kokkos::ALL(), 0);
-    auto tTestVectorHostMirror = Kokkos::create_mirror_view(tTestVectorDeviceView1D);
-    Kokkos::deep_copy(tTestVectorHostMirror, tTestVectorDeviceView1D);
+    auto tTestVectorhost_mirror_type = Kokkos::create_mirror_view(tTestVectorDeviceView1D);
+    Kokkos::deep_copy(tTestVectorhost_mirror_type, tTestVectorDeviceView1D);
 
     for (int i = 0; i < tNumDofs; ++i)
     {
-        TEST_FLOATING_EQUALITY(tTestVectorHostMirror(i), tConvertedVectorHostMirror(i), 1.0e-15);
+        TEST_FLOATING_EQUALITY(tTestVectorhost_mirror_type(i), tConvertedVectorhost_mirror_type(i), 1.0e-15);
     }
 }
 
