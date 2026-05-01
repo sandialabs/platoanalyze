@@ -38,15 +38,6 @@ struct BoundingBoxes
     int N;
 };
 
-struct Spheres
-{
-    double* d_x;
-    double* d_y;
-    double* d_z;
-    double* d_r;
-    int N;
-};
-
 struct Points
 {
     double* d_x;
@@ -55,47 +46,28 @@ struct Points
     int N;
 };
 
+struct BoxWithIndex
+{
+    ArborX::Box<3> mBox;
+    int mIndex;
+};
+
+struct BoxWithIndexGetter
+{
+    KOKKOS_INLINE_FUNCTION
+    ArborX::Box<3> operator()(BoxWithIndex const& aValue) const
+    {
+        return aValue.mBox;
+    }
+};
+
 }  // namespace Geometry
 }  // namespace Plato
 
 namespace ArborX
 {
 template <>
-struct AccessTraits<Plato::Geometry::BoundingBoxes, PrimitivesTag>
-{
-    inline static std::size_t size(Plato::Geometry::BoundingBoxes const& boxes) { return boxes.N; }
-    KOKKOS_INLINE_FUNCTION static Box get(Plato::Geometry::BoundingBoxes const& boxes, std::size_t i)
-    {
-        return {{(float)boxes.d_x0[i], (float)boxes.d_y0[i], (float)boxes.d_z0[i]},
-                {(float)boxes.d_x1[i], (float)boxes.d_y1[i], (float)boxes.d_z1[i]}};
-    }
-    using memory_space = Plato::Geometry::MemSpace;
-};
-
-template <>
-struct AccessTraits<Plato::Geometry::Points, PrimitivesTag>
-{
-    inline static std::size_t size(Plato::Geometry::Points const& points) { return points.N; }
-    KOKKOS_INLINE_FUNCTION static Point get(Plato::Geometry::Points const& points, std::size_t i)
-    {
-        return {{(float)points.d_x[i], (float)points.d_y[i], (float)points.d_z[i]}};
-    }
-    using memory_space = Plato::Geometry::MemSpace;
-};
-
-template <>
-struct AccessTraits<Plato::Geometry::Spheres, PredicatesTag>
-{
-    inline static std::size_t size(Plato::Geometry::Spheres const& d) { return d.N; }
-    KOKKOS_INLINE_FUNCTION static auto get(Plato::Geometry::Spheres const& d, std::size_t i)
-    {
-        return intersects(Sphere{{{(float)d.d_x[i], (float)d.d_y[i], (float)d.d_z[i]}}, (float)d.d_r[i]});
-    }
-    using memory_space = Plato::Geometry::MemSpace;
-};
-
-template <>
-struct AccessTraits<Plato::Geometry::Points, PredicatesTag>
+struct AccessTraits<Plato::Geometry::Points>
 {
     inline static std::size_t size(Plato::Geometry::Points const& d) { return d.N; }
     KOKKOS_INLINE_FUNCTION static auto get(Plato::Geometry::Points const& d, std::size_t i)
@@ -104,7 +76,6 @@ struct AccessTraits<Plato::Geometry::Points, PredicatesTag>
     }
     using memory_space = Plato::Geometry::MemSpace;
 };
-
 }  // namespace ArborX
 
 namespace Plato
@@ -403,9 +374,19 @@ void findParentElements(Plato::Mesh aMesh,
 
     ExecSpace tExecSpace;
 
-    // construct search tree
-    ArborX::BVH<MemSpace> bvh{tExecSpace, BoundingBoxes{d_x0.data(), d_y0.data(), d_z0.data(), d_x1.data(), d_y1.data(),
-                                                        d_z1.data(), tNElems}};
+    Kokkos::View<BoxWithIndex*, MemSpace> tBvhValues("bvh values", tNElems);
+    Kokkos::parallel_for(
+        "fill bvh values",
+        Kokkos::RangePolicy<OrdinalT>(0, tNElems),
+        KOKKOS_LAMBDA(OrdinalT iElemOrdinal)
+        {
+            tBvhValues(iElemOrdinal).mBox = ArborX::Box<3>{
+                {(float)d_x0(iElemOrdinal), (float)d_y0(iElemOrdinal), (float)d_z0(iElemOrdinal)},
+                {(float)d_x1(iElemOrdinal), (float)d_y1(iElemOrdinal), (float)d_z1(iElemOrdinal)}
+            };
+            tBvhValues(iElemOrdinal).mIndex = static_cast<int>(iElemOrdinal);
+        });
+    ArborX::BoundingVolumeHierarchy<MemSpace, BoxWithIndex, BoxWithIndexGetter> bvh(tExecSpace, tBvhValues);
 
     // conduct search for bounding box elements
     auto d_x = Kokkos::subview(aMappedLocations, (size_t)Dim::X, Kokkos::ALL());
@@ -418,8 +399,14 @@ void findParentElements(Plato::Mesh aMesh,
 
     auto tNumLocations = aParentElements.size();
     Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
-    ArborX::query(bvh, tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
-                  tIndices, tOffset);
+    bvh.query(
+        tExecSpace,
+        Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
+        KOKKOS_LAMBDA(auto const&, BoxWithIndex const& aValue, auto const& out)
+        {
+            out(aValue.mIndex);
+        },
+        tIndices, tOffset);
 
     // loop over indices and find containing element
     GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
@@ -575,9 +562,19 @@ void findParentElements(Plato::Mesh aMesh,
 
     ExecSpace tExecSpace;
 
-    // construct search tree
-    ArborX::BVH<MemSpace> bvh{tExecSpace, BoundingBoxes{d_x0.data(), d_y0.data(), d_z0.data(), d_x1.data(), d_y1.data(),
-                                                        d_z1.data(), (int)tNElems}};
+    Kokkos::View<BoxWithIndex*, MemSpace> tBvhValues("bvh values", tNElems);
+    Kokkos::parallel_for(
+        "fill bvh values",
+        Kokkos::RangePolicy<OrdinalT>(0, tNElems),
+        KOKKOS_LAMBDA(OrdinalT iElemOrdinal)
+        {
+            tBvhValues(iElemOrdinal).mBox = ArborX::Box<3>{
+                {(float)d_x0(iElemOrdinal), (float)d_y0(iElemOrdinal), (float)d_z0(iElemOrdinal)},
+                {(float)d_x1(iElemOrdinal), (float)d_y1(iElemOrdinal), (float)d_z1(iElemOrdinal)}
+            };
+            tBvhValues(iElemOrdinal).mIndex = static_cast<int>(iElemOrdinal);
+        });
+    ArborX::BoundingVolumeHierarchy<MemSpace, BoxWithIndex, BoxWithIndexGetter> bvh(tExecSpace, tBvhValues);
 
     // conduct search for bounding box elements
     auto d_x = Kokkos::subview(aMappedLocations, (size_t)Dim::X, Kokkos::ALL());
@@ -591,8 +588,14 @@ void findParentElements(Plato::Mesh aMesh,
 
     auto tNumLocations = aParentElements.size();
     Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
-    ArborX::query(bvh, tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
-                  tIndices, tOffset);
+    bvh.query(
+        tExecSpace,
+        Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
+        KOKKOS_LAMBDA(auto const&, BoxWithIndex const& aValue, auto const& out)
+        {
+            out(aValue.mIndex);
+        },
+        tIndices, tOffset);
 
     // loop over indices and find containing element
     GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
