@@ -45,7 +45,7 @@ struct BoxWithIndex
 struct BoxWithIndexGetter
 {
     KOKKOS_INLINE_FUNCTION
-    ArborX::Box<3> operator()(BoxWithIndex const& aValue) const { return aValue.mBox; }
+    ArborX::Box<3> operator()(const BoxWithIndex& aValue) const { return aValue.mBox; }
 };
 
 }  // namespace plato::mesh
@@ -55,10 +55,11 @@ namespace ArborX
 template <>
 struct AccessTraits<plato::mesh::Points>
 {
-    inline static std::size_t size(plato::mesh::Points const& d) { return d.N; }
-    KOKKOS_INLINE_FUNCTION static auto get(plato::mesh::Points const& d, std::size_t i)
+    inline static std::size_t size(const plato::mesh::Points& d) { return d.N; }
+    KOKKOS_INLINE_FUNCTION static auto get(const plato::mesh::Points& d, std::size_t i)
     {
-        return intersects(Point{(float)d.d_x[i], (float)d.d_y[i], (float)d.d_z[i]});
+        return intersects(Point{static_cast<Plato::Scalar>(d.d_x[i]), static_cast<Plato::Scalar>(d.d_y[i]),
+                                static_cast<Plato::Scalar>(d.d_z[i])});
     }
     using memory_space = plato::mesh::MemSpace;
 };
@@ -365,9 +366,11 @@ void find_parent_elements(Plato::Mesh aMesh,
     Kokkos::View<BoxWithIndex*, MemSpace> tBvhValues("bvh values", tNElems);
     Kokkos::parallel_for(
         "fill bvh values", Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iElemOrdinal) {
-            tBvhValues(iElemOrdinal).mBox =
-                ArborX::Box<3>{{(float)d_x0(iElemOrdinal), (float)d_y0(iElemOrdinal), (float)d_z0(iElemOrdinal)},
-                               {(float)d_x1(iElemOrdinal), (float)d_y1(iElemOrdinal), (float)d_z1(iElemOrdinal)}};
+            tBvhValues(iElemOrdinal).mBox = ArborX::Box<3>{
+                {static_cast<Plato::Scalar>(d_x0(iElemOrdinal)), static_cast<Plato::Scalar>(d_y0(iElemOrdinal)),
+                 static_cast<Plato::Scalar>(d_z0(iElemOrdinal))},
+                {static_cast<Plato::Scalar>(d_x1(iElemOrdinal)), static_cast<Plato::Scalar>(d_y1(iElemOrdinal)),
+                 static_cast<Plato::Scalar>(d_z1(iElemOrdinal))}};
             tBvhValues(iElemOrdinal).mIndex = static_cast<int>(iElemOrdinal);
         });
     ArborX::BoundingVolumeHierarchy<MemSpace, BoxWithIndex, BoxWithIndexGetter> bvh(tExecSpace, tBvhValues);
@@ -386,7 +389,7 @@ void find_parent_elements(Plato::Mesh aMesh,
     Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
     bvh.query(
         tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
-        KOKKOS_LAMBDA(auto const&, BoxWithIndex const& aValue, auto const& out) { out(aValue.mIndex); }, tIndices,
+        KOKKOS_LAMBDA(const auto&, const BoxWithIndex& aValue, const auto& out) { out(aValue.mIndex); }, tIndices,
         tOffset);
 
     // loop over indices and find containing element
