@@ -15,7 +15,7 @@
 #include "domain/contact/multipoint_constraint/MultipointConstraint.hpp"
 #include "linear_algebra/BLAS1.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
-#include "mesh/Plato_MeshMapUtils.hpp"
+#include "mesh/SearchUtilities.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
 namespace Plato

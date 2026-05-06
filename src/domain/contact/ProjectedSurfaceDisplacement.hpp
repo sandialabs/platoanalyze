@@ -5,7 +5,7 @@
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "local_operations/mapping/InterpolateFromNodal.hpp"
 #include "mesh/PlatoMesh.hpp"
-#include "mesh/Plato_MeshMapUtils.hpp"
+#include "mesh/SearchUtilities.hpp"
 
 namespace Plato
 {
@@ -92,7 +92,7 @@ class ProjectedSurfaceDisplacement : public AbstractSurfaceDisplacement<Evaluati
     Plato::ScalarMultiVectorT<Plato::Scalar> mMappedLocations;
     Plato::OrdinalVector mChildNodeOrdMap;
     Plato::OrdinalType mChildNode;
-    Plato::Geometry::GetBasis<ElementType, Plato::Scalar> mGetBasis;
+    plato::mesh::GetBasis<ElementType, Plato::Scalar> mGetBasis;
 };
 
 }  // namespace Contact

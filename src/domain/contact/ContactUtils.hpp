@@ -8,7 +8,7 @@
 #include "domain/contact/ContactPair.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
-#include "mesh/Plato_MeshMapUtils.hpp"
+#include "mesh/SearchUtilities.hpp"
 
 namespace Plato
 {
@@ -62,13 +62,13 @@ void set_parent_data_for_surface(ContactSurface& aSurface,
     Plato::OrdinalVector tParentElements("parent elements", tChildNodes.size());
     if (aSearchTolerance > 0)
     {
-        Plato::Geometry::findParentElements<ElementType, Plato::Scalar>(aSpatialModel.mMesh, tDomain.cellOrdinals(),
-                                                                        tChildLocations, tMappedChildLocations,
-                                                                        tParentElements, aSearchTolerance);
+        plato::mesh::find_parent_elements<ElementType, Plato::Scalar>(aSpatialModel.mMesh, tDomain.cellOrdinals(),
+                                                                      tChildLocations, tMappedChildLocations,
+                                                                      tParentElements, aSearchTolerance);
     }
     else
     {
-        Plato::Geometry::findParentElements<ElementType, Plato::Scalar>(
+        plato::mesh::find_parent_elements<ElementType, Plato::Scalar>(
             aSpatialModel.mMesh, tDomain.cellOrdinals(), tChildLocations, tMappedChildLocations, tParentElements);
     }
 
