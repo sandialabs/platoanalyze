@@ -120,7 +120,7 @@ ElasticProblemParameters elastic_2d_parameters(const Plato::Scalar aMeshPhysical
 }
 
 Plato::ScalarVector::host_mirror_type test_elastic_problem_solution(const Plato::Mesh& aMesh,
-                                                              const std::string& aSolverParameters)
+                                                                    const std::string& aSolverParameters)
 {
     using PhysicsType = ::Plato::Mechanics<Plato::Tri3>;
     using ElementType = typename PhysicsType::ElementType;
@@ -471,8 +471,8 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionToTpetraVector)
 
     auto tConvertedVector = tSystem.fromVector(tTestVector);
 
-    auto tTestVectorhost_mirror_type = Kokkos::create_mirror_view(tTestVector);
-    Kokkos::deep_copy(tTestVectorhost_mirror_type, tTestVector);
+    auto tTestVectorHostMirror = Kokkos::create_mirror_view(tTestVector);
+    Kokkos::deep_copy(tTestVectorHostMirror, tTestVector);
 
     auto tConvertedVectorDeviceView2D = tConvertedVector->getLocalView<Plato::DeviceType>(Tpetra::Access::ReadWrite);
     auto tConvertedVectorDeviceView1D = Kokkos::subview(tConvertedVectorDeviceView2D, Kokkos::ALL(), 0);
@@ -481,7 +481,7 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionToTpetraVector)
 
     for (int i = 0; i < tNumDofs; ++i)
     {
-        TEST_FLOATING_EQUALITY(tTestVectorhost_mirror_type(i), tConvertedVectorhost_mirror_type(i), 1.0e-15);
+        TEST_FLOATING_EQUALITY(tTestVectorHostMirror(i), tConvertedVectorhost_mirror_type(i), 1.0e-15);
     }
 }
 
