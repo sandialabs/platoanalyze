@@ -58,8 +58,8 @@ struct AccessTraits<plato::mesh::Points>
     inline static std::size_t size(const plato::mesh::Points& d) { return d.N; }
     KOKKOS_INLINE_FUNCTION static auto get(const plato::mesh::Points& d, std::size_t i)
     {
-        return intersects(Point{static_cast<Plato::Scalar>(d.d_x[i]), static_cast<Plato::Scalar>(d.d_y[i]),
-                                static_cast<Plato::Scalar>(d.d_z[i])});
+        return intersects(
+            Point{static_cast<float>(d.d_x[i]), static_cast<float>(d.d_y[i]), static_cast<float>(d.d_z[i])});
     }
     using memory_space = plato::mesh::MemSpace;
 };
@@ -366,11 +366,11 @@ void find_parent_elements(Plato::Mesh aMesh,
     Kokkos::View<BoxWithIndex*, MemSpace> tBvhValues("bvh values", tNElems);
     Kokkos::parallel_for(
         "fill bvh values", Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iElemOrdinal) {
-            tBvhValues(iElemOrdinal).mBox = ArborX::Box<3>{
-                {static_cast<Plato::Scalar>(d_x0(iElemOrdinal)), static_cast<Plato::Scalar>(d_y0(iElemOrdinal)),
-                 static_cast<Plato::Scalar>(d_z0(iElemOrdinal))},
-                {static_cast<Plato::Scalar>(d_x1(iElemOrdinal)), static_cast<Plato::Scalar>(d_y1(iElemOrdinal)),
-                 static_cast<Plato::Scalar>(d_z1(iElemOrdinal))}};
+            tBvhValues(iElemOrdinal).mBox =
+                ArborX::Box<3>{{static_cast<float>(d_x0(iElemOrdinal)), static_cast<float>(d_y0(iElemOrdinal)),
+                                static_cast<float>(d_z0(iElemOrdinal))},
+                               {static_cast<float>(d_x1(iElemOrdinal)), static_cast<float>(d_y1(iElemOrdinal)),
+                                static_cast<float>(d_z1(iElemOrdinal))}};
             tBvhValues(iElemOrdinal).mIndex = static_cast<int>(iElemOrdinal);
         });
     ArborX::BoundingVolumeHierarchy<MemSpace, BoxWithIndex, BoxWithIndexGetter> bvh(tExecSpace, tBvhValues);
