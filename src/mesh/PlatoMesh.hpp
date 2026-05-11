@@ -2,52 +2,29 @@
 
 #include <memory>
 
-#ifdef USE_OMEGAH_MESH
-#include "mesh/omega_h/OmegaHMesh.hpp"
-#include "mesh/omega_h/OmegaHMeshIO.hpp"
-#endif
-
 #include "mesh/EngineMesh.hpp"
 #include "mesh/EngineMeshIO.hpp"
 
 namespace Plato
 {
+using Mesh = std::shared_ptr<Plato::EngineMesh>;
 
-#ifdef USE_OMEGAH_MESH
-using MeshType = OmegaHMesh;
-using MeshIOType = OmegaHMeshIO;
-#else
-using MeshType = EngineMesh;
-using MeshIOType = EngineMeshIO;
-#endif
-
-using Mesh = std::shared_ptr<Plato::MeshType>;
 namespace MeshFactory
 {
-inline void initialize(int& aArgc, char**& aArgv)
-{
-#ifdef USE_OMEGAH_MESH
-    Plato::OmegaH::Library = new Omega_h::Library(&aArgc, &aArgv);
-#endif
-}
-inline Plato::Mesh create(std::string aFilePath) { return std::make_shared<Plato::MeshType>(aFilePath); }
-inline void finalize()
-{
-#ifdef USE_OMEGAH_MESH
-    if (Plato::OmegaH::Library) delete Plato::OmegaH::Library;
-#endif
-}
+inline void initialize(int& aArgc, char**& aArgv) {}
+inline Plato::Mesh create(std::string aFilePath) { return std::make_shared<Plato::EngineMesh>(aFilePath); }
+inline void finalize() {}
 }  // namespace MeshFactory
 // end namespace MeshFactory
 
-using MeshIO = std::shared_ptr<Plato::MeshIOType>;
+using MeshIO = std::shared_ptr<Plato::EngineMeshIO>;
 namespace MeshIOFactory
 {
 /// @pre @a aMesh must not be `nullptr`. Checked with an assertion.
 inline Plato::MeshIO create(std::string aFilePath, Plato::Mesh aMesh, std::string aMode)
 {
     assert(aMesh);
-    return std::make_shared<Plato::MeshIOType>(aFilePath, *aMesh, aMode);
+    return std::make_shared<Plato::EngineMeshIO>(aFilePath, *aMesh, aMode);
 }
 }  // namespace MeshIOFactory
 // end namespace MeshIOFactory

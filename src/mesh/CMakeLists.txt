@@ -25,11 +25,6 @@ set(LINK_LIBS SEACASNemesis::nemesis
               AnalyzeDomain 
               AnalyzeElement)
 
-IF(OMEGA_H_PREFIX)
-  list(APPEND LINK_LIBS Omega_h::omega_h)
-  list(APPEND FOLDERS omega_h)
-ENDIF()
-
 create_plato_analyze_library(AnalyzeMesh "${FOLDERS}" "${LINK_LIBS}")
 
 if( PLATOANALYZE_UNIT_TEST)
