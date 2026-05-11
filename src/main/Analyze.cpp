@@ -70,8 +70,6 @@ int main(int aArgc, char** aArgv)
 
     Kokkos::initialize(aArgc, aArgv);
 
-    Plato::MeshFactory::initialize(aArgc, aArgv);
-
     Teuchos::Time tTimeMng("Total Time", true);
 
     Teuchos::ParameterList tProblem = Plato::input_file_parsing(aArgc, aArgv, tMachine);
@@ -88,8 +86,6 @@ int main(int aArgc, char** aArgv)
     if (!tSuccess) tReturnCode = EXIT_FAILURE;
 
     printTimingResults();
-
-    Plato::MeshFactory::finalize();
 
     return tReturnCode;
 }

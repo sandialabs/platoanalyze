@@ -11,9 +11,7 @@ using Mesh = std::shared_ptr<Plato::EngineMesh>;
 
 namespace MeshFactory
 {
-inline void initialize(int& aArgc, char**& aArgv) {}
 inline Plato::Mesh create(std::string aFilePath) { return std::make_shared<Plato::EngineMesh>(aFilePath); }
-inline void finalize() {}
 }  // namespace MeshFactory
 // end namespace MeshFactory
 

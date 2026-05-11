@@ -44,7 +44,6 @@ void start_up()
         {
             Kokkos::initialize(tArgc, tArgv);
         }
-        Plato::MeshFactory::initialize(tArgc, tArgv);
     }
 }
 
