@@ -125,7 +125,7 @@ Plato::ScalarArray3D createOrthonormalTensor(Teuchos::ParameterList& tTransformP
                                              Plato::DataMap& aDataMap,
                                              Plato::OrdinalType aDimension);
 
-void readInputData(Teuchos::ParameterList& aInputs, Plato::DataMap& aDataMap, Plato::Mesh aMesh);
+void read_input_data(const Teuchos::ParameterList& aInputs, Plato::DataMap& aDataMap, const Plato::Mesh& aMesh);
 
 void verifyOrthogonality(Plato::ScalarVector a1X,
                          Plato::ScalarVector a1Y,

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "problem/PlatoAbstractProblem.hpp"
 #include "problem/helmholtz/Problem_decl.hpp"
 #include "solver/PlatoAbstractSolver.hpp"
 
@@ -16,7 +17,7 @@ namespace Helmholtz
  **********************************************************************************/
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine)
-    : AbstractProblem(aMesh, aProblemParams),
+    : AbstractProblem(Plato::make_data_map(aProblemParams, aMesh)),
       mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
       mPDE(std::make_shared<VectorFunctionType>(
           mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint"))),
@@ -91,7 +92,7 @@ auto Problem<PhysicsType>::solver() -> Plato::AbstractSolver&
  * \param [in] aFilepath output/visualizaton file path
  **********************************************************************************/
 template <typename PhysicsType>
-void Problem<PhysicsType>::output(const std::string& aFilepath)
+void Problem<PhysicsType>::output(const std::filesystem::path& aFilepath) const
 {
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();

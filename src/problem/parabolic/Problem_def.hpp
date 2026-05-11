@@ -20,7 +20,7 @@ namespace plato::parabolic
 {
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Plato::Comm::Machine aMachine)
-    : AbstractProblem(aMesh, aProblemParams),
+    : AbstractProblem(Plato::make_data_map(aProblemParams, aMesh)),
       mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
       mPDE(std::make_shared<VectorFunctionType>(mSpatialModel, mDataMap, aProblemParams)),
       mPDEType(aProblemParams.get<std::string>("PDE Constraint")),
@@ -85,7 +85,7 @@ void Problem<PhysicsType>::applyStateConstraints(const Teuchos::RCP<Plato::CrsMa
 }
 
 template <typename PhysicsType>
-void Problem<PhysicsType>::output(const std::string& aFilepath)
+void Problem<PhysicsType>::output(const std::filesystem::path& aFilepath) const
 {
     const auto tDataMap = this->getDataMap();
     const auto tSolution = this->getSolution();

@@ -28,7 +28,7 @@ class AdjointProblem : public Plato::AbstractProblem
     Plato::OrdinalType numDofsPerNode() const;
     Plato::OrdinalType numControlsPerNode() const;
 
-    void output(const std::string& aFilepath) override final;
+    void output(const std::filesystem::path& aFilepath) const override final;
     void updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution) override final;
 
     Plato::Solutions solution(const Plato::ScalarVector& aControl) override final;

@@ -44,7 +44,7 @@ class Problem : public Plato::AbstractProblem
                                Plato::Scalar aScale);
 
     /// @brief write solution fields to output file with path @a FilePath.
-    void output(const std::string& aFilepath) override final;
+    void output(const std::filesystem::path& aFilepath) const override final;
 
     /// @brief update criteria with control values @a aControl and state stored in @a aSolution.
     /// @note this implementation is currently a no-op
