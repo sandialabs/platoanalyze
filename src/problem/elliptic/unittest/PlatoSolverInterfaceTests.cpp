@@ -476,12 +476,12 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionToTpetraVector)
 
     auto tConvertedVectorDeviceView2D = tConvertedVector->getLocalView<Plato::DeviceType>(Tpetra::Access::ReadWrite);
     auto tConvertedVectorDeviceView1D = Kokkos::subview(tConvertedVectorDeviceView2D, Kokkos::ALL(), 0);
-    auto tConvertedVectorhost_mirror_type = Kokkos::create_mirror_view(tConvertedVectorDeviceView1D);
-    Kokkos::deep_copy(tConvertedVectorhost_mirror_type, tConvertedVectorDeviceView1D);
+    auto tConvertedVectorHostMirror = Kokkos::create_mirror_view(tConvertedVectorDeviceView1D);
+    Kokkos::deep_copy(tConvertedVectorHostMirror, tConvertedVectorDeviceView1D);
 
     for (int i = 0; i < tNumDofs; ++i)
     {
-        TEST_FLOATING_EQUALITY(tTestVectorHostMirror(i), tConvertedVectorhost_mirror_type(i), 1.0e-15);
+        TEST_FLOATING_EQUALITY(tTestVectorHostMirror(i), tConvertedVectorHostMirror(i), 1.0e-15);
     }
 }
 
@@ -553,17 +553,17 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionFromTpetraVector)
 
     tSystem.toVector(tConvertedVector, tTestVector);
 
-    auto tConvertedVectorhost_mirror_type = Kokkos::create_mirror_view(tConvertedVector);
-    Kokkos::deep_copy(tConvertedVectorhost_mirror_type, tConvertedVector);
+    auto tConvertedVectorHostMirror = Kokkos::create_mirror_view(tConvertedVector);
+    Kokkos::deep_copy(tConvertedVectorHostMirror, tConvertedVector);
 
     auto tTestVectorDeviceView2D = tTestVector->getLocalView<Plato::DeviceType>(Tpetra::Access::ReadWrite);
     auto tTestVectorDeviceView1D = Kokkos::subview(tTestVectorDeviceView2D, Kokkos::ALL(), 0);
-    auto tTestVectorhost_mirror_type = Kokkos::create_mirror_view(tTestVectorDeviceView1D);
-    Kokkos::deep_copy(tTestVectorhost_mirror_type, tTestVectorDeviceView1D);
+    auto tTestVectorHostMirrorType = Kokkos::create_mirror_view(tTestVectorDeviceView1D);
+    Kokkos::deep_copy(tTestVectorHostMirrorType, tTestVectorDeviceView1D);
 
     for (int i = 0; i < tNumDofs; ++i)
     {
-        TEST_FLOATING_EQUALITY(tTestVectorhost_mirror_type(i), tConvertedVectorhost_mirror_type(i), 1.0e-15);
+        TEST_FLOATING_EQUALITY(tTestVectorHostMirrorType(i), tConvertedVectorHostMirror(i), 1.0e-15);
     }
 }
 
