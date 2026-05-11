@@ -2,13 +2,15 @@ include(${CMAKE_UTIL_DIR}/create_plato_analyze_library.cmake)
 include(${CMAKE_UTIL_DIR}/create_plato_analyze_unittester.cmake)
 
 set(FOLDERS "."
-            nonlinear_solvers)
+            nonlinear_solvers
+            multipoint_constraint)
 set(LINK_LIBS AnalyzeCoreTypes 
               AnalyzeUtilities 
               AnalyzeLinearAlgebra 
               AnalyzeMesh 
               AnalyzeDomain 
               AnalyzeElement 
+              ArborX::ArborX
               Belos::belos 
               MueLu::muelu)
 
@@ -39,19 +41,10 @@ endif()
 list(APPEND FOLDERS "tpetra")
 list(APPEND LINK_LIBS TpetraCore::tpetra)
 
-
-if(PLATOANALYZE_ENABLE_MESHMAP)
-    list(APPEND FOLDERS "multipoint_constraint")
-endif()
-
 IF( AMGX_FOUND )
   list(APPEND FOLDERS "amgx")
   list(APPEND LINK_LIBS "${AMGX_LIBRARIES}")
 ENDIF()
-
-if (PLATOANALYZE_ENABLE_MESHMAP)
-  list(APPEND LINK_LIBS ArborX::ArborX)
-endif()
 
 IF( AMGX_FOUND )
   list(APPEND FOLDERS ${AMGX_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/src/solverInterfaces/AmgX/)
