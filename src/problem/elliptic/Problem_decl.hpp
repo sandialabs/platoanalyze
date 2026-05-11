@@ -99,7 +99,7 @@ class Problem : public Plato::AbstractProblem
      * \brief Output solution to visualization file.
      * \param [in] aFilepath output/visualizaton file path
      **********************************************************************************/
-    void output(const std::string& aFilepath) override final;
+    void output(const std::filesystem::path& aFilepath) const override final;
 
     /******************************************************************************/
     /**

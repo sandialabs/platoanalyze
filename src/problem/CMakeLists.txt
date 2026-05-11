@@ -28,7 +28,7 @@ set(LINK_LIBS AnalyzeUtilities
               AnalyzeKinematicsOperations
               AnalyzeMappingOperations
               AnalyzeOptimizationOperations )
-create_plato_analyze_header_library(AnalyzeProblem "${FOLDERS}" "${LINK_LIBS}")
+create_plato_analyze_library(AnalyzeProblem "${FOLDERS}" "${LINK_LIBS}")
 
 if( PLATOANALYZE_UNIT_TEST )
   set(FOLDERS "unittest") 

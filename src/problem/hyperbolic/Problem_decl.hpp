@@ -92,7 +92,7 @@ class Problem : public Plato::AbstractProblem
 
     void parseLinearSolver(Teuchos::ParameterList& aProblemParams, Plato::Mesh aMesh, Comm::Machine aMachine);
 
-    void output(const std::string& aFilepath) override final;
+    void output(const std::filesystem::path& aFilepath) const override final;
 
     void applyConstraints(const Teuchos::RCP<Plato::CrsMatrixType>& aMatrix, const Plato::ScalarVector& aVector);
 
