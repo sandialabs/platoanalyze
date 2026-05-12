@@ -57,7 +57,7 @@ Plato::OrdinalType AdjointProblem<PhysicsType>::numControlsPerNode() const
 }
 
 template <typename PhysicsType>
-void AdjointProblem<PhysicsType>::output(const std::string& aFilepath)
+void AdjointProblem<PhysicsType>::output(const std::filesystem::path& aFilepath) const
 {
     mHelmholtzProblem->output(aFilepath);
 }

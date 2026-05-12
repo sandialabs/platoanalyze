@@ -64,7 +64,7 @@ class Problem : public Plato::AbstractProblem
     Plato::Solutions getSolution() const override final;
 
     /// @brief write solution fields to output file with path @a FilePath.
-    void output(const std::string& aFilepath) override final;
+    void output(const std::filesystem::path& aFilepath) const override final;
 
    private:
     /// @brief extract the last time step state from @a aSolution and output it as a new Plato::Solutions object.

@@ -20,7 +20,7 @@ namespace Hyperbolic
 {
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Comm::Machine aMachine)
-    : AbstractProblem(aMesh, aProblemParams),
+    : AbstractProblem(Plato::make_data_map(aProblemParams, aMesh)),
       mSpatialModel(aMesh, aProblemParams, mDataMap),
       mPDEConstraint(mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint")),
       mSaveState(aProblemParams.sublist("Hyperbolic").isType<Teuchos::Array<std::string>>("Plottable")),
@@ -206,7 +206,7 @@ void Problem<PhysicsType>::parseLinearSolver(Teuchos::ParameterList& aProblemPar
 }
 
 template <typename PhysicsType>
-void Problem<PhysicsType>::output(const std::string& aFilepath)
+void Problem<PhysicsType>::output(const std::filesystem::path& aFilepath) const
 {
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();

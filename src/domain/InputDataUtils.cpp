@@ -270,9 +270,12 @@ Plato::ScalarArray3D createOrthonormalTensor(Teuchos::ParameterList& tTransformP
     ANALYZE_THROWERR("Invalid dimension.");
 }
 
-void readInputData(Teuchos::ParameterList& aInputs, Plato::DataMap& aDataMap, Plato::Mesh aMesh)
+void read_input_data(const Teuchos::ParameterList& aInputs, Plato::DataMap& aDataMap, const Plato::Mesh& aMesh)
 {
-    if (aInputs.isSublist("Input Data") == false) return;
+    if (!aInputs.isSublist("Input Data"))
+    {
+        return;
+    }
 
     auto tInputDataParams = aInputs.sublist("Input Data");
 

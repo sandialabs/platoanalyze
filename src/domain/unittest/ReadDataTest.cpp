@@ -129,7 +129,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, readCSV)
     const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
     plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    Plato::readInputData(*tParamList, tDataMap, tMesh);
+    Plato::read_input_data(*tParamList, tDataMap, tMesh);
 
     auto tD0 = tDataMap.scalarVectors["D0"];
     auto tD0_Host = Kokkos::create_mirror_view(tD0);
@@ -242,7 +242,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, uniformSpatialBasis)
     const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
     plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
 
-    Plato::readInputData(*tParamList, tDataMap, tMesh);
+    Plato::read_input_data(*tParamList, tDataMap, tMesh);
 
     auto tX0 = tDataMap.scalarVectors["X0"];
     auto tX0_Host = Kokkos::create_mirror_view(tX0);

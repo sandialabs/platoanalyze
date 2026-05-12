@@ -7,15 +7,20 @@
 #ifndef PLATOABSTRACTPROBLEM_HPP_
 #define PLATOABSTRACTPROBLEM_HPP_
 
+#include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCPDecl.hpp>
+#include <filesystem>
 
-#include "domain/InputDataUtils.hpp"
 #include "domain/Solutions.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
-#include "utilities/AnalyzeMacros.hpp"
+#include "mesh/PlatoMesh.hpp"
 
 namespace Plato
 {
+
+/// @brief Given a parameter list @a aInputs and a mesh @a aMesh, create a data map that acts like a global scratch
+/// space for all problems.
+[[nodiscard]] auto make_data_map(const Teuchos::ParameterList& aInputs, const Plato::Mesh& aMesh) -> Plato::DataMap;
 
 /******************************************************************************/
 /**
@@ -36,17 +41,14 @@ class AbstractProblem
      **********************************************************************************/
     AbstractProblem() {}
 
-    AbstractProblem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams)
-    {
-        readInputData(aProblemParams, mDataMap, aMesh);
-    }
+    AbstractProblem(Plato::DataMap aDataMap) : mDataMap(std::move(aDataMap)) {}
 
     /******************************************************************************/
     /**
      * \brief Output solution to visualization file.
      * \param [in] aFilename output file name
      **********************************************************************************/
-    virtual void output(const std::string& aFilename) = 0;
+    virtual void output(const std::filesystem::path& aFilename) const = 0;
 
     /******************************************************************************/
     /**
@@ -114,7 +116,7 @@ class AbstractProblem
      * \return constant reference to Plato output database
      **********************************************************************************/
     Plato::DataMap mDataMap;
-    decltype(mDataMap)& getDataMap() { return mDataMap; }
+    const decltype(mDataMap)& getDataMap() const { return mDataMap; }
 
     /******************************************************************************/
     /**

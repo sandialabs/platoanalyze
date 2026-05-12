@@ -17,6 +17,7 @@
 #include "linear_algebra/PlatoMathHelpers.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "mesh/PlatoMesh.hpp"
+#include "parsing/ParseTools.hpp"
 #include "parsing/TeuchosParsingUtilities.hpp"
 #include "problem/PlatoAbstractProblem.hpp"
 #include "problem/elliptic/ScalarFunctionBaseFactory.hpp"
@@ -29,7 +30,7 @@ namespace plato::elliptic::finite_deformation_mechanics
 {
 template <typename PhysicsType>
 Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProblemParams, Plato::Comm::Machine aMachine)
-    : Plato::AbstractProblem(aMesh, aProblemParams),
+    : Plato::AbstractProblem(Plato::make_data_map(aProblemParams, aMesh)),
       mSpatialModel(aMesh, plato::domain::parse_domains(aProblemParams, aMesh), mDataMap),
       mPDE(std::make_shared<VectorFunctionType>(
           mSpatialModel, mDataMap, aProblemParams, aProblemParams.get<std::string>("PDE Constraint"))),
@@ -225,7 +226,7 @@ Plato::Solutions Problem<PhysicsType>::getSolution() const
 }
 
 template <typename PhysicsType>
-void Problem<PhysicsType>::output(const std::string& aFilepath)
+void Problem<PhysicsType>::output(const std::filesystem::path& aFilepath) const
 {
     auto tDataMap = this->getDataMap();
     auto tSolution = this->getSolution();
