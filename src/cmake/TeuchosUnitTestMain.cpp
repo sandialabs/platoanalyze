@@ -16,8 +16,6 @@ int main(int argc, char* argv[])
     assert(tThreadsProvided == MPI_THREAD_FUNNELED);
 
     Kokkos::initialize(argc, argv);
-    Plato::MeshFactory::initialize(argc, argv);
-
 #ifdef WATCH_ARITHMETIC
     feclearexcept(FE_ALL_EXCEPT);
     feenableexcept(FE_ALL_EXCEPT - FE_INEXACT - FE_UNDERFLOW);
@@ -25,7 +23,6 @@ int main(int argc, char* argv[])
 
     auto result = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 
-    Plato::MeshFactory::finalize();
     Kokkos::finalize();
     MPI_Finalize();
     std::cout << "RESULT: " << result << std::endl;

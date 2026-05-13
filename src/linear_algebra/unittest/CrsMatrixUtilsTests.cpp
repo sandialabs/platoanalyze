@@ -9,7 +9,7 @@ template <typename T, int ArraySize>
 Kokkos::View<T*, Plato::MemSpace> deviceView(std::array<T, ArraySize> aArray)
 {
     using DeviceView = Kokkos::View<T*, Plato::MemSpace>;
-    using HostView = typename DeviceView::HostMirror;
+    using HostView = typename DeviceView::host_mirror_type;
 
     const HostView tArrayOnHost(aArray.data(), ArraySize);
     const DeviceView tArrayOnDevice("Array", ArraySize);

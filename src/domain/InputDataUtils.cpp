@@ -97,7 +97,7 @@ void normalizeVector(Plato::ScalarVector aX, Plato::ScalarVector aY, Plato::Scal
             tMag = sqrt(tMag);
 
             decltype(tX) tOne(1.0);
-            if (fabs(tOne - tMag) > DBL_EPSILON)
+            if (std::fabs(tOne - tMag) > std::numeric_limits<double>::epsilon())
             {
                 aX(tDof) /= tMag;
                 aY(tDof) /= tMag;
@@ -130,7 +130,7 @@ void normalizeVector(Plato::ScalarVector aX, Plato::ScalarVector aY)
             tMag = sqrt(tMag);
 
             decltype(tX) tOne(1.0);
-            if (fabs(tOne - tMag) > DBL_EPSILON)
+            if (std::fabs(tOne - tMag) > std::numeric_limits<double>::epsilon())
             {
                 aX(tDof) /= tMag;
                 aY(tDof) /= tMag;

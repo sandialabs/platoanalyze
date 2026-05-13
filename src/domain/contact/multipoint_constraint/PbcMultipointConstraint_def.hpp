@@ -75,9 +75,8 @@ Plato::PbcMultipointConstraint<ElementT>::PbcMultipointConstraint(const plato::d
 
     // find elements that contain mapped child node locations (in specified domain)
     Plato::OrdinalVector tParentElements("mapped elements", tNumberChildNodes);
-    Plato::Geometry::findParentElements<ElementT, Plato::Scalar>(aSpatialModel.mMesh, tDomainCellMap,
-                                                                 tChildNodeLocations, tMappedChildNodeLocations,
-                                                                 tParentElements, tTolerance);
+    plato::mesh::find_parent_elements<ElementT, Plato::Scalar>(aSpatialModel.mMesh, tDomainCellMap, tChildNodeLocations,
+                                                               tMappedChildNodeLocations, tParentElements, tTolerance);
 
     // get global IDs of unique parent nodes
     Plato::OrdinalVector tParentGlobalLocalMap;
@@ -322,7 +321,7 @@ void Plato::PbcMultipointConstraint<ElementT>::setMatrixValues(Plato::Mesh aMesh
     Plato::CrsMatrixType::OrdinalVectorT tColMap("column indices", tNumEntries);
     Plato::CrsMatrixType::ScalarVectorT tEntries("matrix entries", tNumEntries);
 
-    Plato::Geometry::GetBasis<ElementT, Plato::Scalar> tGetBasis(aMesh);
+    plato::mesh::GetBasis<ElementT, Plato::Scalar> tGetBasis(aMesh);
 
     Kokkos::parallel_for(
         "colmap and entries", Kokkos::RangePolicy<Plato::OrdinalType>(0, tNumChildNodes),

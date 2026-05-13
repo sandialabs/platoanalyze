@@ -169,12 +169,16 @@ Plato::OrdinalType UpdateGraphForContact::updateOffsetMap()
     Kokkos::parallel_scan(
         Kokkos::RangePolicy<>(0, tNumTotalNodes),
         KOKKOS_LAMBDA(const Plato::OrdinalType& iOrdinal, Plato::OrdinalType& aUpdate, const bool& tIsFinal) {
-            auto tChildMark = tMarkedChildNodes(iOrdinal);
-
             auto tOriginalNum = tOffsetMap(iOrdinal + 1) - tOffsetMap(iOrdinal);
-            auto tContactNum = tNumConnectedNodes(tChildMark);
 
-            const auto tVal = (tChildMark < 0) ? tOriginalNum : tOriginalNum + tContactNum;
+            auto tChildMark = tMarkedChildNodes(iOrdinal);
+            auto tVal = tOriginalNum;
+            if (tChildMark >= 0)
+            {
+                auto tContactNum = tNumConnectedNodes(tChildMark);
+                tVal += tContactNum;
+            }
+
             aUpdate += tVal;
             if (tIsFinal)
             {

@@ -131,7 +131,7 @@ void normalizeVector(Teuchos::Array<T>& aVector, bool aQuiet = false, const std:
     tMag = sqrt(tMag);
 
     T tOne(1.0);
-    if (fabs(tOne - tMag) > DBL_EPSILON)
+    if (std::fabs(tOne - tMag) > std::numeric_limits<double>::epsilon())
     {
         if (!aQuiet)
         {

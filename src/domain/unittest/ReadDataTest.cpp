@@ -135,34 +135,34 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, readCSV)
     auto tD0_Host = Kokkos::create_mirror_view(tD0);
     Kokkos::deep_copy(tD0_Host, tD0);
 
-    TEST_FLOATING_EQUALITY(tD0_Host(0), 1e5, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD0_Host(1), 1e-5, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD0_Host(2), 2e+5, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD0_Host(3), 3e-6, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD0_Host(4), 4e-5, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD0_Host(5), 5e-15, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tD0_Host(0), 1e5, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD0_Host(1), 1e-5, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD0_Host(2), 2e+5, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD0_Host(3), 3e-6, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD0_Host(4), 4e-5, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD0_Host(5), 5e-15, std::numeric_limits<double>::epsilon());
 
     auto tD1 = tDataMap.scalarVectors["D1"];
     auto tD1_Host = Kokkos::create_mirror_view(tD1);
     Kokkos::deep_copy(tD1_Host, tD1);
 
-    TEST_FLOATING_EQUALITY(tD1_Host(0), 1.234e6, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD1_Host(1), 2.12876, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD1_Host(2), 2.12876, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD1_Host(3), 2.12876, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD1_Host(4), 2.12876, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD1_Host(5), -2.12876, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tD1_Host(0), 1.234e6, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD1_Host(1), 2.12876, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD1_Host(2), 2.12876, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD1_Host(3), 2.12876, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD1_Host(4), 2.12876, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD1_Host(5), -2.12876, std::numeric_limits<double>::epsilon());
 
     auto tD2 = tDataMap.scalarVectors["D2"];
     auto tD2_Host = Kokkos::create_mirror_view(tD2);
     Kokkos::deep_copy(tD2_Host, tD2);
 
-    TEST_FLOATING_EQUALITY(tD2_Host(0), 5.432e4, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD2_Host(1), -0.2344, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD2_Host(2), 0.2344e-4, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD2_Host(3), 0.2344, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD2_Host(4), 0.2344, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tD2_Host(5), 10.2344, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tD2_Host(0), 5.432e4, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD2_Host(1), -0.2344, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD2_Host(2), 0.2344e-4, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD2_Host(3), 0.2344, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD2_Host(4), 0.2344, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tD2_Host(5), 10.2344, std::numeric_limits<double>::epsilon());
 }
 
 /******************************************************************************/
@@ -248,34 +248,34 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, uniformSpatialBasis)
     auto tX0_Host = Kokkos::create_mirror_view(tX0);
     Kokkos::deep_copy(tX0_Host, tX0);
 
-    TEST_FLOATING_EQUALITY(tX0_Host(0), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tX0_Host(1), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tX0_Host(2), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tX0_Host(3), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tX0_Host(4), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tX0_Host(5), 1, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tX0_Host(0), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tX0_Host(1), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tX0_Host(2), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tX0_Host(3), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tX0_Host(4), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tX0_Host(5), 1, std::numeric_limits<double>::epsilon());
 
     auto tBasis = tDataMap.scalarArray3Ds["Element Bases"];
     auto tBasis_Host = Kokkos::create_mirror_view(tBasis);
     Kokkos::deep_copy(tBasis_Host, tBasis);
 
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 0, 0), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 1, 1), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 2, 2), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 1, 2), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 0, 2), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 0, 1), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 2, 1), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 2, 0), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(0, 1, 0), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 0, 0), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 1, 1), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 2, 2), 1, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 1, 2), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 0, 2), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 0, 1), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 2, 1), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 2, 0), 0, DBL_EPSILON);
-    TEST_FLOATING_EQUALITY(tBasis_Host(1, 1, 0), 0, DBL_EPSILON);
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 0, 0), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 1, 1), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 2, 2), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 1, 2), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 0, 2), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 0, 1), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 2, 1), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 2, 0), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(0, 1, 0), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 0, 0), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 1, 1), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 2, 2), 1, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 1, 2), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 0, 2), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 0, 1), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 2, 1), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 2, 0), 0, std::numeric_limits<double>::epsilon());
+    TEST_FLOATING_EQUALITY(tBasis_Host(1, 1, 0), 0, std::numeric_limits<double>::epsilon());
 }
 }  // namespace PlatoUnitTests

@@ -18,20 +18,12 @@ copy_test_data("${COPY_FILES}")
 set(FOLDERS ".")
 set(LINK_LIBS SEACASNemesis::nemesis 
               SEACASExodus::exodus 
+              ArborX::ArborX
               AnalyzeCoreTypes 
               AnalyzeParsing 
               AnalyzeLinearAlgebra 
               AnalyzeDomain 
               AnalyzeElement)
-
-IF(OMEGA_H_PREFIX)
-  list(APPEND LINK_LIBS Omega_h::omega_h)
-  list(APPEND FOLDERS omega_h)
-ENDIF()
-
-if (PLATOANALYZE_ENABLE_MESHMAP)
-  list(APPEND LINK_LIBS ArborX::ArborX)
-endif()
 
 create_plato_analyze_library(AnalyzeMesh "${FOLDERS}" "${LINK_LIBS}")
 

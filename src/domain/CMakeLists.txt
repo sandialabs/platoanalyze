@@ -1,16 +1,10 @@
 include(${CMAKE_UTIL_DIR}/create_plato_analyze_library.cmake)
 
-set(LINK_LIBS AnalyzeCoreTypes)
+set(LINK_LIBS AnalyzeCoreTypes
+              ArborX::ArborX)
 set(FOLDERS "."
-            contact)
-
-if(PLATOANALYZE_ENABLE_MESHMAP)
-    list(APPEND FOLDERS "contact/multipoint_constraint")
-endif()
-if (PLATOANALYZE_ENABLE_MESHMAP)
-  list(APPEND LINK_LIBS ArborX::ArborX)
-endif()
-
+            contact
+            contact/multipoint_constraint)
 
 create_plato_analyze_library(AnalyzeDomain "${FOLDERS}" "${LINK_LIBS}")
 if( PLATOANALYZE_UNIT_TEST)

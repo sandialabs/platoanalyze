@@ -119,8 +119,8 @@ ElasticProblemParameters elastic_2d_parameters(const Plato::Scalar aMeshPhysical
             /*.mMeshWidth = */ aMeshPhysicalWidth};
 }
 
-Plato::ScalarVector::HostMirror test_elastic_problem_solution(const Plato::Mesh& aMesh,
-                                                              const std::string& aSolverParameters)
+Plato::ScalarVector::host_mirror_type test_elastic_problem_solution(const Plato::Mesh& aMesh,
+                                                                    const std::string& aSolverParameters)
 {
     using PhysicsType = ::Plato::Mechanics<Plato::Tri3>;
     using ElementType = typename PhysicsType::ElementType;
@@ -180,7 +180,7 @@ Plato::ScalarVector::HostMirror test_elastic_problem_solution(const Plato::Mesh&
     Plato::ScalarVector tStateSolution("state", tNumDofs);
     Kokkos::deep_copy(tStateSolution, tState);
 
-    Plato::ScalarVector::HostMirror tStateSolutionHost = Kokkos::create_mirror_view(tStateSolution);
+    Plato::ScalarVector::host_mirror_type tStateSolutionHost = Kokkos::create_mirror_view(tStateSolution);
     Kokkos::deep_copy(tStateSolutionHost, tStateSolution);
     return tStateSolutionHost;
 }
@@ -558,12 +558,12 @@ TEUCHOS_UNIT_TEST(SolverInterfaceTests, VectorConversionFromTpetraVector)
 
     auto tTestVectorDeviceView2D = tTestVector->getLocalView<Plato::DeviceType>(Tpetra::Access::ReadWrite);
     auto tTestVectorDeviceView1D = Kokkos::subview(tTestVectorDeviceView2D, Kokkos::ALL(), 0);
-    auto tTestVectorHostMirror = Kokkos::create_mirror_view(tTestVectorDeviceView1D);
-    Kokkos::deep_copy(tTestVectorHostMirror, tTestVectorDeviceView1D);
+    auto tTestVectorHostMirrorType = Kokkos::create_mirror_view(tTestVectorDeviceView1D);
+    Kokkos::deep_copy(tTestVectorHostMirrorType, tTestVectorDeviceView1D);
 
     for (int i = 0; i < tNumDofs; ++i)
     {
-        TEST_FLOATING_EQUALITY(tTestVectorHostMirror(i), tConvertedVectorHostMirror(i), 1.0e-15);
+        TEST_FLOATING_EQUALITY(tTestVectorHostMirrorType(i), tConvertedVectorHostMirror(i), 1.0e-15);
     }
 }
 

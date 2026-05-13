@@ -65,7 +65,7 @@ class TpetraSystem
 
    private:
     void checkInputMatrixSize(const Plato::CrsMatrix<Plato::OrdinalType> aInMatrix,
-                              Kokkos::View<Plato::OrdinalType*, MemSpace>::HostMirror aRowMap) const;
+                              Kokkos::View<Plato::OrdinalType*, MemSpace>::host_mirror_type aRowMap) const;
 };
 
 /******************************************************************************/

@@ -4,6 +4,7 @@
 #include "domain/MatrixGraphUtils.hpp"
 #include "domain/SpatialModel.hpp"
 #include "domain/WorksetBase.hpp"
+#include "domain/contact/ContactUtils.hpp"
 #include "element/MechanicsElement.hpp"
 #include "element/Tet4.hpp"
 #include "linear_algebra/PlatoStaticsTypes.hpp"
@@ -13,10 +14,6 @@
 #include "problem/elliptic/EvaluationTypes.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 #include "utilities/PlatoUtilities.hpp"
-
-#ifdef PLATO_MESHMAP
-#include "domain/contact/ContactUtils.hpp"
-#endif
 
 namespace AssemblyTests
 {
@@ -160,7 +157,6 @@ plato::domain::SpatialModel setup_dummy_spatial_model(Plato::Mesh aMesh)
     return plato::domain::SpatialModel(aMesh, tParsedDomains, tDataMap);
 }
 
-// #ifdef PLATO_MESHMAP
 Teuchos::RCP<Teuchos::ParameterList> get_2box_mesh_params()
 {
     Teuchos::RCP<Teuchos::ParameterList> tInputs = Teuchos::getParametersFromXmlString(
@@ -488,8 +484,6 @@ TEUCHOS_UNIT_TEST(JacobianTests, ElementDerivativesAreShapeFunctions)
         TEST_FLOATING_EQUALITY(tJacobianEntries_Host(iVal), tJacobianEntries_Gold[iVal], 1e-12);
     }
 }
-
-// #ifdef PLATO_MESHMAP
 
 // testing mesh for contact as reference for the actual assembly tests below
 //

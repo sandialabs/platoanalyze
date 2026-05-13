@@ -11,8 +11,6 @@ set (CMAKE_CXX_STANDARD 20)
 option( WARNINGS_AS_ERRORS "Builds platoanalyze with warnings as errors" OFF )
 option( BUILD_WITH_SANITIZER_FLAGS "Builds platoanalyze with sanitizers" OFF )
 option(PLATOANALYZE_ENABLE_CUDA "Build for Nvidia GPUs using CUDA" OFF)
-option(PLATOANALYZE_ENABLE_MESHMAP  "Enable Plato MeshMap"  ON )
-option(PLATOANALYZE_ENABLE_ENGINEMESH "Enable EngineMesh"           ON )
 option(ELLIPTIC        "Compile with Elliptic physics"       ON )
 option(PARABOLIC       "Compile with Parabolic physics"      ON )
 option(HYPERBOLIC      "Compile with Hyperbolic physics"     OFF )
@@ -118,20 +116,6 @@ if(${srcdir} STREQUAL ${bindir})
 
 endif()
 
-SET(OMEGA_H_PREFIX "" CACHE PATH "Omega_h install location")
-IF(OMEGA_H_PREFIX)
-  SET(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${OMEGA_H_PREFIX})
-  FIND_PACKAGE(Omega_h 9.17.0 REQUIRED)
-ENDIF()
-
-# DAI: omega_h2 has a vtkdiff which by default compares all timesteps.
-# old omega_h's vtkdiff only compared one timestep.
-# at the time of transition, we will keep comparing just one time step
-# this flag is needed to do that.
-
-# We need to do this better, but for now lets see how well it works to find the right mpirun
-# This needs to be the one on the front end for Cuda and MIC machines - it runs the utilities.
-
 IF(PLATOANALYZE_MPIEXEC)
   MESSAGE("-- User defined PLATOANALYZE_MPIEXEC=${PLATOANALYZE_MPIEXEC}")
   SEPARATE_ARGUMENTS(PLATOANALYZE_MPIEXEC)
@@ -225,32 +209,16 @@ if(CUSTOMMATERIALS)
   ADD_DEFINITIONS(-DPLATO_CUSTOM_MATERIALS)
 endif()
 
-if (PLATOANALYZE_ENABLE_MESHMAP)
-  add_definitions(-DPLATO_MESHMAP)
-  find_package(ArborX REQUIRED)
-endif()
-
-IF(PLATOANALYZE_ENABLE_ENGINEMESH)
-  FIND_PROGRAM( EXODIFF NAMES exodiff PATHS ${Trilinos_PREFIX}/bin NO_DEFAULT_PATH)
-  IF(EXODIFF)
-    MESSAGE("-- EXODIFF=${EXODIFF}")
-  ELSE()
-    MESSAGE(FATAL_ERROR "Cannot locate the executable for exodiff, exiting")
-  ENDIF()
+FIND_PROGRAM( EXODIFF NAMES exodiff PATHS ${Trilinos_PREFIX}/bin NO_DEFAULT_PATH)
+IF(EXODIFF)
+  MESSAGE("-- EXODIFF=${EXODIFF}")
 ELSE()
-  FIND_PROGRAM( VTKDIFF NAMES vtkdiff PATHS ${OMEGA_H_PREFIX}/bin NO_DEFAULT_PATH)
-  IF(VTKDIFF)
-    MESSAGE("-- VTKDIFF=${VTKDIFF}")
-  ELSE()
-    MESSAGE(FATAL_ERROR "Cannot locate the executable for vtkdiff, exiting")
-  ENDIF()
+  MESSAGE(FATAL_ERROR "Cannot locate the executable for exodiff, exiting")
 ENDIF()
-
 
 find_package(Tpetra REQUIRED)
 find_package(Belos REQUIRED)
 find_package(Ifpack2 REQUIRED)
-
 
 set(PLATOENGINE_PREFIX "" CACHE STRING "Path to Plato install")
 find_package(PlatoEngine REQUIRED COMPONENTS PlatoEngine::PlatoCommonInterface PlatoEngine::PlatoUtilitiesInterface PlatoEngine::PlatoTestUtilitiesInterface PlatoEngine::PlatoCommonTestUtilitiesInterface HINTS ${PLATOENGINE_PREFIX})
@@ -258,22 +226,10 @@ find_package(SEACASExodus REQUIRED)
 find_package(SEACASNemesis REQUIRED)
 find_package(Shards REQUIRED)
 find_package(TeuchosCore REQUIRED)
-
-if (PLATOANALYZE_ENABLE_ENGINEMESH)
-  message("Default mesh is EngineMesh")
-else()
-  add_definitions(-DUSE_OMEGAH_MESH)
-  message("Default mesh is Omega-h mesh")
-endif()
+find_package(ArborX REQUIRED)
 
 option(PLATOANALYZE_ENABLE_TACHO "Enable Tacho" OFF)
 option(PLATOANALYZE_ENABLE_UMFPACK "Enable UMFPACK" OFF)
-
-IF(OMEGA_H_PREFIX)
- # omega-h adds -Werror which currently breaks build
- set_target_properties(Omega_h::omega_h PROPERTIES INTERFACE_COMPILE_OPTIONS "")
-ENDIF()
-
 
 SET(PLATOANALYZE_RANKS_PER_NODE_FLAG "-npernode" CACHE STRING "Processes per node flag for PLATOANALYZE_MPIEXEC")
 SET(PLATOANALYZE_RANKS_FLAG "-n" CACHE STRING "Number of processes flag for PLATOANALYZE_MPIEXEC")

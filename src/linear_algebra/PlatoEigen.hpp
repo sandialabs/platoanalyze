@@ -55,7 +55,7 @@ KOKKOS_INLINE_FUNCTION Plato::Array<2, ScalarType> schurSym(ScalarType f, Scalar
     Plato::Array<2, ScalarType> tRetVal;
     tRetVal(0) = 1.0;
     tRetVal(1) = 0.0;
-    if (Kokkos::fabs(g) > DBL_EPSILON)
+    if (Kokkos::fabs(g) > std::numeric_limits<double>::epsilon())
     {
         ScalarType t = (h - f) / (2.0 * g);
         if (t >= 0.0)
@@ -114,7 +114,7 @@ KOKKOS_INLINE_FUNCTION void decomposeEigenJacobi(Plato::Matrix<N, N, ScalarType>
 
     auto tVectors = Plato::identity<N, ScalarType>();
 
-    auto tTolerance = Plato::norm(aMatrix) * DBL_EPSILON;
+    auto tTolerance = Plato::norm(aMatrix) * std::numeric_limits<double>::epsilon();
 
     Plato::OrdinalType tIteration = 0;
     while (Plato::normOffDiag(aMatrix) > tTolerance && tIteration < tMaxIters)

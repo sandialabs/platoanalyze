@@ -1,13 +1,5 @@
-
-/*!
- * Plato_MeshMapUtils.hpp
- *
- * Created on: Oct 1, 2020
- *
- */
-
-#ifndef PLATO_MESHMAP_UTILS_HPP_
-#define PLATO_MESHMAP_UTILS_HPP_
+#ifndef PLATO_MESH_SEARCHUTILITIES
+#define PLATO_MESH_SEARCHUTILITIES
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
@@ -16,12 +8,10 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "domain/SpatialModel.hpp"
 #include "element/ElementBase.hpp"
+#include "mesh/PlatoMesh.hpp"
 
-namespace Plato
-{
-namespace Geometry
+namespace plato::mesh
 {
 
 using ExecSpace = Kokkos::DefaultExecutionSpace;
@@ -38,15 +28,6 @@ struct BoundingBoxes
     int N;
 };
 
-struct Spheres
-{
-    double* d_x;
-    double* d_y;
-    double* d_z;
-    double* d_r;
-    int N;
-};
-
 struct Points
 {
     double* d_x;
@@ -55,61 +36,36 @@ struct Points
     int N;
 };
 
-}  // namespace Geometry
-}  // namespace Plato
+struct BoxWithIndex
+{
+    ArborX::Box<3> mBox;
+    int mIndex;
+};
+
+struct BoxWithIndexGetter
+{
+    KOKKOS_INLINE_FUNCTION
+    ArborX::Box<3> operator()(const BoxWithIndex& aValue) const { return aValue.mBox; }
+};
+
+}  // namespace plato::mesh
 
 namespace ArborX
 {
 template <>
-struct AccessTraits<Plato::Geometry::BoundingBoxes, PrimitivesTag>
+struct AccessTraits<plato::mesh::Points>
 {
-    inline static std::size_t size(Plato::Geometry::BoundingBoxes const& boxes) { return boxes.N; }
-    KOKKOS_INLINE_FUNCTION static Box get(Plato::Geometry::BoundingBoxes const& boxes, std::size_t i)
+    inline static std::size_t size(const plato::mesh::Points& d) { return d.N; }
+    KOKKOS_INLINE_FUNCTION static auto get(const plato::mesh::Points& d, std::size_t i)
     {
-        return {{(float)boxes.d_x0[i], (float)boxes.d_y0[i], (float)boxes.d_z0[i]},
-                {(float)boxes.d_x1[i], (float)boxes.d_y1[i], (float)boxes.d_z1[i]}};
+        return intersects(
+            Point{static_cast<float>(d.d_x[i]), static_cast<float>(d.d_y[i]), static_cast<float>(d.d_z[i])});
     }
-    using memory_space = Plato::Geometry::MemSpace;
+    using memory_space = plato::mesh::MemSpace;
 };
-
-template <>
-struct AccessTraits<Plato::Geometry::Points, PrimitivesTag>
-{
-    inline static std::size_t size(Plato::Geometry::Points const& points) { return points.N; }
-    KOKKOS_INLINE_FUNCTION static Point get(Plato::Geometry::Points const& points, std::size_t i)
-    {
-        return {{(float)points.d_x[i], (float)points.d_y[i], (float)points.d_z[i]}};
-    }
-    using memory_space = Plato::Geometry::MemSpace;
-};
-
-template <>
-struct AccessTraits<Plato::Geometry::Spheres, PredicatesTag>
-{
-    inline static std::size_t size(Plato::Geometry::Spheres const& d) { return d.N; }
-    KOKKOS_INLINE_FUNCTION static auto get(Plato::Geometry::Spheres const& d, std::size_t i)
-    {
-        return intersects(Sphere{{{(float)d.d_x[i], (float)d.d_y[i], (float)d.d_z[i]}}, (float)d.d_r[i]});
-    }
-    using memory_space = Plato::Geometry::MemSpace;
-};
-
-template <>
-struct AccessTraits<Plato::Geometry::Points, PredicatesTag>
-{
-    inline static std::size_t size(Plato::Geometry::Points const& d) { return d.N; }
-    KOKKOS_INLINE_FUNCTION static auto get(Plato::Geometry::Points const& d, std::size_t i)
-    {
-        return intersects(Point{(float)d.d_x[i], (float)d.d_y[i], (float)d.d_z[i]});
-    }
-    using memory_space = Plato::Geometry::MemSpace;
-};
-
 }  // namespace ArborX
 
-namespace Plato
-{
-namespace Geometry
+namespace plato::mesh
 {
 
 enum Dim
@@ -327,174 +283,6 @@ struct GetBasis
 /***************************************************************************/
 /**
 * @brief Find element that contains each mapped node
- * @param [in]  aLocations location of mesh nodes
- * @param [in]  aMappedLocations mapped location of mesh nodes
- * @param [out] aParentElements if node is mapped, index of parent element.
-
-   If a node is mapped (i.e., aLocations(*,node_id)!=aMappedLocations(*,node_id))
-   and the parent element is found, aParentElements(node_id) is set to the index
-   of the parent element.
-   If a node is mapped but the parent element isn't found, aParentElements(node_id)
-   is set to -2.
-   If a node is not mapped, aParentElements(node_id) is set to -1.
-*******************************************************************************/
-template <typename ElementT, typename ScalarT>
-void findParentElements(Plato::Mesh aMesh,
-                        Plato::ScalarMultiVectorT<ScalarT> aLocations,
-                        Plato::ScalarMultiVectorT<ScalarT> aMappedLocations,
-                        Plato::ScalarVectorT<int> aParentElements,
-                        ScalarT aSearchTolerance)
-{
-    using OrdinalT = typename Plato::ScalarVectorT<ScalarT>::size_type;
-
-    auto tNElems = aMesh->NumElements();
-    Plato::ScalarMultiVectorT<ScalarT> tMin("min", ElementT::mNumSpatialDims, tNElems);
-    Plato::ScalarMultiVectorT<ScalarT> tMax("max", ElementT::mNumSpatialDims, tNElems);
-
-    // fill d_* data
-    auto tCoords = aMesh->Coordinates();
-    auto tCells2Nodes = aMesh->Connectivity();
-    Kokkos::parallel_for(
-        "element bounding boxes", Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iCellOrdinal) {
-            // set min and max of element bounding box to first node
-            for (size_t iDim = 0; iDim < ElementT::mNumSpatialDims; ++iDim)
-            {
-                OrdinalT tVertIndex = tCells2Nodes[iCellOrdinal * ElementT::mNumNodesPerCell];
-                tMin(iDim, iCellOrdinal) = tCoords[tVertIndex * ElementT::mNumSpatialDims + iDim];
-                tMax(iDim, iCellOrdinal) = tCoords[tVertIndex * ElementT::mNumSpatialDims + iDim];
-            }
-            // loop on remaining nodes to find min
-            for (OrdinalT iVert = 1; iVert < ElementT::mNumNodesPerCell; ++iVert)
-            {
-                OrdinalT tVertIndex = tCells2Nodes[iCellOrdinal * ElementT::mNumNodesPerCell + iVert];
-                for (size_t iDim = 0; iDim < ElementT::mNumSpatialDims; ++iDim)
-                {
-                    if (tMin(iDim, iCellOrdinal) > tCoords[tVertIndex * ElementT::mNumSpatialDims + iDim])
-                    {
-                        tMin(iDim, iCellOrdinal) = tCoords[tVertIndex * ElementT::mNumSpatialDims + iDim];
-                    }
-                    else if (tMax(iDim, iCellOrdinal) < tCoords[tVertIndex * ElementT::mNumSpatialDims + iDim])
-                    {
-                        tMax(iDim, iCellOrdinal) = tCoords[tVertIndex * ElementT::mNumSpatialDims + iDim];
-                    }
-                }
-            }
-            for (size_t iDim = 0; iDim < ElementT::mNumSpatialDims; ++iDim)
-            {
-                ScalarT tLen = tMax(iDim, iCellOrdinal) - tMin(iDim, iCellOrdinal);
-                tMax(iDim, iCellOrdinal) += aSearchTolerance * tLen;
-                tMin(iDim, iCellOrdinal) -= aSearchTolerance * tLen;
-            }
-        });
-
-    auto d_x0 = Kokkos::subview(tMin, (size_t)Dim::X, Kokkos::ALL());
-    auto d_x1 = Kokkos::subview(tMax, (size_t)Dim::X, Kokkos::ALL());
-
-    auto d_y0 = Kokkos::subview(tMin, (size_t)Dim::Y, Kokkos::ALL());
-    auto d_y1 = Kokkos::subview(tMax, (size_t)Dim::Y, Kokkos::ALL());
-
-    decltype(d_x0) d_z0("min", tNElems);
-    decltype(d_x0) d_z1("max", tNElems);
-    if (tMin.extent(0) > 2)
-    {
-        d_z0 = Kokkos::subview(tMin, (size_t)Dim::Z, Kokkos::ALL());
-        d_z1 = Kokkos::subview(tMax, (size_t)Dim::Z, Kokkos::ALL());
-    }
-
-    ExecSpace tExecSpace;
-
-    // construct search tree
-    ArborX::BVH<MemSpace> bvh{tExecSpace, BoundingBoxes{d_x0.data(), d_y0.data(), d_z0.data(), d_x1.data(), d_y1.data(),
-                                                        d_z1.data(), tNElems}};
-
-    // conduct search for bounding box elements
-    auto d_x = Kokkos::subview(aMappedLocations, (size_t)Dim::X, Kokkos::ALL());
-    auto d_y = Kokkos::subview(aMappedLocations, (size_t)Dim::Y, Kokkos::ALL());
-    decltype(d_x) d_z("z", d_x.layout());
-    if (aMappedLocations.extent(0) > 2)
-    {
-        d_z = Kokkos::subview(aMappedLocations, (size_t)Dim::Z, Kokkos::ALL());
-    }
-
-    auto tNumLocations = aParentElements.size();
-    Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
-    ArborX::query(bvh, tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
-                  tIndices, tOffset);
-
-    // loop over indices and find containing element
-    GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
-    Kokkos::parallel_for(
-        "find parent element", Kokkos::RangePolicy<OrdinalT>(0, tNumLocations), KOKKOS_LAMBDA(OrdinalT iNodeOrdinal) {
-            Plato::Array<ElementT::mNumNodesPerCell, Plato::Scalar> tBasis(0.0);
-            Plato::Array<ElementT::mNumSpatialDims, Plato::Scalar> tInPoint(0.0);
-
-            aParentElements(iNodeOrdinal) = -1;
-
-            bool tMapped = false;
-            for (OrdinalT iDim = 0; iDim < ElementT::mNumSpatialDims; iDim++)
-            {
-                tMapped = tMapped || (aLocations(iDim, iNodeOrdinal) != aMappedLocations(iDim, iNodeOrdinal));
-            }
-            if (tMapped)
-            {
-                aParentElements(iNodeOrdinal) = -2;
-                constexpr ScalarT cNotFound = -1e8;  // big negative number ensures max min is found
-                constexpr ScalarT cEpsilon = -1e-8;  // small negative number for checking if float greater than 0
-                ScalarT tMaxMin = cNotFound;
-                OrdinalT tRunningNegCount = 4;
-                typename Plato::ScalarVectorT<int>::value_type iParent = -2;
-                for (int iElem = tOffset(iNodeOrdinal); iElem < tOffset(iNodeOrdinal + 1); iElem++)
-                {
-                    auto tElemIndex = tIndices(iElem);
-                    for (OrdinalT iDim = 0; iDim < ElementT::mNumSpatialDims; iDim++)
-                    {
-                        tInPoint(iDim) = aMappedLocations(iDim, iNodeOrdinal);
-                    }
-
-                    tGetBasis(tElemIndex, tInPoint, tBasis);
-
-                    ScalarT tEleMin = tBasis[0];
-                    OrdinalT tNegCount = 0;
-                    for (OrdinalT iB = 0; iB < ElementT::C1::mNumNodesPerCell; iB++)
-                    {
-                        if (tBasis[iB] < tEleMin) tEleMin = tBasis[iB];
-                        if (tBasis[iB] < cEpsilon) tNegCount += 1;
-                    }
-                    if (tNegCount < tRunningNegCount)
-                    {
-                        tRunningNegCount = tNegCount;
-                        tMaxMin = tEleMin;
-                        iParent = tElemIndex;
-                    }
-                    else if ((tNegCount == tRunningNegCount) && (tEleMin > tMaxMin))
-                    {
-                        tMaxMin = tEleMin;
-                        iParent = tElemIndex;
-                    }
-                }
-                if (tMaxMin >= cEpsilon)
-                {
-                    aParentElements(iNodeOrdinal) = iParent;
-                }
-                else
-                {
-                    OrdinalT tBoundCheck = 0;
-                    for (OrdinalT iDim = 0; iDim < ElementT::mNumSpatialDims; iDim++)
-                    {
-                        ScalarT tBoundTol = aSearchTolerance * (tMax(iDim, iParent) - tMin(iDim, iParent));
-                        if (tMaxMin < -tBoundTol) tBoundCheck += 1;
-                    }
-                    if (tBoundCheck < 1)
-                    {
-                        aParentElements(iNodeOrdinal) = iParent;
-                    }
-                }
-            }
-        });
-}
-/***************************************************************************/
-/**
-* @brief Find element that contains each mapped node
  * @param [in]  aDomainCellMap map of local parent domain cell IDs to global cell IDs
  * @param [in]  aLocations location of mesh nodes
  * @param [in]  aMappedLocations mapped location of mesh nodes
@@ -507,12 +295,12 @@ void findParentElements(Plato::Mesh aMesh,
    is set to -2.
 *******************************************************************************/
 template <typename ElementT, typename ScalarT>
-void findParentElements(Plato::Mesh aMesh,
-                        const Plato::ScalarVectorT<int>& aDomainCellMap,
-                        Plato::ScalarMultiVectorT<ScalarT> aLocations,
-                        Plato::ScalarMultiVectorT<ScalarT> aMappedLocations,
-                        Plato::ScalarVectorT<int> aParentElements,
-                        ScalarT aSearchTolerance = 1.0e-2)
+void find_parent_elements(Plato::Mesh aMesh,
+                          const Plato::ScalarVectorT<int>& aDomainCellMap,
+                          Plato::ScalarMultiVectorT<ScalarT> aLocations,
+                          Plato::ScalarMultiVectorT<ScalarT> aMappedLocations,
+                          Plato::ScalarVectorT<int> aParentElements,
+                          ScalarT aSearchTolerance = 1.0e-2)
 {
     using OrdinalT = typename Plato::ScalarVectorT<ScalarT>::size_type;
 
@@ -575,9 +363,17 @@ void findParentElements(Plato::Mesh aMesh,
 
     ExecSpace tExecSpace;
 
-    // construct search tree
-    ArborX::BVH<MemSpace> bvh{tExecSpace, BoundingBoxes{d_x0.data(), d_y0.data(), d_z0.data(), d_x1.data(), d_y1.data(),
-                                                        d_z1.data(), (int)tNElems}};
+    Kokkos::View<BoxWithIndex*, MemSpace> tBvhValues("bvh values", tNElems);
+    Kokkos::parallel_for(
+        "fill bvh values", Kokkos::RangePolicy<OrdinalT>(0, tNElems), KOKKOS_LAMBDA(OrdinalT iElemOrdinal) {
+            tBvhValues(iElemOrdinal).mBox =
+                ArborX::Box<3>{{static_cast<float>(d_x0(iElemOrdinal)), static_cast<float>(d_y0(iElemOrdinal)),
+                                static_cast<float>(d_z0(iElemOrdinal))},
+                               {static_cast<float>(d_x1(iElemOrdinal)), static_cast<float>(d_y1(iElemOrdinal)),
+                                static_cast<float>(d_z1(iElemOrdinal))}};
+            tBvhValues(iElemOrdinal).mIndex = static_cast<int>(iElemOrdinal);
+        });
+    ArborX::BoundingVolumeHierarchy<MemSpace, BoxWithIndex, BoxWithIndexGetter> bvh(tExecSpace, tBvhValues);
 
     // conduct search for bounding box elements
     auto d_x = Kokkos::subview(aMappedLocations, (size_t)Dim::X, Kokkos::ALL());
@@ -591,8 +387,10 @@ void findParentElements(Plato::Mesh aMesh,
 
     auto tNumLocations = aParentElements.size();
     Kokkos::View<int*, MemSpace> tIndices("indices", 0), tOffset("offset", 0);
-    ArborX::query(bvh, tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
-                  tIndices, tOffset);
+    bvh.query(
+        tExecSpace, Points{d_x.data(), d_y.data(), d_z.data(), static_cast<int>(tNumLocations)},
+        KOKKOS_LAMBDA(const auto&, const BoxWithIndex& aValue, const auto& out) { out(aValue.mIndex); }, tIndices,
+        tOffset);
 
     // loop over indices and find containing element
     GetBasis<ElementT, ScalarT> tGetBasis(aMesh);
@@ -661,7 +459,6 @@ void findParentElements(Plato::Mesh aMesh,
         });
 }
 
-}  // end namespace Geometry
-}  // end namespace Plato
+}  // namespace plato::mesh
 
 #endif

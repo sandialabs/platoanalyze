@@ -20,9 +20,9 @@ namespace Plato
  * @returns Mirror on host
  **********************************************************************************/
 template <typename ViewType>
-typename ViewType::HostMirror get(const ViewType& aView)
+typename ViewType::host_mirror_type get(const ViewType& aView)
 {
-    using RetType = typename ViewType::HostMirror;
+    using RetType = typename ViewType::host_mirror_type;
     RetType tView = Kokkos::create_mirror(aView);
     Kokkos::deep_copy(tView, aView);
     return tView;
