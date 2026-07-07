@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "problem/geometric/ScalarFunctionBaseFactory.hpp"
 #include "utilities/AnalyzeMacros.hpp"
@@ -24,6 +26,7 @@ void LeastSquaresFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProb
     mFunctionWeights.clear();
     mFunctionGoldValues.clear();
     mFunctionNormalization.clear();
+    mFunctionNames.clear();
 
     auto tFunctionParams = aProblemParams.sublist("Criteria").sublist(mFunctionName);
 
@@ -54,6 +57,7 @@ void LeastSquaresFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProb
         mScalarFunctionBaseContainer.push_back(
             tFactory.create(mSpatialModel, mDataMap, aProblemParams, tFunctionNames[tFunctionIndex]));
         mFunctionWeights.push_back(tFunctionWeights[tFunctionIndex]);
+        mFunctionNames.push_back(tFunctionNames[tFunctionIndex]);
 
         appendGoldFunctionValue(tFunctionGoldValues[tFunctionIndex]);
     }
@@ -107,6 +111,12 @@ template <typename PhysicsType>
 void LeastSquaresFunction<PhysicsType>::appendFunctionWeight(Plato::Scalar aWeight)
 {
     mFunctionWeights.push_back(aWeight);
+}
+
+template <typename PhysicsType>
+void LeastSquaresFunction<PhysicsType>::appendFunctionName(const std::string& aName)
+{
+    mFunctionNames.push_back(aName);
 }
 
 /******************************************************************************/
@@ -182,6 +192,7 @@ Plato::Scalar LeastSquaresFunction<PhysicsType>::value(const Plato::ScalarVector
     assert(mFunctionWeights.size() == mScalarFunctionBaseContainer.size());
     assert(mFunctionGoldValues.size() == mScalarFunctionBaseContainer.size());
     assert(mFunctionNormalization.size() == mScalarFunctionBaseContainer.size());
+    assert(mFunctionNames.size() == mScalarFunctionBaseContainer.size());
 
     Plato::Scalar tResult = 0.0;
     for (Plato::OrdinalType tFunctionIndex = 0; tFunctionIndex < mScalarFunctionBaseContainer.size(); ++tFunctionIndex)
@@ -197,8 +208,9 @@ Plato::Scalar LeastSquaresFunction<PhysicsType>::value(const Plato::ScalarVector
                                          : (tFunctionValue - tFunctionGoldValue);
         std::cout << std::format(
             "{:.20s} = {:12.4e} * (({:12.4e} - {:12.4e}) / {:12.4e})^{} =  {:12.4e} (PercDiff = {:10.1f})\n",
-            mFunctionName.c_str(), tFunctionWeight, tFunctionValue, tFunctionGoldValue, tFunctionScale, mPower,
-            tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, mPower), tPercentDiff);
+            mFunctionNames[tFunctionIndex].c_str(), tFunctionWeight, tFunctionValue, tFunctionGoldValue, tFunctionScale,
+            mPower, tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, mPower),
+            tPercentDiff);
     }
     return tResult;
 }

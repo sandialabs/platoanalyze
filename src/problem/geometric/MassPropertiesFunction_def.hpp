@@ -328,60 +328,70 @@ void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMassFunction(aSpatialModel));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else if (tPropertyName == "CGx")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
         }
         else if (tPropertyName == "CGy")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
         }
         else if (tPropertyName == "CGz")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
         }
         else if (tPropertyName == "Ixx")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "XX"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else if (tPropertyName == "Iyy")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "YY"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else if (tPropertyName == "Izz")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "ZZ"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else if (tPropertyName == "Ixy")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "XY"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else if (tPropertyName == "Ixz")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "XZ"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else if (tPropertyName == "Iyz")
         {
             mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "YZ"));
             mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
+            mLeastSquaresFunction->appendFunctionName(tPropertyName);
             mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
         }
         else

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "domain/WorksetBase.hpp"
@@ -51,6 +52,9 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
      * \param [in] aWeight function weight
      **********************************************************************************/
     void appendFunctionWeight(Plato::Scalar aWeight);
+
+    /// @brief Add function name
+    void appendFunctionName(const std::string& aName);
 
     /******************************************************************************/
     /**
@@ -114,6 +118,7 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
     std::vector<Plato::Scalar> mFunctionWeights;
     std::vector<Plato::Scalar> mFunctionGoldValues;
     std::vector<Plato::Scalar> mFunctionNormalization;
+    std::vector<std::string> mFunctionNames;
     std::vector<std::shared_ptr<Plato::Geometric::ScalarFunctionBase>> mScalarFunctionBaseContainer;
 
     const plato::domain::SpatialModel& mSpatialModel;
