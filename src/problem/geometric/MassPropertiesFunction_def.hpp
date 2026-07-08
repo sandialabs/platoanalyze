@@ -1,13 +1,15 @@
 #pragma once
 
+#include <memory>
 #include <set>
 
-#include "linear_algebra/BLAS1.hpp"
 #include "linear_algebra/PlatoEigen.hpp"
 #include "parsing/ParseTools.hpp"
 #include "problem/geometric/DivisionFunction.hpp"
 #include "problem/geometric/GeometryScalarFunction.hpp"
+#include "problem/geometric/LeastSquaresFunction.hpp"
 #include "problem/geometric/MassMoment.hpp"
+#include "problem/geometric/MassPropertiesFunction_decl.hpp"
 #include "problem/geometric/WeightedSumFunction.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
@@ -92,13 +94,20 @@ void MassPropertiesFunction<PhysicsType>::createLeastSquaresFunction(const plato
         ANALYZE_THROWERR(tErrorString)
     }
 
+    std::unordered_map<std::string, LeastSquaresFunctionData> tPropertyFunctions;
+    constexpr Plato::Scalar tDefaultPropertyNormalization{1.0};
+    for (Plato::OrdinalType tPropertyIndex = 0; tPropertyIndex < tPropertyNames.size(); ++tPropertyIndex)
+    {
+        tPropertyFunctions.try_emplace(tPropertyNames[tPropertyIndex], tPropertyWeights[tPropertyIndex],
+                                       tPropertyGoldValues[tPropertyIndex], tDefaultPropertyNormalization, nullptr);
+    }
+
     const bool tAllPropertiesSpecifiedByUser = allPropertiesSpecified(tPropertyNames);
 
     if (tAllPropertiesSpecifiedByUser)
-        createAllMassPropertiesLeastSquaresFunction(aSpatialModel, tPropertyNames, tPropertyWeights,
-                                                    tPropertyGoldValues);
+        createAllMassPropertiesLeastSquaresFunction(aSpatialModel, std::move(tPropertyFunctions));
     else
-        createItemizedLeastSquaresFunction(aSpatialModel, tPropertyNames, tPropertyWeights, tPropertyGoldValues);
+        createItemizedLeastSquaresFunction(aSpatialModel, std::move(tPropertyFunctions));
 }
 
 /******************************************************************************/
@@ -165,118 +174,100 @@ bool MassPropertiesFunction<PhysicsType>::allPropertiesSpecified(const std::vect
     return true;
 }
 
+template <typename PhysicsType>
+auto MassPropertiesFunction<PhysicsType>::computePropertyNormalizationFromGoldValue(const Plato::Scalar aGoldValue)
+    -> Plato::Scalar const
+{
+    const Plato::Scalar tAbsoluteGold = std::abs(aGoldValue);
+    return tAbsoluteGold > mFunctionNormalizationCutoff ? tAbsoluteGold : 1.0;
+}
+
+template <typename PhysicsType>
+auto MassPropertiesFunction<PhysicsType>::thresholdPropertyNormalization(const Plato::Scalar aNormalization)
+    -> Plato::Scalar const
+{
+    const Plato::Scalar tAbsoluteNormalization = std::abs(aNormalization);
+    return tAbsoluteNormalization > mFunctionNormalizationCutoff ? tAbsoluteNormalization
+                                                                 : mFunctionNormalizationCutoff;
+}
+
 // CPD-OFF
-/******************************************************************************/
-/**
- * \brief Create a least squares function for all mass properties (inertia about gold CG)
- * \param [in] aSpatialModel Plato Analyze spatial model
- * \param [in] aPropertyNames names of properties specified by user
- * \param [in] aPropertyWeights weights of properties specified by user
- * \param [in] aPropertyGoldValues gold values of properties specified by user
- **********************************************************************************/
 template <typename PhysicsType>
 void MassPropertiesFunction<PhysicsType>::createAllMassPropertiesLeastSquaresFunction(
     const plato::domain::SpatialModel& aSpatialModel,
-    const std::vector<std::string>& aPropertyNames,
-    const std::vector<Plato::Scalar>& aPropertyWeights,
-    const std::vector<Plato::Scalar>& aPropertyGoldValues)
+    std::unordered_map<std::string, LeastSquaresFunctionData> aPropertyFunctions)
 {
     std::cout << "Creating all mass properties function.\n";
-    mLeastSquaresFunction = std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(
-        aSpatialModel, mDataMap, mLeastSquaresExponent);
-    std::map<std::string, Plato::Scalar> tWeightMap;
-    std::map<std::string, Plato::Scalar> tGoldValueMap;
-    for (Plato::OrdinalType tPropertyIndex = 0; tPropertyIndex < aPropertyNames.size(); ++tPropertyIndex)
-    {
-        const std::string tPropertyName = aPropertyNames[tPropertyIndex];
-        const Plato::Scalar tPropertyWeight = aPropertyWeights[tPropertyIndex];
-        const Plato::Scalar tPropertyGoldValue = aPropertyGoldValues[tPropertyIndex];
+    computeRotationAndParallelAxisTheoremMatrices(aPropertyFunctions);
 
-        tWeightMap.insert(std::pair<std::string, Plato::Scalar>(tPropertyName, tPropertyWeight));
-        tGoldValueMap.insert(std::pair<std::string, Plato::Scalar>(tPropertyName, tPropertyGoldValue));
-    }
+    aPropertyFunctions.at("Mass").mScalarFunction = getMassFunction(aSpatialModel);
+    aPropertyFunctions.at("Mass").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("Mass").mGoldValue);
 
-    computeRotationAndParallelAxisTheoremMatrices(tGoldValueMap);
+    aPropertyFunctions.at("CGx").mScalarFunction = getFirstMomentOverMassRatio(aSpatialModel, "FirstX");
+    aPropertyFunctions.at("CGx").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("CGx").mGoldValue);
 
-    // Mass
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMassFunction(aSpatialModel));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Mass")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("Mass")]);
+    aPropertyFunctions.at("CGy").mScalarFunction = getFirstMomentOverMassRatio(aSpatialModel, "FirstY");
+    aPropertyFunctions.at("CGy").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("CGy").mGoldValue);
 
-    // CGx
-    mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGx")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGx")], true);
+    aPropertyFunctions.at("CGz").mScalarFunction = getFirstMomentOverMassRatio(aSpatialModel, "FirstZ");
+    aPropertyFunctions.at("CGz").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("CGz").mGoldValue);
 
-    // CGy
-    mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGy")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGy")], true);
+    aPropertyFunctions.at("Ixx").mScalarFunction = getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XX");
+    aPropertyFunctions.at("Ixx").mGoldValue = mInertiaPrincipalValues(0);
+    aPropertyFunctions.at("Ixx").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("Ixx").mGoldValue);
 
-    // CGz
-    mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("CGz")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(tGoldValueMap[std::string("CGz")], true);
+    aPropertyFunctions.at("Iyy").mScalarFunction = getMomentOfInertiaRotatedAboutCG(aSpatialModel, "YY");
+    aPropertyFunctions.at("Iyy").mGoldValue = mInertiaPrincipalValues(1);
+    aPropertyFunctions.at("Iyy").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("Iyy").mGoldValue);
 
-    // Ixx
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XX"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Ixx")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(mInertiaPrincipalValues(0));
-
-    // Iyy
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "YY"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Iyy")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(mInertiaPrincipalValues(1));
-
-    // Izz
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "ZZ"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Izz")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(mInertiaPrincipalValues(2));
+    aPropertyFunctions.at("Izz").mScalarFunction = getMomentOfInertiaRotatedAboutCG(aSpatialModel, "ZZ");
+    aPropertyFunctions.at("Izz").mGoldValue = mInertiaPrincipalValues(2);
+    aPropertyFunctions.at("Izz").mNormalization =
+        computePropertyNormalizationFromGoldValue(aPropertyFunctions.at("Izz").mGoldValue);
 
     // Minimum Principal Moment of Inertia
     Plato::Scalar tMinPrincipalMoment =
         std::min(mInertiaPrincipalValues(0), std::min(mInertiaPrincipalValues(1), mInertiaPrincipalValues(2)));
 
-    // Ixy
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XY"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Ixy")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(0.0, false);
-    mLeastSquaresFunction->appendFunctionNormalization(tMinPrincipalMoment);
+    aPropertyFunctions.at("Ixy").mScalarFunction = getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XY");
+    aPropertyFunctions.at("Ixy").mGoldValue = 0.0;
+    aPropertyFunctions.at("Ixy").mNormalization = thresholdPropertyNormalization(tMinPrincipalMoment);
 
-    // Ixz
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XZ"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Ixz")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(0.0, false);
-    mLeastSquaresFunction->appendFunctionNormalization(tMinPrincipalMoment);
+    aPropertyFunctions.at("Ixz").mScalarFunction = getMomentOfInertiaRotatedAboutCG(aSpatialModel, "XZ");
+    aPropertyFunctions.at("Ixz").mGoldValue = 0.0;
+    aPropertyFunctions.at("Ixz").mNormalization = thresholdPropertyNormalization(tMinPrincipalMoment);
 
-    // Iyz
-    mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertiaRotatedAboutCG(aSpatialModel, "YZ"));
-    mLeastSquaresFunction->appendFunctionWeight(tWeightMap[std::string("Iyz")]);
-    mLeastSquaresFunction->appendGoldFunctionValue(0.0, false);
-    mLeastSquaresFunction->appendFunctionNormalization(tMinPrincipalMoment);
+    aPropertyFunctions.at("Iyz").mScalarFunction = getMomentOfInertiaRotatedAboutCG(aSpatialModel, "YZ");
+    aPropertyFunctions.at("Iyz").mGoldValue = 0.0;
+    aPropertyFunctions.at("Iyz").mNormalization = thresholdPropertyNormalization(tMinPrincipalMoment);
+
+    mLeastSquaresFunction = std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(
+        aSpatialModel, mDataMap, mLeastSquaresExponent);
+    mLeastSquaresFunction->appendScalarFunctions(std::move(aPropertyFunctions));
 }
 
-/******************************************************************************/
-/**
- * \brief Compute rotation and parallel axis theorem matrices
- * \param [in] aGoldValueMap gold value map
- **********************************************************************************/
 template <typename PhysicsType>
 void MassPropertiesFunction<PhysicsType>::computeRotationAndParallelAxisTheoremMatrices(
-    std::map<std::string, Plato::Scalar>& aGoldValueMap)
+    const std::unordered_map<std::string, LeastSquaresFunctionData>& aPropertyFunctions)
 {
-    const Plato::Scalar Mass = aGoldValueMap[std::string("Mass")];
+    const Plato::Scalar Mass = aPropertyFunctions.at(std::string("Mass")).mGoldValue;
 
-    const Plato::Scalar Ixx = aGoldValueMap[std::string("Ixx")];
-    const Plato::Scalar Iyy = aGoldValueMap[std::string("Iyy")];
-    const Plato::Scalar Izz = aGoldValueMap[std::string("Izz")];
-    const Plato::Scalar Ixy = aGoldValueMap[std::string("Ixy")];
-    const Plato::Scalar Ixz = aGoldValueMap[std::string("Ixz")];
-    const Plato::Scalar Iyz = aGoldValueMap[std::string("Iyz")];
+    const Plato::Scalar Ixx = aPropertyFunctions.at(std::string("Ixx")).mGoldValue;
+    const Plato::Scalar Iyy = aPropertyFunctions.at(std::string("Iyy")).mGoldValue;
+    const Plato::Scalar Izz = aPropertyFunctions.at(std::string("Izz")).mGoldValue;
+    const Plato::Scalar Ixy = aPropertyFunctions.at(std::string("Ixy")).mGoldValue;
+    const Plato::Scalar Ixz = aPropertyFunctions.at(std::string("Ixz")).mGoldValue;
+    const Plato::Scalar Iyz = aPropertyFunctions.at(std::string("Iyz")).mGoldValue;
 
-    const Plato::Scalar CGx = aGoldValueMap[std::string("CGx")];
-    const Plato::Scalar CGy = aGoldValueMap[std::string("CGy")];
-    const Plato::Scalar CGz = aGoldValueMap[std::string("CGz")];
+    const Plato::Scalar CGx = aPropertyFunctions.at(std::string("CGx")).mGoldValue;
+    const Plato::Scalar CGy = aPropertyFunctions.at(std::string("CGy")).mGoldValue;
+    const Plato::Scalar CGz = aPropertyFunctions.at(std::string("CGz")).mGoldValue;
 
     Plato::Array<3> tCGVector({CGx, CGy, CGz});
 
@@ -300,99 +291,54 @@ void MassPropertiesFunction<PhysicsType>::computeRotationAndParallelAxisTheoremM
 }
 // CPD-ON
 
-/******************************************************************************/
-/**
- * \brief Create an itemized least squares function for user specified mass properties
- * \param [in] aMesh mesh database
- * \param [in] aPropertyNames names of properties specified by user
- * \param [in] aPropertyWeights weights of properties specified by user
- * \param [in] aPropertyGoldValues gold values of properties specified by user
- **********************************************************************************/
 template <typename PhysicsType>
 void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
     const plato::domain::SpatialModel& aSpatialModel,
-    const std::vector<std::string>& aPropertyNames,
-    const std::vector<Plato::Scalar>& aPropertyWeights,
-    const std::vector<Plato::Scalar>& aPropertyGoldValues)
+    std::unordered_map<std::string, LeastSquaresFunctionData> aPropertyFunctions)
 {
     std::cout << "Creating itemized mass properties function.\n";
-    mLeastSquaresFunction = std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(
-        aSpatialModel, mDataMap, mLeastSquaresExponent);
-    for (Plato::OrdinalType tPropertyIndex = 0; tPropertyIndex < aPropertyNames.size(); ++tPropertyIndex)
+    for (auto& [tPropertyName, tPropertyFunction] : aPropertyFunctions)
     {
-        const std::string tPropertyName = aPropertyNames[tPropertyIndex];
-        const Plato::Scalar tPropertyWeight = aPropertyWeights[tPropertyIndex];
-        const Plato::Scalar tPropertyGoldValue = aPropertyGoldValues[tPropertyIndex];
-
+        tPropertyFunction.mNormalization = computePropertyNormalizationFromGoldValue(tPropertyFunction.mGoldValue);
         if (tPropertyName == "Mass")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMassFunction(aSpatialModel));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            tPropertyFunction.mScalarFunction = getMassFunction(aSpatialModel);
         }
         else if (tPropertyName == "CGx")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstX"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
+            tPropertyFunction.mScalarFunction = getFirstMomentOverMassRatio(aSpatialModel, "FirstX");
         }
         else if (tPropertyName == "CGy")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstY"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
+            tPropertyFunction.mScalarFunction = getFirstMomentOverMassRatio(aSpatialModel, "FirstY");
         }
         else if (tPropertyName == "CGz")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getFirstMomentOverMassRatio(aSpatialModel, "FirstZ"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue, true);
+            tPropertyFunction.mScalarFunction = getFirstMomentOverMassRatio(aSpatialModel, "FirstZ");
         }
         else if (tPropertyName == "Ixx")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "XX"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            aPropertyFunctions.at("Ixx").mScalarFunction = getMomentOfInertia(aSpatialModel, "XX");
         }
         else if (tPropertyName == "Iyy")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "YY"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            aPropertyFunctions.at("Iyy").mScalarFunction = getMomentOfInertia(aSpatialModel, "YY");
         }
         else if (tPropertyName == "Izz")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "ZZ"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            aPropertyFunctions.at("Izz").mScalarFunction = getMomentOfInertia(aSpatialModel, "ZZ");
         }
         else if (tPropertyName == "Ixy")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "XY"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            aPropertyFunctions.at("Ixy").mScalarFunction = getMomentOfInertia(aSpatialModel, "XY");
         }
         else if (tPropertyName == "Ixz")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "XZ"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            aPropertyFunctions.at("Ixz").mScalarFunction = getMomentOfInertia(aSpatialModel, "XZ");
         }
         else if (tPropertyName == "Iyz")
         {
-            mLeastSquaresFunction->allocateScalarFunctionBase(getMomentOfInertia(aSpatialModel, "YZ"));
-            mLeastSquaresFunction->appendFunctionWeight(tPropertyWeight);
-            mLeastSquaresFunction->appendFunctionName(tPropertyName);
-            mLeastSquaresFunction->appendGoldFunctionValue(tPropertyGoldValue);
+            aPropertyFunctions.at("Iyz").mScalarFunction = getMomentOfInertia(aSpatialModel, "YZ");
         }
         else
         {
@@ -402,6 +348,10 @@ void MassPropertiesFunction<PhysicsType>::createItemizedLeastSquaresFunction(
             ANALYZE_THROWERR(tErrorString)
         }
     }
+
+    mLeastSquaresFunction = std::make_shared<Plato::Geometric::LeastSquaresFunction<PhysicsType>>(
+        aSpatialModel, mDataMap, mLeastSquaresExponent);
+    mLeastSquaresFunction->appendScalarFunctions(std::move(aPropertyFunctions));
 }
 
 /******************************************************************************/

@@ -1,9 +1,8 @@
 #pragma once
 
-#include <cassert>
 #include <memory>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 #include "domain/WorksetBase.hpp"
 #include "problem/geometric/ScalarFunctionBase.hpp"
@@ -13,6 +12,13 @@ namespace Plato
 
 namespace Geometric
 {
+struct LeastSquaresFunctionData
+{
+    Plato::Scalar mWeight;
+    Plato::Scalar mGoldValue;
+    Plato::Scalar mNormalization;
+    std::shared_ptr<Plato::Geometric::ScalarFunctionBase> mScalarFunction;
+};
 
 /******************************************************************************/
 /**
@@ -46,37 +52,9 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
                          Plato::DataMap& aDataMap,
                          const unsigned int aPower);
 
-    /******************************************************************************/
-    /**
-     * \brief Add function weight
-     * \param [in] aWeight function weight
-     **********************************************************************************/
-    void appendFunctionWeight(Plato::Scalar aWeight);
-
-    /// @brief Add function name
-    void appendFunctionName(const std::string& aName);
-
-    /******************************************************************************/
-    /**
-     * \brief Add function gold value
-     * \param [in] aGoldValue function gold value
-     * \param [in] aUseAsNormalization use gold value as normalization
-     **********************************************************************************/
-    void appendGoldFunctionValue(Plato::Scalar aGoldValue, bool aUseAsNormalization = true);
-
-    /******************************************************************************/
-    /**
-     * \brief Add function normalization
-     * \param [in] aFunctionNormalization function normalization value
-     **********************************************************************************/
-    void appendFunctionNormalization(Plato::Scalar aFunctionNormalization);
-
-    /******************************************************************************/
-    /**
-     * \brief Allocate scalar function base using the residual automatic differentiation type
-     * \param [in] aInput scalar function
-     **********************************************************************************/
-    void allocateScalarFunctionBase(const std::shared_ptr<Plato::Geometric::ScalarFunctionBase>& aInput);
+    /// @brief append an existing map from name @a aName to a struct containing the scalar function data @a
+    /// aFunctionData for use in least squares computation
+    void appendScalarFunctions(std::unordered_map<std::string, LeastSquaresFunctionData> aFunctionMap);
 
     /******************************************************************************/
     /**
@@ -110,16 +88,14 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
     Plato::ScalarVector gradient_z(const Plato::ScalarVector& aControl) const override;
 
    private:
+    /// @brief Initialize from parameter list
+    void initialize(Teuchos::ParameterList& aProblemParams);
+
+   private:
     using ElementType = typename PhysicsType::ElementType;
 
     using Plato::WorksetBase<ElementType>::mNumSpatialDims;
     using Plato::WorksetBase<ElementType>::mNumNodes;
-
-    std::vector<Plato::Scalar> mFunctionWeights;
-    std::vector<Plato::Scalar> mFunctionGoldValues;
-    std::vector<Plato::Scalar> mFunctionNormalization;
-    std::vector<std::string> mFunctionNames;
-    std::vector<std::shared_ptr<Plato::Geometric::ScalarFunctionBase>> mScalarFunctionBaseContainer;
 
     const plato::domain::SpatialModel& mSpatialModel;
 
@@ -127,16 +103,9 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
 
     std::string mFunctionName;
 
-    /*!< if (|GoldValue| > 0.1) then ((f - f_gold) / f_gold)^2 ; otherwise  (f - f_gold)^2 */
-    const Plato::Scalar mFunctionNormalizationCutoff = 0.1;
-
     unsigned int mPower = 2;
-    /******************************************************************************/
-    /**
-     * \brief Initialization of Least Squares Function
-     * \param [in] aProblemParams input parameters database
-     **********************************************************************************/
-    void initialize(Teuchos::ParameterList& aProblemParams);
+
+    std::unordered_map<std::string, LeastSquaresFunctionData> mFunctions;
 };
 // class LeastSquaresFunction
 
