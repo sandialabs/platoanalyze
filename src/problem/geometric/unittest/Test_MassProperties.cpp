@@ -15,7 +15,7 @@
 #include "problem/geometric/WeightedSumFunction.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
-namespace problem::geometric::unittest
+namespace plato::problem::geometric::unittest
 {
 
 namespace
@@ -283,4 +283,4 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesGradZ_3D)
     Plato::test_partial_control<GradientZ, ElementType>(tMesh, tMassProperties);
 }
 
-}  // namespace problem::geometric::unittest
+}  // namespace plato::problem::geometric::unittest
