@@ -88,7 +88,7 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
 {
     if (mCriteriaMap.count(aName))
     {
-        return mCriteriaMap.at(aName)->gradient_z(aControl);
+        return mCriteriaMap.at(aName)->gradient_x(aControl);
     }
     else
     {
