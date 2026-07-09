@@ -3,7 +3,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
-#include "element/MechanicsElement.hpp"
+#include "element/GeometricElement.hpp"
 #include "element/Tet4.hpp"
 #include "element/Tri3.hpp"
 #include "linear_algebra/BLAS1.hpp"
@@ -102,7 +102,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesParsingGoldShouldBeZero)
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
 {
-    using ElementType = typename Plato::MechanicsElement<Plato::Tri3>;
+    using ElementType = typename plato::element::GeometricElement<Plato::Tri3>;
     using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;
     using ConfigT = typename Residual::ConfigScalarType;
     using ResultT = typename Residual::ResultScalarType;
@@ -145,7 +145,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume3D)
 {
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename plato::element::GeometricElement<Plato::Tet4>;
     using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;
     using ConfigT = typename Residual::ConfigScalarType;
     using ResultT = typename Residual::ResultScalarType;
@@ -250,7 +250,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3DNormalized)
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesGradZ_3D)
 {
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename plato::element::GeometricElement<Plato::Tet4>;
     using GradientZ = typename Plato::Geometric::Evaluation<ElementType>::GradientZ;
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);

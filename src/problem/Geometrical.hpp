@@ -44,7 +44,7 @@ struct FunctionFactory
 
 }  // namespace Plato
 
-#include "element/MechanicsElement.hpp"
+#include "element/GeometricElement.hpp"
 
 namespace Plato
 {
@@ -53,7 +53,7 @@ class Geometrical
 {
    public:
     typedef Plato::GeometryFactory::FunctionFactory FunctionFactory;
-    using ElementType = MechanicsElement<TopoElementType>;
+    using ElementType = plato::element::GeometricElement<TopoElementType>;
 };
 // class Geometrical
 
