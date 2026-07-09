@@ -98,38 +98,32 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
      **********************************************************************************/
     bool allPropertiesSpecified(const std::vector<std::string>& aPropertyNames);
 
-    /******************************************************************************/
-    /**
-     * \brief Create a least squares function for all mass properties (inertia about gold CG)
-     * \param [in] aSpatialModel Plato Analyze spatial model
-     * \param [in] aPropertyNames names of properties specified by user
-     * \param [in] aPropertyWeights weights of properties specified by user
-     * \param [in] aPropertyGoldValues gold values of properties specified by user
-     **********************************************************************************/
-    void createAllMassPropertiesLeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
-                                                     const std::vector<std::string>& aPropertyNames,
-                                                     const std::vector<Plato::Scalar>& aPropertyWeights,
-                                                     const std::vector<Plato::Scalar>& aPropertyGoldValues);
+    /// @brief Compute the normalization weight as the absolute value of the gold value if the gold value is above the
+    /// threshold mFunctionNormalizationCutoff, otherwise use a normalization of 1.0
+    auto computePropertyNormalizationFromGoldValue(const Plato::Scalar aGoldValue) -> Plato::Scalar const;
+
+    /// @brief Threshold the normalization weight at mFunctionNormalizationCutoff
+    auto thresholdPropertyNormalization(const Plato::Scalar aNormalization) -> Plato::Scalar const;
+
+    /// @brief Create a least squares function for all mass properties (inertia about gold CG) using property data
+    /// stored in the map @a aPropertyFunctions.
+    void createAllMassPropertiesLeastSquaresFunction(
+        const plato::domain::SpatialModel& aSpatialModel,
+        std::unordered_map<std::string, LeastSquaresFunctionData> aPropertyFunctions);
 
     /******************************************************************************/
     /**
      * \brief Compute rotation and parallel axis theorem matrices
      * \param [in] aGoldValueMap gold value map
      **********************************************************************************/
-    void computeRotationAndParallelAxisTheoremMatrices(std::map<std::string, Plato::Scalar>& aGoldValueMap);
+    void computeRotationAndParallelAxisTheoremMatrices(
+        const std::unordered_map<std::string, LeastSquaresFunctionData>& aPropertyFunctions);
 
-    /******************************************************************************/
-    /**
-     * \brief Create an itemized least squares function for user specified mass properties
-     * \param [in] aMesh mesh database
-     * \param [in] aPropertyNames names of properties specified by user
-     * \param [in] aPropertyWeights weights of properties specified by user
-     * \param [in] aPropertyGoldValues gold values of properties specified by user
-     **********************************************************************************/
-    void createItemizedLeastSquaresFunction(const plato::domain::SpatialModel& aSpatialModel,
-                                            const std::vector<std::string>& aPropertyNames,
-                                            const std::vector<Plato::Scalar>& aPropertyWeights,
-                                            const std::vector<Plato::Scalar>& aPropertyGoldValues);
+    /// @brief Create an itemized least squares function for user specified mass properties using property data stored
+    /// in the map @a aPropertyFunctions.
+    void createItemizedLeastSquaresFunction(
+        const plato::domain::SpatialModel& aSpatialModel,
+        std::unordered_map<std::string, LeastSquaresFunctionData> aPropertyFunctions);
 
     /******************************************************************************/
     /**
@@ -212,6 +206,9 @@ class MassPropertiesFunction : public Plato::Geometric::ScalarFunctionBase,
     Plato::Matrix<3, 3> mMinusRotatedParallelAxisTheoremMatrix;
 
     unsigned int mLeastSquaresExponent = 2;
+
+    /*!< if (|GoldValue| > 0.1) then ((f - f_gold) / f_gold)^2 ; otherwise  (f - f_gold)^2 */
+    Plato::Scalar mFunctionNormalizationCutoff = 0.1;
 };
 // class MassPropertiesFunction
 

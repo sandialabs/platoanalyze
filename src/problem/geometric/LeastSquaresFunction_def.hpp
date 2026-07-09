@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
+
 #include "linear_algebra/PlatoStaticsTypes.hpp"
+#include "problem/geometric/LeastSquaresFunction_decl.hpp"
 #include "problem/geometric/ScalarFunctionBaseFactory.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
@@ -19,11 +22,6 @@ template <typename PhysicsType>
 void LeastSquaresFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProblemParams)
 {
     Plato::Geometric::ScalarFunctionBaseFactory<PhysicsType> tFactory;
-
-    mScalarFunctionBaseContainer.clear();
-    mFunctionWeights.clear();
-    mFunctionGoldValues.clear();
-    mFunctionNormalization.clear();
 
     auto tFunctionParams = aProblemParams.sublist("Criteria").sublist(mFunctionName);
 
@@ -49,13 +47,13 @@ void LeastSquaresFunction<PhysicsType>::initialize(Teuchos::ParameterList& aProb
         ANALYZE_THROWERR(tErrorString)
     }
 
+    constexpr Plato::Scalar tDefaultFunctionNormalization{1.0};
     for (Plato::OrdinalType tFunctionIndex = 0; tFunctionIndex < tFunctionNames.size(); ++tFunctionIndex)
     {
-        mScalarFunctionBaseContainer.push_back(
+        mFunctions.try_emplace(
+            tFunctionNames[tFunctionIndex], tFunctionWeights[tFunctionIndex], tFunctionGoldValues[tFunctionIndex],
+            tDefaultFunctionNormalization,
             tFactory.create(mSpatialModel, mDataMap, aProblemParams, tFunctionNames[tFunctionIndex]));
-        mFunctionWeights.push_back(tFunctionWeights[tFunctionIndex]);
-
-        appendGoldFunctionValue(tFunctionGoldValues[tFunctionIndex]);
     }
 }
 
@@ -100,74 +98,23 @@ LeastSquaresFunction<PhysicsType>::LeastSquaresFunction(const plato::domain::Spa
 
 /******************************************************************************/
 /**
- * \brief Add function weight
- * \param [in] aWeight function weight
- **********************************************************************************/
-template <typename PhysicsType>
-void LeastSquaresFunction<PhysicsType>::appendFunctionWeight(Plato::Scalar aWeight)
-{
-    mFunctionWeights.push_back(aWeight);
-}
-
-/******************************************************************************/
-/**
- * \brief Add function gold value
- * \param [in] aGoldValue function gold value
- * \param [in] aUseAsNormalization use gold value as normalization
- **********************************************************************************/
-template <typename PhysicsType>
-void LeastSquaresFunction<PhysicsType>::appendGoldFunctionValue(Plato::Scalar aGoldValue, bool aUseAsNormalization)
-{
-    mFunctionGoldValues.push_back(aGoldValue);
-
-    if (aUseAsNormalization)
-    {
-        if (std::abs(aGoldValue) > mFunctionNormalizationCutoff)
-            mFunctionNormalization.push_back(std::abs(aGoldValue));
-        else
-            mFunctionNormalization.push_back(1.0);
-    }
-}
-
-/******************************************************************************/
-/**
- * \brief Add function normalization
- * \param [in] aFunctionNormalization function normalization value
- **********************************************************************************/
-template <typename PhysicsType>
-void LeastSquaresFunction<PhysicsType>::appendFunctionNormalization(Plato::Scalar aFunctionNormalization)
-{
-    // Dont allow the function normalization to be "too small"
-    if (std::abs(aFunctionNormalization) > mFunctionNormalizationCutoff)
-        mFunctionNormalization.push_back(std::abs(aFunctionNormalization));
-    else
-        mFunctionNormalization.push_back(mFunctionNormalizationCutoff);
-}
-
-/******************************************************************************/
-/**
- * \brief Allocate scalar function base using the residual automatic differentiation type
- * \param [in] aInput scalar function
- **********************************************************************************/
-template <typename PhysicsType>
-void LeastSquaresFunction<PhysicsType>::allocateScalarFunctionBase(
-    const std::shared_ptr<Plato::Geometric::ScalarFunctionBase>& aInput)
-{
-    mScalarFunctionBaseContainer.push_back(aInput);
-}
-
-/******************************************************************************/
-/**
  * \brief Update physics-based parameters within optimization iterations
  * \param [in] aControl 1D view of control variables
  **********************************************************************************/
 template <typename PhysicsType>
 void LeastSquaresFunction<PhysicsType>::updateProblem(const Plato::ScalarVector& aControl) const
 {
-    for (Plato::OrdinalType tFunctionIndex = 0; tFunctionIndex < mScalarFunctionBaseContainer.size(); ++tFunctionIndex)
+    for (const auto& [tName, tFunctionData] : mFunctions)
     {
-        mScalarFunctionBaseContainer[tFunctionIndex]->updateProblem(aControl);
+        tFunctionData.mScalarFunction->updateProblem(aControl);
     }
+}
+
+template <typename PhysicsType>
+void LeastSquaresFunction<PhysicsType>::appendScalarFunctions(
+    std::unordered_map<std::string, LeastSquaresFunctionData> aFunctionMap)
+{
+    mFunctions = std::move(aFunctionMap);
 }
 
 /******************************************************************************/
@@ -179,25 +126,21 @@ void LeastSquaresFunction<PhysicsType>::updateProblem(const Plato::ScalarVector&
 template <typename PhysicsType>
 Plato::Scalar LeastSquaresFunction<PhysicsType>::value(const Plato::ScalarVector& aControl) const
 {
-    assert(mFunctionWeights.size() == mScalarFunctionBaseContainer.size());
-    assert(mFunctionGoldValues.size() == mScalarFunctionBaseContainer.size());
-    assert(mFunctionNormalization.size() == mScalarFunctionBaseContainer.size());
-
     Plato::Scalar tResult = 0.0;
-    for (Plato::OrdinalType tFunctionIndex = 0; tFunctionIndex < mScalarFunctionBaseContainer.size(); ++tFunctionIndex)
+    for (const auto& [tName, tFunctionData] : mFunctions)
     {
-        const Plato::Scalar tFunctionWeight = mFunctionWeights[tFunctionIndex];
-        const Plato::Scalar tFunctionGoldValue = mFunctionGoldValues[tFunctionIndex];
-        const Plato::Scalar tFunctionScale = mFunctionNormalization[tFunctionIndex];
-        Plato::Scalar tFunctionValue = mScalarFunctionBaseContainer[tFunctionIndex]->value(aControl);
+        const Plato::Scalar tFunctionWeight = tFunctionData.mWeight;
+        const Plato::Scalar tFunctionGoldValue = tFunctionData.mGoldValue;
+        const Plato::Scalar tFunctionScale = tFunctionData.mNormalization;
+        const Plato::Scalar tFunctionValue = tFunctionData.mScalarFunction->value(aControl);
         tResult += tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, mPower);
 
-        Plato::Scalar tPercentDiff = std::abs(tFunctionGoldValue) > 0.0
-                                         ? 100.0 * (tFunctionValue - tFunctionGoldValue) / tFunctionGoldValue
-                                         : (tFunctionValue - tFunctionGoldValue);
+        const Plato::Scalar tPercentDiff = std::abs(tFunctionGoldValue) > 0.0
+                                               ? 100.0 * (tFunctionValue - tFunctionGoldValue) / tFunctionGoldValue
+                                               : (tFunctionValue - tFunctionGoldValue);
         std::cout << std::format(
             "{:.20s} = {:12.4e} * (({:12.4e} - {:12.4e}) / {:12.4e})^{} =  {:12.4e} (PercDiff = {:10.1f})\n",
-            mFunctionName.c_str(), tFunctionWeight, tFunctionValue, tFunctionGoldValue, tFunctionScale, mPower,
+            tName.c_str(), tFunctionWeight, tFunctionValue, tFunctionGoldValue, tFunctionScale, mPower,
             tFunctionWeight * std::pow((tFunctionValue - tFunctionGoldValue) / tFunctionScale, mPower), tPercentDiff);
     }
     return tResult;
@@ -214,14 +157,14 @@ Plato::ScalarVector LeastSquaresFunction<PhysicsType>::gradient_x(const Plato::S
 {
     const Plato::OrdinalType tNumDofs = mNumSpatialDims * mNumNodes;
     Plato::ScalarVector tGradientX("gradient configuration", tNumDofs);
-    for (Plato::OrdinalType tFunctionIndex = 0; tFunctionIndex < mScalarFunctionBaseContainer.size(); ++tFunctionIndex)
+    for (const auto& [tName, tFunctionData] : mFunctions)
     {
         const Plato::Scalar tPower = mPower;
-        const Plato::Scalar tFunctionWeight = mFunctionWeights[tFunctionIndex];
-        const Plato::Scalar tFunctionGoldValue = mFunctionGoldValues[tFunctionIndex];
-        const Plato::Scalar tFunctionScale = mFunctionNormalization[tFunctionIndex];
-        const Plato::Scalar tFunctionValue = mScalarFunctionBaseContainer[tFunctionIndex]->value(aControl);
-        const Plato::ScalarVector tFunctionGradX = mScalarFunctionBaseContainer[tFunctionIndex]->gradient_x(aControl);
+        const Plato::Scalar tFunctionWeight = tFunctionData.mWeight;
+        const Plato::Scalar tFunctionGoldValue = tFunctionData.mGoldValue;
+        const Plato::Scalar tFunctionScale = tFunctionData.mNormalization;
+        const Plato::Scalar tFunctionValue = tFunctionData.mScalarFunction->value(aControl);
+        const Plato::ScalarVector tFunctionGradX = tFunctionData.mScalarFunction->gradient_x(aControl);
         Kokkos::parallel_for(
             "Least Squares Function Summation Grad X", Kokkos::RangePolicy<>(0, tNumDofs),
             KOKKOS_LAMBDA(const Plato::OrdinalType& tDof) {
@@ -244,14 +187,14 @@ Plato::ScalarVector LeastSquaresFunction<PhysicsType>::gradient_z(const Plato::S
 {
     const Plato::OrdinalType tNumDofs = mNumNodes;
     Plato::ScalarVector tGradientZ("gradient control", tNumDofs);
-    for (Plato::OrdinalType tFunctionIndex = 0; tFunctionIndex < mScalarFunctionBaseContainer.size(); ++tFunctionIndex)
+    for (const auto& [tName, tFunctionData] : mFunctions)
     {
         const Plato::Scalar tPower = mPower;
-        const Plato::Scalar tFunctionWeight = mFunctionWeights[tFunctionIndex];
-        const Plato::Scalar tFunctionGoldValue = mFunctionGoldValues[tFunctionIndex];
-        const Plato::Scalar tFunctionScale = mFunctionNormalization[tFunctionIndex];
-        const Plato::Scalar tFunctionValue = mScalarFunctionBaseContainer[tFunctionIndex]->value(aControl);
-        const Plato::ScalarVector tFunctionGradZ = mScalarFunctionBaseContainer[tFunctionIndex]->gradient_z(aControl);
+        const Plato::Scalar tFunctionWeight = tFunctionData.mWeight;
+        const Plato::Scalar tFunctionGoldValue = tFunctionData.mGoldValue;
+        const Plato::Scalar tFunctionScale = tFunctionData.mNormalization;
+        const Plato::Scalar tFunctionValue = tFunctionData.mScalarFunction->value(aControl);
+        const Plato::ScalarVector tFunctionGradZ = tFunctionData.mScalarFunction->gradient_z(aControl);
         Kokkos::parallel_for(
             "Least Squares Function Summation Grad Z", Kokkos::RangePolicy<>(0, tNumDofs),
             KOKKOS_LAMBDA(const Plato::OrdinalType& tDof) {
