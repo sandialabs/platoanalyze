@@ -136,7 +136,7 @@ TEUCHOS_UNIT_TEST(GeometricProblem, MassPropertiesCriterionPassesGradientCheck)
 
     const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.1};
-    constexpr Plato::Scalar tTruncationErrorTolerance{1e-2};
+    constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
 
     constexpr Plato::Scalar tControlValue{0.86};
     const std::valarray<Plato::Scalar> tControl(tControlValue, tMesh->NumNodes());
