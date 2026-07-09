@@ -52,8 +52,7 @@ class LeastSquaresFunction : public Plato::Geometric::ScalarFunctionBase,
                          Plato::DataMap& aDataMap,
                          const unsigned int aPower);
 
-    /// @brief append an existing map from name @a aName to a struct containing the scalar function data @a
-    /// aFunctionData for use in least squares computation
+    /// @brief append an existing map @a aFunctionMap from function name to a struct containing the scalar function data for use in least squares computation
     void appendScalarFunctions(std::unordered_map<std::string, LeastSquaresFunctionData> aFunctionMap);
 
     /******************************************************************************/
