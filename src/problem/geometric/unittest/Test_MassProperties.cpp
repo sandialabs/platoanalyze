@@ -13,6 +13,7 @@
 #include "problem/geometric/MassMoment.hpp"
 #include "problem/geometric/MassPropertiesFunction.hpp"
 #include "problem/geometric/WeightedSumFunction.hpp"
+#include "problem/geometric/test_utilities/MassPropertiesCriterionUtilities.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
 namespace plato::problem::geometric::unittest
@@ -24,7 +25,6 @@ constexpr Plato::Scalar kTolerance = 1e-15;
 constexpr auto kMaterialName = std::string_view{"material"};
 constexpr auto kSpatialModelName = std::string_view{"Spatial Model"};
 constexpr auto kMaterialModelsName = std::string_view{"Material Models"};
-constexpr auto kMassPropertiesName = std::string_view{"Mass Properties"};
 [[nodiscard]] auto material_model() -> Teuchos::ParameterList
 {
     Teuchos::ParameterList tParameterList;
@@ -50,21 +50,6 @@ constexpr auto kMassPropertiesName = std::string_view{"Mass Properties"};
     return tParameterList;
 }
 
-[[nodiscard]] auto mass_properties_criterion(const Teuchos::Array<std::string>& aPropertyList,
-                                             const Teuchos::Array<double>& aWeightsList,
-                                             const Teuchos::Array<double>& aGoldValuesList,
-                                             const unsigned int aPower) -> Teuchos::ParameterList
-{
-    Teuchos::ParameterList tParameterList;
-    tParameterList.setName("Criteria");
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Type", std::string{kMassPropertiesName});
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Properties", aPropertyList);
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Weights", aWeightsList);
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Gold Values", aGoldValuesList);
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Least Squares Exponent", aPower);
-    return tParameterList;
-}
-
 [[nodiscard]] auto mass_property_problem(const Teuchos::Array<std::string>& aPropertyList,
                                          const Teuchos::Array<double>& aWeightsList,
                                          const Teuchos::Array<double>& aGoldValuesList,
@@ -72,7 +57,7 @@ constexpr auto kMassPropertiesName = std::string_view{"Mass Properties"};
 {
     auto tParameterList = criterionless_problem_for_test();
     tParameterList.sublist("Criteria") =
-        mass_properties_criterion(aPropertyList, aWeightsList, aGoldValuesList, aPower);
+        test_utilities::mass_properties_criterion(aPropertyList, aWeightsList, aGoldValuesList, aPower);
     return tParameterList;
 }
 
