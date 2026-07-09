@@ -8,10 +8,8 @@
 #include "linear_algebra/BLAS1.hpp"
 #include "mesh/ImplicitFunctors.hpp"
 #include "parsing/ParseTools.hpp"
-#include "problem/Geometrical.hpp"
 #include "problem/elliptic/Problem_decl.hpp"
 #include "problem/elliptic/ScalarFunctionBaseFactory.hpp"
-#include "problem/geometric/ScalarFunctionBaseFactory.hpp"
 #include "solver/multipoint_constraint/MultipointConstraints.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
@@ -103,17 +101,6 @@ Plato::OrdinalType Problem<PhysicsType>::numControlsPerNode() const
 
 /******************************************************************************/
 /**
- * \brief Is criterion independent of the solution state?
- * \param [in] aName Name of criterion.
- **********************************************************************************/
-template <typename PhysicsType>
-bool Problem<PhysicsType>::criterionIsLinear(const std::string& aName)
-{
-    return mLinearCriteria.count(aName) > 0 ? true : false;
-}
-
-/******************************************************************************/
-/**
  * \brief Output solution to visualization file.
  * \param [in] aFilepath output/visualizaton file path
  **********************************************************************************/
@@ -164,10 +151,6 @@ void Problem<PhysicsType>::updateProblem(const Plato::ScalarVector& aControl, co
     for (auto tCriterion : mCriteria)
     {
         tCriterion.second->updateProblem(tStatesSubView, aControl);
-    }
-    for (auto tCriterion : mLinearCriteria)
-    {
-        tCriterion.second->updateProblem(aControl);
     }
 }
 
@@ -262,11 +245,6 @@ Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aC
         Criterion tCriterion = mCriteria[aName];
         return tCriterion->value(aSolution, aControl);
     }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->value(aControl);
-    }
     else
     {
         ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE CRITERION MAP.")
@@ -290,11 +268,6 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarV
     {
         Criterion tCriterion = mCriteria[aName];
         return criterionGradient(aControl, aSolution, tCriterion);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->gradient_z(aControl);
     }
     else
     {
@@ -382,11 +355,6 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
     {
         Criterion tCriterion = mCriteria[aName];
         return criterionGradientX(aControl, aSolution, tCriterion);
-    }
-    else if (mLinearCriteria.count(aName))
-    {
-        LinearCriterion tCriterion = mLinearCriteria[aName];
-        return tCriterion->gradient_x(aControl);
     }
     else
     {
@@ -508,7 +476,6 @@ void Problem<PhysicsType>::initialize(Teuchos::ParameterList& aProblemParams)
 
     if (aProblemParams.isSublist("Criteria"))
     {
-        Plato::Geometric::ScalarFunctionBaseFactory<Plato::Geometrical<TopoElementType>> tLinearFunctionBaseFactory;
         Plato::Elliptic::ScalarFunctionBaseFactory<PhysicsType> tNonlinearFunctionBaseFactory;
 
         auto tCriteriaParams = aProblemParams.sublist("Criteria");
@@ -521,21 +488,10 @@ void Problem<PhysicsType>::initialize(Teuchos::ParameterList& aProblemParams)
             TEUCHOS_TEST_FOR_EXCEPTION(!tEntry.isList(), std::logic_error,
                                        " Parameter in Criteria block not valid.  Expect lists only.");
 
-            if (tCriteriaParams.sublist(tName).get<bool>("Linear", false) == true)
+            auto tCriterion = tNonlinearFunctionBaseFactory.create(mSpatialModel, mDataMap, aProblemParams, tName);
+            if (tCriterion != nullptr)
             {
-                auto tCriterion = tLinearFunctionBaseFactory.create(mSpatialModel, mDataMap, aProblemParams, tName);
-                if (tCriterion != nullptr)
-                {
-                    mLinearCriteria[tName] = tCriterion;
-                }
-            }
-            else
-            {
-                auto tCriterion = tNonlinearFunctionBaseFactory.create(mSpatialModel, mDataMap, aProblemParams, tName);
-                if (tCriterion != nullptr)
-                {
-                    mCriteria[tName] = tCriterion;
-                }
+                mCriteria[tName] = tCriterion;
             }
         }
         if (mCriteria.size())

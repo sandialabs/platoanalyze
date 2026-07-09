@@ -26,9 +26,6 @@ class Problem : public Plato::AbstractProblem
     using Criterion = std::shared_ptr<Plato::Elliptic::ScalarFunctionBase>;
     using Criteria = std::map<std::string, Criterion>;
 
-    using LinearCriterion = std::shared_ptr<Plato::Geometric::ScalarFunctionBase>;
-    using LinearCriteria = std::map<std::string, LinearCriterion>;
-
     using ElementType = typename PhysicsType::ElementType;
     using TopoElementType = typename ElementType::TopoElementType;
 
@@ -39,7 +36,6 @@ class Problem : public Plato::AbstractProblem
     // required
     std::shared_ptr<VectorFunctionType> mPDE; /*!< equality constraint interface */
 
-    LinearCriteria mLinearCriteria;
     Criteria mCriteria;
 
     Plato::OrdinalType mNumNewtonSteps;
@@ -86,13 +82,6 @@ class Problem : public Plato::AbstractProblem
     Plato::OrdinalType numDofsPerNode() const;
 
     Plato::OrdinalType numControlsPerNode() const;
-
-    /******************************************************************************/
-    /**
-     * \brief Is criterion independent of the solution state?
-     * \param [in] aName Name of criterion.
-     **********************************************************************************/
-    bool criterionIsLinear(const std::string& aName) override;
 
     /******************************************************************************/
     /**

@@ -29,12 +29,10 @@
 #include "local_operations/differential/GeneralStressDivergence.hpp"
 #include "local_operations/differential/GradientMatrix.hpp"
 #include "local_operations/kinematics/SmallStrain.hpp"
-#include "problem/Geometrical.hpp"
 #include "problem/Mechanics.hpp"
 #include "problem/elliptic/PhysicsScalarFunction.hpp"
 #include "problem/elliptic/Problem.hpp"
 #include "problem/elliptic/VectorFunction.hpp"
-#include "problem/geometric/GeometryScalarFunction.hpp"
 #include "utilities/ParallelComm.hpp"
 
 using ordType = typename Plato::ScalarMultiVector::size_type;
@@ -1666,147 +1664,6 @@ TEUCHOS_UNIT_TEST(DerivativeTests, referenceStrain3D)
             {
                 TEST_FLOATING_EQUALITY(stress_Host(iCell, iVoigt), stress_gold[iCell][iVoigt], 1e-13);
             }
-        }
-    }
-}
-
-/******************************************************************************/
-/*!
-  \brief Compute value and both gradients (wrt state and control) of
-         Volume in 3D.
-*/
-/******************************************************************************/
-TEUCHOS_UNIT_TEST(DerivativeTests, Volume3D)
-{
-    // create material model
-    //
-    Teuchos::RCP<Teuchos::ParameterList> tParamList = Teuchos::getParametersFromXmlString(
-        "<ParameterList name='Plato Problem'>                                          \n"
-        "  <ParameterList name='Spatial Model'>                                        \n"
-        "    <ParameterList name='Domains'>                                            \n"
-        "      <ParameterList name='Design Volume'>                                    \n"
-        "        <Parameter name='Element Block' type='string' value='body'/>          \n"
-        "        <Parameter name='Material Model' type='string' value='Unobtainium'/>  \n"
-        "      </ParameterList>                                                        \n"
-        "    </ParameterList>                                                          \n"
-        "  </ParameterList>                                                            \n"
-        "  <Parameter name='PDE Constraint' type='string' value='Elliptic'/>           \n"
-        "  <Parameter name='Self-Adjoint' type='bool' value='true'/>                   \n"
-        "  <ParameterList name='Criteria'>                                             \n"
-        "    <ParameterList name='Volume'>                                             \n"
-        "      <Parameter name='Linear' type='bool' value='true'/>                     \n"
-        "      <Parameter name='Type' type='string' value='Scalar Function'/>          \n"
-        "      <Parameter name='Scalar Function Type' type='string' value='Volume'/>   \n"
-        "      <ParameterList name='Penalty Function'>                                 \n"
-        "        <Parameter name='Exponent' type='double' value='1.0'/>                \n"
-        "        <Parameter name='Minimum Value' type='double' value='0.0'/>           \n"
-        "        <Parameter name='Type' type='string' value='SIMP'/>                   \n"
-        "      </ParameterList>                                                        \n"
-        "    </ParameterList>                                                          \n"
-        "    <ParameterList name='Internal Elastic Energy'>                            \n"
-        "      <Parameter name='Type' type='string' value='Scalar Function'/>          \n"
-        "      <Parameter name='Scalar Function Type' type='string' value='Internal Elastic Energy'/>  \n"
-        "    </ParameterList>                                                          \n"
-        "  </ParameterList>                                                            \n"
-        "</ParameterList>                                                              \n");
-
-    // create test mesh
-    //
-    constexpr int meshWidth = 2;
-    constexpr int spaceDim = 3;
-    auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", meshWidth);
-
-    // create mesh based density from host data
-    //
-    std::vector<Plato::Scalar> z_host(tMesh->NumNodes(), 1.0);
-    Kokkos::View<Plato::Scalar*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> z_host_view(z_host.data(), z_host.size());
-    auto z = Kokkos::create_mirror_view_and_copy(Kokkos::DefaultExecutionSpace(), z_host_view);
-
-    // create mesh based displacement from host data
-    //
-    ordType tNumDofs = spaceDim * tMesh->NumNodes();
-    Plato::ScalarMultiVector U("states", /*numSteps=*/1, tNumDofs);
-    auto u = Kokkos::subview(U, 0, Kokkos::ALL());
-    auto u_host = Kokkos::create_mirror_view(u);
-    Plato::Scalar disp = 0.0, dval = 0.0001;
-    for (ordType i = 0; i < tNumDofs; i++)
-    {
-        u_host(i) = (disp += dval);
-    }
-    Kokkos::deep_copy(u, u_host);
-
-    // create objective
-    //
-    Plato::DataMap tDataMap;
-    const auto tParsedDomains = plato::domain::parse_domains(*tParamList, tMesh);
-    plato::domain::SpatialModel tSpatialModel(tMesh, tParsedDomains, tDataMap);
-
-    std::string tMyFunction("Volume");
-    Plato::Geometric::GeometryScalarFunction<::Plato::Geometrical<Plato::Tet4>> volScalarFunction(
-        tSpatialModel, tDataMap, *tParamList, tMyFunction);
-
-    // compute and test criterion value
-    //
-    auto value = volScalarFunction.value(z);
-
-    Plato::Scalar value_gold = 1.0;
-    TEST_FLOATING_EQUALITY(value, value_gold, 1e-13);
-
-    // compute and test criterion gradient wrt control, z
-    //
-    auto grad_z = volScalarFunction.gradient_z(z);
-
-    auto grad_z_Host = Kokkos::create_mirror_view(grad_z);
-    Kokkos::deep_copy(grad_z_Host, grad_z);
-
-    std::vector<Plato::Scalar> grad_z_gold = {
-        0.03125000000000000, 0.04166666666666666, 0.01041666666666667, 0.04166666666666666, 0.06250000000000000,
-        0.02083333333333333, 0.01041666666666667, 0.02083333333333333, 0.01041666666666667, 0.04166666666666666,
-        0.06250000000000000, 0.02083333333333333, 0.06250000000000000, 0.1249999999999999,  0.06250000000000000,
-        0.02083333333333333, 0.06250000000000000, 0.04166666666666666, 0.01041666666666667, 0.02083333333333333,
-        0.01041666666666667, 0.02083333333333333, 0.06250000000000000, 0.04166666666666666, 0.01041666666666667,
-        0.04166666666666666, 0.03125000000000000};
-
-    for (int iNode = 0; iNode < int(grad_z_gold.size()); iNode++)
-    {
-        TEST_FLOATING_EQUALITY(grad_z_Host[iNode], grad_z_gold[iNode], 1e-13);
-    }
-
-    // compute and test criterion gradient wrt node position, x
-    //
-    auto grad_x = volScalarFunction.gradient_x(z);
-
-    auto grad_x_Host = Kokkos::create_mirror_view(grad_x);
-    Kokkos::deep_copy(grad_x_Host, grad_x);
-
-    std::vector<Plato::Scalar> grad_x_gold = {
-        -0.08333333333333333, -0.08333333333333333, -0.08333333333333333, -0.1250000000000000,  -0.1250000000000000,
-        0.0000000000000000,   -0.04166666666666666, -0.04166666666666666, 0.08333333333333333,  -0.1250000000000000,
-        0.0000000000000000,   -0.1250000000000000,  -0.2500000000000000,  0.0000000000000000,   0.0000000000000000,
-        -0.1250000000000000,  0.0000000000000000,   0.1250000000000000,   -0.04166666666666666, 0.08333333333333333,
-        -0.04166666666666666, -0.1250000000000000,  0.1250000000000000,   0.0000000000000000,   -0.08333333333333333,
-        0.04166666666666666,  0.04166666666666666,  0.0000000000000000,   -0.1250000000000000,  -0.1250000000000000,
-        0.0000000000000000,   -0.2500000000000000,  0.0000000000000000,   0.0000000000000000,   -0.1250000000000000,
-        0.1250000000000000,   0.000000000000000,    0.0000000000000000,   -0.2500000000000000,  0.0000000000000000,
-        0.0000000000000000,   0.0000000000000000,   0.0000000000000000,   0.0000000000000000,   0.2500000000000000,
-        0.0000000000000000,   0.1250000000000000,   -0.1250000000000000,  0.0000000000000000,   0.2500000000000000,
-        0.0000000000000000,   0.0000000000000000,   0.1250000000000000,   0.1250000000000000,   0.08333333333333333,
-        -0.04166666666666666, -0.04166666666666666, 0.1250000000000000,   -0.1250000000000000,  0.0000000000000000,
-        0.04166666666666666,  -0.08333333333333333, 0.04166666666666666,  0.1250000000000000,   0.0000000000000000,
-        -0.1250000000000000,  0.2500000000000000,   0.0000000000000000,   0.0000000000000000,   0.1250000000000000,
-        0.0000000000000000,   0.1250000000000000,   0.04166666666666666,  0.04166666666666666,  -0.08333333333333333,
-        0.1250000000000000,   0.1250000000000000,   0.0000000000000000,   0.08333333333333333,  0.08333333333333333,
-        0.08333333333333333};
-
-    for (int iNode = 0; iNode < int(grad_x_gold.size()); iNode++)
-    {
-        if (grad_x_gold[iNode] == 0.0)
-        {
-            TEST_ASSERT(fabs(grad_x_Host[iNode]) < 1e-13);
-        }
-        else
-        {
-            TEST_FLOATING_EQUALITY(grad_x_Host[iNode], grad_x_gold[iNode], 1e-13);
         }
     }
 }
