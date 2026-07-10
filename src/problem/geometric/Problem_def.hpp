@@ -39,9 +39,9 @@ Problem<PhysicsType>::Problem(Plato::Mesh aMesh, Teuchos::ParameterList& aProble
 template <typename PhysicsType>
 void Problem<PhysicsType>::updateProblem(const Plato::ScalarVector& aControl, const Plato::Solutions& aSolution)
 {
-    for (auto tCriterion : mCriteriaMap)
+    for (const auto& [tName, tCriterion] : mCriteriaMap)
     {
-        tCriterion.second->updateProblem(aControl);
+        tCriterion->updateProblem(aControl);
     }
 }
 
@@ -56,9 +56,9 @@ Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aC
                                                    const Plato::Solutions& aSolution,
                                                    const std::string& aName)
 {
-    if (mCriteriaMap.count(aName))
+    if (const auto tCriterionIterator = mCriteriaMap.find(aName); tCriterionIterator != mCriteriaMap.end())
     {
-        return mCriteriaMap.at(aName)->value(aControl);
+        return tCriterionIterator->second->value(aControl);
     }
     else
     {
@@ -71,9 +71,9 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarV
                                                             const Plato::Solutions& aSolution,
                                                             const std::string& aName)
 {
-    if (mCriteriaMap.count(aName))
+    if (const auto tCriterionIterator = mCriteriaMap.find(aName); tCriterionIterator != mCriteriaMap.end())
     {
-        return mCriteriaMap.at(aName)->gradient_z(aControl);
+        return tCriterionIterator->second->gradient_z(aControl);
     }
     else
     {
@@ -86,9 +86,9 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
                                                              const Plato::Solutions& aSolution,
                                                              const std::string& aName)
 {
-    if (mCriteriaMap.count(aName))
+    if (const auto tCriterionIterator = mCriteriaMap.find(aName); tCriterionIterator != mCriteriaMap.end())
     {
-        return mCriteriaMap.at(aName)->gradient_x(aControl);
+        return tCriterionIterator->second->gradient_x(aControl);
     }
     else
     {
