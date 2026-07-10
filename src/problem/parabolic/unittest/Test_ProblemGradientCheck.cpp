@@ -2,7 +2,7 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
-#include <plato/test_utilities/GradientChecker.hpp>
+#include <plato/utilities/GradientChecker.hpp>
 #include <string>
 
 #include "element/Hex8.hpp"
@@ -99,7 +99,7 @@ void run_internal_thermal_energy_gradient_check(const std::string& aElementType,
 
     const auto tMesh = Plato::TestHelpers::get_box_mesh(aElementType, aMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.01};
 
     constexpr Plato::Scalar tControlValue{0.5};
@@ -141,7 +141,7 @@ void run_time_integrated_state_average_gradient_check(const std::string& aElemen
 
     const auto tMesh = Plato::TestHelpers::get_box_mesh(aElementType, aMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.01};
 
     constexpr Plato::Scalar tControlValue{0.5};

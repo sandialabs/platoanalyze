@@ -2,7 +2,7 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
-#include <plato/test_utilities/GradientChecker.hpp>
+#include <plato/utilities/GradientChecker.hpp>
 #include <string_view>
 #include <valarray>
 
@@ -112,7 +112,7 @@ TEUCHOS_UNIT_TEST(GeometricProblem, VolumeCriterionPassesGradientCheck)
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{1e-2};
 
@@ -134,7 +134,7 @@ TEUCHOS_UNIT_TEST(GeometricProblem, MassPropertiesCriterionPassesGradientCheck)
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
 
