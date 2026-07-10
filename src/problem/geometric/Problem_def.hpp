@@ -2,6 +2,7 @@
 #define PLATO_GEOMETRIC_PROBLEM_DEF_H
 
 #include <Teuchos_ParameterList.hpp>
+#include <format>
 
 #include "domain/SpatialModel.hpp"
 #include "mesh/PlatoMesh.hpp"
@@ -62,7 +63,7 @@ Plato::Scalar Problem<PhysicsType>::criterionValue(const Plato::ScalarVector& aC
     }
     else
     {
-        ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE PROBLEM.")
+        ANALYZE_THROWERR(std::format("CRITERION WITH NAME '{}' IS NOT DEFINED IN THE PROBLEM.", aName));
     }
 }
 
@@ -77,7 +78,7 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradient(const Plato::ScalarV
     }
     else
     {
-        ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE PROBLEM.")
+        ANALYZE_THROWERR(std::format("CRITERION WITH NAME '{}' IS NOT DEFINED IN THE PROBLEM.", aName));
     }
 }
 
@@ -92,7 +93,7 @@ Plato::ScalarVector Problem<PhysicsType>::criterionGradientX(const Plato::Scalar
     }
     else
     {
-        ANALYZE_THROWERR(std::string("CRITERION WITH NAME '") + aName + "' IS NOT DEFINED IN THE PROBLEM.")
+        ANALYZE_THROWERR(std::format("CRITERION WITH NAME '{}' IS NOT DEFINED IN THE PROBLEM.", aName));
     }
 }
 
