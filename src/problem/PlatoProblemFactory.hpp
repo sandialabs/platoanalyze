@@ -18,9 +18,11 @@
 #include "element/Tet10.hpp"
 #include "element/Tet4.hpp"
 #include "mesh/PlatoMesh.hpp"
+#include "problem/Geometrical.hpp"
 #include "problem/Mechanics.hpp"
 #include "problem/Thermal.hpp"
 #include "problem/Thermomechanics.hpp"
+#include "problem/geometric/Problem.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 #include "utilities/ParallelComm.hpp"
 
@@ -265,6 +267,11 @@ class ProblemFactory
         if (tLowerPhysics == "thermomechanical")
         {
             return (Plato::create_thermomechanical_problem(aMesh, tInputData, aMachine));
+        }
+
+        if (tLowerPhysics == "geometric")
+        {
+            return makeProblem<plato::problem::geometric::Problem, Plato::Geometrical>(aMesh, tInputData, aMachine);
         }
 
         if (tLowerPhysics == "helmholtz filter")

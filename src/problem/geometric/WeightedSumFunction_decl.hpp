@@ -54,7 +54,7 @@ class WeightedSumFunction : public Plato::Geometric::ScalarFunctionBase,
     WeightedSumFunction(const plato::domain::SpatialModel& aSpatialModel,
                         Plato::DataMap& aDataMap,
                         Teuchos::ParameterList& aProblemParams,
-                        std::string& aName);
+                        const std::string& aName);
 
     /******************************************************************************/
     /**

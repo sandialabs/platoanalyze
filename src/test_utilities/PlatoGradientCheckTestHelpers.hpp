@@ -3,7 +3,7 @@
 
 #include <Teuchos_UnitTestHarness.hpp>
 #include <numeric>
-#include <plato/test_utilities/GradientChecker.hpp>
+#include <plato/utilities/GradientChecker.hpp>
 #include <random>
 #include <valarray>
 
@@ -16,7 +16,7 @@ namespace Plato::TestHelpers
 /// This is used to check gradient consistency with respect to controls.
 template <typename ProblemType>
 auto make_criterion_gradient_checker(ProblemType aProblem, const std::string aCriterionName)
-    -> plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>>
+    -> plato::utilities::GradientChecker<std::valarray<Plato::Scalar>>
 {
     auto tCriterionValue = [&aCriterionName, &aProblem](const std::valarray<Plato::Scalar>& aControlVector)
     {
@@ -36,19 +36,18 @@ auto make_criterion_gradient_checker(ProblemType aProblem, const std::string aCr
                                   begin(aDirection), 0.0);
     };
 
-    return plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>>{tCriterionValue, tCriterionGradient};
+    return plato::utilities::GradientChecker<std::valarray<Plato::Scalar>>{tCriterionValue, tCriterionGradient};
 }
 
 /// @brief uses the gradient checker @a aGradientChecker to perform a gradient check about the control values @a aX.
 /// The gradient check paramters are defined by input @a aGradientCheckParameters and first order truncation error is
 /// checked against @a aTruncationErrorTolerance.
-void check_control_gradient(
-    const plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>>& aGradientChecker,
-    const plato::test_utilities::GradientCheckParameters& aGradientCheckParameters,
-    const std::valarray<Plato::Scalar>& aX,
-    const Plato::Scalar aTruncationErrorTolerance,
-    Teuchos::FancyOStream& aOutStream,
-    bool& aSuccess);
+void check_control_gradient(const plato::utilities::GradientChecker<std::valarray<Plato::Scalar>>& aGradientChecker,
+                            const plato::utilities::GradientCheckParameters& aGradientCheckParameters,
+                            const std::valarray<Plato::Scalar>& aX,
+                            const Plato::Scalar aTruncationErrorTolerance,
+                            Teuchos::FancyOStream& aOutStream,
+                            bool& aSuccess);
 
 namespace detail
 {

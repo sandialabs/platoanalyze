@@ -3,7 +3,7 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include <Teuchos_XMLParameterListHelpers.hpp>
 
-#include "element/MechanicsElement.hpp"
+#include "element/GeometricElement.hpp"
 #include "element/Tet4.hpp"
 #include "element/Tri3.hpp"
 #include "linear_algebra/BLAS1.hpp"
@@ -13,9 +13,10 @@
 #include "problem/geometric/MassMoment.hpp"
 #include "problem/geometric/MassPropertiesFunction.hpp"
 #include "problem/geometric/WeightedSumFunction.hpp"
+#include "problem/geometric/test_utilities/MassPropertiesCriterionUtilities.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
-namespace problem::geometric::unittest
+namespace plato::problem::geometric::unittest
 {
 
 namespace
@@ -24,7 +25,6 @@ constexpr Plato::Scalar kTolerance = 1e-15;
 constexpr auto kMaterialName = std::string_view{"material"};
 constexpr auto kSpatialModelName = std::string_view{"Spatial Model"};
 constexpr auto kMaterialModelsName = std::string_view{"Material Models"};
-constexpr auto kMassPropertiesName = std::string_view{"Mass Properties"};
 [[nodiscard]] auto material_model() -> Teuchos::ParameterList
 {
     Teuchos::ParameterList tParameterList;
@@ -50,21 +50,6 @@ constexpr auto kMassPropertiesName = std::string_view{"Mass Properties"};
     return tParameterList;
 }
 
-[[nodiscard]] auto mass_properties_criterion(const Teuchos::Array<std::string>& aPropertyList,
-                                             const Teuchos::Array<double>& aWeightsList,
-                                             const Teuchos::Array<double>& aGoldValuesList,
-                                             const unsigned int aPower) -> Teuchos::ParameterList
-{
-    Teuchos::ParameterList tParameterList;
-    tParameterList.setName("Criteria");
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Type", std::string{kMassPropertiesName});
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Properties", aPropertyList);
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Weights", aWeightsList);
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Gold Values", aGoldValuesList);
-    tParameterList.sublist(std::string{kMassPropertiesName}).set("Least Squares Exponent", aPower);
-    return tParameterList;
-}
-
 [[nodiscard]] auto mass_property_problem(const Teuchos::Array<std::string>& aPropertyList,
                                          const Teuchos::Array<double>& aWeightsList,
                                          const Teuchos::Array<double>& aGoldValuesList,
@@ -72,7 +57,7 @@ constexpr auto kMassPropertiesName = std::string_view{"Mass Properties"};
 {
     auto tParameterList = criterionless_problem_for_test();
     tParameterList.sublist("Criteria") =
-        mass_properties_criterion(aPropertyList, aWeightsList, aGoldValuesList, aPower);
+        test_utilities::mass_properties_criterion(aPropertyList, aWeightsList, aGoldValuesList, aPower);
     return tParameterList;
 }
 
@@ -117,7 +102,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesParsingGoldShouldBeZero)
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
 {
-    using ElementType = typename Plato::MechanicsElement<Plato::Tri3>;
+    using ElementType = typename plato::element::GeometricElement<Plato::Tri3>;
     using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;
     using ConfigT = typename Residual::ConfigScalarType;
     using ResultT = typename Residual::ResultScalarType;
@@ -160,7 +145,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume2D)
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassInsteadOfVolume3D)
 {
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename plato::element::GeometricElement<Plato::Tet4>;
     using Residual = typename Plato::Geometric::Evaluation<ElementType>::Residual;
     using ConfigT = typename Residual::ConfigScalarType;
     using ResultT = typename Residual::ResultScalarType;
@@ -265,7 +250,7 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesValue3DNormalized)
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesGradZ_3D)
 {
-    using ElementType = typename Plato::MechanicsElement<Plato::Tet4>;
+    using ElementType = typename plato::element::GeometricElement<Plato::Tet4>;
     using GradientZ = typename Plato::Geometric::Evaluation<ElementType>::GradientZ;
     constexpr Plato::OrdinalType tMeshWidth = 1;
     auto tMesh = Plato::TestHelpers::get_box_mesh("TET4", tMeshWidth);
@@ -283,4 +268,4 @@ TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, MassPropertiesGradZ_3D)
     Plato::test_partial_control<GradientZ, ElementType>(tMesh, tMassProperties);
 }
 
-}  // namespace problem::geometric::unittest
+}  // namespace plato::problem::geometric::unittest

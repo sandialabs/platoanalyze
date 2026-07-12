@@ -11,9 +11,14 @@ set(LINK_LIBS AnalyzeProblem)
 create_plato_analyze_library(AnalyzeGeometric "${FOLDERS}" "${LINK_LIBS}")
 
 if( PLATOANALYZE_UNIT_TEST )
-  set(FOLDERS "unittest") 
-  
-  set(LINK_LIBS AnalyzeTestUtilities AnalyzeUtilities) 
 
+  set(FOLDERS "test_utilities") 
+  set(LINK_LIBS TeuchosCore::teuchoscore)
+  create_plato_analyze_library(AnalyzeGeometricTestUtilities "${FOLDERS}" "${LINK_LIBS}")
+
+  set(FOLDERS "unittest") 
+  set(LINK_LIBS AnalyzeTestUtilities 
+                AnalyzeGeometricTestUtilities
+                AnalyzeUtilities) 
   create_plato_analyze_teuchos_unittester(AnalyzeGeometric "${FOLDERS}" "${LINK_LIBS}")
 endif()

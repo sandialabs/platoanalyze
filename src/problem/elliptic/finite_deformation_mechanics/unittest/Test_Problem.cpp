@@ -5,7 +5,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include <cmath>
-#include <plato/test_utilities/GradientChecker.hpp>
+#include <plato/utilities/GradientChecker.hpp>
 #include <string>
 
 #include "boundary_conditions/EssentialBCs.hpp"
@@ -329,7 +329,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, StrainEnergyCriterionGradientPassesG
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
 
@@ -358,7 +358,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, StrainEnergyCriterionGradientPassesG
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 5, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{5e-2};
 
@@ -386,7 +386,7 @@ TEUCHOS_UNIT_TEST(FiniteDeformationProblem, VarianceCriterionGradientPassesGradi
     constexpr Plato::OrdinalType tMeshWidth = 5;
     const auto tMesh = Plato::TestHelpers::get_box_mesh("TRI3", tMeshWidth);
 
-    const plato::test_utilities::GradientCheckParameters tGradientCheckParameters{
+    const plato::utilities::GradientCheckParameters tGradientCheckParameters{
         .mStepDelta = 0.1, .mNumSteps = 6, .mInitialStepSize = 0.1};
     constexpr Plato::Scalar tTruncationErrorTolerance{2e-2};
 

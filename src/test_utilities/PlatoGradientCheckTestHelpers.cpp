@@ -8,13 +8,12 @@
 
 namespace Plato::TestHelpers
 {
-void check_control_gradient(
-    const plato::test_utilities::GradientChecker<std::valarray<Plato::Scalar>>& aGradientChecker,
-    const plato::test_utilities::GradientCheckParameters& aGradientCheckParameters,
-    const std::valarray<Plato::Scalar>& aX,
-    const Plato::Scalar aTruncationErrorTolerance,
-    Teuchos::FancyOStream& aOutStream,
-    bool& aSuccess)
+void check_control_gradient(const plato::utilities::GradientChecker<std::valarray<Plato::Scalar>>& aGradientChecker,
+                            const plato::utilities::GradientCheckParameters& aGradientCheckParameters,
+                            const std::valarray<Plato::Scalar>& aX,
+                            const Plato::Scalar aTruncationErrorTolerance,
+                            Teuchos::FancyOStream& aOutStream,
+                            bool& aSuccess)
 {
     const detail::RandomEngineSeedType tSeed{123};
     const auto tPerturbationDirection = detail::random_perturbation(aX.size(), tSeed);

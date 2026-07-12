@@ -697,7 +697,7 @@ template <typename PhysicsType>
 MassPropertiesFunction<PhysicsType>::MassPropertiesFunction(const plato::domain::SpatialModel& aSpatialModel,
                                                             Plato::DataMap& aDataMap,
                                                             Teuchos::ParameterList& aProblemParams,
-                                                            std::string& aName)
+                                                            const std::string& aName)
     : Plato::WorksetBase<typename PhysicsType::ElementType>(aSpatialModel.mMesh),
       mSpatialModel(aSpatialModel),
       mDataMap(aDataMap),

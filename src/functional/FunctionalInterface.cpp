@@ -119,15 +119,7 @@ auto FunctionalInterface::solveProblem(const analysis::AnalysisDomainMesh& aAnal
 
 Plato::Solutions FunctionalInterface::computeState(const Plato::ScalarVector& aArg) const
 {
-    const std::string tCriterionName = first_criterion_name(parameterList());
-    if (!tCriterionName.empty() && mProblem->criterionIsLinear(tCriterionName))
-    {
-        return Plato::Solutions{};
-    }
-    else
-    {
-        return mProblem->solution(aArg);
-    }
+    return mProblem->solution(aArg);
 }
 
 Plato::AbstractProblem& FunctionalInterface::problem() { return *mProblem; }

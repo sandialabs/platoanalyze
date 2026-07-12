@@ -37,7 +37,7 @@ class ScalarFunctionBaseFactory
     std::shared_ptr<Plato::Geometric::ScalarFunctionBase> create(const plato::domain::SpatialModel& aSpatialModel,
                                                                  Plato::DataMap& aDataMap,
                                                                  Teuchos::ParameterList& aInputParams,
-                                                                 std::string& aFunctionName);
+                                                                 const std::string& aFunctionName) const;
 };
 // class ScalarFunctionBaseFactory
 

@@ -5,6 +5,7 @@
 #include "problem/geometric/LeastSquaresFunction.hpp"
 #include "problem/geometric/MassPropertiesFunction.hpp"
 #include "problem/geometric/ScalarFunctionBase.hpp"
+#include "problem/geometric/ScalarFunctionBaseFactory_decl.hpp"
 #include "problem/geometric/WeightedSumFunction.hpp"
 #include "utilities/AnalyzeMacros.hpp"
 
@@ -27,7 +28,7 @@ std::shared_ptr<Plato::Geometric::ScalarFunctionBase> ScalarFunctionBaseFactory<
     const plato::domain::SpatialModel& aSpatialModel,
     Plato::DataMap& aDataMap,
     Teuchos::ParameterList& aProblemParams,
-    std::string& aFunctionName)
+    const std::string& aFunctionName) const
 {
     auto tFunctionParams = aProblemParams.sublist("Criteria").sublist(aFunctionName);
     auto tFunctionType = tFunctionParams.get<std::string>("Type", "Not Defined");
