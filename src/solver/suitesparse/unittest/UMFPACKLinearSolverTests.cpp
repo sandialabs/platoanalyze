@@ -1,6 +1,6 @@
 #include <Teuchos_UnitTestHarness.hpp>
 
-#include "solver/umfpack/UMFPACKLinearSolver.hpp"
+#include "solver/suitesparse/UMFPACKLinearSolver.hpp"
 #include "test_utilities/PlatoMathTestHelpers.hpp"
 
 namespace

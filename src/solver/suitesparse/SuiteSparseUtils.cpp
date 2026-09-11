@@ -1,4 +1,4 @@
-#include "solver/umfpack/SuiteSparseUtils.hpp"
+#include "solver/suitesparse/SuiteSparseUtils.hpp"
 
 #include <umfpack.h>
 

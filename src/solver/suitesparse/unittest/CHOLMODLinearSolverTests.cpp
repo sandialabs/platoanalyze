@@ -3,7 +3,7 @@
 #include <filesystem>
 
 #include "linear_algebra/CrsMatrixUtils.hpp"
-#include "solver/umfpack/CHOLMODLinearSolver.hpp"
+#include "solver/suitesparse/CHOLMODLinearSolver.hpp"
 #include "test_utilities/PlatoMathTestHelpers.hpp"
 
 namespace

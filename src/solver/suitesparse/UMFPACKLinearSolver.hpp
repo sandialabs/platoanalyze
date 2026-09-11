@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef PLATO_UMFPACK
+#ifdef PLATO_SUITESPARSE
 
 #include <filesystem>
 #include <plato/utilities/StateCache.hpp>
@@ -9,7 +9,7 @@
 
 #include "linear_algebra/PlatoStaticsTypes.hpp"
 #include "solver/PlatoAbstractSolver.hpp"
-#include "solver/umfpack/SuiteSparseUtils.hpp"
+#include "solver/suitesparse/SuiteSparseUtils.hpp"
 
 namespace Plato::alg
 {
