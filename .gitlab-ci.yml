@@ -14,5 +14,4 @@ trigger-super:
   trigger:
     project: 1540-compsim/plato/plato
     strategy: depend
-    branch: shardes/to-8157
   needs: []
