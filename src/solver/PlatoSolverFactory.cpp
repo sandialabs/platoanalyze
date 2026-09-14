@@ -7,8 +7,8 @@
 #ifdef PLATO_TACHO
 #include "solver/tacho/TachoLinearSolver.hpp"
 #endif
-#ifdef PLATO_UMFPACK
-#include "solver/umfpack/SuiteSparseSolverFactory.hpp"
+#ifdef PLATO_SUITESPARSE
+#include "solver/suitesparse/SuiteSparseSolverFactory.hpp"
 #endif
 
 namespace Plato
@@ -23,8 +23,8 @@ std::string determine_solver_stack(const Teuchos::ParameterList& tSolverParams)
     }
     else
     {
-#ifdef PLATO_UMFPACK
-        tSolverStack = "UMFPACK";
+#ifdef PLATO_SUITESPARSE
+        tSolverStack = "SuiteSparse";
 #elif PLATO_TACHO
         tSolverStack = "Tacho";
 #elif HAVE_AMGX
@@ -71,12 +71,12 @@ rcp<AbstractSolver> SolverFactory::create(Plato::OrdinalType aNumNodes,
         ANALYZE_THROWERR("Not compiled with Tacho");
 #endif
     }
-    else if (tLowerSolverStack == "umfpack")
+    else if (tLowerSolverStack == "suitesparse")
     {
-#ifdef PLATO_UMFPACK
+#ifdef PLATO_SUITESPARSE
         return std::shared_ptr<AbstractSolver>{alg::make_suite_sparse_solver(mSolverParams, mType, aMPCs)};
 #else
-        ANALYZE_THROWERR("Not compiled with UMFPACK");
+        ANALYZE_THROWERR("Not compiled with SuiteSparse");
 #endif
     }
     ANALYZE_THROWERR("Requested solver stack not found");

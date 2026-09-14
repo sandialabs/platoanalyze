@@ -8,7 +8,7 @@
 #include "problem/elliptic/VectorFunction.hpp"
 #include "solver/PlatoSolverFactory.hpp"
 #include "solver/tpetra/TpetraLinearSolver.hpp"
-#include "solver/umfpack/UMFPACKLinearSolver.hpp"
+#include "solver/suitesparse/UMFPACKLinearSolver.hpp"
 #include "test_utilities/PlatoMathTestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 
@@ -1034,7 +1034,7 @@ void blockMatrixTest(const std::string& aSolverStack, Teuchos::FancyOStream& aOu
     }
 }
 
-#ifdef PLATO_UMFPACK
+#ifdef PLATO_SUITESPARSE
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, UMFPACKSolver_NonBlockMatrix) { nonBlockMatrixTest("UMFPACK", out, success); }
 
 TEUCHOS_UNIT_TEST(PlatoAnalyzeUnitTests, UMFPACKSolver_BlockMatrix) { blockMatrixTest("UMFPACK", out, success); }

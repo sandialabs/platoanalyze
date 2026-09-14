@@ -1,7 +1,7 @@
-#include "solver/umfpack/SuiteSparseSolverFactory.hpp"
+#include "solver/suitesparse/SuiteSparseSolverFactory.hpp"
 
-#include "solver/umfpack/CHOLMODLinearSolver.hpp"
-#include "solver/umfpack/UMFPACKLinearSolver.hpp"
+#include "solver/suitesparse/CHOLMODLinearSolver.hpp"
+#include "solver/suitesparse/UMFPACKLinearSolver.hpp"
 
 namespace Plato::alg
 {

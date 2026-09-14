@@ -5,7 +5,7 @@
 #include <array>
 
 #include "linear_algebra/CrsMatrixUtils.hpp"
-#include "solver/umfpack/SuiteSparseUtils.hpp"
+#include "solver/suitesparse/SuiteSparseUtils.hpp"
 #include "test_utilities/PlatoMathTestHelpers.hpp"
 #include "test_utilities/PlatoTestHelpers.hpp"
 

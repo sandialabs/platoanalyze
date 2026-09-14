@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef PLATO_UMFPACK
+#ifdef PLATO_SUITESPARSE
 
 #include <cholmod.h>
 
